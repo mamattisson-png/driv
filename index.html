@@ -207,6 +207,11 @@
   .chart .dot { fill: var(--accent); stroke: var(--card); stroke-width: 2; pointer-events: none; }
   .chart .hit { fill: transparent; cursor: pointer; }
   .chart [data-pt].sel .dot { r: 6.5; }
+  .chart .wdot { fill: var(--muted); opacity: .55; pointer-events: none; }
+  .legend { display: flex; gap: 16px; margin-top: 6px; }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .lg-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); opacity: .7; display: inline-block; }
+  .lg-line { width: 16px; height: 2px; background: var(--accent); display: inline-block; }
   .charttable { margin-top: 10px; font-variant-numeric: tabular-nums; }
   [hidden] { display: none !important; }
   .meal-row { display: flex; gap: 8px; align-items: center; padding: 8px 0; border-top: 1px solid var(--line); }

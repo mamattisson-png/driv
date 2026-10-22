@@ -148,6 +148,7 @@ function freshState() {
     profile: { sex: "m", age: 30, height: 180, weight: 80, activity: 1.55, goal: "keep" },
     kcalOverride: null,
     meals: [],
+    weights: {},           // datum → kg
     learned: {},           // rätter som Claude räknat ut, så att de känns igen nästa gång
     plan: { program: "ppl", count: 3, mode: "flex", weekdays: DEFAULT_WEEKDAYS[3].slice(), days: makeDays("ppl", 3) },
     daily: DEFAULT_DAILY.map(exEntry),
@@ -624,6 +625,73 @@ function weekSummary(ws) {
   };
 }
 
+// ---------- Kroppsvikt ----------
+const weights = () => S.weights || (S.weights = {});
+function weekAvgWeight(ws) {
+  const v = weekDates(ws).map(d => weights()[d]).filter(x => x > 0);
+  return v.length ? v.reduce((a, b) => a + b, 0) / v.length : null;
+}
+function latestWeight() {
+  const d = Object.keys(weights()).sort().pop();
+  return d ? { date: d, kg: weights()[d] } : null;
+}
+// Om en ändring är bra beror på målet: ner när man vill gå ner, upp när man vill bygga
+function weightBadge(diff) {
+  const r = Math.round(diff * 10) / 10, goal = S.profile.goal;
+  if (!r) return `<span class="delta same">±0 kg</span>`;
+  const good = goal === "cut" ? r < 0 : goal === "bulk" ? r > 0 : Math.abs(r) <= 0.5;
+  return `<span class="delta ${good ? "up" : "down"}">${r > 0 ? "+" : "−"}${fmtNum(Math.abs(r))} kg</span>`;
+}
+function logWeight(kg) {
+  if (!(kg > 20 && kg < 400)) return false;
+  weights()[TODAY] = Math.round(kg * 10) / 10;
+  // Kalorimålet följer den senaste vikten
+  S.profile.weight = latestWeight().kg;
+  return true;
+}
+function weightCard() {
+  const last = latestWeight(), ws = weekStart(TODAY);
+  const now = weekAvgWeight(ws), prev = weekAvgWeight(shift(ws, -7));
+  return `<div class="card"><div class="row between"><h2>Vikt</h2>${last ? `<span class="muted">Senast ${fmtNum(last.kg)} kg · ${last.date === TODAY ? "idag" : `${WD[weekdayOf(last.date)]} ${last.date.slice(8)}/${+last.date.slice(5, 7)}`}</span>` : ""}</div>
+    <div class="row"><input id="wkg" type="number" inputmode="decimal" step="0.1" placeholder="${last ? fmtNum(last.kg).replace(",", ".") : "kg"}" aria-label="Dagens vikt i kg"
+      value="${weights()[TODAY] ?? ""}"><button class="primary" data-wsave>${weights()[TODAY] ? "Ändra" : "Spara"}</button></div>
+    ${now != null ? `<div class="muted" style="margin-top:8px">Veckosnitt ${fmtNum(now)} kg ${prev != null ? weightBadge(now - prev) + " mot förra veckan" : ""}</div>` : ""}
+    <div class="muted small" style="margin-top:4px">Väg dig gärna samma tid på dagen. Kalorimålet följer din senaste vikt.</div></div>`;
+}
+// Vägningar som punkter och veckosnitt som linje, de senaste åtta veckorna
+function weightChart() {
+  const start = shift(weekStart(TODAY), -49), days = [];
+  for (let i = 0; i < 56; i++) days.push(shift(start, i));
+  const pts = days.map((d, i) => ({ i, d, kg: weights()[d] })).filter(p => p.kg > 0);
+  if (pts.length < 2) return `<div class="muted">Grafen visas när du vägt dig minst två gånger.</div>`;
+  const avgs = [];
+  for (let w = 0; w < 8; w++) {
+    const a = weekAvgWeight(shift(start, w * 7));
+    if (a != null) avgs.push({ i: w * 7 + 3, kg: a, ws: shift(start, w * 7) });
+  }
+  const W = 320, H = 170, L = 34, Rr = 12, T = 14, B = 26;
+  let lo = Math.min(...pts.map(p => p.kg)), hi = Math.max(...pts.map(p => p.kg));
+  if (hi - lo < 1) { lo -= 0.5; hi += 0.5; }
+  const pad = (hi - lo) * 0.15; lo -= pad; hi += pad;
+  const x = i => L + i * (W - L - Rr) / 55, y = v => T + (hi - v) * (H - T - B) / (hi - lo);
+  const ticks = [lo, (lo + hi) / 2, hi];
+  const path = avgs.map((a, k) => `${k ? "L" : "M"}${x(a.i).toFixed(1)},${y(a.kg).toFixed(1)}`).join(" ");
+  const last = pts[pts.length - 1];
+  return `<div class="readout" id="wreadout">${WD[weekdayOf(last.d)]} ${last.d.slice(8)}/${+last.d.slice(5, 7)}: <b>${fmtNum(last.kg)} kg</b></div>
+    <svg class="chart" viewBox="0 0 ${W} ${H}" data-readout="wreadout" role="img" aria-label="Vikt de senaste åtta veckorna">
+      ${ticks.map(t => `<line class="grid" x1="${L}" x2="${W - Rr}" y1="${y(t).toFixed(1)}" y2="${y(t).toFixed(1)}"/>
+        <text class="axis" x="${L - 6}" y="${(y(t) + 4).toFixed(1)}" text-anchor="end">${fmtNum(Math.round(t * 2) / 2)}</text>`).join("")}
+      ${[0, 3, 7].map(w => `<text class="axis" x="${x(w * 7 + 3).toFixed(1)}" y="${H - 6}" text-anchor="middle">v.${weekNo(shift(start, w * 7))}</text>`).join("")}
+      ${pts.map(p => `<circle class="wdot" cx="${x(p.i).toFixed(1)}" cy="${y(p.kg).toFixed(1)}" r="3"/>`).join("")}
+      ${avgs.length > 1 ? `<path class="line" d="${path}"/>` : ""}
+      ${avgs.map(a => `<circle class="dot" cx="${x(a.i).toFixed(1)}" cy="${y(a.kg).toFixed(1)}" r="4.5"/>`).join("")}
+      ${pts.map(p => `<g data-pt data-label="${WD[weekdayOf(p.d)]} ${p.d.slice(8)}/${+p.d.slice(5, 7)}: ${fmtNum(p.kg)} kg"><circle class="hit" cx="${x(p.i).toFixed(1)}" cy="${y(p.kg).toFixed(1)}" r="10"/></g>`).join("")}
+      ${avgs.map(a => `<g data-pt data-label="Snitt v.${weekNo(a.ws)}: ${fmtNum(a.kg)} kg"><circle class="hit" cx="${x(a.i).toFixed(1)}" cy="${y(a.kg).toFixed(1)}" r="12"/></g>`).join("")}
+      <text class="axis" x="${L}" y="10">kg</text>
+    </svg>
+    <div class="legend muted small"><span><i class="lg-dot"></i>Vägning</span><span><i class="lg-line"></i>Veckosnitt</span></div>`;
+}
+
 // ---------- Rendering ----------
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const TABS = [["idag", "🏠", "Idag"], ["pass", "🏋️", "Pass"], ["dailys", "✅", "Dailys"], ["kost", "🍽️", "Kost"], ["vecka", "📈", "Vecka"], ["profil", "⚙️", "Profil"]];
@@ -754,6 +822,7 @@ const VIEWS = {
       ${S.plan.days.length > 1 ? dayPicker(d && d.id) : ""}
       ${passCard}
       ${plusCard()}
+      ${weightCard()}
       <div class="card"><div class="row between"><h2>Kalorier</h2><span class="muted">${e.kcal} / ${m.kcal} kcal</span></div>
         ${bar(e.kcal, m.kcal)}<div class="muted">${Math.max(0, m.kcal - e.kcal)} kcal kvar</div>
         <div class="row between" style="margin-top:10px"><span>Protein</span><span class="muted">${e.protein} / ${m.protein} g</span></div>
@@ -880,6 +949,10 @@ const VIEWS = {
         ${stat("löpning", cur.km, prev.km, " km")}
         <div><div class="stat">${cur.kcal || "–"}</div><div class="muted">kcal/dag i snitt (mål ${m.kcal})</div></div>
       </div></div>
+      ${Object.keys(weights()).length ? `<div class="card"><h2>Vikt</h2>${(() => {
+        const a = weekAvgWeight(ws), b = weekAvgWeight(prevWs);
+        return a != null ? `<div>Snitt vecka ${weekNo(ws)}: <b>${fmtNum(a)} kg</b> ${b != null ? weightBadge(a - b) : ""}</div>` : "";
+      })()}${weightChart()}</div>` : ""}
       <div class="card"><h2>Övningar</h2>${rows ? `<table class="wk"><tr><th>Övning</th><th>Bästa set</th><th>Förra v.</th><th>±</th></tr>${rows}</table>`
         : `<div class="muted">Inga loggade set de här två veckorna.</div>`}</div>
       <div class="card"><h2>Dagar</h2><table>${dates.map(d => {
@@ -1339,7 +1412,8 @@ document.addEventListener("click", ev => {
   if (pt) {
     document.querySelectorAll("[data-pt].sel").forEach(g => g.classList.remove("sel"));
     pt.classList.add("sel");
-    const r = document.getElementById("readout");
+    const svg = pt.closest("svg");
+    const r = document.getElementById((svg && svg.dataset.readout) || "readout");
     if (r) r.textContent = pt.dataset.label;
     return;
   }
@@ -1390,6 +1464,10 @@ document.addEventListener("click", ev => {
   }
   else if (ds.dcheck) day().dailies[ds.dcheck] = !dailyDone(TODAY, ds.dcheck);
   else if (ds.dedit !== undefined) dailyEditing = !dailyEditing;
+  else if (ds.wsave !== undefined) {
+    if (!logWeight(+String($("wkg").value).replace(",", "."))) { toast("Skriv vikten i kg, till exempel 80,5"); return; }
+    toast(`Vikt sparad: ${fmtNum(weights()[TODAY])} kg`);
+  }
   else if (ds.resttoggle !== undefined) S.rest = Object.assign({}, restSettings(), { on: t.checked });
   else if (ds.sendcode !== undefined) { sendLoginCode(); return; }
   else if (ds.verifycode !== undefined) { verifyLoginCode(); return; }
