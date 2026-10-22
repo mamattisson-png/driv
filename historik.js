@@ -73,8 +73,9 @@ function weekSection() {
     const c = exWeek(id, ws), p = exWeek(id, prevWs);
     if (!c && !p) return "";
     const vol = c && p && p.vol ? Math.round((c.vol - p.vol) / p.vol * 100) : null;
-    return `<tr><td><div class="row">${thumb(id, "xs")}<button class="linkbtn" data-chart="${id}">${esc(EX[id].name)}</button></div></td><td>${fmtSet(c, id)}</td><td class="muted">${fmtSet(p, id)}</td>
-      <td>${exDelta(c, p, id)}${vol !== null && vol !== 0 ? `<div>${deltaBadge(vol, "% vol")}</div>` : ""}</td></tr>`;
+    return `<div class="exrow">${thumb(id, "xs")}<div class="grow"><button class="linkbtn" data-chart="${id}">${esc(EX[id].name)}</button>
+        <div class="muted small">${fmtSet(c, id)}${p ? ` · förra ${fmtSet(p, id)}` : ""}</div></div>
+      <div class="exdelta">${exDelta(c, p, id)}${vol !== null && vol !== 0 ? deltaBadge(vol, "% vol") : ""}</div></div>`;
   }).join("");
   const m = macros();
   const stat = (label, c, p, unit = "") => `<div><div class="stat">${fmtNum(c)}${unit}</div><div class="muted">${label}</div>${c || p ? deltaBadge(Math.round((c - p) * 10) / 10, unit.trim() || "st") : ""}</div>`;
@@ -93,7 +94,7 @@ function weekSection() {
       const a = weekAvgWeight(ws), b = weekAvgWeight(prevWs);
       return a != null ? `<div>Snitt vecka ${weekNo(ws)}: <b>${fmtNum(a)} kg</b> ${b != null ? weightBadge(a - b) : ""}</div>` : "";
     })()}${weightChart()}</div>` : ""}
-    <div class="card"><h2>Övningar</h2>${rows ? `<table class="wk"><tr><th>Övning</th><th>Bästa set</th><th>Förra v.</th><th>±</th></tr>${rows}</table>`
+    <div class="card"><h2>Övningar</h2>${rows ? `<div class="muted small" style="margin-bottom:4px">Bästa set den här veckan. Tryck på en övning för grafen.</div>${rows}`
       : `<div class="muted">Inga loggade set de här två veckorna.</div>`}</div>`;
 }
 

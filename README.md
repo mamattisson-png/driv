@@ -73,6 +73,10 @@ python tools/sw-version.py
 
 Testerna larmar om versionen inte stämmer med filerna.
 
+## Design
+
+Färgerna ligger som variabler överst i `index.html`, för ljust och mörkt läge. Text och knappar har egna, mörkare toner (`--accent-strong`, `--accent-text`, `--ok-text`, `--bad-text`, `--on-color`) så att kontrasten når WCAG AA (4,5:1); `--accent` och `--ok` används för staplar, prickar och ramar. `tests/test_design.py` går igenom all synlig text i varje vy och fönster i båda lägena och kontrollerar kontrasten, och att inget sticker ut utanför skärmen i 320 och 390 px bredd.
+
 ## Publicera
 
 Appen är statiska filer. Med GitHub Pages: *Settings → Pages → Build and deployment → Deploy from a branch → `main` / `(root)`*.

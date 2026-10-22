@@ -66,7 +66,7 @@ def test_vikt_jamfors_med_forra_veckan(page):
     page.press('[data-set=bankpress][data-i="0"][data-f=reps]', "Tab")
     page.click('[data-ok=bankpress][data-i="0"]')
     go(page, "historik")
-    row = page.locator("table.wk tr", has_text="Bänkpress").inner_text()
+    row = page.locator(".exrow", has_text="Bänkpress").inner_text()
     assert "82,5 kg × 8" in row and "+2,5 kg" in row
 
 
@@ -84,8 +84,8 @@ def test_kroppsvikt_ovningar_raknas_i_reps_och_sekunder(page):
         page.fill(sel, val)
         page.press(sel, "Tab")
     go(page, "historik")
-    assert "+3 reps" in page.locator("table.wk tr", has_text="Armhävningar").inner_text()
-    assert "+15 s" in page.locator("table.wk tr", has_text="Plankan").inner_text()
+    assert "+3 reps" in page.locator(".exrow", has_text="Armhävningar").inner_text()
+    assert "+15 s" in page.locator(".exrow", has_text="Plankan").inner_text()
 
 
 def test_dagens_mal_fylls_i_och_pers_firas(page):

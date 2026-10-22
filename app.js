@@ -1076,8 +1076,9 @@ const VIEWS = {
     if (d) {
       const w = workoutOn(TODAY, d.id);
       const done = d.ex.filter(x => exDone(w, x)).length;
-      passCard = `<div class="card"><div class="row between"><div>${tag(d.type)} ${w && w.done ? `<span class="pill">✓ Klart</span>` : ""}
-        <h2 style="margin-top:8px">${passLabel(d)}</h2>
+      // Etiketten visas bara när passväljaren ovanför inte redan visar den
+      passCard = `<div class="card"><div class="row between"><div>${S.plan.days.length > 1 ? "" : tag(d.type)} ${w && w.done ? `<span class="pill">✓ Klart</span>` : ""}
+        <h2 style="margin-top:${S.plan.days.length > 1 && !(w && w.done) ? 0 : 8}px">${passLabel(d)}</h2>
         <div class="muted">${TYPES[d.type].muscles} · ${done}/${d.ex.length} övningar klara</div>
         <div class="muted">${weekPasses} av ${S.plan.count} pass klara denna vecka</div>
         ${others.length ? `<div class="muted">Idag har du även loggat ${others.map(o => esc(o.name)).join(", ")}.</div>` : ""}</div>
