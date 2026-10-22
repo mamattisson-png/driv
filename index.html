@@ -183,21 +183,28 @@
   .letter-card { border-color: var(--accent); }
   .nudge { border-color: var(--accent); }
   /* Kost */
-  .mealpick { grid-template-columns: repeat(4, 1fr); gap: 4px; margin-bottom: 10px; }
-  .mealpick button { padding: 8px 2px; font-size: 13px; }
-  .qrow { display: flex; align-items: center; gap: 4px; border-top: 1px solid var(--line); }
-  .qadd { display: flex; gap: 8px; align-items: baseline; text-align: left; border: 0; background: none; padding: 10px 0; min-width: 0; }
+  .mcard h2 { margin: 0; }
+  .mitem { display: flex; width: 100%; gap: 10px; align-items: baseline; text-align: left; border: 0; border-top: 1px solid var(--line);
+    border-radius: 0; background: none; padding: 10px 0; }
+  .mcard .row + .mitem { border-top: 0; margin-top: 4px; }
+  .addbtn { width: 100%; margin-top: 10px; padding: 10px; border-style: dashed; color: var(--accent); font-weight: 600; background: none; }
+  .again { display: block; width: 100%; text-align: left; margin-top: 10px; font-size: 14px; }
+  .sheet-sub { font-size: 14px; color: var(--muted); font-weight: 600; margin: 18px 0 4px; }
+  .qrow { display: flex; align-items: center; gap: 8px; border-top: 1px solid var(--line); }
+  .qrow.has { background: var(--accent-soft); margin: 0 -8px; padding: 0 8px; border-radius: 8px; }
+  .qadd { display: flex; gap: 8px; align-items: baseline; text-align: left; border: 0; background: none; padding: 11px 0; min-width: 0; }
   .qadd .plus { color: var(--accent); font-weight: 700; }
-  .qadd .muted { margin-left: auto; }
+  .qcount { min-width: 22px; text-align: center; font-variant-numeric: tabular-nums; }
+  .qminus { width: 34px; height: 34px; padding: 0; }
+  .qtyrow { margin-top: 14px; gap: 12px; }
+  .qtyrow .step { width: 48px; height: 48px; font-size: 22px; padding: 0; }
+  .qtyrow .qcount { font-size: 20px; min-width: 36px; }
   .nowrap { white-space: nowrap; }
-  .star { font-size: 18px; color: var(--muted); }
-  .star.on { color: var(--accent); }
-  .mgroup { padding: 10px 0; border-top: 1px solid var(--line); }
-  .mgroup:first-of-type { border-top: 0; padding-top: 0; }
-  .mgroup .food:first-of-type { border-top: 0; }
-  .mgroup .again { display: block; width: 100%; text-align: left; margin-top: 8px; }
-  .qkcal { margin-top: 8px; }
   .qkcal input { flex: 1; }
+  .drow { display: flex; gap: 8px; align-items: center; padding: 8px 0; border-top: 1px solid var(--line); color: var(--text); }
+  .drow:first-child { border-top: 0; }
+  .amt-n { width: 76px; flex: none; text-align: right; font-size: 17px; font-weight: 600; }
+  .amt-u { width: auto; flex: none; }
   /* Fokusläge */
   .fdots { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; margin: 4px 0 12px; }
   .fdots button { width: 22px; height: 22px; padding: 0; border: 0; background: none; position: relative; }

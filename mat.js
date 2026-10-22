@@ -374,7 +374,8 @@ function parseItem(raw) {
   const g = qty == null && !unit
     ? food.portion || food.st || (food.msk ? 2 * food.msk : 100)
     : grams(food, qty == null ? 1 : qty, unit);
-  return { text: raw.trim(), known: true, corrected, grams: Math.round(g), kcal: Math.round(food.kcal * g / 100), protein: Math.round(food.p * g / 10) / 10 };
+  return { text: raw.trim(), known: true, corrected, grams: Math.round(g), kcal: Math.round(food.kcal * g / 100), protein: Math.round(food.p * g / 10) / 10,
+    food, qty, unit, name: cap(corrected || food.label || food.n[0]) };
 }
 
 // Delar på komma (inte decimalkomma), "och", "+" och radbrytning

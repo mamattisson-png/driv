@@ -249,6 +249,7 @@ def test_paminnelse_i_kalendern(page):
 def test_fritext_forslag_och_felstavning(page):
     start(page)
     go(page, "kost")
+    page.click('[data-addto="1"]')
     assert page.evaluate("parseFood('2 dl mjölk och 2 ägg').kcal") == 246
     assert page.evaluate("parseFood('ryggbif').items[0].corrected") == "Ryggbiff"
     page.type("#fname", "150 g ryggb")
@@ -257,47 +258,99 @@ def test_fritext_forslag_och_felstavning(page):
     assert page.input_value("#fkcal") == "195"
     page.type("#fname", " och kottbu")
     assert "Köttbull" in page.inner_text("#fsugg")
-    page.click("h1")
+    page.click(".sheet h2")
     page.click("[data-addfood]")
     assert page.evaluate("day().food.length") == 1
 
 
-def test_kost_maltider_snabbval_och_upprepa(page):
-    import datetime
-    page.clock.install(time=datetime.datetime(2026, 10, 22, 12, 30))
+def test_kost_maltider_snabbval_antal_och_upprepa(page):
     start(page)
     seed(page, """S.log[shift(TODAY, -1)] = {workouts:[], dailies:{}, food:[
-      {name:'Gröt', kcal:300, protein:10, meal:0}, {name:'Kaffe', kcal:40, protein:2, meal:0}, {name:'Pasta', kcal:700, protein:25, meal:1}]}""")
+      {name:'Gröt', kcal:300, protein:10, meal:0}, {name:'Ägg', kcal:154, protein:13, meal:0, qty:2, per:{kcal:77, protein:6.5}},
+      {name:'Pasta', kcal:700, protein:25, meal:1}]}""")
     go(page, "kost")
-    # Halv ett är det lunch; fritext loggas där
+    # Sidan visar bara måltiderna; att lägga till sker i ett eget fönster per måltid
+    assert page.locator("#fname").count() == 0
+    page.click('[data-repeat="0"]')
+    assert page.evaluate("day().food.filter(f => f.meal === 0).map(f => [f.name, f.kcal, f.qty || 1])") == [["Gröt", 300, 1], ["Ägg", 154, 2]]
+    # Fritext i lunch
+    page.click('[data-addto="1"]')
     page.fill("#fname", "1 banan")
     page.click("[data-addfood]")
-    assert page.evaluate("day().food.map(f => [f.name, f.meal])") == [["1 banan", 1]]
-    # Frukost som igår med ett tryck
-    page.click('[data-repeat="0"]')
-    assert page.evaluate("day().food.filter(f => f.meal === 0).map(f => f.name)") == ["Gröt", "Kaffe"]
-    # Snabbval loggas i vald måltid, och en favorit hamnar först
-    page.click('[data-mealpick="3"]')
-    page.click('.qrow:has-text("Pasta") [data-qfav]')
-    assert "Pasta" in page.inner_text(".qrow >> nth=0") and "★" in page.inner_text(".qrow >> nth=0")
-    page.click('.qrow:has-text("Pasta") [data-quick]')
-    assert page.evaluate("day().food.at(-1)") == {"name": "Pasta", "kcal": 700, "protein": 25, "meal": 3}
-    # Frukosten sparad som måltid loggas del för del
+    assert page.evaluate("day().food.at(-1).meal") == 1
+    # Samma snabbval två gånger blir två stycken, och − tar bort ett
+    page.click('.qrow:has-text("Ägg") [data-quick]')
+    page.click('.qrow:has-text("Ägg") [data-quick]')
+    page.click('.qrow:has-text("Ägg") [data-quick]')
+    page.click('.qrow:has-text("Ägg") [data-qminus]')
+    assert page.evaluate("day().food.filter(f => f.meal === 1 && f.name === 'Ägg').map(f => [f.qty, f.kcal])") == [[2, 154]]
+    page.click('.sheet [data-fsclose].wide')
+    assert page.locator(".sheet").count() == 0
+    assert "Ägg × 2" in page.inner_text(".mcard >> nth=1")
+    # Tryck på en loggad sak: ändra antal, gör till favorit, ta bort
+    i = page.evaluate("day().food.findIndex(f => f.meal === 1 && f.name === 'Ägg')")
+    page.click(f'[data-fooditem="{i}"]')
+    page.click('[data-qty="1"]')
+    assert page.evaluate(f"day().food[{i}].kcal") == 231
+    page.click("[data-itemfav]")
+    assert page.evaluate("S.favs.map(f => [f.name, f.kcal])") == [["Ägg", 77]]
+    page.click(".sheet [data-delfood]")
+    assert page.locator(".sheet").count() == 0
+    assert page.evaluate("day().food.some(f => f.meal === 1 && f.name === 'Ägg')") is False
+    # Frukosten sparad som måltid och loggad i middag del för del
+    page.click('[data-addto="0"]')
     page.click('[data-savegroup="0"]')
-    page.click('[data-mealpick="2"]')
+    page.click('.sheet [data-fsclose].wide')
+    page.click('[data-addto="3"]')
     page.click('.qrow:has-text("Frukost:") [data-quick]')
-    assert page.evaluate("day().food.filter(f => f.meal === 2).map(f => f.name)") == ["Gröt", "Kaffe"]
-    # Ungefärlig måltid
-    page.click('[data-mealpick="3"]')
-    page.click('[data-delfood="3"]')
-    page.fill("#qm-3", "650")
-    page.click('[data-qmeal="3"]')
-    assert page.evaluate("day().food.at(-1).name") == "Middag (ca 650 kcal)"
+    assert page.evaluate("day().food.filter(f => f.meal === 3).map(f => [f.name, f.qty || 1])") == [["Gröt", 1], ["Ägg", 2]]
+    # Ungefärlig måltid i en tom måltid
+    page.click('.sheet [data-fsclose].wide')
+    page.click('[data-addto="2"]')
+    page.fill("#qm-2", "300")
+    page.click('[data-qmeal="2"]')
+    assert page.evaluate("day().food.at(-1).name") == "Mellanmål (ca 300 kcal)"
+
+
+def test_mangd_styr_kalorierna(page):
+    start(page)
+    go(page, "kost")
+    page.click('[data-addto="1"]')
+    page.fill("#fname", "bolognese")
+    page.click(".sheet h2")
+    row = page.locator("[data-drow]").first
+    assert "Spaghetti bolognese" in row.inner_text() and "675 kcal" in row.inner_text()
+    assert row.locator(".amt-u").input_value() == "portion"
+    # Byt till gram och skriv 100 g; kcal räknas om
+    row.locator(".amt-u").select_option("g")
+    assert row.locator(".amt-n").input_value() == "450"
+    row.locator(".amt-n").fill("100")
+    assert "150 kcal" in row.inner_text()
+    page.click("[data-addfood]")
+    f = page.evaluate("day().food[0]")
+    assert [f["name"], f["kcal"], f["protein"], f["amt"]["n"], f["amt"]["unit"]] == ["Spaghetti bolognese", 150, 7, 100, "g"]
+    # Ändra mängden i efterhand på det loggade
+    page.click('.sheet [data-fsclose].wide')
+    page.click('[data-fooditem="0"]')
+    page.locator('[data-iamt="n"]').fill("300")
+    page.locator('[data-iamt="n"]').press("Enter")
+    page.wait_for_function("day().food[0].kcal === 450")
+    page.locator('[data-iamt="u"]').select_option("portion")
+    page.wait_for_function("day().food[0].amt.unit === 'portion'")
+    assert page.evaluate("[day().food[0].amt.n, day().food[0].kcal]") == [0.5, 338]
+    # Två ägg: flera rader i en text blir var sin rad med sin mängd
+    page.click("[data-itemclose].primary")
+    page.click('[data-addto="0"]')
+    page.fill("#fname", "2 ägg och 1 dl mjölk")
+    page.click(".sheet h2")
+    page.click("[data-addfood]")
+    assert page.evaluate("day().food.filter(f => f.meal === 0).map(f => [f.name, f.amt.n, f.amt.unit, f.kcal])") == [["Ägg", 2, "st", 154], ["Mjölk", 1, "dl", 46]]
 
 
 def test_streckkod_fran_open_food_facts(page):
     start(page, "window.BarcodeDetector = class { async detect() { return window.__code ? [{ rawValue: window.__code }] : []; } };")
     go(page, "kost")
+    page.click('[data-addto="0"]')
     page.click("[data-scan]")
     page.wait_for_function("scanner.stream !== null")
     page.evaluate("window.__code = '7310000000001'")
@@ -334,6 +387,7 @@ def test_claude_lagring_med_frysta_snapshots(page):
     page.reload()
     page.wait_for_function("cloud.status === 'cloud'")
     go(page, "kost")
+    page.click('[data-addto="0"]')
     page.fill("#fname", "1 dl mjölk")
     page.click("[data-addfood]")
     assert page.evaluate("S.log[TODAY].food.length") == 1

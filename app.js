@@ -703,7 +703,7 @@ let TODAY = iso(new Date());
 function refreshToday() {
   const now = iso(new Date());
   if (now === TODAY) return false;
-  TODAY = now; chosenDay = null; editing = false; foodMeal = null;
+  TODAY = now; chosenDay = null; editing = false; foodSheet = null; foodItem = null;
   if (focus) endFocus();
   return true;
 }
@@ -1936,7 +1936,10 @@ function foodPreview(suggest = true) {
   if (r.unknown.length) tip = cloud.sample
     ? `<div style="margin-top:6px"><button class="small" data-askai>Räkna ut med Claude</button> eller tryck Logga direkt</div>`
     : `<div>Skriv mängd och livsmedel, t.ex. "150 g kyckling", eller fyll i kcal själv.</div>`;
-  out.innerHTML = lines.join("<br>") + tip;
+  // Med fönstret för en måltid öppet blir varje tolkad rad en mängd som går att ändra
+  out.innerHTML = (foodSheet ? draftRows(r.items) : lines.join("<br>")) + tip;
+  const manual = document.querySelector(".manual");
+  if (manual && r.unknown.length) manual.hidden = false;
 }
 
 // ---------- Streckkodsskanner (Open Food Facts) ----------
@@ -2071,7 +2074,7 @@ function updateScanCalc() {
 function logScanned() {
   const pr = scanner.product, g = +scanner.el.querySelector("#scangrams").value || 0;
   if (!pr || !g) return;
-  logFood({ name: `${pr.name} ${Math.round(g)} g`, kcal: pr.kcal * g / 100, protein: pr.p * g / 100 });
+  logFood({ name: pr.name, amt: { n: Math.round(g), unit: "g", k: pr.kcal, p: pr.p, u: {} } });
   closeScanner();
   save();
   render();
