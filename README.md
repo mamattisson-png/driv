@@ -1,6 +1,8 @@
-# Träning
+<img src="icons/icon-192.png" alt="Driv" width="96">
 
-En träningsapp i webbläsaren med pass, övningsbilder, veckojämförelse, dailys och kalorimål. Inga konton och inga beroenden: allt sparas i din webbläsare.
+# Driv
+
+**Hitta ditt driv.** Träning, dailys och kost i en app, med plus eller minus mot förra veckan så att du ser att du blir bättre. Inga konton och inga beroenden: allt sparas i din webbläsare.
 
 **Öppna appen:** https://mamattisson-png.github.io/traningsapp/
 

@@ -3,38 +3,38 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#e8572a">
-<meta name="description" content="Träningsapp med pass, övningsbilder, veckojämförelse, dailys och kalorimål.">
+<meta name="theme-color" content="#0b0b0b">
+<meta name="description" content="Driv – hitta ditt driv. Träning, dailys och kost i en app.">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Träning">
-<title>PPL Träning</title>
+<meta name="apple-mobile-web-app-title" content="Driv">
+<title>Driv</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <style>
   :root {
     --bg: #f5f6f8; --card: #ffffff; --text: #15181d; --muted: #67707c;
-    --line: #e2e5ea; --accent: #e8572a; --accent-soft: #fde8e0;
+    --line: #e2e5ea; --accent: #ef5b00; --accent-soft: #ffe7d6;
     --ok: #1f9d55; --ok-soft: #dcf3e5; --bad: #d23b3b; --bad-soft: #fbe3e3;
-    --push: #e8572a; --pull: #2f6fdb; --legs: #8a4fd6; --upper: #c2410c; --lower: #0e7c86; --full: #4d7c0f;
+    --push: #ef5b00; --pull: #2f6fdb; --legs: #8a4fd6; --upper: #c2410c; --lower: #0e7c86; --full: #4d7c0f;
     --equip: #9aa1ab;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
       --bg: #0f1215; --card: #181c21; --text: #eef1f4; --muted: #929ba6;
-      --line: #2a3038; --accent: #ff7a4d; --accent-soft: #3a2219;
+      --line: #2a3038; --accent: #ff7a1a; --accent-soft: #3a2312;
       --ok: #3ccf7a; --ok-soft: #173325; --bad: #ff6b6b; --bad-soft: #3a1d1d;
-      --push: #ff7a4d; --pull: #5e95ff; --legs: #b17cff; --upper: #f59e0b; --lower: #2dd4bf; --full: #84cc16;
+      --push: #ff7a1a; --pull: #5e95ff; --legs: #b17cff; --upper: #f59e0b; --lower: #2dd4bf; --full: #84cc16;
       --equip: #5d6670;
       color-scheme: dark;
     }
   }
   :root[data-theme="dark"] {
     --bg: #0f1215; --card: #181c21; --text: #eef1f4; --muted: #929ba6;
-    --line: #2a3038; --accent: #ff7a4d; --accent-soft: #3a2219;
+    --line: #2a3038; --accent: #ff7a1a; --accent-soft: #3a2312;
     --ok: #3ccf7a; --ok-soft: #173325; --bad: #ff6b6b; --bad-soft: #3a1d1d;
-    --push: #ff7a4d; --pull: #5e95ff; --legs: #b17cff; --upper: #f59e0b; --lower: #2dd4bf; --full: #84cc16;
+    --push: #ff7a1a; --pull: #5e95ff; --legs: #b17cff; --upper: #f59e0b; --lower: #2dd4bf; --full: #84cc16;
     --equip: #5d6670;
     color-scheme: dark;
   }
@@ -91,6 +91,9 @@
 
   /* Upplägg */
   .seg { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .brand { display: flex; gap: 14px; align-items: center; margin: 4px 0 18px; }
+  .brand img { width: 56px; height: 56px; border-radius: 14px; }
+  .brand b { font-size: 26px; letter-spacing: -.01em; display: block; }
   .proglist { display: grid; gap: 8px; }
   .proglist button { text-align: left; padding: 10px 12px; display: grid; gap: 2px; }
   .proglist button.on { border-color: var(--accent); outline: 2px solid var(--accent); }
