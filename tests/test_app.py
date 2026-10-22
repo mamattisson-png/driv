@@ -218,6 +218,8 @@ def test_dailys_flyttas_over_fran_gammalt_format(page):
     page.fill("[data-run=lop][data-f=km]", "5")
     page.press("[data-run=lop][data-f=km]", "Tab")
     assert page.evaluate(run_ok) is True
+    # Inga pilar i sifferfälten som tar plats från siffrorna
+    assert page.evaluate("getComputedStyle(document.querySelector('[data-run=lop]')).appearance") == "textfield"
 
 
 def test_kroppsvikt_en_gang_i_veckan_och_kalorimal(page):
