@@ -18,9 +18,11 @@ def test_alla_upplagg_har_giltiga_standardovningar(page):
     page.click("button.on[data-progtoggle]")
     for prog in page.evaluate("Object.keys(PROGRAMS)"):
         page.click(f'[data-prog="{prog}"]')
-        for c in page.evaluate(f"counts('{prog}')"):
+        assert page.evaluate(f"counts('{prog}')") == [1, 2, 3, 4, 5, 6, 7]
+        for c in range(1, 8):
             page.click(f'[data-count="{c}"]')
             assert page.evaluate("draft.days.length") == c
+            assert page.evaluate("draft.days.every(d => d.ex.length || d.type === 'custom')")
         page.click("button.on[data-progtoggle]")
 
 

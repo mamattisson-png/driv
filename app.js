@@ -57,7 +57,34 @@ const PROGRAMS = {
     1: ["custom"], 2: ["custom", "custom"], 3: ["custom", "custom", "custom"], 4: ["custom", "custom", "custom", "custom"],
     5: ["custom", "custom", "custom", "custom", "custom"], 6: ["custom", "custom", "custom", "custom", "custom", "custom"] } },
 };
-const DEFAULT_WEEKDAYS = { 1: [0], 2: [0, 3], 3: [0, 2, 4], 4: [0, 1, 3, 4], 5: [0, 1, 2, 3, 4], 6: [0, 1, 2, 3, 4, 5] };
+// Alla upplägg går att köra 1–7 pass i veckan. Utöver det upplägget är tänkt för fylls det på med passtyper som passar.
+const EXTRA_DAYS = {
+  ppl: { 1: ["full"], 2: ["upper", "lower"], 7: ["push", "pull", "legs", "upper", "push", "pull", "legs"] },
+  helkropp: { 1: ["full"], 5: Array(5).fill("full"), 6: Array(6).fill("full"), 7: Array(7).fill("full") },
+  overunder: { 1: ["full"], 5: ["upper", "lower", "upper", "lower", "upper"], 6: ["upper", "lower", "upper", "lower", "upper", "lower"],
+    7: ["upper", "lower", "upper", "lower", "upper", "lower", "full"] },
+  cali: { 1: ["cfull"], 2: ["cfull", "cfull"], 7: ["cpush", "cpull", "clegs", "cfull", "cpush", "cpull", "clegs"] },
+  split: { 1: ["full"], 2: ["upper", "lower"], 3: ["chestback", "shoulderarms", "legs"],
+    6: ["chest", "back", "legs", "shoulders", "arms", "legs"], 7: ["chest", "back", "legs", "shoulders", "arms", "legs", "full"] },
+  arnold: { 1: ["full"], 2: ["upper", "lower"], 4: ["chestback", "shoulderarms", "legs", "chestback"],
+    5: ["chestback", "shoulderarms", "legs", "chestback", "shoulderarms"],
+    7: ["chestback", "shoulderarms", "legs", "chestback", "shoulderarms", "legs", "full"] },
+  styrka5x5: { 1: ["str5a"], 2: ["str5a", "str5b"], 4: ["str5a", "str5b", "str5a", "str5b"], 5: ["str5a", "str5b", "str5a", "str5b", "str5a"],
+    6: ["str5a", "str5b", "str5a", "str5b", "str5a", "str5b"], 7: ["str5a", "str5b", "str5a", "str5b", "str5a", "str5b", "str5a"] },
+  styrkelyft: { 1: ["str5a"], 2: ["str5a", "str5b"], 5: ["sq", "bp", "dl", "upper", "lower"], 6: ["sq", "bp", "dl", "sq", "bp", "dl"],
+    7: ["sq", "bp", "dl", "upper", "sq", "bp", "dl"] },
+  hantlar: { 1: ["hfull"], 5: Array(5).fill("hfull"), 6: Array(6).fill("hfull"), 7: Array(7).fill("hfull") },
+  rumpa: { 1: ["glutes"], 2: ["glutes", "upper"], 5: ["glutes", "upper", "lower", "glutes", "upper"],
+    6: ["glutes", "upper", "lower", "glutes", "upper", "lower"], 7: ["glutes", "upper", "lower", "glutes", "upper", "lower", "glutes"] },
+  eget: { 7: Array(7).fill("custom") },
+};
+for (const [id, pr] of Object.entries(PROGRAMS)) {
+  // Det antal pass upplägget är gjort för, t.ex. "3–6" eller "3 eller 6"
+  const n = pr.fit = Object.keys(pr.days).map(Number);
+  pr.best = n.length === 1 ? `${n[0]}` : n[n.length - 1] - n[0] === n.length - 1 ? `${n[0]}–${n[n.length - 1]}` : n.join(" eller ");
+  Object.assign(pr.days, EXTRA_DAYS[id]);
+}
+const DEFAULT_WEEKDAYS = { 1: [0], 2: [0, 3], 3: [0, 2, 4], 4: [0, 1, 3, 4], 5: [0, 1, 2, 3, 4], 6: [0, 1, 2, 3, 4, 5], 7: [0, 1, 2, 3, 4, 5, 6] };
 const counts = prog => Object.keys(PROGRAMS[prog].days).map(Number);
 
 // Standardövningar per passtyp; typ2/typ3 används när samma typ återkommer i veckan
@@ -133,7 +160,7 @@ function makeDays(prog, count, old = []) {
   return types.map((type, i) => {
     const round = seen[type] = (seen[type] || 0) + 1;
     const repeated = !TYPES[type].fixedName && types.filter(t => t === type).length > 1;
-    const name = TYPES[type].label + (repeated ? " " + "ABCDEF"[(round - 1) % 6] : "");
+    const name = TYPES[type].label + (repeated ? " " + "ABCDEFG"[(round - 1) % 7] : "");
     const prev = old[i];
     // Ett pass man själv döpt behåller sitt namn
     if (prev && prev.type === type) return prev.named ? prev : { ...prev, name };
@@ -811,10 +838,13 @@ const VIEWS = {
           <div class="muted">${PROGRAMS[draft.program].info}</div><div class="muted small">Tryck för att byta upplägg</div></button></div>`}
         <div ${progOpen ? "" : "hidden"}>
         <div class="proglist">${Object.entries(PROGRAMS).map(([id, pr]) => `<button data-prog="${id}" class="${draft.program === id ? "on" : ""}" aria-pressed="${draft.program === id}">
-          <b>${pr.name}</b><div class="muted">${pr.info}</div><div class="muted small">${counts(id).join(", ")} pass i veckan</div></button>`).join("")}</div>
+          <b>${pr.name}</b><div class="muted">${pr.info}</div><div class="muted small">Gjort för ${pr.best} pass i veckan</div></button>`).join("")}</div>
         </div></div>
       <div class="card"><h2>2. Hur många pass i veckan?</h2>
-        <div class="seg" style="grid-template-columns:repeat(${counts(draft.program).length},1fr)">${counts(draft.program).map(c => `<button data-count="${c}" class="${n === c ? "on" : ""}" aria-pressed="${n === c}"><b>${c}</b><div class="muted">pass</div></button>`).join("")}</div>
+        <div class="seg count">${counts(draft.program).map(c => `<button data-count="${c}" class="${n === c ? "on" : ""}" aria-pressed="${n === c}"><b>${c}</b><div class="muted">pass</div></button>`).join("")}</div>
+        <div class="muted small" style="margin-top:8px">Passen blir: ${draft.days.map(d => esc(d.name)).join(", ")}.
+          ${PROGRAMS[draft.program].fit.includes(n) ? "" : `${PROGRAMS[draft.program].name} är gjort för ${PROGRAMS[draft.program].best} pass, så passen har anpassats.`}
+          ${n === 7 ? " Sju pass i veckan kräver bra återhämtning – lyssna på kroppen." : ""}</div>
         </div>
       <div class="card"><h2>3. När tränar du?</h2>
         <div class="seg two">
