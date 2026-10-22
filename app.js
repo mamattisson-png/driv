@@ -572,6 +572,7 @@ const VIEWS = {
     return `<h1>Idag <span class="muted">${new Date().toLocaleDateString("sv-SE", { weekday: "long", day: "numeric", month: "long" })} · v.${weekNo(TODAY)}</span></h1>
       ${S.plan.days.length > 1 ? dayPicker(d && d.id) : ""}
       ${passCard}
+      ${plusCard()}
       <div class="card"><div class="row between"><h2>Kalorier</h2><span class="muted">${e.kcal} / ${m.kcal} kcal</span></div>
         ${bar(e.kcal, m.kcal)}<div class="muted">${Math.max(0, m.kcal - e.kcal)} kcal kvar</div>
         <div class="row between" style="margin-top:10px"><span>Protein</span><span class="muted">${e.protein} / ${m.protein} g</span></div>
@@ -675,7 +676,7 @@ const VIEWS = {
       const c = exWeek(id, ws), p = exWeek(id, prevWs);
       if (!c && !p) return "";
       const vol = c && p && p.vol ? Math.round((c.vol - p.vol) / p.vol * 100) : null;
-      return `<tr><td><div class="row">${thumb(id, "xs")}<span>${esc(EX[id].name)}</span></div></td><td>${fmtSet(c, id)}</td><td class="muted">${fmtSet(p, id)}</td>
+      return `<tr><td><div class="row">${thumb(id, "xs")}<button class="linkbtn" data-chart="${id}">${esc(EX[id].name)}</button></div></td><td>${fmtSet(c, id)}</td><td class="muted">${fmtSet(p, id)}</td>
         <td>${exDelta(c, p, id)}${vol !== null && vol !== 0 ? `<div>${deltaBadge(vol, "% vol")}</div>` : ""}</td></tr>`;
     }).join("");
     const dates = weekDates(ws);
@@ -772,11 +773,12 @@ function exBlock(d, ex, w) {
   const ws = weekStart(TODAY);
   const cur = exWeek(ex.id, ws), last = exWeek(ex.id, shift(ws, -7));
   const all = exDone(w, ex);
+  const target = todayTarget(ex);
   // Kroppsvikt: reps (eller sekunder) först, extra vikt valfritt
   const bw = !!EX[ex.id].bw, unitName = isTimed(ex.id) ? "Sekunder" : "Reps";
   let rows = "";
   for (let i = 0; i < ex.sets; i++) {
-    const s = sets[i] || {}, p = hintSet(prev, i);
+    const s = sets[i] || {}, p = target ? { kg: target.kg || "", reps: target.reps } : hintSet(prev, i);
     const kg = `<input type="number" inputmode="decimal" step="0.5" placeholder="${p.kg || (bw ? "+kg" : "kg")}" value="${s.kg ?? ""}" data-set="${ex.id}" data-i="${i}" data-f="kg" aria-label="${bw ? "Extra vikt" : "Vikt"} set ${i + 1}">`;
     const reps = `<input type="number" inputmode="numeric" placeholder="${p.reps || esc(ex.reps)}" value="${s.reps ?? ""}" data-set="${ex.id}" data-i="${i}" data-f="reps" aria-label="${unitName} set ${i + 1}">`;
     rows += `<div class="n">${i + 1}</div>${bw ? reps + kg : kg + reps}
@@ -784,6 +786,8 @@ function exBlock(d, ex, w) {
   }
   return `<div class="card ex ${all ? "complete" : ""}"><div class="row">${thumb(ex.id)}
       <div class="grow"><b>${esc(EX[ex.id].name)}</b><div class="muted">${ex.sets} × ${esc(ex.reps)}</div>
+        ${target ? `<div class="goal">🎯 Dagens mål: <b>${fmtTarget(target, ex.id)}</b> <span class="delta up">${target.why}</span></div>`
+          : `<div class="muted">Första gången: välj en vikt du klarar ${esc(ex.reps)}.</div>`}
         <div class="muted">Förra veckan: ${fmtSet(last, ex.id)}</div>
         ${cur ? `<div>Denna vecka: ${fmtSet(cur, ex.id)} ${exDelta(cur, last, ex.id)}</div>` : ""}</div>
       <button class="done-btn big ${all ? "on" : ""}" data-exok="${ex.id}" aria-label="Hela övningen klar">✓</button></div>
@@ -826,7 +830,52 @@ function editList(d) {
 
 const norm = s => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 
+// Bästa set vecka för vecka, de senaste tolv veckorna
+function weeklySeries(id) {
+  const out = [];
+  for (let k = 11; k >= 0; k--) {
+    const ws = shift(weekStart(TODAY), -7 * k), b = exWeek(id, ws);
+    out.push({ ws, week: weekNo(ws), best: b });
+  }
+  return out;
+}
+function chartModal(id) {
+  const series = weeklySeries(id), pts = series.filter(x => x.best);
+  // Vikt om övningen körts med vikt, annars reps eller sekunder
+  const useKg = pts.some(x => x.best.kg), val = b => useKg ? b.kg : b.reps;
+  const unit = useKg ? "kg" : repUnit(id);
+  if (pts.length < 2) return `<div class="muted" style="margin:12px 0">Grafen visas när du loggat ${esc(EX[id].name)} två olika veckor.</div>`;
+  const W = 320, H = 170, L = 34, Rr = 12, T = 14, B = 26;
+  const vals = pts.map(x => val(x.best));
+  let lo = Math.min(...vals), hi = Math.max(...vals);
+  if (lo === hi) { lo -= 1; hi += 1; }
+  const pad = (hi - lo) * 0.15; lo = Math.max(0, lo - pad); hi += pad;
+  const x = i => L + i * (W - L - Rr) / (series.length - 1);
+  const y = v => T + (hi - v) * (H - T - B) / (hi - lo);
+  const ticks = [lo, (lo + hi) / 2, hi];
+  const idx = series.map((s, i) => s.best ? i : -1).filter(i => i >= 0);
+  const path = idx.map((i, k) => `${k ? "L" : "M"}${x(i).toFixed(1)},${y(val(series[i].best)).toFixed(1)}`).join(" ");
+  const last = idx[idx.length - 1];
+  return `<div class="readout" id="readout">v.${series[last].week}: <b>${fmtSet(series[last].best, id)}</b></div>
+    <svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Bästa set per vecka i ${esc(EX[id].name)}">
+      ${ticks.map(t => `<line class="grid" x1="${L}" x2="${W - Rr}" y1="${y(t).toFixed(1)}" y2="${y(t).toFixed(1)}"/>
+        <text class="axis" x="${L - 6}" y="${(y(t) + 4).toFixed(1)}" text-anchor="end">${fmtNum(Math.round(t * 2) / 2)}</text>`).join("")}
+      ${series.map((s, i) => i % 3 === 2 || i === series.length - 1 ? `<text class="axis" x="${x(i).toFixed(1)}" y="${H - 6}" text-anchor="middle">v.${s.week}</text>` : "").join("")}
+      <path class="line" d="${path}"/>
+      ${idx.map(i => `<g data-pt="${i}" data-label="v.${series[i].week}: ${esc(fmtSet(series[i].best, id))}">
+        <circle class="hit" cx="${x(i).toFixed(1)}" cy="${y(val(series[i].best)).toFixed(1)}" r="14"/>
+        <circle class="dot" cx="${x(i).toFixed(1)}" cy="${y(val(series[i].best)).toFixed(1)}" r="4.5"/></g>`).join("")}
+      <text class="axis" x="${L}" y="10">${unit}</text>
+    </svg>
+    <table class="charttable"><tr><th>Vecka</th><th>Bästa set</th></tr>
+      ${pts.slice().reverse().map(s => `<tr><td>v.${s.week}</td><td>${fmtSet(s.best, id)}</td></tr>`).join("")}</table>`;
+}
+
 function renderModal() {
+  if (modal.chart) {
+    return `<div class="overlay" data-close><div class="sheet"><div class="row between"><h2>${esc(EX[modal.chart].name)}</h2><button class="small ghost" data-close>✕</button></div>
+      <div class="muted">Bästa set per vecka, senaste 12 veckorna</div>${chartModal(modal.chart)}</div></div>`;
+  }
   if (modal.info) {
     const e = EX[modal.info];
     return `<div class="overlay" data-close><div class="sheet"><div class="row between"><h2>${esc(e.name)}</h2><button class="small ghost" data-close>✕</button></div>
@@ -881,11 +930,117 @@ function setAt(d, exId, i) {
 // Förra gångens set på samma plats, eller dess sista set om det var färre
 const hintSet = (prev, i) => prev ? prev[i] || prev.filter(hasData).pop() || {} : {};
 
+// Målintervall ur "8–10", "5", "10/ben" eller "45 s"
+function repRange(r) {
+  const nums = String(r || "").match(/\d+/g) || [];
+  const lo = +nums[0] || 0;
+  return { lo, hi: +(nums[1] || nums[0]) || lo };
+}
+const weightStep = id => EX[id].hold === "db" ? 2 : EX[id].cat === "legs" || id === "marklyft" ? 5 : 2.5;
+// Bättre set: högre vikt, eller samma vikt och fler reps/sekunder
+const betterSet = (a, b) => !b || (+a.kg || 0) > (+b.kg || 0) || ((+a.kg || 0) === (+b.kg || 0) && (+a.reps || 0) > (+b.reps || 0));
+const topSet = sets => sets.filter(hasData).reduce((best, x) => betterSet(x, best) ? x : best, null);
+
+// Dagens mål med dubbel progression: nådde du toppen av intervallet förra gången höjs vikten
+// och reps börjar om nerifrån, annars siktar du på en rep (eller fem sekunder) till
+function todayTarget(ex) {
+  const top = topSet(lastSets(ex.id) || []);
+  if (!top) return null;
+  const kg = +top.kg || 0, reps = +top.reps || 0, { lo, hi } = repRange(ex.reps);
+  if (isTimed(ex.id)) return { kg, reps: reps + 5, why: "+5 s" };
+  if (EX[ex.id].bw && !kg) return { kg: 0, reps: reps + 1, why: "+1 rep" };
+  if (hi && reps >= hi) {
+    const step = weightStep(ex.id);
+    return { kg: kg + step, reps: lo || reps, why: `+${fmtNum(step)} kg` };
+  }
+  return { kg, reps: hi ? Math.min(reps + 1, hi) : reps + 1, why: "+1 rep" };
+}
+const fmtTarget = (t, id) => EX[id].bw
+  ? `${t.reps} ${repUnit(id)}${t.kg ? ` +${fmtNum(t.kg)} kg` : ""}`
+  : `${fmtNum(t.kg)} kg × ${t.reps}`;
+// Exempelvärden för ett set: dagens mål om det finns, annars förra gångens set
+function setHint(ex, i) {
+  const t = todayTarget(ex);
+  return t ? { kg: t.kg || "", reps: t.reps } : hintSet(lastSets(ex.id), i);
+}
+
+// Bästa set före den här veckan, för att kunna säga när man slår pers
+function bestBefore(exId, date) {
+  let best = null;
+  for (const d of Object.keys(S.log)) {
+    if (d >= date) continue;
+    const w = S.log[d].workout;
+    const t = topSet((w && w.sets[exId]) || []);
+    if (t && betterSet(t, best)) best = t;
+  }
+  return best;
+}
+// Kollar ett nyss avbockat set mot förra veckan och mot allt tidigare
+const toasted = new Set();
+function checkRecord(exId, s) {
+  if (!hasData(s) || toasted.has(exId)) return;
+  const ws = weekStart(TODAY), prevWeek = exWeek(exId, shift(ws, -7)), ever = bestBefore(exId, ws);
+  const set = fmtSet({ kg: +s.kg || 0, reps: +s.reps || 0 }, exId);
+  if (ever && betterSet(s, ever)) toast(`🏆 Nytt pers i ${EX[exId].name}: ${set}`);
+  else if (prevWeek && betterSet(s, prevWeek)) toast(`📈 Bättre än förra veckan i ${EX[exId].name}: ${set}`);
+  else return;
+  toasted.add(exId);
+}
+function toast(msg) {
+  const el = document.createElement("div");
+  el.className = "toast";
+  el.setAttribute("role", "status");
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(() => el.classList.add("out"), 2600);
+  setTimeout(() => el.remove(), 3100);
+}
+
+// Veckans plus: hur många övningar som gått upp, stått still eller gått ned mot förra veckan
+function weekPlus(ws) {
+  const prevWs = shift(ws, -7), res = { plus: 0, same: 0, minus: 0, ids: [] };
+  const ids = new Set();
+  for (const d of weekDates(ws)) {
+    const w = S.log[d] && S.log[d].workout;
+    if (w) for (const id of Object.keys(w.sets)) if (EX[id]) ids.add(id);
+  }
+  for (const id of ids) {
+    const c = exWeek(id, ws), p = exWeek(id, prevWs);
+    if (!c || !p) continue;
+    if (betterSet(c, p)) { res.plus++; res.ids.push(id); }
+    else if (betterSet(p, c)) res.minus++;
+    else res.same++;
+  }
+  return res;
+}
+// Veckor i rad med fler plus än minus, räknat från förra veckan (och den här om den redan är i plus)
+function plusStreak() {
+  let ws = weekStart(TODAY), n = 0;
+  const now = weekPlus(ws);
+  if (now.plus > now.minus) n++;
+  for (ws = shift(ws, -7); ; ws = shift(ws, -7)) {
+    const r = weekPlus(ws);
+    if (!(r.plus > r.minus)) break;
+    n++;
+  }
+  return n;
+}
+function plusCard() {
+  // Har du inte jämfört något än den här veckan visas förra veckans resultat
+  let r = weekPlus(weekStart(TODAY)), label = "Den här veckan";
+  if (!(r.plus + r.same + r.minus)) { r = weekPlus(shift(weekStart(TODAY), -7)); label = "Förra veckan"; }
+  const streak = plusStreak(), total = r.plus + r.same + r.minus;
+  return `<div class="card plus-card"><div class="row between"><h2>Slå förra veckan</h2>${streak ? `<span class="pill">🔥 ${streak} ${streak === 1 ? "plusvecka" : "plusveckor"} i rad</span>` : ""}</div>
+    ${total ? `<div class="plus-row"><div><b class="up">${r.plus}</b><span class="muted">i plus</span></div><div><b>${r.same}</b><span class="muted">lika</span></div><div><b class="down">${r.minus}</b><span class="muted">i minus</span></div></div>
+      <div class="muted">${label}: ${total} övningar jämförda med veckan innan</div>`
+      : `<div class="muted">När du kört samma övning två veckor i rad ser du här hur många som gått upp. Dagens mål på varje övning visar hur du tar ditt plus.</div>`}</div>`;
+}
+
 // Ett avbockat set med tomma fält får exempelvärdena: förra gångens set, annars målet
 // (vid ett intervall som 8–10 det lägsta värdet)
 function fillFromHint(d, exId, i) {
-  const s = setAt(d, exId, i), prev = hintSet(lastSets(exId), i);
   const ex = d.ex.find(x => x.id === exId);
+  const s = setAt(d, exId, i), prev = setHint(ex, i);
   const target = parseInt(String(ex && ex.reps || ""), 10);
   if (s.reps === undefined || s.reps === "") s.reps = +prev.reps || (target > 0 ? target : "");
   if ((s.kg === undefined || s.kg === "") && +prev.kg) s.kg = +prev.kg;
@@ -907,6 +1062,15 @@ function saveSetup() {
 
 // ---------- Händelser ----------
 document.addEventListener("click", ev => {
+  // Tryck på en punkt i grafen visar dess värde
+  const pt = ev.target.closest && ev.target.closest("[data-pt]");
+  if (pt) {
+    document.querySelectorAll("[data-pt].sel").forEach(g => g.classList.remove("sel"));
+    pt.classList.add("sel");
+    const r = document.getElementById("readout");
+    if (r) r.textContent = pt.dataset.label;
+    return;
+  }
   if (suggCache && !ev.target.closest(".fwrap")) hideSuggestions();
   const t = ev.target.closest("button, input[type=checkbox], .overlay");
   if (!t || t.disabled) return;
@@ -914,6 +1078,7 @@ document.addEventListener("click", ev => {
   const ds = t.dataset;
   if (ds.close !== undefined) { modal = null; render(); return; }
   if (ds.info) { modal = { info: ds.info }; render(); return; }
+  if (ds.chart) { modal = { chart: ds.chart }; render(); return; }
   if (ds.openpick) { modal = { pick: ds.openpick }; render(); return; }
   if (ds.swap) { modal = { pick: ds.swap, replace: +ds.idx }; render(); filterPicker(); return; }
   if (ds.cat) {
@@ -932,7 +1097,7 @@ document.addEventListener("click", ev => {
   else if (ds.ok) {
     const d = currentPassDay(), s = setAt(d, ds.ok, +ds.i);
     s.ok = !s.ok;
-    if (s.ok) fillFromHint(d, ds.ok, +ds.i);
+    if (s.ok) { fillFromHint(d, ds.ok, +ds.i); checkRecord(ds.ok, s); }
     syncDone(d);
   }
   else if (ds.exok) {
@@ -942,6 +1107,7 @@ document.addEventListener("click", ev => {
       setAt(d, ex.id, i).ok = val;
       if (val) fillFromHint(d, ex.id, i);
     }
+    if (val) checkRecord(ex.id, topSet(day().workout.sets[ex.id] || []) || {});
     syncDone(d);
   }
   else if (ds.finish) { const w = workoutFor(dayById(ds.finish)); w.done = !w.done; if (w.done) tab = "vecka"; }
