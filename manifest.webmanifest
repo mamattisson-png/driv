@@ -1,7 +1,7 @@
 {
   "name": "Driv",
   "short_name": "Driv",
-  "description": "Ditt mål. Ditt drive. Träning, dailys och kost i en app.",
+  "description": "Ditt mål. Ditt driv. Träning, dailys och kost i en app.",
   "lang": "sv",
   "start_url": "./",
   "scope": "./",
