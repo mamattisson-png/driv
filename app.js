@@ -778,10 +778,11 @@ const VIEWS = {
       ${editing ? editList(d) : d.ex.length ? d.ex.map(ex => exBlock(d, ex, w)).join("")
         : `<div class="card muted">Passet har inga övningar än. Tryck på Redigera för att lägga till.</div>`}
       ${editing ? "" : w && w.done
-        ? `<div class="card done-card"><b>✓ Bra jobbat, passet är klart!</b>
+        ? `<div class="card done-card"><b>✓ Bra jobbat, passet är sparat!</b>
             <div class="muted small">Det räknas in i veckans pass och jämförelsen med förra veckan.</div>
             <button class="small" style="margin-top:8px" data-finish="${d.id}">Öppna passet igen</button></div>`
-        : `<button class="primary wide" data-finish="${d.id}">Avsluta passet</button>`}`;
+        : `<button class="primary wide" data-finish="${d.id}">✓ Spara passet${d.ex.length ? ` (${done} av ${d.ex.length} övningar)` : ""}</button>
+          <div class="muted small finish-note">Allt du loggat sparas direkt. Passet räknas även om du inte hunnit alla övningar.</div>`}`;
   },
 
   dailys() {
