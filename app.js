@@ -1969,7 +1969,8 @@ function foodPreview(suggest = true) {
   // Med fönstret för en måltid öppet blir varje tolkad rad en mängd som går att ändra
   out.innerHTML = (foodSheet ? draftRows(r.items) : lines.join("<br>")) + tip;
   const manual = document.querySelector(".manual");
-  if (manual && r.unknown.length) manual.hidden = false;
+  // Fälten för egna kcal visas bara när något inte känns igen, eller när man bett om dem
+  if (manual) manual.hidden = !(manualKcal || r.unknown.length);
 }
 
 // ---------- Streckkodsskanner (Open Food Facts) ----------

@@ -400,6 +400,13 @@ def test_mangd_styr_kalorierna(page):
     assert row.locator(".amt-n").input_value() == "450"
     row.locator(".amt-n").fill("100")
     assert "150 kcal" in row.inner_text()
+    # − och + stegar mängden: 50 g åt gången
+    row.locator('[data-astep="1"]').click()
+    assert row.locator(".amt-n").input_value() == "150" and "225 kcal" in row.inner_text()
+    row.locator('[data-astep="-1"]').click()
+    assert row.locator(".amt-n").input_value() == "100"
+    # Fälten för egna kcal syns inte när allt känns igen
+    assert page.locator(".sheet .manual").is_hidden()
     page.click("[data-addfood]")
     f = page.evaluate("day().food[0]")
     assert [f["name"], f["kcal"], f["protein"], f["amt"]["n"], f["amt"]["unit"]] == ["Spaghetti bolognese", 150, 7, 100, "g"]
@@ -412,6 +419,8 @@ def test_mangd_styr_kalorierna(page):
     page.locator('[data-iamt="u"]').select_option("portion")
     page.wait_for_function("day().food[0].amt.unit === 'portion'")
     assert page.evaluate("[day().food[0].amt.n, day().food[0].kcal]") == [0.5, 338]
+    page.click('.sheet [data-astep="1"]')
+    assert page.evaluate("[day().food[0].amt.n, day().food[0].kcal]") == [1, 675]
     # Två ägg: flera rader i en text blir var sin rad med sin mängd
     page.click("[data-itemclose].primary")
     page.click('[data-addto="0"]')

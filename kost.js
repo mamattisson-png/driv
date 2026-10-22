@@ -62,8 +62,15 @@ function setUnit(a, unit) {
   a.unit = unit;
   a.n = unit === "g" ? Math.round(g) : Math.max(0.5, Math.round(g / unitGrams(a, unit) * 2) / 2);
 }
+// Ett steg upp eller ned: 50 g för gram, annars en hel (en halv under 1). 0 betyder slut.
+function stepAmount(a, dir) {
+  const step = a.unit === "g" ? 50 : a.n < 1 || (a.n === 1 && dir < 0) ? 0.5 : 1, n = a.n + dir * step;
+  return n <= 0 ? 0 : a.unit === "g" ? Math.max(10, n) : n;
+}
 function amtInputs(a, attr) {
-  return `<input class="amt-n" type="number" inputmode="decimal" min="0" step="any" value="${a.n}" ${attr}="n" aria-label="Mängd">
+  return `<div class="amtstep"><button class="small qminus" data-astep="-1" ${a.n <= (a.unit === "g" ? 10 : 0.5) ? "disabled" : ""} aria-label="Mindre">−</button>
+    <input class="amt-n" type="number" inputmode="decimal" min="0" step="any" value="${a.n}" ${attr}="n" aria-label="Mängd">
+    <button class="small qminus" data-astep="1" aria-label="Mer">+</button></div>
     <select class="amt-u" ${attr}="u" aria-label="Enhet">${unitChoices(a).map(k => `<option value="${k}" ${k === a.unit ? "selected" : ""}>${UNIT_NAMES[k] || k}</option>`).join("")}</select>`;
 }
 
@@ -88,6 +95,27 @@ function updateDraft(el) {
   row.querySelector(".dk").textContent = `≈ ${Math.round(d.amt.k * g / 100)} kcal · ${Math.round(d.amt.p * g / 100)} g protein${d.amt.unit !== "g" ? ` (${Math.round(g)} g)` : ""}`;
 }
 document.addEventListener("input", ev => { if (ev.target.closest && ev.target.closest("[data-drow]")) updateDraft(ev.target); });
+document.addEventListener("click", ev => {
+  const b = ev.target.closest && ev.target.closest("[data-astep]");
+  if (!b || b.disabled) return;
+  const row = b.closest("[data-drow]");
+  if (row) {
+    const a = foodDraft[+row.dataset.drow].amt, n = stepAmount(a, +b.dataset.astep);
+    if (!n) return;
+    const input = row.querySelector(".amt-n");
+    input.value = n;
+    updateDraft(input);
+    row.querySelector('[data-astep="-1"]').disabled = n <= (a.unit === "g" ? 10 : 0.5);
+  } else if (foodItem != null) {
+    const f = day().food[foodItem], n = stepAmount(f.amt, +b.dataset.astep);
+    if (!n) return;
+    f.amt.n = n;
+    applyAmt(f);
+    rememberAmount(f);
+    save();
+    render();
+  }
+});
 document.addEventListener("change", ev => {
   if (ev.target.closest && ev.target.closest("[data-drow]")) updateDraft(ev.target);
   // Mängd på något som redan loggats
@@ -158,10 +186,9 @@ function addQuick(f, meal) {
 function stepItem(f, dir) {
   if (isEst(f)) return dir > 0;
   if (f.amt) {
-    const a = f.amt, step = a.unit === "g" ? 50 : a.n < 1 || (a.n === 1 && dir < 0) ? 0.5 : 1;
-    const n = a.n + dir * step;
-    if (n <= 0) return false;
-    a.n = a.unit === "g" ? Math.max(10, n) : n;
+    const n = stepAmount(f.amt, dir);
+    if (!n) return false;
+    f.amt.n = n;
     applyAmt(f);
   } else {
     const q = f.qty || 1, n = dir > 0 ? (q < 1 ? 1 : q + 1) : q <= 0.5 ? 0 : q <= 1 ? 0.5 : q - 1;
