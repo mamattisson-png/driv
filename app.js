@@ -491,6 +491,12 @@ function dailiesSummary() {
     <div style="margin-top:10px"><button data-go="dailys">Öppna dailys</button></div></div>`;
 }
 
+// Alla pass som knappar; används på Idag och under Pass
+function dayPicker(selected) {
+  return `<div class="daypick" style="grid-template-columns:repeat(${Math.min(S.plan.days.length, 6)},1fr)">${S.plan.days.map((k, i) =>
+    `<button data-pick="${k.id}" class="${k.id === selected ? "on" : ""}" aria-pressed="${k.id === selected}">${tag(k.type)}<div class="muted">${isFixed() ? WD[S.plan.weekdays[i]] : `Pass ${i + 1}`}</div></button>`).join("")}</div>`;
+}
+
 const VIEWS = {
   upplagg() {
     if (!draft) draft = {
@@ -543,8 +549,10 @@ const VIEWS = {
 
   idag() {
     const m = macros(), e = eaten(), L = day();
-    const d = L.workout ? dayById(L.workout.dayId) : isFixed() ? scheduledDay(TODAY) : nextInRotation();
+    const suggested = L.workout ? dayById(L.workout.dayId) : isFixed() ? scheduledDay(TODAY) : nextInRotation();
+    const d = (chosenDay && dayById(chosenDay)) || suggested;
     const weekPasses = weekSummary(weekStart(TODAY)).passes;
+    const other = L.workout && d && L.workout.dayId !== d.id ? dayById(L.workout.dayId) : null;
     let passCard;
     if (d) {
       const w = L.workout && L.workout.dayId === d.id ? L.workout : null;
@@ -552,7 +560,8 @@ const VIEWS = {
       passCard = `<div class="card"><div class="row between"><div>${tag(d.type)} ${w && w.done ? `<span class="pill">✓ Klart</span>` : ""}
         <h2 style="margin-top:8px">${passLabel(d)}</h2>
         <div class="muted">${TYPES[d.type].muscles} · ${done}/${d.ex.length} övningar klara</div>
-        <div class="muted">${weekPasses} av ${S.plan.count} pass klara denna vecka</div></div>
+        <div class="muted">${weekPasses} av ${S.plan.count} pass klara denna vecka</div>
+        ${other ? `<div class="muted">Idag har du redan loggat ${esc(other.name)}.</div>` : ""}</div>
         <button class="primary" data-go="pass" data-day="${d.id}">${w ? "Fortsätt" : "Starta"}</button></div>
         <div class="thumbs">${d.ex.map(x => thumb(x.id, "xs")).join("")}</div></div>`;
     } else {
@@ -561,6 +570,7 @@ const VIEWS = {
         <div style="margin-top:10px"><button data-go="pass" data-day="${nx.day.id}">Kör ett pass ändå</button></div></div>`;
     }
     return `<h1>Idag <span class="muted">${new Date().toLocaleDateString("sv-SE", { weekday: "long", day: "numeric", month: "long" })} · v.${weekNo(TODAY)}</span></h1>
+      ${S.plan.days.length > 1 ? dayPicker(d && d.id) : ""}
       ${passCard}
       <div class="card"><div class="row between"><h2>Kalorier</h2><span class="muted">${e.kcal} / ${m.kcal} kcal</span></div>
         ${bar(e.kcal, m.kcal)}<div class="muted">${Math.max(0, m.kcal - e.kcal)} kcal kvar</div>
@@ -576,8 +586,7 @@ const VIEWS = {
     const other = L.workout && L.workout.dayId !== d.id ? dayById(L.workout.dayId) : null;
     const done = d.ex.filter(x => exDone(w, x)).length;
     return `<h1>Pass <span class="muted">v.${weekNo(TODAY)}</span></h1>
-      <div class="daypick" style="grid-template-columns:repeat(${Math.min(S.plan.days.length, 6)},1fr)">${S.plan.days.map((k, i) =>
-        `<button data-pick="${k.id}" class="${k.id === d.id ? "on" : ""}">${tag(k.type)}<div class="muted">${isFixed() ? WD[S.plan.weekdays[i]] : `Pass ${i + 1}`}</div></button>`).join("")}</div>
+      ${dayPicker(d && d.id)}
       ${other && !editing ? `<div class="card warn">Idag har du redan loggat ${esc(other.name)}. Loggar du här ersätts det.</div>` : ""}
       <div class="card"><div class="row between"><h2>${passLabel(d)}</h2>
         <button class="small ghost" data-edit>${editing ? "Klar" : "Redigera"}</button></div>
