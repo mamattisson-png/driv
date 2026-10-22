@@ -599,11 +599,10 @@ function accountNudge() {
   if (!sbEnabled || account.step === "in" || (S.nudgeUntil && S.nudgeUntil > TODAY)) return "";
   const days = Object.values(S.log).filter(L => L.food.length || L.workouts.length || Object.keys(L.dailies).length).length;
   if (days < 3) return "";
-  return `<div class="card nudge"><h2>💾 Spara din träning säkert</h2>
-    <div class="muted">Just nu finns allt du loggat bara på den här enheten. Rensas webbläsaren försvinner det.
-      Med ett gratis konto sparas det tryggt och följer med till andra enheter. Bara e-post, inget lösenord.</div>
-    <div class="row" style="margin-top:10px"><button class="primary" data-gokonto>Skapa konto</button>
-      <button class="ghost" data-nudgelater>Inte nu</button></div></div>`;
+  return `<div class="card nudge"><h2>💾 Spara dina loggar</h2>
+    <div class="muted">Just nu finns allt bara på den här enheten. Med ett konto sparas det i molnet – bara e-post, klart på en minut.</div>
+    <div class="row wrap" style="margin-top:10px"><button class="primary small" data-gokonto>Skapa konto</button>
+      <button class="small" data-gokonto>Logga in</button><button class="ghost small" data-nudgelater>Inte nu</button></div></div>`;
 }
 
 // Visas på startsidan så att den som redan har konto slipper göra om upplägget
@@ -960,7 +959,10 @@ function render() {
   const banner = editDate && (tab === "pass" || tab === "kost")
     ? `<div class="editbar">📅 Du ändrar <b>${dateLabel(editDate)}</b><button class="small" data-editdone>Klar</button></div>` : "";
   // Kugghjulet behövs inte i upplägget eller i fokusläget, där det skulle ligga över texten
-  const gear = tab === "upplagg" || (tab === "pass" && focus && !editing) ? "" : `<button class="gear ${tab === "profil" ? "on" : ""}" data-tab="profil" aria-label="Profil och inställningar">⚙️</button>`;
+  // Första starten: Logga in i hörnet för den som redan har ett konto
+  const corner = tab === "upplagg" && !S.setupDone && sbEnabled && account.step !== "in" && !welcomeLogin
+    ? `<button class="corner-login small" data-welcomelogin="login">Logga in</button>` : "";
+  const gear = tab === "upplagg" || (tab === "pass" && focus && !editing) ? corner : `<button class="gear ${tab === "profil" ? "on" : ""}" data-tab="profil" aria-label="Profil och inställningar">⚙️</button>`;
   document.getElementById("app").innerHTML = gear + banner + VIEWS[tab]() + (modal ? renderModal() : "");
   if (modal && modal.pick) filterPicker();
   afterFocusRender();
@@ -1052,8 +1054,7 @@ const VIEWS = {
       : !S.setupDone && sbEnabled ? (welcomeLogin
         ? `<div class="card"><div class="row between"><h2>${welcomeLogin === "login" ? "Logga in" : "Skapa konto"}</h2>
               <button class="small ghost" data-welcomelogin="" aria-label="Stäng">✕</button></div>${accountBody(welcomeLogin)}</div>`
-        : `<div class="card welcome-acct"><div><b>💾 Spara dina loggar</b><div class="muted small">Valfritt · bara e-post, klart på en minut</div></div>
-            <div class="row"><button class="small primary" data-welcomelogin="create">Skapa konto</button><button class="small" data-welcomelogin="login">Logga in</button></div></div>`) : ""}
+        : "") : ""}
       <div class="card"><div class="row between"><h2>1. Vilket upplägg?</h2>
           <button class="small" data-progtoggle aria-expanded="${progOpen}">${progOpen ? "Fäll ihop" : `Visa alla ${Object.keys(PROGRAMS).length}`}</button></div>
         ${progOpen ? "" : `<div class="proglist"><button class="on" data-progtoggle><b>${PROGRAMS[draft.program].name}</b>

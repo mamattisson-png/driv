@@ -601,8 +601,7 @@ def test_logga_in_fran_startsidan(page):
     page.evaluate("localStorage.clear(); sessionStorage.removeItem('sess')")
     page.reload()
     assert page.locator("[data-savesetup]").count() == 1
-    assert page.locator('[data-welcomelogin="create"]').count() == 1
-    page.click('[data-welcomelogin="login"]')
+    page.click('.corner-login')
     assert "Logga in" in page.inner_text(".card:has(#acctemail) h2")
     assert "bara för att logga in" in page.inner_text(".card:has(#acctemail)")
     page.fill("#acctemail", "test@exempel.se")
