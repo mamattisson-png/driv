@@ -4,6 +4,18 @@ from conftest import go, open_app, start
 KONTO = '.card:has(h2:text-is("Konto"))'
 
 
+def open_ex(page, ex_id):
+    """Öppnar en övning i passet i fokusläget, från listan i Träna eller från en annan övning."""
+    i = page.evaluate(f"currentPassDay().ex.findIndex(x => x.id === '{ex_id}')")
+    page.click(f'[data-focusgo="{i}"]' if page.locator(".focus").count() else f'[data-focusex="{i}"]')
+
+
+def to_list(page):
+    """Lämnar fokusläget och visar listan med passets övningar."""
+    if page.locator(".focus").count():
+        page.click("[data-focusexit]")
+
+
 def seed(page, js):
     """Lägger in historik direkt i appens data och laddar om."""
     page.evaluate(f"() => {{ {js}; save(); }}")
@@ -31,6 +43,7 @@ def test_eget_upplagg_med_egna_namn_och_ovningar(page):
     page.click("button.on[data-progtoggle]")
     page.click('[data-prog="eget"]')
     page.click('[data-count="2"]')
+    page.click("[data-setupmore]")
     page.fill('[data-dayname="0"]', "Bröst & triceps")
     page.press('[data-dayname="0"]', "Tab")
     page.click('[data-openpick="draft:0"]')
@@ -41,6 +54,19 @@ def test_eget_upplagg_med_egna_namn_och_ovningar(page):
     page.click("[data-savesetup]")
     assert "Bröst & triceps" in page.inner_text(".card >> nth=0")
 
+
+def test_kort_start_och_paminnelse_om_kalorimal(page):
+    open_app(page)
+    # Första gången: bara upplägg, antal och dagar; resten är valfritt
+    assert page.locator("[data-prof]").count() == 0 and page.locator("[data-openpick^=draft]").count() == 0
+    page.click("[data-savesetup]")
+    go(page, "kost")
+    assert "standardvärden" in page.inner_text(".dayring")
+    page.click(".dayring [data-tab=profil]")
+    page.fill("[data-prof=weight]", "72")
+    page.press("[data-prof=weight]", "Tab")
+    go(page, "kost")
+    assert "standardvärden" not in page.inner_text(".dayring")
 
 def test_fasta_dagar_kraver_ratt_antal(page):
     open_app(page)
@@ -60,6 +86,7 @@ def test_vikt_jamfors_med_forra_veckan(page):
     seed(page, "S.log[shift(TODAY,-7)] = {workout:{dayId:S.plan.days[0].id,done:true,sets:{bankpress:[{kg:80,reps:8,ok:true}]}},dailies:{},food:[]}")
     go(page, "pass")
     page.click("[data-pick]")
+    open_ex(page, "bankpress")
     page.fill('[data-set=bankpress][data-i="0"][data-f=kg]', "82.5")
     page.press('[data-set=bankpress][data-i="0"][data-f=kg]', "Tab")
     page.fill('[data-set=bankpress][data-i="0"][data-f=reps]', "8")
@@ -80,6 +107,7 @@ def test_kroppsvikt_ovningar_raknas_i_reps_och_sekunder(page):
     go(page, "pass")
     page.click("[data-pick]")
     for ex, val in [("armhavningar", "15"), ("plankan", "60")]:
+        open_ex(page, ex)
         sel = f'[data-set={ex}][data-i="0"][data-f=reps]'
         page.fill(sel, val)
         page.press(sel, "Tab")
@@ -93,8 +121,11 @@ def test_dagens_mal_fylls_i_och_pers_firas(page):
     seed(page, "S.log[shift(TODAY,-7)] = {workout:{dayId:S.plan.days[0].id,done:true,sets:{bankpress:[{kg:80,reps:8,ok:true}],dips:[{reps:10,ok:true}]}},dailies:{},food:[]}")
     go(page, "pass")
     page.click("[data-pick]")
-    assert "82,5 kg × 6" in page.locator(".card.ex", has_text="Bänkpress").first.locator(".goal").inner_text()
-    assert "11 reps" in page.locator(".card.ex", has_text="Dips").first.locator(".goal").inner_text()
+    # Listan visar varje övning på en rad med dagens mål
+    assert "mål 82,5 kg × 6" in page.locator(".exlist .tile", has_text="Bänkpress").inner_text()
+    assert "mål 11 reps" in page.locator(".exlist .tile", has_text="Dips").inner_text()
+    open_ex(page, "bankpress")
+    assert "Bänkpress" in page.inner_text(".focus h2")
     page.click('[data-ok=bankpress][data-i="0"]')
     assert page.evaluate("JSON.stringify(day().workouts[0].sets.bankpress[0])") == '{"ok":true,"reps":6,"kg":82.5}'
     assert "Nytt pers" in page.inner_text(".toast")
@@ -103,7 +134,11 @@ def test_dagens_mal_fylls_i_och_pers_firas(page):
 def test_spara_pass_och_oppna_igen(page):
     start(page)
     go(page, "pass")
-    page.click("[data-exok=bankpress]")
+    open_ex(page, "bankpress")
+    for i in range(4):
+        page.click(f'[data-ok=bankpress][data-i="{i}"]')
+    to_list(page)
+    assert "✓" in page.inner_text('.exlist .tile:has-text("Bänkpress") .setcount')
     assert "1 av 6 övningar" in page.inner_text("button[data-finish]")
     page.click("button[data-finish]")
     go(page, "pass")
@@ -176,17 +211,20 @@ def test_bilder_ar_stilla_i_listor_men_animeras_ensamma(page):
 def test_vilotimer(page):
     start(page, "window.__vib = []; navigator.vibrate = p => { window.__vib.push(p); return true; };")
     go(page, "pass")
+    open_ex(page, "bankpress")
     page.click('[data-ok=bankpress][data-i="0"]')
     assert page.inner_text(".rest-time") == "1:30"
     page.click('[data-restadd="15"]')
     assert page.inner_text(".rest-time") == "1:45"
     # Med en övning öppen ligger timern under dialogen, inte över den, även med stor text
     page.add_style_tag(content=".rest-row { font-size: 22px; padding: 14px 0; }")
+    open_ex(page, "militarpress")
     page.click('[data-info=militarpress]')
     page.wait_for_timeout(100)
     sheet, timer = page.locator(".sheet").bounding_box(), page.locator(".rest").bounding_box()
     assert sheet["y"] + sheet["height"] <= timer["y"] + 1
     page.click(".sheet [data-close]")
+    open_ex(page, "sidolyft")
     page.click('[data-ok=sidolyft][data-i="0"]')
     assert page.inner_text(".rest-time") == "1:00"
     page.evaluate("rest.end = Date.now() + 500")
@@ -226,6 +264,7 @@ def test_kroppsvikt_en_gang_i_veckan_och_kalorimal(page):
     import datetime
     page.clock.install(time=datetime.datetime(2026, 10, 22, 8, 0))   # torsdag
     open_app(page)
+    page.click("[data-setupmore]")
     page.select_option("[data-prof=goal]", "cut")
     page.click("[data-savesetup]")
     seed(page, "S.weights['2026-10-15'] = 82; S.weights['2026-10-16'] = 81.8")
@@ -610,6 +649,7 @@ def test_synk_tappar_inte_pass_som_loggats_offline(page):
       L.food.push({name:'Lax', kcal:500, protein:40}); L._t.food = Date.now() + 1000; }""")
     # Mobilen loggar ett set utan att ha sett middagen
     go(page, "pass")
+    open_ex(page, "bankpress")
     page.click('[data-ok=bankpress][data-i="0"]')
     page.wait_for_function("""(() => { const L = window.__db['m-' + TODAY.slice(0, 7)].days[TODAY];
       return L.workouts && L.workouts.length && L.food.length === 2; })()""")
@@ -640,6 +680,7 @@ def test_synk_vid_ateranslutning_valjer_nyaste_delen(page):
     # Mobilen tappar kontakten och loggar ett pass medan datorn ändrar kalorimålet
     page.evaluate("cloud.col = null")
     go(page, "pass")
+    open_ex(page, "bankpress")
     page.click('[data-ok=bankpress][data-i="0"]')
     page.evaluate("""() => { const st = window.__db.settings; st.kcalOverride = 2500; st._t = Object.assign({}, st._t, { kcalOverride: Date.now() + 1000 }); }""")
     page.evaluate("connectSupabase()")
@@ -670,9 +711,13 @@ def test_tva_pass_samma_dag_och_gammalt_format(page):
     assert page.evaluate("'workout' in S.log['2026-01-05']") is False
     go(page, "pass")
     page.click(f'[data-pick="{page.evaluate("S.plan.days[0].id")}"]')
+    open_ex(page, "bankpress")
     page.click('[data-ok=bankpress][data-i="0"]')
+    to_list(page)
     page.click(f'[data-pick="{page.evaluate("S.plan.days[1].id")}"]')
+    open_ex(page, "marklyft")
     page.click('[data-ok=marklyft][data-i="0"]')
+    to_list(page)
     assert page.evaluate("workoutsOn(TODAY).map(w => Object.keys(w.sets)[0])") == ["bankpress", "marklyft"]
     for d in page.evaluate("S.plan.days.slice(0, 2).map(d => d.id)"):
         page.click(f'[data-pick="{d}"]')
@@ -759,7 +804,9 @@ def test_historik_andra_en_tidigare_dag(page):
     page.click("[data-hpass='']")
     assert page.evaluate("[tab, logDate()]") == ["pass", "2026-10-21"]
     page.click(f'[data-pick="{page.evaluate("S.plan.days[1].id")}"]')
+    open_ex(page, "marklyft")
     page.click('[data-ok=marklyft][data-i="0"]')
+    to_list(page)
     page.click(f'[data-finish="{page.evaluate("S.plan.days[1].id")}"]')
     assert page.evaluate("[tab, histDay]") == ["historik", "2026-10-21"]
     assert page.evaluate("workoutsOn('2026-10-21').map(w => w.done)") == [True]

@@ -100,6 +100,17 @@ function focusView() {
   </div>`;
 }
 
+// Passet i Träna: en rad per övning med mål och hur många set som är klara. Tryck för att
+// öppna fokusläget på just den övningen.
+function passOverview(d, w) {
+  return `<div class="card exlist">${d.ex.map((ex, i) => {
+    const sets = (w && w.sets[ex.id]) || [], done = sets.filter(x => x && x.ok).length, all = exDone(w, ex), target = todayTarget(ex);
+    return `<button class="tile ${all ? "done" : ""}" data-focusex="${i}"><span class="thumb xs" aria-hidden="true">${figure(ex.id)}</span>
+      <span class="grow"><b>${esc(EX[ex.id].name)}</b><span class="muted small">${ex.sets} × ${esc(ex.reps)}${target ? ` · mål ${fmtTarget(target, ex.id)}` : ""}</span></span>
+      <span class="setcount ${all ? "ok" : ""}">${all ? "✓" : `${done}/${ex.sets}`}</span></button>`;
+  }).join("")}</div>`;
+}
+
 // ---------- Skärmen tänd ----------
 let wakeLock = null;
 async function keepAwake(on) {
@@ -120,15 +131,16 @@ document.addEventListener("visibilitychange", () => {
 });
 
 document.addEventListener("click", ev => {
-  const t = ev.target.closest("[data-step],[data-focusgo],[data-focusexit],[data-focusend],[data-focusstart]");
+  const t = ev.target.closest("[data-step],[data-focusgo],[data-focusexit],[data-focusend],[data-focusstart],[data-focusex]");
   if (!t) return;
   const ds = t.dataset;
   if (ds.focusend !== undefined) { endFocus(); return; }   // själva sparandet sköts av data-finish
   if (ds.focusstart) { tab = "pass"; editing = false; startFocus(ds.focusstart); }
+  else if (ds.focusex !== undefined) { if (startFocus(currentPassDay().id)) focus.idx = +ds.focusex; }
   else if (ds.focusexit !== undefined) endFocus();
   else if (ds.focusgo !== undefined) focus.idx = Math.max(0, +ds.focusgo);
   else if (ds.step) stepSet(currentPassDay(), ds.ex, +ds.i, ds.step, +ds.dir);
   save();
   render();
-  if (ds.focusgo !== undefined || ds.focusstart) window.scrollTo(0, 0);
+  if (ds.focusgo !== undefined || ds.focusstart || ds.focusex !== undefined) window.scrollTo(0, 0);
 });

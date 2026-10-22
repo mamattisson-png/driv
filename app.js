@@ -941,6 +941,7 @@ let chosenDay = null;
 let editing = false;
 let dailyEditing = false;
 let progOpen = false;      // listan med upplägg är ihopfälld tills man vill byta
+let setupMore = false;     // första gången: övningar, dailys och kalorimål är valfria och ihopfällda
 let modal = null;          // { info: exId } eller { pick: lista, replace, cat, q }
 let weekOffset = 0;
 let draft = null;          // utkast i upplägg-vyn
@@ -1070,6 +1071,8 @@ const VIEWS = {
         ${fixed ? `<div class="seg wd" style="margin-top:12px">${WD.map((name, i) => `<button data-wd="${i}" class="${draft.weekdays.includes(i) ? "on" : ""}" aria-pressed="${draft.weekdays.includes(i)}">${name}</button>`).join("")}</div>
           <div class="muted" style="margin-top:8px">${ok ? `✓ ${n} dagar valda. Tryck på en vald dag för att avmarkera den.` : `Välj ${n} dagar (${picked} valda)`}</div>`
           : `<div class="muted" style="margin-top:8px">Appen föreslår nästa pass i ordningen när du tränar, vilken dag det än är.</div>`}</div>
+      ${!S.setupDone && !setupMore ? `<button class="wide" data-setupmore>Anpassa övningar, dailys och kalorimål <span class="muted">(valfritt)</span></button>
+        <div class="muted small" style="margin:-4px 0 12px">Allt är förifyllt och kan ändras när som helst under Profil.</div>` : `
       <div class="card"><h2>4. Övningar</h2>
         <div class="muted" style="margin-bottom:8px">${draft.program === "eget" ? "Lägg till övningar i varje pass." : "Förifyllt. Byt, ta bort eller lägg till."} Tryck på en bild för att se hur övningen görs.</div>
         ${draft.days.map((d, i) => `<details class="plan-day" open><summary>${fixed && ok ? `<b>${WD[sorted[i]]}</b> · ` : ""}<b>Pass ${i + 1}</b> ${tag(d.type)}
@@ -1079,10 +1082,10 @@ const VIEWS = {
           ${d.ex.length ? "" : `<div class="muted" style="margin:6px 0">Inga övningar än. Lägg till dem nedan.</div>`}
           ${exRows("draft:" + i, d.ex, false)}</details>`).join("")}</div>
       <div class="card"><h2>5. Dailys</h2>
-        <div class="muted" style="margin-bottom:8px">Det du vill göra varje dag. Du ändrar det när som helst under fliken Dailys.</div>
+        <div class="muted" style="margin-bottom:8px">Det du vill göra varje dag. Du bockar av och ändrar dem på Idag.</div>
         ${exRows("daily", S.daily, false)}</div>
       <div class="card"><h2>6. Kalorimål</h2>${profileFields(p)}
-        <div class="muted" style="margin-top:8px">Mål: <b>${kcalGoal()} kcal</b> · ${macros().protein} g protein per dag</div></div>
+        <div class="muted" style="margin-top:8px">Mål: <b>${kcalGoal()} kcal</b> · ${macros().protein} g protein per dag</div></div>`}
       <button class="primary wide" data-savesetup ${ok ? "" : "disabled"}>${S.setupDone ? "Spara upplägg" : "Kom igång"}</button>
       ${S.setupDone ? `<button class="ghost wide" data-cancelsetup>Avbryt</button>` : ""}`;
   },
@@ -1144,7 +1147,7 @@ const VIEWS = {
         ${!editing && d.ex.length ? `<div class="bar ok"><div style="width:${Math.round(done / d.ex.length * 100)}%"></div></div>` : ""}
       </div>
       ${!editing && d.ex.length && !(w && w.done) ? `<button class="primary wide" data-focusstart="${d.id}">▶ ${w ? "Fortsätt" : "Kör"} passet – en övning i taget</button>` : ""}
-      ${editing ? editList(d) : d.ex.length ? d.ex.map(ex => exBlock(d, ex, w)).join("")
+      ${editing ? editList(d) : d.ex.length ? passOverview(d, w)
         : `<div class="card muted">Passet har inga övningar än. Tryck på Redigera för att lägga till.</div>`}
       ${editing ? "" : w && w.done
         ? `<div class="card done-card"><b>✓ Bra jobbat, passet är sparat!</b>
@@ -1235,36 +1238,6 @@ function lastSets(exId) {
   return null;
 }
 
-function exBlock(d, ex, w) {
-  const sets = (w && w.sets[ex.id]) || [];
-  const prev = lastSets(ex.id);
-  const ws = weekStart(logDate());
-  const cur = exWeek(ex.id, ws), last = exWeek(ex.id, shift(ws, -7));
-  const all = exDone(w, ex);
-  const target = todayTarget(ex);
-  // Kroppsvikt: reps (eller sekunder) först, extra vikt valfritt
-  const bw = !!EX[ex.id].bw, unitName = isTimed(ex.id) ? "Sekunder" : "Reps";
-  let rows = "";
-  for (let i = 0; i < ex.sets; i++) {
-    const s = sets[i] || {}, p = liveHint(d, ex, i);
-    const kg = `<input type="number" inputmode="decimal" step="0.5" placeholder="${p.kg || (bw ? "+kg" : "kg")}" value="${s.kg ?? ""}" data-set="${ex.id}" data-i="${i}" data-f="kg" aria-label="${bw ? "Extra vikt" : "Vikt"} set ${i + 1}">`;
-    const reps = `<input type="number" inputmode="numeric" placeholder="${p.reps || esc(ex.reps)}" value="${s.reps ?? ""}" data-set="${ex.id}" data-i="${i}" data-f="reps" aria-label="${unitName} set ${i + 1}">`;
-    rows += `<div class="n">${i + 1}</div>${bw ? reps + kg : kg + reps}
-      <button class="done-btn ${s.ok ? "on" : ""}" data-ok="${ex.id}" data-i="${i}" aria-label="Set ${i + 1} klart">✓</button>`;
-  }
-  return `<div class="card ex ${all ? "complete" : ""}"><div class="row">${thumb(ex.id)}
-      <div class="grow"><b>${esc(EX[ex.id].name)}</b><div class="muted">${ex.sets} × ${esc(ex.reps)}</div>
-        ${target ? `<div class="goal">🎯 Dagens mål: <b>${fmtTarget(target, ex.id)}</b> <span class="delta up">${target.why}</span></div>`
-          : `<div class="muted">Första gången: välj en vikt du klarar ${esc(ex.reps)}.</div>`}
-        <div class="muted">Förra veckan: ${fmtSet(last, ex.id)}</div>
-        ${cur ? `<div>Denna vecka: ${fmtSet(cur, ex.id)} ${exDelta(cur, last, ex.id)}</div>` : ""}</div>
-      <button class="done-btn big ${all ? "on" : ""}" data-exok="${ex.id}" aria-label="Hela övningen klar">✓</button></div>
-    <div class="sets ${bw ? "bw" : ""}"><div></div>${bw
-      ? `<div class="muted">${isTimed(ex.id) ? "sek" : "reps"}</div><div class="muted">extra kg</div>`
-      : `<div class="muted">kg</div><div class="muted">reps</div>`}<div></div>${rows}</div>
-    <div class="row" style="margin-top:8px"><button class="small" data-setcount="-1" data-ex="${ex.id}" ${ex.sets > 1 ? "" : "disabled"}>− Set</button>
-      <button class="small" data-setcount="1" data-ex="${ex.id}">+ Set</button></div></div>`;
-}
 
 // Övningslistor kan ligga i ett passdag-id, "draft:<index>" (upplägget) eller "daily"
 function exList(target) {
@@ -1670,6 +1643,8 @@ function syncDone(d) {
 function saveSetup() {
   const weekdays = draft.weekdays.slice().sort((a, b) => a - b);
   S.plan = { program: draft.program, count: draft.count, mode: draft.mode, weekdays, days: draft.days };
+  // Har man hoppat över kalorimålet påminner Kost om att ställa in det
+  if (!S.setupDone && !setupMore) S.profileSet = false;
   S.setupDone = true;
   draft = null;
   tab = "idag";
@@ -1829,6 +1804,7 @@ document.addEventListener("click", ev => {
   }
   else if (ds.mode) draft.mode = ds.mode;
   else if (ds.progtoggle !== undefined) progOpen = !progOpen;
+  else if (ds.setupmore !== undefined) setupMore = true;
   else if (ds.prog) {
     draft.program = ds.prog;
     progOpen = false;
@@ -1880,7 +1856,7 @@ document.addEventListener("change", ev => {
   }
   if (ds.run) { const L = day(); L.dailies[ds.run] = Object.assign({}, L.dailies[ds.run], { [ds.f]: +t.value || 0 }); }
   else if (ds.weighday !== undefined) S.weighDay = +t.value;
-  else if (ds.prof) S.profile[ds.prof] = ds.prof === "sex" || ds.prof === "goal" ? t.value : +t.value;
+  else if (ds.prof) { S.profile[ds.prof] = ds.prof === "sex" || ds.prof === "goal" ? t.value : +t.value; S.profileSet = true; }
   else if (ds.dayname) {
     const d = draft.days[+ds.dayname];
     d.name = t.value.trim() || d.name;
