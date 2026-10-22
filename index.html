@@ -165,7 +165,7 @@
   .food { display: flex; gap: 8px; align-items: center; padding: 6px 0; border-top: 1px solid var(--line); }
   .food:first-of-type { border-top: 0; }
   nav { position: fixed; left: 0; right: 0; bottom: 0; background: var(--card); border-top: 1px solid var(--line);
-    display: grid; grid-template-columns: repeat(6, 1fr); padding-bottom: env(safe-area-inset-bottom, 0px);
+    display: grid; grid-template-columns: repeat(4, minmax(0, 150px)); justify-content: center; padding-bottom: env(safe-area-inset-bottom, 0px);
     padding-left: env(safe-area-inset-left, 0px); padding-right: env(safe-area-inset-right, 0px); z-index: 5; }
   nav button { border: 0; border-radius: 0; background: transparent; padding: 10px 2px 12px; font-size: 13px; color: var(--muted); }
   nav button.on { color: var(--accent); font-weight: 700; }

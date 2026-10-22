@@ -631,6 +631,11 @@ def test_nytt_datum_efter_midnatt(page):
 def test_fyra_flikar_och_profil_via_kugghjulet(page):
     start(page)
     assert page.evaluate("[...document.querySelectorAll('#nav [data-tab]')].map(b => b.dataset.tab)") == ["idag", "pass", "kost", "historik"]
+    # Flikarna ligger centrerat, även på en bred skärm
+    page.set_viewport_size({"width": 1400, "height": 800})
+    first, last = page.locator("#nav button").first.bounding_box(), page.locator("#nav button").last.bounding_box()
+    assert abs((first["x"] - 0) - (1400 - last["x"] - last["width"])) < 2
+    page.set_viewport_size({"width": 390, "height": 844})
     page.click(".gear")
     assert page.evaluate("tab") == "profil"
     # Dailys bockas av direkt på Idag
