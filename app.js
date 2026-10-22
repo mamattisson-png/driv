@@ -798,7 +798,9 @@ const VIEWS = {
     const p = S.profile;
     return `${S.setupDone ? "" : `<div class="brand"><img src="icons/icon-192.png" alt=""><div><b>Driv</b><span class="muted">Ditt mål. Ditt driv.</span></div></div>`}
       <h1>${S.setupDone ? "Ditt upplägg" : "Välj ditt upplägg"}</h1>
-      ${!S.setupDone && sbEnabled ? (welcomeLogin
+      ${!S.setupDone && account.step === "in" ? `<div class="muted" style="margin:-4px 0 12px">Inloggad som <b>${esc(account.email)}</b>.
+        ${cloud.status === "cloud" ? "Kontot har inget sparat upplägg än. Välj ett nedan och tryck Kom igång, så sparas det på kontot." : cloud.status === "error" ? "Kunde inte hämta från kontot. Ladda om sidan." : "Hämtar från kontot…"}</div>`
+      : !S.setupDone && sbEnabled ? (welcomeLogin
         ? `<div class="card"><div class="row between"><h2>Logga in</h2><button class="small ghost" data-welcomelogin aria-label="Stäng">✕</button></div>
             ${accountBody()}<div class="muted small" style="margin-top:8px">Ditt upplägg och allt du loggat hämtas från kontot.</div></div>`
         : `<div class="muted" style="margin:-4px 0 12px">Välj upplägg och tryck Kom igång – inget konto behövs. Konto kan du skapa senare under Profil.

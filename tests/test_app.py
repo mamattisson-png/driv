@@ -314,6 +314,24 @@ def test_logga_in_fran_startsidan(page):
     assert page.locator("[data-savesetup]").count() == 0
 
 
+def test_inloggad_utan_upplagg_far_besked(page):
+    page.context.route("**/config.js", lambda r: r.fulfill(
+        body='window.DRIV_CONFIG = { supabaseUrl: "https://exempel.supabase.co", supabaseAnonKey: "nyckel" };',
+        content_type="application/javascript"))
+    open_app(page, SUPABASE_MOCK)
+    page.click("[data-welcomelogin]")
+    page.fill("#acctemail", "ny@exempel.se")
+    page.click("[data-sendcode]")
+    page.fill("#acctcode", "123456")
+    page.click("[data-verifycode]")
+    page.wait_for_function("cloud.status === 'cloud'")
+    text = page.inner_text("#app")
+    assert "Inloggad som ny@exempel.se" in text and "inget sparat upplägg" in text
+    assert page.locator("[data-welcomelogin]").count() == 0
+    page.click("[data-savesetup]")
+    page.wait_for_function("window.__db.settings && window.__db.settings.setupDone")
+
+
 def test_startsidan_utan_konto_visar_ingen_inloggning(page):
     open_app(page)
     assert page.locator("[data-welcomelogin]").count() == 0

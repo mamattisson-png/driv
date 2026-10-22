@@ -1,5 +1,5 @@
 // Gör appen tillgänglig offline: filerna hämtas från nätet när det går, annars från cachen
-const CACHE = "driv-v6";
+const CACHE = "driv-v7";
 const FILES = ["./", "index.html", "app.js", "figur.js", "ovningar.js", "livsmedel.js", "mat.js", "config.js",
   "manifest.webmanifest", "icons/favicon.png", "icons/apple-touch-icon.png", "icons/icon-192.png", "icons/icon-512.png", "icons/icon-maskable-512.png"];
 
