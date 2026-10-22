@@ -1003,7 +1003,7 @@ function upcomingCard() {
 }
 
 // Dagens dailys som en kort lista att bocka av, direkt på Idag
-function dailiesCard() {
+function dailiesCard(inPass) {
   const n = S.daily.length, date = logDate(), L = day(date);
   if (dailyEditing) return `<div class="card"><div class="row between"><h2>Redigera dailys</h2><button class="small ghost" data-dedit>Klar</button></div>
     ${exRows("daily", S.daily, true)}
@@ -1025,7 +1025,7 @@ function dailiesCard() {
   return `<div class="card"><div class="row between"><h2>Dailys</h2><span class="muted">${done} av ${n} klara${st ? ` · 🔥 ${st} d` : ""}</span></div>
     <div class="bar ok"><div style="width:${Math.round(done / n * 100)}%"></div></div>
     ${rows}
-    <button class="small ghost" style="margin-top:6px" data-dedit>Redigera dailys</button></div>`;
+    ${inPass ? "" : `<button class="small ghost" style="margin-top:6px" data-dedit>Redigera dailys</button>`}</div>`;
 }
 
 // Alla pass som knappar; används på Idag och under Pass
@@ -1349,7 +1349,7 @@ function weekLetter(ws) {
     <h3>${headline}</h3>
     ${line("🏋️", "Pass", `${cur.passes} av ${goalPasses}`, prev.passes || cur.passes ? deltaBadge(cur.passes - prev.passes, "st") : "")}
     ${plus.plus + plus.same + plus.minus ? line("📈", "Övningar som gått framåt", `${plus.plus} av ${plus.plus + plus.same + plus.minus}`) : ""}
-    ${recs.length ? line("🏆", "Nya pers", recs.map(r => `${esc(EX[r.id].name)} ${fmtSet(r.best, r.id)}`).join(", ")) : ""}
+    ${recs.length ? line("🏆", "Nya PB", recs.map(r => `${esc(EX[r.id].name)} ${fmtSet(r.best, r.id)}`).join(", ")) : ""}
     ${S.daily.length ? line("✅", "Dagar med alla dailys", `${cur.dailies} av 7`) : ""}
     ${cur.km || prev.km ? line("🏃", "Löpning", `${fmtNum(cur.km)} km`, deltaBadge(Math.round((cur.km - prev.km) * 10) / 10, "km")) : ""}
     ${!S.hideWeight && wNow != null ? line("⚖️", "Vikt, snitt", `${fmtNum(wNow)} kg`, wPrev != null ? weightBadge(wNow - wPrev) : "") : ""}
@@ -1463,7 +1463,7 @@ function setHint(ex, i) {
   return t ? { kg: t.kg || "", reps: t.reps } : hintSet(lastSets(ex.id), i);
 }
 
-// Bästa set före den här veckan, för att kunna säga när man slår pers
+// Bästa set före den här veckan, för att kunna säga när man slår PB (personbästa)
 function bestBefore(exId, date) {
   let best = null;
   for (const d of Object.keys(S.log)) {
@@ -1479,7 +1479,7 @@ function checkRecord(exId, s) {
   if (!hasData(s) || toasted.has(exId)) return;
   const ws = weekStart(logDate()), prevWeek = exWeek(exId, shift(ws, -7)), ever = bestBefore(exId, ws);
   const set = fmtSet({ kg: +s.kg || 0, reps: +s.reps || 0 }, exId);
-  if (ever && betterSet(s, ever)) toast(`🏆 Nytt pers i ${EX[exId].name}: ${set}`);
+  if (ever && betterSet(s, ever)) toast(`🏆 Nytt PB i ${EX[exId].name}: ${set}`);
   else if (prevWeek && betterSet(s, prevWeek)) toast(`📈 Bättre än förra veckan i ${EX[exId].name}: ${set}`);
   else return;
   toasted.add(exId);
