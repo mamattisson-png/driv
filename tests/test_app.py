@@ -292,45 +292,47 @@ def test_fritext_forslag_och_felstavning(page):
     assert page.evaluate("day().food.length") == 1
 
 
-def test_kost_maltider_snabbval_antal_och_upprepa(page):
+def test_kost_maltider_forslag_mangd_och_upprepa(page):
     start(page)
     seed(page, """S.log[shift(TODAY, -1)] = {workouts:[], dailies:{}, food:[
       {name:'Gröt', kcal:300, protein:10, meal:0}, {name:'Ägg', kcal:154, protein:13, meal:0, qty:2, per:{kcal:77, protein:6.5}},
       {name:'Pasta', kcal:700, protein:25, meal:1}]}""")
     go(page, "kost")
+    amounts = lambda meal: page.evaluate(f"day().food.filter(f => f.meal === {meal}).map(f => [f.name, f.kcal, f.amt ? f.amt.n + ' ' + f.amt.unit : ''])")
     # Sidan visar bara måltiderna; att lägga till sker i ett eget fönster per måltid
     assert page.locator("#fname").count() == 0
+    # Som igår: gammalt "Ägg × 2" har fått mängden 2 st
     page.click('[data-repeat="0"]')
-    assert page.evaluate("day().food.filter(f => f.meal === 0).map(f => [f.name, f.kcal, f.qty || 1])") == [["Gröt", 300, 1], ["Ägg", 154, 2]]
+    assert amounts(0) == [["Gröt", 300, ""], ["Ägg", 154, "2 st"]]
     # Fritext i lunch
     page.click('[data-addto="1"]')
     page.fill("#fname", "1 banan")
     page.click("[data-addfood]")
     assert page.evaluate("day().food.at(-1).meal") == 1
-    # Samma snabbval två gånger blir två stycken, och − tar bort ett
-    page.click('.qrow:has-text("Ägg") [data-quick]')
-    page.click('.qrow:has-text("Ägg") [data-quick]')
-    page.click('.qrow:has-text("Ägg") [data-quick]')
-    page.click('.qrow:has-text("Ägg") [data-qminus]')
-    assert page.evaluate("day().food.filter(f => f.meal === 1 && f.name === 'Ägg').map(f => [f.qty, f.kcal])") == [[2, 154]]
-    # + bredvid antalet ökar, och Klar syns även i ett lågt fönster
-    page.click('.qrow:has-text("Ägg") [aria-label="Mer Ägg"]')
-    assert page.evaluate("day().food.find(f => f.meal === 1 && f.name === 'Ägg').qty") == 3
-    page.click('.qrow:has-text("Ägg") [data-qminus]')
+    # Ett förslag läggs till med sin senaste mängd och flyttar upp till "I lunchen nu"
+    page.click('.qadd:has-text("Ägg")')
+    assert amounts(1)[-1] == ["Ägg", 154, "2 st"]
+    assert page.locator('.qadd:has-text("Ägg")').count() == 0
+    assert page.locator(".sheet .qadd .plus").count() == page.locator(".sheet .qadd").count()   # ett + per rad, inga andra
+    row = page.locator('.nrow:has-text("Ägg")')
+    row.locator('[data-mstep="-1"]').click()
+    assert amounts(1)[-1] == ["Ägg", 77, "1 st"]
+    page.locator('.nrow:has-text("Ägg") [data-mstep="1"]').click()
+    page.locator('.nrow:has-text("Ägg") [data-mstep="1"]').click()
+    assert amounts(1)[-1] == ["Ägg", 231, "3 st"]
+    # Klar syns även i ett lågt fönster
     page.set_viewport_size({"width": 1200, "height": 500})
     klar = page.locator(".sheet [data-fsclose].wide").bounding_box()
     assert klar["y"] + klar["height"] <= 500
     page.set_viewport_size({"width": 390, "height": 844})
     page.click('.sheet [data-fsclose].wide')
     assert page.locator(".sheet").count() == 0
-    assert "Ägg × 2" in page.inner_text(".mcard >> nth=1")
-    # Tryck på en loggad sak: ändra antal, gör till favorit, ta bort
+    assert "Ägg · 3 st" in page.inner_text(".meals")
+    # Tryck på en loggad sak: favorit med sin mängd, ta bort
     i = page.evaluate("day().food.findIndex(f => f.meal === 1 && f.name === 'Ägg')")
     page.click(f'[data-fooditem="{i}"]')
-    page.click('[data-qty="1"]')
-    assert page.evaluate(f"day().food[{i}].kcal") == 231
     page.click("[data-itemfav]")
-    assert page.evaluate("S.favs.map(f => [f.name, f.kcal])") == [["Ägg", 77]]
+    assert page.evaluate("S.favs.map(f => [f.name, f.amt.n, f.amt.unit])") == [["Ägg", 3, "st"]]
     page.click(".sheet [data-delfood]")
     assert page.locator(".sheet").count() == 0
     assert page.evaluate("day().food.some(f => f.meal === 1 && f.name === 'Ägg')") is False
@@ -339,14 +341,49 @@ def test_kost_maltider_snabbval_antal_och_upprepa(page):
     page.click('[data-savegroup="0"]')
     page.click('.sheet [data-fsclose].wide')
     page.click('[data-addto="3"]')
-    page.click('.qrow:has-text("Frukost:") [data-quick]')
-    assert page.evaluate("day().food.filter(f => f.meal === 3).map(f => [f.name, f.qty || 1])") == [["Gröt", 1], ["Ägg", 2]]
-    # Ungefärlig måltid i en tom måltid
+    page.click('.qadd:has-text("Frukost:")')
+    assert amounts(3) == [["Gröt", 300, ""], ["Ägg", 154, "2 st"]]
     page.click('.sheet [data-fsclose].wide')
+
+
+def test_uppskattningar_raknas_inte_dubbelt(page):
+    start(page)
+    seed(page, "S.log[shift(TODAY, -1)] = {workouts:[], dailies:{}, food:[{name:'Pasta', kcal:700, protein:25, meal:1}]}")
+    go(page, "kost")
     page.click('[data-addto="2"]')
     page.fill("#qm-2", "300")
     page.click('[data-qmeal="2"]')
-    assert page.evaluate("day().food.at(-1).name") == "Mellanmål (ca 300 kcal)"
+    assert page.evaluate("day().food.at(-1)") == {"name": "Uppskattning", "kcal": 300, "protein": 17, "meal": 2, "est": True}
+    # Uppskattningen är aldrig ett förslag eller en favorit
+    assert page.locator('.qadd:has-text("Uppskattning")').count() == 0
+    # Riktig mat i samma måltid: varning och ett tryck för att ta bort uppskattningen
+    page.click('.qadd:has-text("Pasta")')
+    assert "räknas dubbelt" in page.inner_text(".sheet")
+    page.click(".sheet .warn [data-mdel]")
+    assert page.evaluate("day().food.filter(f => f.meal === 2).map(f => f.name)") == ["Pasta"]
+    page.click('.sheet [data-fsclose].wide')
+    # En uppskattning visas som just det och kan inte bli favorit
+    page.evaluate("day().food.push({name: 'Uppskattning', kcal: 600, protein: 30, meal: 3, est: true}); render()")
+    assert "≈ Uppskattning" in page.inner_text(".meals")
+    page.click(f'[data-fooditem="{page.evaluate("day().food.length - 1")}"]')
+    assert page.locator("[data-itemfav]").count() == 0
+
+
+def test_gammal_mat_far_mangd_och_protein_ar_gront_over_malet(page):
+    start(page)
+    seed(page, """S.favs = [{name: 'Lunch (ca 830 kcal)', kcal: 830, protein: 48}, {name: 'ägg', kcal: 77, protein: 7}];
+      S.log[shift(TODAY, -1)] = {workouts: [], dailies: {}, food: [
+        {name: 'ägg', kcal: 385, protein: 35, meal: 0, qty: 5, per: {kcal: 77, protein: 7}},
+        {name: 'Lunch (ca 830 kcal)', kcal: 830, protein: 48, meal: 1},
+        {name: 'ägg', kcal: 100, protein: 9, meal: 2}]};
+      day().food.push({name: 'Kvarg', kcal: 600, protein: 200, meal: 0})""")
+    L = page.evaluate("S.log[shift(TODAY, -1)].food")
+    assert [L[0]["name"], L[0]["amt"]["n"], L[0]["amt"]["unit"], L[0]["kcal"]] == ["Ägg", 5, "st", 385]
+    assert L[1].get("est") is True
+    assert L[2]["name"] == "ägg" and L[2]["kcal"] == 100 and L[2].get("plain") is True   # egna kcal skrivs aldrig över
+    assert page.evaluate("S.favs.map(f => f.name)") == ["ägg"]
+    go(page, "kost")
+    assert page.evaluate("document.querySelectorAll('.card .bar')[1].className") == "bar ok"
 
 
 def test_mangd_styr_kalorierna(page):

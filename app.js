@@ -248,7 +248,27 @@ function upgradeWorkouts(s) {
   }
   return s;
 }
-const normalize = s => upgradeWorkouts(upgradeDailies(s));
+// Äldre mat: uppskattningar ("Lunch (ca 830 kcal)") märks som uppskattningar och tas bort ur
+// favoriterna. Fritext som är ett känt livsmedel får mängd (2 st, 150 g) i stället för antal (× 2),
+// men bara om den uträknade kcal stämmer med den sparade, så att egna värden aldrig skrivs över.
+const isEstName = n => /\(ca \d+ kcal\)$/.test(n || "");
+function upgradeFood(s) {
+  if (s.favs) s.favs = s.favs.filter(f => !f.est && !isEstName(f.name));
+  for (const L of Object.values(s.log || {})) for (const f of L.food || []) {
+    if (f.amt || f.est || f.plain) continue;
+    if (isEstName(f.name)) { f.est = true; continue; }
+    const r = parseFood(f.name), it = r.items.length === 1 && !r.unknown.length && r.items[0];
+    if (it && Math.abs(it.kcal - (f.per ? f.per.kcal : f.kcal)) <= 2) {
+      const amt = amtFromItem(it);
+      amt.n *= f.qty || 1;
+      Object.assign(f, { name: it.name, amt });
+      delete f.qty; delete f.per;
+      applyAmt(f);
+    } else f.plain = true;   // prövad: behålls som den är
+  }
+  return s;
+}
+const normalize = s => upgradeFood(upgradeWorkouts(upgradeDailies(s)));
 
 function load() {
   try {
@@ -942,9 +962,11 @@ function render() {
   updateBadge();
 }
 
-function bar(value, goal) {
+// Med reachGood är det bra att nå eller passera målet (protein); annars blir det rött över målet
+function bar(value, goal, reachGood = false) {
   const pct = goal ? Math.min(100, Math.round(value / goal * 100)) : 0;
-  return `<div class="bar ${value > goal * 1.05 ? "over" : ""}"><div style="width:${pct}%"></div></div>`;
+  const cls = reachGood ? (goal && value >= goal ? "ok" : "") : value > goal * 1.05 ? "over" : "";
+  return `<div class="bar ${cls}"><div style="width:${pct}%"></div></div>`;
 }
 const thumb = (id, cls = "") => `<button class="thumb ${cls}" data-info="${id}" aria-label="Visa ${esc(EX[id].name)}">${figure(id)}</button>`;
 const tag = t => `<span class="tag ${TYPES[t].color || t}">${TYPES[t].label}</span>`;
@@ -1104,7 +1126,7 @@ const VIEWS = {
       <div class="card"><div class="row between"><h2>Kalorier</h2><span class="muted">${e.kcal} / ${m.kcal} kcal</span></div>
         ${bar(e.kcal, m.kcal)}<div class="muted">${Math.max(0, m.kcal - e.kcal)} kcal kvar</div>
         <div class="row between" style="margin-top:10px"><span>Protein</span><span class="muted">${e.protein} / ${m.protein} g</span></div>
-        ${bar(e.protein, m.protein)}
+        ${bar(e.protein, m.protein, true)}
         <div style="margin-top:10px"><button data-go="kost">Logga mat</button></div></div>
       `;
   },
@@ -1785,7 +1807,7 @@ document.addEventListener("click", ev => {
     const [slot, share] = MEALS[+ds.qmeal], m = macros();
     const kcal = Math.round(+document.getElementById("qm-" + ds.qmeal).value || Math.round(m.kcal * share / 10) * 10);
     // Protein uppskattas med samma andel som i dagens mål
-    logFood({ name: `${slot} (ca ${kcal} kcal)`, kcal, protein: Math.round(kcal * m.protein / m.kcal) }, +ds.qmeal);
+    logFood({ name: "Uppskattning", kcal, protein: Math.round(kcal * m.protein / m.kcal), est: true }, +ds.qmeal);
   }
   else if (ds.delmeal) S.meals.splice(+ds.delmeal, 1);
   else if (ds.delfood) day().food.splice(+ds.delfood, 1);

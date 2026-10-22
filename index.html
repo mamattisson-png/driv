@@ -223,16 +223,19 @@
   .runf span { font-size: 11px; color: var(--muted); }
   .daily .run { width: 60px; flex: none; text-align: center; padding: 7px 4px; }
   /* Kost */
-  .mcard h2 { margin: 0; }
-  .mitem { display: flex; width: 100%; gap: 10px; align-items: baseline; text-align: left; border: 0; border-top: 1px solid var(--line);
-    border-radius: 0; background: none; padding: 10px 0; }
-  .mcard .row + .mitem { border-top: 0; margin-top: 4px; }
-  .addbtn { width: 100%; margin-top: 10px; padding: 10px; border-style: dashed; color: var(--accent-text); font-weight: 600; background: none; }
-  .again { display: block; width: 100%; text-align: left; margin-top: 10px; font-size: 14px; }
+  .meals { padding-top: 4px; padding-bottom: 4px; }
+  .msec { padding: 10px 0; border-top: 1px solid var(--line); }
+  .msec:first-child { border-top: 0; }
+  .msec h3 { margin: 0; font-size: 16px; }
+  .msec h3 .muted { font-weight: 400; margin-left: 4px; }
+  .addmini { color: var(--accent-text); font-weight: 600; border-color: transparent; background: none; }
+  .mitem { display: flex; width: 100%; gap: 10px; align-items: baseline; text-align: left; border: 0; border-radius: 0; background: none; padding: 7px 0; }
+  .mitem.est, .nrow.est { color: var(--muted); font-style: italic; }
+  .again { display: block; width: 100%; text-align: left; margin-top: 6px; font-size: 14px; }
   .sheet-sub { font-size: 14px; color: var(--muted); font-weight: 600; margin: 18px 0 4px; }
-  .qrow { display: flex; align-items: center; gap: 8px; border-top: 1px solid var(--line); }
-  .qrow.has { background: var(--accent-soft); margin: 0 -8px; padding: 0 8px; border-radius: 8px; }
-  .qadd { display: flex; gap: 8px; align-items: baseline; text-align: left; border: 0; background: none; padding: 11px 0; min-width: 0; }
+  .qadd { display: flex; width: 100%; gap: 8px; align-items: baseline; text-align: left; border: 0; border-top: 1px solid var(--line);
+    border-radius: 0; background: none; padding: 11px 0; min-width: 0; }
+  .nrow { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-top: 1px solid var(--line); }
   .qadd .plus { color: var(--accent-text); font-weight: 700; }
   /* Klar ligger alltid i bild längst ner i fönstret */
   .sheet-foot { position: sticky; bottom: calc(-20px - env(safe-area-inset-bottom, 0px)); background: var(--card);
