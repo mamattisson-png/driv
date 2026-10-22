@@ -210,19 +210,46 @@ def test_dailys_flyttas_over_fran_gammalt_format(page):
     go(page, "idag")
     page.click("[data-dcheck=plankan]")
     assert page.evaluate("dailyDone(TODAY, 'plankan')")
+    # Löpningen får samma bock när km är ifyllt
+    run_ok = "document.querySelector('[data-runcheck=lop]').classList.contains('on')"
+    assert page.evaluate(run_ok) is False
+    page.click("[data-runcheck=lop]")
+    assert page.evaluate("document.activeElement.dataset.f") == "km"
+    page.fill("[data-run=lop][data-f=km]", "5")
+    page.press("[data-run=lop][data-f=km]", "Tab")
+    assert page.evaluate(run_ok) is True
 
 
-def test_kroppsvikt_och_kalorimal(page):
+def test_kroppsvikt_en_gang_i_veckan_och_kalorimal(page):
+    import datetime
+    page.clock.install(time=datetime.datetime(2026, 10, 22, 8, 0))   # torsdag
     open_app(page)
     page.select_option("[data-prof=goal]", "cut")
     page.click("[data-savesetup]")
-    seed(page, "S.weights[shift(TODAY,-7)] = 82; S.weights[shift(TODAY,-6)] = 81.8")
+    seed(page, "S.weights['2026-10-15'] = 82; S.weights['2026-10-16'] = 81.8")
+    # Ingen vägning den här veckan: rutan ber om en
+    assert "Veckans vägning" in page.inner_text("#app")
     page.fill("#wkg", "70")
     page.click("[data-wsave]")
-    assert page.evaluate("S.profile.weight") == 70
+    assert page.evaluate("S.weights['2026-10-22']") == 70 and page.evaluate("S.profile.weight") == 70
     assert page.evaluate("kcalGoal()") < 2360
-    assert "mot förra veckan" in page.locator('.card:has(h2:text-is("Vikt"))').inner_text()
+    # Därefter bara veckans vikt; Ändra skriver över samma vägning
+    card = page.locator('.card:has(h2:text-is("Veckans vikt"))')
+    assert page.locator("#wkg").count() == 0 and "mot förra veckan" in card.inner_text()
+    page.click("[data-wedit]")
+    page.fill("#wkg", "71")
+    page.click("[data-wsave]")
+    assert page.evaluate("Object.keys(S.weights).filter(d => d >= '2026-10-19')") == ["2026-10-22"]
+    # Före vägningsdagen syns ingen ruta
+    go(page, "profil")
+    page.select_option("[data-weighday]", "4")
+    page.evaluate("delete S.weights['2026-10-22']; save()")
+    go(page, "idag")
+    assert "Veckans" not in page.inner_text("#app")
     # Vikten kan döljas och visas igen
+    go(page, "profil")
+    page.select_option("[data-weighday]", "0")
+    go(page, "idag")
     page.click("[data-hideweight]")
     assert page.locator("#wkg").count() == 0
     go(page, "historik")

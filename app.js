@@ -850,21 +850,32 @@ function weightBadge(diff) {
   const good = goal === "cut" ? r < 0 : goal === "bulk" ? r > 0 : Math.abs(r) <= 0.5;
   return `<span class="delta ${good ? "up" : "down"}">${r > 0 ? "+" : "−"}${fmtNum(Math.abs(r))} kg</span>`;
 }
-function logWeight(kg) {
+function logWeight(kg, date = logDate()) {
   if (!(kg > 20 && kg < 400)) return false;
-  weights()[logDate()] = Math.round(kg * 10) / 10;
+  weights()[date] = Math.round(kg * 10) / 10;
   // Kalorimålet följer den senaste vikten
   S.profile.weight = latestWeight().kg;
   return true;
 }
+// En vägning i veckan räcker. Från vägningsdagen (Profil) visas rutan tills veckan har en vägning;
+// sedan bara veckans vikt och skillnaden mot förra veckan.
+let weightEditing = false;
+const weighDay = () => S.weighDay ?? 0;
 function weightCard() {
-  const last = latestWeight(), ws = weekStart(TODAY);
-  const now = weekAvgWeight(ws), prev = weekAvgWeight(shift(ws, -7));
-  return `<div class="card"><div class="row between"><h2>Vikt</h2>${last ? `<span class="muted">Senast ${fmtNum(last.kg)} kg · ${last.date === TODAY ? "idag" : `${WD[weekdayOf(last.date)]} ${last.date.slice(8)}/${+last.date.slice(5, 7)}`}</span>` : ""}</div>
-    <div class="row"><input id="wkg" type="number" inputmode="decimal" step="0.1" placeholder="${last ? fmtNum(last.kg).replace(",", ".") : "kg"}" aria-label="Dagens vikt i kg"
-      value="${weights()[TODAY] ?? ""}"><button class="primary" data-wsave>${weights()[TODAY] ? "Ändra" : "Spara"}</button></div>
-    ${now != null ? `<div class="muted" style="margin-top:8px">Veckosnitt ${fmtNum(now)} kg ${prev != null ? weightBadge(now - prev) + " mot förra veckan" : ""}</div>` : ""}
-    <div class="row between" style="margin-top:4px"><span class="muted small">Väg dig gärna samma tid på dagen. Kalorimålet följer din senaste vikt.</span>
+  const ws = weekStart(TODAY), last = latestWeight();
+  const weighed = weekDates(ws).filter(d => d <= TODAY && weights()[d] > 0).pop();
+  const prev = weekAvgWeight(shift(ws, -7)), now = weekAvgWeight(ws);
+  if (weighed && !weightEditing) {
+    return `<div class="card"><div class="row between"><div><h2 style="margin:0">Veckans vikt</h2>
+        <div style="margin-top:4px"><b class="stat-sm">${fmtNum(now)} kg</b> ${prev != null ? `${weightBadge(now - prev)} <span class="muted small">mot förra veckan</span>` : ""}</div></div>
+      <button class="small ghost" data-wedit>Ändra</button></div></div>`;
+  }
+  if (!weighed && weekdayOf(TODAY) < weighDay()) return "";
+  const date = weighed || TODAY;
+  return `<div class="card"><div class="row between"><h2>Veckans vägning</h2>${last ? `<span class="muted">Förra: ${fmtNum(last.kg)} kg</span>` : ""}</div>
+    <div class="row"><input id="wkg" type="number" inputmode="decimal" step="0.1" placeholder="${last ? fmtNum(last.kg).replace(",", ".") : "kg"}" aria-label="Vikt i kg"
+      value="${weights()[date] ?? ""}"><button class="primary" data-wsave data-wdate="${date}">Spara</button></div>
+    <div class="row between" style="margin-top:4px"><span class="muted small">En gång i veckan räcker. Väg dig gärna på morgonen, samma veckodag. Kalorimålet följer din senaste vikt.</span>
       <button class="small ghost" data-hideweight>Dölj vikt</button></div></div>`;
 }
 // Vägningar som punkter och veckosnitt som linje, de senaste åtta veckorna
@@ -923,7 +934,8 @@ function render() {
     `<button data-tab="${id}" class="${tab === id ? "on" : ""}"><span>${ic}</span>${lbl}</button>`).join("");
   const banner = editDate && (tab === "pass" || tab === "kost")
     ? `<div class="editbar">📅 Du ändrar <b>${dateLabel(editDate)}</b><button class="small" data-editdone>Klar</button></div>` : "";
-  const gear = tab === "upplagg" ? "" : `<button class="gear ${tab === "profil" ? "on" : ""}" data-tab="profil" aria-label="Profil och inställningar">⚙️</button>`;
+  // Kugghjulet behövs inte i upplägget eller i fokusläget, där det skulle ligga över texten
+  const gear = tab === "upplagg" || (tab === "pass" && focus && !editing) ? "" : `<button class="gear ${tab === "profil" ? "on" : ""}" data-tab="profil" aria-label="Profil och inställningar">⚙️</button>`;
   document.getElementById("app").innerHTML = gear + banner + VIEWS[tab]() + (modal ? renderModal() : "");
   if (modal && modal.pick) filterPicker();
   afterFocusRender();
@@ -974,11 +986,12 @@ function dailiesCard() {
     const id = e.id, ok = dailyDone(date, id), its = streakOf(d => dailyDone(d, id)), v = L.dailies[id] || {};
     const sub = isRun(id) ? "" : EX[id].cat === "cardio" ? esc(e.reps || "") : `${e.sets} × ${esc(e.reps)}`;
     const ctl = isRun(id)
-      ? `<input class="run" type="number" inputmode="decimal" step="0.1" placeholder="km" value="${v.km || ""}" data-run="${id}" data-f="km" aria-label="Kilometer">
-         <input class="run" type="number" inputmode="numeric" placeholder="min" value="${v.min || ""}" data-run="${id}" data-f="min" aria-label="Minuter">`
+      ? `<label class="runf"><input class="run" type="number" inputmode="decimal" step="0.1" min="0" value="${v.km || ""}" data-run="${id}" data-f="km" aria-label="Kilometer"><span>km</span></label>
+         <label class="runf"><input class="run" type="number" inputmode="numeric" min="0" value="${v.min || ""}" data-run="${id}" data-f="min" aria-label="Minuter"><span>min</span></label>
+         <button class="done-btn big ${ok ? "on" : ""}" data-runcheck="${id}" aria-pressed="${ok}" aria-label="${esc(EX[id].name)}: ${ok ? "klar" : "fyll i km eller minuter"}">✓</button>`
       : `<button class="done-btn big ${ok ? "on" : ""}" data-dcheck="${id}" aria-pressed="${ok}" aria-label="${esc(EX[id].name)} klar">✓</button>`;
     return `<div class="daily ${ok ? "ok" : ""}">${thumb(id, "xs")}<div class="grow"><b>${esc(EX[id].name)}</b>
-      <span class="muted small">${sub}${its ? ` · 🔥 ${its}` : ""}</span></div>${ctl}</div>`;
+      <span class="muted small">${[sub, its ? `🔥 ${its}` : ""].filter(Boolean).join(" · ")}</span></div>${ctl}</div>`;
   }).join("");
   return `<div class="card"><div class="row between"><h2>Dailys</h2><span class="muted">${done} av ${n} klara${st ? ` · 🔥 ${st} d` : ""}</span></div>
     <div class="bar ok"><div style="width:${Math.round(done / n * 100)}%"></div></div>
@@ -1129,7 +1142,8 @@ const VIEWS = {
       <div class="card"><h2>Upplägg</h2><div class="muted">${PROGRAMS[S.plan.program || "ppl"].name} · ${isFixed() ? S.plan.weekdays.map(i => WD[i]).join(", ") : `${S.plan.count} pass i veckan, valfria dagar`}</div>
         <button style="margin-top:10px" data-tab="upplagg">Ändra upplägg</button></div>
       <div class="card"><h2>Vikt</h2>
-        <label class="row"><input type="checkbox" data-showweight ${S.hideWeight ? "" : "checked"}><span>Visa vikt på Idag och under Vecka</span></label>
+        <label class="row"><input type="checkbox" data-showweight ${S.hideWeight ? "" : "checked"}><span>Visa vikt på Idag och i Historik</span></label>
+        <label class="field" style="margin-top:8px">Vägningsdag<select data-weighday>${WD.map((w, i) => `<option value="${i}" ${weighDay() === i ? "selected" : ""}>${WD_LONG[i].replace(/^./, c => c.toUpperCase())}</option>`).join("")}</select></label>
         <div class="muted small" style="margin-top:4px">Döljer du vikten används vikten i Kalorimål nedan, och sparade vägningar finns kvar.</div></div>
       ${S.daily.length ? reminderCard() : ""}
       <div class="card"><h2>Vilotimer</h2>
@@ -1711,8 +1725,17 @@ document.addEventListener("click", ev => {
   else if (ds.hideweight !== undefined) { S.hideWeight = true; toast("Vikten är dold. Visa den igen under Profil."); }
   else if (ds.showweight !== undefined) S.hideWeight = !t.checked;
   else if (ds.wsave !== undefined) {
-    if (!logWeight(+String($("wkg").value).replace(",", "."))) { toast("Skriv vikten i kg, till exempel 80,5"); return; }
-    toast(`Vikt sparad: ${fmtNum(weights()[logDate()])} kg`);
+    const date = ds.wdate || logDate();
+    if (!logWeight(+String($("wkg").value).replace(",", "."), date)) { toast("Skriv vikten i kg, till exempel 80,5"); return; }
+    weightEditing = false;
+    toast(`Vikt sparad: ${fmtNum(weights()[date])} kg`);
+  }
+  else if (ds.wedit !== undefined) weightEditing = true;
+  // Löpning bockas av genom att fylla i km eller minuter; bocken leder dit
+  else if (ds.runcheck) {
+    if (!dailyDone(logDate(), ds.runcheck)) { const k = document.querySelector(`[data-run="${ds.runcheck}"][data-f="km"]`); if (k) k.focus(); }
+    else toast("Klar. Ändra km eller minuter om det behövs.");
+    return;
   }
   else if (ds.resttoggle !== undefined) S.rest = Object.assign({}, restSettings(), { on: t.checked });
   else if (ds.sendcode !== undefined) { sendLoginCode(); return; }
@@ -1833,6 +1856,7 @@ document.addEventListener("change", ev => {
     return;   // ingen omritning, så att fokus stannar kvar i fältet
   }
   if (ds.run) { const L = day(); L.dailies[ds.run] = Object.assign({}, L.dailies[ds.run], { [ds.f]: +t.value || 0 }); }
+  else if (ds.weighday !== undefined) S.weighDay = +t.value;
   else if (ds.prof) S.profile[ds.prof] = ds.prof === "sex" || ds.prof === "goal" ? t.value : +t.value;
   else if (ds.dayname) {
     const d = draft.days[+ds.dayname];
