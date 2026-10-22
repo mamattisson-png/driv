@@ -223,25 +223,41 @@
   .runf span { font-size: 11px; color: var(--muted); }
   .daily .run { width: 60px; flex: none; text-align: center; padding: 7px 4px; }
   /* Kost */
-  .meals { padding-top: 4px; padding-bottom: 4px; }
-  .msec { padding: 10px 0; border-top: 1px solid var(--line); }
-  .msec:first-child { border-top: 0; }
-  .msec h3 { margin: 0; font-size: 16px; }
-  .msec h3 .muted { font-weight: 400; margin-left: 4px; }
-  .addmini { color: var(--accent-text); font-weight: 600; border-color: transparent; background: none; }
-  .mitem { display: flex; width: 100%; gap: 10px; align-items: baseline; text-align: left; border: 0; border-radius: 0; background: none; padding: 7px 0; }
-  .mitem.est, .nrow.est { color: var(--muted); font-style: italic; }
+  .dayring { display: flex; align-items: center; gap: 14px; }
+  .ringwrap { position: relative; width: 96px; height: 96px; flex: none; }
+  .ring { width: 96px; height: 96px; display: block; }
+  .ring-bg, .ring-fg { fill: none; stroke-width: 8; }
+  .ring-bg { stroke: var(--line); }
+  .ring-fg { stroke: var(--accent); stroke-linecap: round; }
+  .ring-fg.over { stroke: var(--bad); }
+  .ringnum { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.1; }
+  .ringnum b { font-size: 20px; font-variant-numeric: tabular-nums; }
+  .ringnum .muted { font-size: 11px; }
+  .mcard { padding: 12px; }
+  .mhead { margin-bottom: 8px; }
+  .mhead h2 { margin: 0; display: flex; align-items: center; gap: 8px; }
+  .micon { font-size: 18px; }
+  .msum { color: var(--accent-text); font-weight: 700; font-variant-numeric: tabular-nums; }
+  .tile { display: flex; width: 100%; gap: 10px; align-items: center; text-align: left; background: var(--bg); border: 0;
+    border-radius: 12px; padding: 9px 12px; margin-top: 6px; }
+  .tile b { display: block; font-weight: 600; }
+  .tile.est b { font-weight: 400; font-style: italic; color: var(--muted); }
+  .chev { color: var(--muted); font-size: 20px; line-height: 1; }
+  .addfood { width: 100%; margin-top: 8px; padding: 9px; background: none; border: 0; color: var(--accent-text); font-weight: 600; text-align: left; }
+  .addfood.empty { border: 1px dashed var(--line); text-align: center; }
   .again { display: block; width: 100%; text-align: left; margin-top: 6px; font-size: 14px; }
   .sheet-sub { font-size: 14px; color: var(--muted); font-weight: 600; margin: 18px 0 4px; }
-  .qadd { display: flex; width: 100%; gap: 8px; align-items: baseline; text-align: left; border: 0; border-top: 1px solid var(--line);
-    border-radius: 0; background: none; padding: 11px 0; min-width: 0; }
-  .nrow { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-top: 1px solid var(--line); }
-  .qadd .plus { color: var(--accent-text); font-weight: 700; }
+  .qgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 6px; }
+  .qadd { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; text-align: left; background: var(--bg);
+    border: 1px solid var(--line); border-radius: 12px; padding: 9px 11px; min-width: 0; }
+  .qadd b { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+  .nrow { gap: 8px; }
   /* Klar ligger alltid i bild längst ner i fönstret */
   .sheet-foot { position: sticky; bottom: calc(-20px - env(safe-area-inset-bottom, 0px)); background: var(--card);
     margin: 12px -16px calc(-20px - env(safe-area-inset-bottom, 0px)); padding: 10px 16px calc(12px + env(safe-area-inset-bottom, 0px));
     border-top: 1px solid var(--line); }
   .sheet-foot .wide { margin: 0; }
+  .sheet-foot .total { margin-bottom: 8px; font-size: 17px; }
   .qcount { min-width: 22px; text-align: center; font-variant-numeric: tabular-nums; }
   .qminus { width: 34px; height: 34px; padding: 0; }
   .qtyrow { margin-top: 14px; gap: 12px; }

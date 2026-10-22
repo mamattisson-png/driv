@@ -187,32 +187,47 @@ const sumKcal = items => items.reduce((a, f) => a + (+f.kcal || 0), 0);
 // Används bara som förslag i fältet för en ungefärlig måltid
 const mealTarget = (meal, m) => Math.round(m.kcal * MEALS[meal][1] / 10) * 10;
 
-// En måltid i översikten: namn och summa, det som ätits, och för en tom måltid "som igår"
-function mealSection(meal, L) {
+// En måltid i översikten: en egen ruta med symbol, namn och summa. Varje sak är ett block med
+// namnet överst och mängd och kcal under, och en tom måltid har "Lägg till" och "som igår".
+const MEAL_ICONS = ["☀️", "🍴", "🍎", "🌙"];
+const foodLine = f => [amountText(f), `${f.kcal} kcal`].filter(Boolean).join(" · ");
+function mealCard(meal, L) {
   const items = L.food.map((f, i) => ({ f, i })).filter(x => (x.f.meal ?? -1) === meal);
   if (meal < 0 && !items.length) return "";
   const name = meal < 0 ? "Övrigt" : MEALS[meal][0], sum = sumKcal(items.map(x => x.f));
   const last = meal >= 0 && !items.length ? lastSlot(meal) : null;
-  return `<div class="msec">
-    <div class="row between"><h3>${name}${sum ? ` <span class="muted">${sum} kcal</span>` : ""}</h3>
-      ${meal >= 0 ? `<button class="small addmini" data-addto="${meal}" aria-label="Lägg till i ${name.toLowerCase()}">+ Lägg till</button>` : ""}</div>
-    ${items.map(({ f, i }) => `<button class="mitem ${isEst(f) ? "est" : ""}" data-fooditem="${i}"><span class="grow">${itemName(f)}<span class="muted">${amountText(f) ? ` · ${amountText(f)}` : ""}</span></span>
-      <span class="muted nowrap">${f.kcal} kcal</span></button>`).join("")}
+  return `<div class="card mcard">
+    <div class="row between mhead"><h2>${meal < 0 ? "" : `<span class="micon" aria-hidden="true">${MEAL_ICONS[meal]}</span>`}${name}</h2>
+      <span class="${sum ? "msum" : "muted"}">${sum} kcal</span></div>
+    ${items.map(({ f, i }) => `<button class="tile ${isEst(f) ? "est" : ""}" data-fooditem="${i}">
+      <span class="grow"><b>${itemName(f)}</b><span class="muted small">${foodLine(f)}</span></span><span class="chev" aria-hidden="true">›</span></button>`).join("")}
     ${last ? `<button class="again" data-repeat="${meal}">↻ Samma som ${whenText(last.date)}<span class="muted"> · ${esc(last.items.map(f => isEst(f) ? "uppskattning" : f.name).join(", "))}</span></button>` : ""}
+    ${meal >= 0 ? `<button class="addfood ${items.length ? "" : "empty"}" data-addto="${meal}">+ Lägg till${items.length ? "" : " mat"}</button>` : ""}
   </div>`;
+}
+
+// Dagens kalorier som en ring, med protein bredvid
+function dayRing(e, m) {
+  const pct = m.kcal ? Math.min(1, e.kcal / m.kcal) : 0, r = 34, c = 2 * Math.PI * r, over = e.kcal > m.kcal * 1.05;
+  return `<div class="card dayring"><div class="ringwrap"><svg viewBox="0 0 84 84" class="ring" role="img" aria-label="${e.kcal} av ${m.kcal} kcal">
+      <circle cx="42" cy="42" r="${r}" class="ring-bg"/><circle cx="42" cy="42" r="${r}" class="ring-fg ${over ? "over" : ""}"
+        stroke-dasharray="${(pct * c).toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 42 42)"/></svg>
+    <div class="ringnum"><b>${e.kcal}</b><span class="muted">av ${m.kcal}</span><span class="muted">kcal</span></div></div>
+    <div class="grow"><div class="row between"><span>Protein</span><span class="muted">${e.protein} / ${m.protein} g</span></div>
+      ${bar(e.protein, m.protein, true)}
+      <div class="muted small" style="margin-top:6px">${e.kcal <= m.kcal ? `${m.kcal - e.kcal} kcal kvar` : `${e.kcal - m.kcal} kcal över målet`}</div></div></div>`;
 }
 
 function addSheet(m) {
   const meal = foodSheet.meal, mealName = MEALS[meal][0].toLowerCase(), q = quickList(meal), shown = quickMore ? q : q.slice(0, 8);
   const food = day().food, items = food.map((f, i) => ({ f, i })).filter(x => x.f.meal === meal);
   const est = items.find(x => isEst(x.f));
-  const now = items.map(({ f, i }) => `<div class="nrow ${isEst(f) ? "est" : ""}"><span class="grow">${itemName(f)}<span class="muted small"> · ${f.kcal} kcal</span></span>
+  const now = items.map(({ f, i }) => `<div class="nrow tile ${isEst(f) ? "est" : ""}"><span class="grow"><b>${itemName(f)}</b><span class="muted small">${f.kcal} kcal</span></span>
     ${isEst(f) ? `<button class="small qminus" data-mdel="${i}" aria-label="Ta bort uppskattningen">✕</button>`
       : `<button class="small qminus" data-mstep="-1" data-mi="${i}" aria-label="Mindre ${esc(f.name)}">−</button><b class="qcount">${amountText(f) || "1"}</b>
          <button class="small qminus" data-mstep="1" data-mi="${i}" aria-label="Mer ${esc(f.name)}">+</button>`}</div>`).join("");
   const quick = shown.map((f, i) => `<button class="qadd" data-quick="${i}" aria-label="Lägg till ${esc(f.name)}">
-      <span class="plus">+</span><span class="grow">${f.kind === "fav" ? "★ " : f.kind === "meal" ? "🍽 " : ""}${esc(f.name)}${f.amt ? `<span class="muted"> · ${amtText(f.amt)}</span>` : ""}</span>
-      <span class="muted nowrap">${f.kcal} kcal</span></button>`).join("");
+      <b>${f.kind === "fav" ? "★ " : f.kind === "meal" ? "🍽 " : ""}${esc(f.name)}</b><span class="muted small">${f.amt ? `${amtText(f.amt)} · ` : ""}${f.kcal} kcal</span></button>`).join("");
   return `<div class="overlay" data-fsclose><div class="sheet">
     <div class="row between"><h2>Lägg till i ${mealName}</h2><button class="small ghost" data-fsclose aria-label="Stäng">✕</button></div>
     <div class="fwrap"><input id="fname" placeholder="Sök eller skriv, t.ex. 2 ägg och 1 banan" autocomplete="off"
@@ -228,14 +243,15 @@ function addSheet(m) {
     ${est && items.length > 1 ? `<div class="card warn" style="margin:14px 0 0">Här finns både en uppskattning på ${est.f.kcal} kcal och riktig mat, så kalorierna kan räknas dubbelt.
       <button class="small" style="margin-top:6px" data-mdel="${est.i}">Ta bort uppskattningen</button></div>` : ""}
     ${items.length ? `<h3 class="sheet-sub">I ${mealName}en nu</h3>${now}` : ""}
-    ${q.length ? `<h3 class="sheet-sub">Förslag</h3>${quick}
+    ${q.length ? `<h3 class="sheet-sub">Förslag <span class="muted small">· tryck för att lägga till</span></h3><div class="qgrid">${quick}</div>
       ${q.length > 8 ? `<button class="small ghost" data-quickmore>${quickMore ? "Visa färre" : `Visa fler (${q.length - 8})`}</button>` : ""}` : ""}
     ${!items.length ? `<h3 class="sheet-sub">Bara ungefär</h3><div class="row qkcal">
       <input id="qm-${meal}" type="number" inputmode="numeric" placeholder="ca ${mealTarget(meal, m)} kcal" aria-label="Ungefär hur många kcal">
       <button data-qmeal="${meal}">Lägg till</button></div>` : ""}
     ${items.filter(x => !isEst(x.f)).length > 1 ? `<button class="small ghost" data-savegroup="${meal}" style="margin-top:12px">Spara ${mealName}en som en måltid</button>` : ""}
     <div class="muted small" style="margin-top:14px">Näringsvärden: Livsmedelsverkets livsmedelsdatabas (CC BY 4.0) och egna uppskattningar.</div>
-    <div class="sheet-foot"><button class="wide" data-fsclose>Klar${items.length ? ` · ${sumKcal(items.map(x => x.f))} kcal` : ""}</button></div>
+    <div class="sheet-foot"><div class="row between total"><b>Totalt i ${mealName}en</b><b>${sumKcal(items.map(x => x.f))} kcal</b></div>
+      <button class="wide" data-fsclose>Klar</button></div>
   </div></div>`;
 }
 
@@ -260,11 +276,8 @@ function itemSheet() {
 function kostView() {
   const m = macros(), e = eaten(), L = day();
   return `<h1>Kost</h1>
-    <div class="card"><div class="row between"><h2>Dagens mål</h2><span class="muted">${e.kcal} / ${m.kcal} kcal</span></div>
-      ${bar(e.kcal, m.kcal)}
-      <div class="row between" style="margin-top:8px"><span class="muted">Protein</span><span class="muted">${e.protein} / ${m.protein} g</span></div>
-      ${bar(e.protein, m.protein, true)}</div>
-    <div class="card meals">${MEALS.map((_, i) => mealSection(i, L)).join("")}${mealSection(-1, L)}</div>
+    ${dayRing(e, m)}
+    <div class="meals">${MEALS.map((_, i) => mealCard(i, L)).join("")}${mealCard(-1, L)}</div>
     ${foodSheet ? addSheet(m) : foodItem != null ? itemSheet() : ""}`;
 }
 

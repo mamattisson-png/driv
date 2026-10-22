@@ -313,7 +313,7 @@ def test_kost_maltider_forslag_mangd_och_upprepa(page):
     page.click('.qadd:has-text("Ägg")')
     assert amounts(1)[-1] == ["Ägg", 154, "2 st"]
     assert page.locator('.qadd:has-text("Ägg")').count() == 0
-    assert page.locator(".sheet .qadd .plus").count() == page.locator(".sheet .qadd").count()   # ett + per rad, inga andra
+    assert page.locator(".sheet .qadd button").count() == 0   # ett förslag är en enda knapp, utan egna − och +
     row = page.locator('.nrow:has-text("Ägg")')
     row.locator('[data-mstep="-1"]').click()
     assert amounts(1)[-1] == ["Ägg", 77, "1 st"]
@@ -327,7 +327,7 @@ def test_kost_maltider_forslag_mangd_och_upprepa(page):
     page.set_viewport_size({"width": 390, "height": 844})
     page.click('.sheet [data-fsclose].wide')
     assert page.locator(".sheet").count() == 0
-    assert "Ägg · 3 st" in page.inner_text(".meals")
+    assert "Ägg\n3 st · 231 kcal" in page.inner_text(".meals")
     # Tryck på en loggad sak: favorit med sin mängd, ta bort
     i = page.evaluate("day().food.findIndex(f => f.meal === 1 && f.name === 'Ägg')")
     page.click(f'[data-fooditem="{i}"]')
@@ -383,7 +383,7 @@ def test_gammal_mat_far_mangd_och_protein_ar_gront_over_malet(page):
     assert L[2]["name"] == "ägg" and L[2]["kcal"] == 100 and L[2].get("plain") is True   # egna kcal skrivs aldrig över
     assert page.evaluate("S.favs.map(f => f.name)") == ["ägg"]
     go(page, "kost")
-    assert page.evaluate("document.querySelectorAll('.card .bar')[1].className") == "bar ok"
+    assert page.evaluate("document.querySelector('.dayring .bar').className") == "bar ok"
 
 
 def test_mangd_styr_kalorierna(page):
