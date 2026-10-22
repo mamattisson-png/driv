@@ -431,8 +431,13 @@ async function sendFeedback() {
   feedback.busy = false; render();
 }
 
+// Visas på startsidan så att den som redan har konto slipper göra om upplägget
+let welcomeLogin = false;
 function accountCard() {
   if (!sbEnabled) return "";
+  return `<div class="card"><h2>Konto</h2>${accountBody()}</div>`;
+}
+function accountBody() {
   const a = account;
   let body;
   if (a.step === "in") {
@@ -449,7 +454,7 @@ function accountCard() {
       <div class="row" style="margin-top:8px"><input id="acctemail" type="email" autocomplete="email" placeholder="din@epost.se" value="${esc(a.email)}">
         <button class="primary small" data-sendcode ${a.busy ? "disabled" : ""}>Skicka kod</button></div>`;
   }
-  return `<div class="card"><h2>Konto</h2>${body}${a.msg ? `<div class="muted small" style="margin-top:8px">${esc(a.msg)}</div>` : ""}</div>`;
+  return `${body}${a.msg ? `<div class="muted small" style="margin-top:8px">${esc(a.msg)}</div>` : ""}`;
 }
 
 // Sparar en fil: via Claudes nedladdning i Claude-versionen, annars som vanlig nedladdning
@@ -793,6 +798,11 @@ const VIEWS = {
     const p = S.profile;
     return `${S.setupDone ? "" : `<div class="brand"><img src="icons/icon-192.png" alt=""><div><b>Driv</b><span class="muted">Ditt mål. Ditt driv.</span></div></div>`}
       <h1>${S.setupDone ? "Ditt upplägg" : "Välj ditt upplägg"}</h1>
+      ${!S.setupDone && sbEnabled ? (welcomeLogin
+        ? `<div class="card"><div class="row between"><h2>Logga in</h2><button class="small ghost" data-welcomelogin aria-label="Stäng">✕</button></div>
+            ${accountBody()}<div class="muted small" style="margin-top:8px">Ditt upplägg och allt du loggat hämtas från kontot.</div></div>`
+        : `<div class="muted" style="margin:-4px 0 12px">Välj upplägg och tryck Kom igång – inget konto behövs. Konto kan du skapa senare under Profil.
+            <button class="link" data-welcomelogin>Har du redan ett konto? Logga in</button></div>`) : ""}
       <div class="card"><div class="row between"><h2>1. Vilket upplägg?</h2>
           <button class="small" data-progtoggle aria-expanded="${progOpen}">${progOpen ? "Fäll ihop" : `Visa alla ${Object.keys(PROGRAMS).length}`}</button></div>
         ${progOpen ? "" : `<div class="proglist"><button class="on" data-progtoggle><b>${PROGRAMS[draft.program].name}</b>
@@ -1567,6 +1577,7 @@ document.addEventListener("click", ev => {
   else if (ds.fbsend !== undefined) { sendFeedback(); return; }
   else if (ds.fbagain !== undefined) { feedback.sent = false; feedback.msg = ""; }
   else if (ds.verifycode !== undefined) { verifyLoginCode(); return; }
+  else if (ds.welcomelogin !== undefined) welcomeLogin = !welcomeLogin;
   else if (ds.changeemail !== undefined) { account.step = "email"; account.msg = ""; }
   else if (ds.signout !== undefined) { signOut(); return; }
   else if (ds.remcal !== undefined) {

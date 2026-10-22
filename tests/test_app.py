@@ -286,6 +286,39 @@ def test_supabase_inloggning_synk_och_sammanslagning(page):
     assert page.evaluate("cloud.status") == "local"
 
 
+
+def test_logga_in_fran_startsidan(page):
+    page.context.route("**/config.js", lambda r: r.fulfill(
+        body='window.DRIV_CONFIG = { supabaseUrl: "https://exempel.supabase.co", supabaseAnonKey: "nyckel" };',
+        content_type="application/javascript"))
+    # Ett konto med färdigt upplägg och lite logg
+    start(page, SUPABASE_MOCK)
+    page.evaluate("S.log['2026-01-05'] = {workout:null,dailies:{},food:[{name:'Macka',kcal:300,protein:10}]}; save()")
+    go(page, "profil")
+    page.fill("#acctemail", "test@exempel.se")
+    page.click("[data-sendcode]")
+    page.fill("#acctcode", "123456")
+    page.click("[data-verifycode]")
+    page.wait_for_function("account.step === 'in' && Object.keys(window.__db).length >= 2")
+    # Ny enhet: tom webbläsare och utloggad, startsidan visas
+    page.evaluate("localStorage.clear(); sessionStorage.removeItem('sess')")
+    page.reload()
+    assert page.locator("[data-savesetup]").count() == 1
+    page.click("[data-welcomelogin]")
+    page.fill("#acctemail", "test@exempel.se")
+    page.click("[data-sendcode]")
+    page.fill("#acctcode", "123456")
+    page.click("[data-verifycode]")
+    page.wait_for_function("account.step === 'in' && S.setupDone && tab === 'idag'")
+    assert page.evaluate("S.log['2026-01-05'].food[0].name") == "Macka"
+    assert page.locator("[data-savesetup]").count() == 0
+
+
+def test_startsidan_utan_konto_visar_ingen_inloggning(page):
+    open_app(page)
+    assert page.locator("[data-welcomelogin]").count() == 0
+
+
 # ---------- Veckobrev ----------
 
 def test_veckobrev_pa_sondag(page):
