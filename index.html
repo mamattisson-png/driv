@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#e8572a">
+<meta name="description" content="Träningsapp med pass, övningsbilder, veckojämförelse, dailys och kalorimål.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Träning">
+<title>PPL Träning</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+  :root {
+    --bg: #f5f6f8; --card: #ffffff; --text: #15181d; --muted: #67707c;
+    --line: #e2e5ea; --accent: #e8572a; --accent-soft: #fde8e0;
+    --ok: #1f9d55; --ok-soft: #dcf3e5; --bad: #d23b3b; --bad-soft: #fbe3e3;
+    --push: #e8572a; --pull: #2f6fdb; --legs: #8a4fd6; --upper: #c2410c; --lower: #0e7c86; --full: #4d7c0f;
+    --equip: #9aa1ab;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0f1215; --card: #181c21; --text: #eef1f4; --muted: #929ba6;
+      --line: #2a3038; --accent: #ff7a4d; --accent-soft: #3a2219;
+      --ok: #3ccf7a; --ok-soft: #173325; --bad: #ff6b6b; --bad-soft: #3a1d1d;
+      --push: #ff7a4d; --pull: #5e95ff; --legs: #b17cff; --upper: #f59e0b; --lower: #2dd4bf; --full: #84cc16;
+      --equip: #5d6670;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0f1215; --card: #181c21; --text: #eef1f4; --muted: #929ba6;
+    --line: #2a3038; --accent: #ff7a4d; --accent-soft: #3a2219;
+    --ok: #3ccf7a; --ok-soft: #173325; --bad: #ff6b6b; --bad-soft: #3a1d1d;
+    --push: #ff7a4d; --pull: #5e95ff; --legs: #b17cff; --upper: #f59e0b; --lower: #2dd4bf; --full: #84cc16;
+    --equip: #5d6670;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+    font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    padding-bottom: calc(76px + env(safe-area-inset-bottom)); }
+  main { max-width: 640px; margin: 0 auto; padding-block: 16px;
+    padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  h1 { font-size: 22px; margin: 4px 0 16px; }
+  h1 .muted { font-weight: 500; }
+  h2 { font-size: 17px; margin: 0 0 10px; }
+  ol { padding-left: 20px; margin: 10px 0 0; }
+  li { margin-bottom: 6px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px; margin-bottom: 14px; }
+  .card.warn { background: var(--accent-soft); border-color: transparent; font-size: 14px; }
+  .muted { color: var(--muted); font-size: 14px; }
+  .small { font-size: 13px; }
+  .row { display: flex; gap: 10px; align-items: center; }
+  .grow { flex: 1; min-width: 0; }
+  .col { display: flex; flex-direction: column; }
+  .between { justify-content: space-between; }
+  .wrap { flex-wrap: wrap; }
+  button { font: inherit; border: 1px solid var(--line); background: var(--card); color: var(--text);
+    border-radius: 10px; padding: 8px 12px; cursor: pointer; }
+  button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  @media (prefers-reduced-motion: reduce) { .bar > div { transition: none; } }
+  button:disabled { opacity: .4; cursor: default; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+  button.small { padding: 4px 9px; font-size: 14px; }
+  button.ghost { border-color: transparent; background: transparent; color: var(--muted); }
+  button.wide { width: 100%; margin-bottom: 10px; padding: 12px; }
+  input, select { font: inherit; color: var(--text); background: var(--bg); border: 1px solid var(--line);
+    border-radius: 8px; padding: 7px 9px; width: 100%; min-width: 0; }
+  input::placeholder { color: var(--muted); opacity: .55; }
+  input[type=checkbox] { width: 24px; height: 24px; flex: none; accent-color: var(--ok); }
+  label.field { display: block; font-size: 14px; color: var(--muted); }
+  label.field input, label.field select { margin-top: 3px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .bar { height: 10px; background: var(--line); border-radius: 99px; overflow: hidden; margin: 6px 0 2px; }
+  .bar > div { height: 100%; background: var(--accent); border-radius: 99px; transition: width .2s; }
+  .bar.ok > div { background: var(--ok); }
+  .bar.over > div { background: var(--bad); }
+  .tag { display: inline-block; font-size: 12px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
+    padding: 2px 8px; border-radius: 99px; color: #fff; }
+  .tag.push { background: var(--push); } .tag.pull { background: var(--pull); } .tag.legs { background: var(--legs); }
+  .tag.upper { background: var(--upper); } .tag.lower { background: var(--lower); } .tag.full { background: var(--full); }
+  .pill { font-size: 13px; padding: 2px 8px; border-radius: 99px; background: var(--ok-soft); color: var(--ok); font-weight: 600; }
+  .delta { display: inline-block; font-size: 13px; font-weight: 700; padding: 1px 7px; border-radius: 99px; white-space: nowrap; }
+  .delta.up { background: var(--ok-soft); color: var(--ok); }
+  .delta.down { background: var(--bad-soft); color: var(--bad); }
+  .delta.same { background: var(--line); color: var(--muted); }
+  .stat { font-size: 26px; font-weight: 700; }
+
+  /* Upplägg */
+  .seg { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .proglist { display: grid; gap: 8px; }
+  .proglist button { text-align: left; padding: 10px 12px; display: grid; gap: 2px; }
+  .proglist button.on { border-color: var(--accent); outline: 2px solid var(--accent); }
+  .seg.two { grid-template-columns: 1fr 1fr; }
+  .seg.two button { text-align: left; padding: 10px 12px; }
+  .seg.wd { grid-template-columns: repeat(7, 1fr); gap: 4px; }
+  .seg.wd button { padding: 9px 0; font-size: 14px; }
+  .seg button.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .seg button.on .muted { color: #fff; opacity: .85; }
+  .plan-row { padding: 8px 0 10px; border-bottom: 1px solid var(--line); margin-bottom: 8px; }
+  .daily-pick { padding: 6px 0; cursor: pointer; }
+
+  /* Pass */
+  .daypick { display: grid; gap: 6px; margin-bottom: 14px; }
+  .daypick button { padding: 8px 2px; }
+  .daypick button.on { outline: 2px solid var(--accent); }
+  .daypick .tag { font-size: 10px; padding: 2px 5px; letter-spacing: 0; }
+  .card.ex.complete { border-color: var(--ok); }
+  .sets { display: grid; grid-template-columns: 24px 1fr 1fr 40px; gap: 6px; align-items: center; margin-top: 10px; }
+  .sets.bw { grid-template-columns: 24px 1fr 84px 40px; }
+  .sets .n { color: var(--muted); font-size: 14px; text-align: center; }
+  .done-btn { width: 40px; height: 38px; padding: 0; font-weight: 700; color: var(--muted); }
+  .done-btn.big { width: 44px; height: 44px; border-radius: 99px; flex: none; }
+  .done-btn.on { background: var(--ok); border-color: var(--ok); color: #fff; }
+  .subex { display: flex; gap: 10px; align-items: center; padding: 6px 0; border-top: 1px solid var(--line); }
+  .daily { padding: 10px 0; border-top: 1px solid var(--line); }
+  .daily:first-of-type { border-top: 0; padding-top: 0; }
+  .daily .subex { margin-left: 8px; }
+  .runin { width: 140px; gap: 6px; }
+
+  /* Figurer */
+  .thumb { padding: 0; border-radius: 10px; background: var(--bg); width: 84px; height: 84px; flex: none; overflow: hidden; }
+  .thumb.sm { width: 52px; height: 52px; border-radius: 8px; }
+  .thumb.xs { width: 40px; height: 40px; border-radius: 7px; }
+  .thumb.done { outline: 2px solid var(--ok); outline-offset: -2px; }
+  .thumbs { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+  .fig { width: 100%; height: 100%; display: block; }
+  .fig.big { width: 100%; height: auto; max-height: 300px; background: var(--bg); border-radius: 12px; margin: 6px 0 8px; }
+  .fb { fill: none; stroke: var(--text); stroke-width: 4.2; stroke-linecap: round; stroke-linejoin: round; }
+  .ff { opacity: .38; }
+  .fh { fill: var(--text); }
+  .fe { fill: none; stroke: var(--equip); stroke-width: 3; stroke-linecap: round; }
+  .fbar { stroke-width: 3.5; }
+  .fplate { stroke-width: 4; }
+  .fw { fill: var(--accent); }
+  .fp { fill: var(--equip); }
+  .fc { stroke: var(--equip); stroke-width: 1.2; }
+  .ffloor { stroke: var(--line); stroke-width: 2; }
+
+  /* Dialog */
+  .overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, .45); z-index: 10; display: flex; align-items: flex-end; justify-content: center; }
+  .sheet { background: var(--card); width: 100%; max-width: 640px; max-height: 88vh; overflow-y: auto;
+    border-radius: 18px 18px 0 0; padding: 16px 16px calc(20px + env(safe-area-inset-bottom)); }
+  .pickgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
+  .pick { border: 1px solid var(--line); border-radius: 12px; padding: 8px; display: flex; flex-direction: column; gap: 4px; }
+  .pick .thumb { width: 100%; height: auto; aspect-ratio: 1.03; }
+  .pick.have { opacity: .55; }
+  .pname { font-weight: 600; font-size: 15px; }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chips button { font-size: 14px; padding: 5px 10px; border-radius: 99px; }
+  .chips button.on { background: var(--text); color: var(--bg); border-color: var(--text); }
+  .food { display: flex; gap: 8px; align-items: center; padding: 6px 0; border-top: 1px solid var(--line); }
+  .food:first-of-type { border-top: 0; }
+  nav { position: fixed; left: 0; right: 0; bottom: 0; background: var(--card); border-top: 1px solid var(--line);
+    display: grid; grid-template-columns: repeat(6, 1fr); padding-bottom: env(safe-area-inset-bottom, 0px);
+    padding-left: env(safe-area-inset-left, 0px); padding-right: env(safe-area-inset-right, 0px); z-index: 5; }
+  nav button { border: 0; border-radius: 0; background: transparent; padding: 10px 2px 12px; font-size: 13px; color: var(--muted); }
+  nav button.on { color: var(--accent); font-weight: 700; }
+  nav button span { display: block; font-size: 20px; line-height: 1.1; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  td, th { text-align: left; padding: 6px 4px; border-top: 1px solid var(--line); vertical-align: middle; }
+  th { color: var(--muted); font-weight: 600; border-top: 0; }
+  table.wk .row { gap: 6px; }
+  .hidden { display: none; }
+  [hidden] { display: none !important; }
+  .meal-row { display: flex; gap: 8px; align-items: center; padding: 8px 0; border-top: 1px solid var(--line); }
+  .meal-row:first-of-type { border-top: 0; }
+  .mealbtn { text-align: left; border: 0; background: transparent; padding: 4px 0; }
+  .fpreview { margin-top: 6px; line-height: 1.6; }
+  .fpreview .fg { color: var(--text); font-weight: 600; }
+  .fpreview .unk { color: var(--bad); }
+  .plan-day { border-top: 1px solid var(--line); padding: 8px 0; }
+  .plan-day summary { cursor: pointer; padding: 4px 0; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .plan-day summary .muted { margin-left: auto; }
+  .subex .small { flex: none; }
+</style>
+</head>
+<body>
+<main id="app"></main>
+<nav id="nav"></nav>
+<script src="ovningar.js"></script>
+<script src="figur.js"></script>
+<script src="mat.js"></script>
+<script src="app.js"></script>
+<script>
+  // Offline och installation på hemskärmen när appen ligger på en vanlig webbplats
+  if (!window.claude && "serviceWorker" in navigator && location.protocol === "https:") {
+    navigator.serviceWorker.register("sw.js").catch(() => {});
+  }
+</script>
+</body>
+</html>

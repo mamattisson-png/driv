@@ -1,0 +1,1107 @@
+"use strict";
+
+// ---------- Upplägg ----------
+const WD = ["Mån", "Tis", "Ons", "Tors", "Fre", "Lör", "Sön"];
+// Passtyper: rubrik, muskler, övningskategorier i väljaren och färg på etiketten
+const TYPES = {
+  push: { label: "Push", muscles: "Bröst, axlar, triceps", cats: ["push"] },
+  pull: { label: "Pull", muscles: "Rygg, baksida axlar, biceps", cats: ["pull"] },
+  legs: { label: "Legs", muscles: "Lår, säte, vader", cats: ["legs"] },
+  upper: { label: "Överkropp", muscles: "Bröst, rygg, axlar, armar", cats: ["push", "pull"] },
+  lower: { label: "Underkropp", muscles: "Lår, säte, vader", cats: ["legs"] },
+  full: { label: "Helkropp", muscles: "Hela kroppen", cats: ["legs", "push", "pull"] },
+  cpush: { label: "Push", color: "push", muscles: "Bröst, axlar, triceps med kroppsvikt", cats: ["bw"] },
+  cpull: { label: "Pull", color: "pull", muscles: "Rygg, biceps, grepp med kroppsvikt", cats: ["bw"] },
+  clegs: { label: "Ben & bål", color: "legs", muscles: "Ben, säte och bål med kroppsvikt", cats: ["bw"] },
+  cfull: { label: "Helkropp", color: "full", muscles: "Hela kroppen med kroppsvikt", cats: ["bw"] },
+  chest: { label: "Bröst", color: "push", muscles: "Bröst, triceps", cats: ["push"] },
+  back: { label: "Rygg", color: "pull", muscles: "Rygg, biceps", cats: ["pull"] },
+  shoulders: { label: "Axlar", color: "upper", muscles: "Axlar, armar", cats: ["push", "pull"] },
+  arms: { label: "Armar", color: "lower", muscles: "Biceps, triceps, underarmar", cats: ["pull", "push"] },
+  str5a: { label: "Styrka A", fixedName: true, color: "full", muscles: "Knäböj, bänkpress, rodd", cats: ["legs", "push", "pull"] },
+  str5b: { label: "Styrka B", fixedName: true, color: "full", muscles: "Knäböj, militärpress, marklyft", cats: ["legs", "push", "pull"] },
+  sq: { label: "Knäböj", color: "legs", muscles: "Knäböj och ben", cats: ["legs"] },
+  bp: { label: "Bänkpress", color: "push", muscles: "Bänkpress, bröst, triceps", cats: ["push"] },
+  dl: { label: "Marklyft", color: "pull", muscles: "Marklyft, rygg, baksida", cats: ["pull", "legs"] },
+  chestback: { label: "Bröst & rygg", color: "push", muscles: "Bröst, rygg", cats: ["push", "pull"] },
+  shoulderarms: { label: "Axlar & armar", color: "upper", muscles: "Axlar, biceps, triceps", cats: ["push", "pull"] },
+  hfull: { label: "Hantlar", color: "full", muscles: "Hela kroppen med hantlar", cats: ["push", "pull", "legs"] },
+  glutes: { label: "Rumpa", color: "lower", muscles: "Säte, baksida lår", cats: ["legs"] },
+};
+// Program: vilka passtyper som ingår för varje antal pass i veckan
+// keys: extra sökord utöver namn och beskrivning
+const PROGRAMS = {
+  ppl: { name: "Push / Pull / Legs", info: "Tre olika pass som roterar. Klassiskt för att bygga muskler.", keys: "ppl muskler gym", days: {
+    3: ["push", "pull", "legs"], 4: ["push", "pull", "legs", "upper"],
+    5: ["push", "pull", "legs", "upper", "lower"], 6: ["push", "pull", "legs", "push", "pull", "legs"] } },
+  helkropp: { name: "Helkropp", info: "Hela kroppen varje pass. Bra när du tränar få dagar.", keys: "nybörjare full body gym", days: {
+    2: ["full", "full"], 3: ["full", "full", "full"], 4: ["full", "full", "full", "full"] } },
+  overunder: { name: "Över/Underkropp", info: "Överkropp och underkropp varannan gång.", keys: "upper lower gym muskler", days: {
+    2: ["upper", "lower"], 3: ["upper", "lower", "upper"], 4: ["upper", "lower", "upper", "lower"] } },
+  cali: { name: "Calisthenics", info: "Bara kroppsvikt: golvet, en stång och en bänk räcker.", keys: "kroppsvikt hemma utomhus stång utan gym street workout", days: {
+    3: ["cpush", "cpull", "clegs"], 4: ["cpush", "cpull", "clegs", "cfull"],
+    5: ["cpush", "cpull", "clegs", "cpush", "cpull"], 6: ["cpush", "cpull", "clegs", "cpush", "cpull", "clegs"] } },
+  split: { name: "Kroppsdelssplit", info: "En muskelgrupp per pass.", keys: "bro split bodybuilding muskler gym", days: {
+    4: ["chest", "back", "legs", "shoulders"], 5: ["chest", "back", "legs", "shoulders", "arms"] } },
+  arnold: { name: "Arnold split", info: "Bröst och rygg, axlar och armar, ben. Mycket volym.", keys: "bodybuilding muskler avancerad gym", days: {
+    3: ["chestback", "shoulderarms", "legs"], 6: ["chestback", "shoulderarms", "legs", "chestback", "shoulderarms", "legs"] } },
+  styrka5x5: { name: "Styrka 5×5", info: "Få basövningar med tunga set om 5. Enkelt sätt att bli starkare.", keys: "nybörjare styrka skivstång stronglifts 5x5 gym", days: {
+    3: ["str5a", "str5b", "str5a"] } },
+  styrkelyft: { name: "Styrkelyft", info: "Knäböj, bänkpress och marklyft i fokus, med hjälpövningar.", keys: "powerlifting styrka tungt skivstång gym", days: {
+    3: ["sq", "bp", "dl"], 4: ["sq", "bp", "dl", "upper"] } },
+  hantlar: { name: "Hemma med hantlar", info: "Helkropp med bara hantlar och en bänk.", keys: "hemma hantlar nybörjare utan gym", days: {
+    2: ["hfull", "hfull"], 3: ["hfull", "hfull", "hfull"], 4: ["hfull", "hfull", "hfull", "hfull"] } },
+  rumpa: { name: "Rumpa & ben", info: "Extra fokus på säte och baksida lår, plus ett överkroppspass.", keys: "glutes rumpa säte underkropp ben gym", days: {
+    3: ["glutes", "upper", "lower"], 4: ["glutes", "upper", "glutes", "lower"] } },
+};
+const DEFAULT_WEEKDAYS = { 2: [0, 3], 3: [0, 2, 4], 4: [0, 1, 3, 4], 5: [0, 1, 2, 3, 4], 6: [0, 1, 2, 3, 4, 5] };
+const counts = prog => Object.keys(PROGRAMS[prog].days).map(Number);
+
+// Standardövningar per passtyp; typ2/typ3 används när samma typ återkommer i veckan
+const DEFAULT_EX = {
+  push: ["bankpress", "lutande_hantelpress", "militarpress", "sidolyft", "dips", "triceps_pushdown"],
+  push2: ["sittande_axelpress", "hantelpress", "armhavningar", "sidolyft", "fransk_press"],
+  pull: ["marklyft", "chins", "skivstangsrodd", "kabelrodd", "face_pulls", "bicepscurl"],
+  pull2: ["latsdrag", "hantelrodd", "face_pulls", "hammercurl"],
+  legs: ["knaboj", "rumansk_marklyft", "benpress", "bencurl", "utfall", "vadpress"],
+  legs2: ["benpress", "hip_thrust", "benspark", "bencurl", "vadpress"],
+  upper: ["bankpress", "skivstangsrodd", "sittande_axelpress", "latsdrag", "bicepscurl", "triceps_pushdown"],
+  upper2: ["lutande_hantelpress", "chins", "militarpress", "kabelrodd", "hammercurl", "fransk_press"],
+  lower: ["knaboj", "hip_thrust", "benspark", "bencurl", "vadpress"],
+  lower2: ["marklyft", "benpress", "utfall", "bencurl", "vadpress"],
+  full: ["knaboj", "bankpress", "skivstangsrodd", "militarpress", "rumansk_marklyft"],
+  full2: ["marklyft", "lutande_hantelpress", "chins", "utfall", "sidolyft"],
+  full3: ["benpress", "hantelpress", "latsdrag", "hip_thrust", "face_pulls"],
+  cpush: ["armhavningar", "dips", "pike_pushups", "diamant_armhavningar", "plankan"],
+  cpush2: ["pike_pushups", "dips", "armhavningar", "l_sit"],
+  cpull: ["pullups", "australiensisk_rodd", "chins", "hangande_benlyft"],
+  cpull2: ["chins", "australiensisk_rodd", "pullups", "hollow_hold"],
+  clegs: ["bulgarisk", "pistol", "hoppknaboj", "glute_bridge", "hollow_hold"],
+  cfull: ["burpees", "pullups", "dips", "bulgarisk", "l_sit"],
+  chest: ["bankpress", "lutande_hantelpress", "hantelpress", "dips", "triceps_pushdown", "fransk_press"],
+  back: ["marklyft", "chins", "skivstangsrodd", "latsdrag", "kabelrodd", "bicepscurl"],
+  shoulders: ["militarpress", "sittande_axelpress", "sidolyft", "face_pulls", "bicepscurl", "triceps_pushdown"],
+  arms: ["bicepscurl", "hammercurl", "triceps_pushdown", "fransk_press", "dips"],
+  // id@SxR ger egna set × reps
+  str5a: ["knaboj@5x5", "bankpress@5x5", "skivstangsrodd@5x5"],
+  str5b: ["knaboj@5x5", "militarpress@5x5", "marklyft@1x5"],
+  sq: ["knaboj@5x3", "benpress", "utfall", "plankan"],
+  bp: ["bankpress@5x3", "lutande_hantelpress", "dips", "triceps_pushdown", "face_pulls"],
+  dl: ["marklyft@5x3", "rumansk_marklyft", "chins", "skivstangsrodd", "hangande_benlyft"],
+  chestback: ["bankpress", "skivstangsrodd", "lutande_hantelpress", "chins", "dips", "kabelrodd"],
+  chestback2: ["hantelpress", "latsdrag", "armhavningar", "hantelrodd", "face_pulls"],
+  shoulderarms: ["militarpress", "sidolyft", "face_pulls", "bicepscurl", "fransk_press", "hammercurl"],
+  shoulderarms2: ["sittande_axelpress", "sidolyft", "hammercurl", "triceps_pushdown", "bicepscurl"],
+  hfull: ["hantelpress", "hantelrodd", "utfall", "sittande_axelpress", "hammercurl", "glute_bridge"],
+  hfull2: ["lutande_hantelpress", "hantelrodd", "bulgarisk", "sidolyft", "fransk_press", "armhavningar"],
+  hfull3: ["utfall", "armhavningar", "hantelrodd", "sittande_axelpress", "glute_bridge", "hammercurl"],
+  glutes: ["hip_thrust", "rumansk_marklyft", "bulgarisk", "utfall", "glute_bridge", "bencurl"],
+  glutes2: ["hip_thrust", "knaboj", "bencurl", "bulgarisk", "glute_bridge"],
+};
+// Dailys: övningar, löpning eller promenad som bockas av varje dag
+const DEFAULT_DAILY = ["plankan", "hangande_benlyft", "russian_twist", "lop"];
+const isRun = id => id === "lop";
+
+// ---------- Kost ----------
+// Måltid och andel av dagens kalorier
+const MEALS = [["Frukost", 0.25], ["Lunch", 0.30], ["Mellanmål", 0.15], ["Middag", 0.30]];
+const ACTIVITY = [
+  [1.2, "Stillasittande"], [1.375, "Lätt aktiv (1–3 pass/v)"],
+  [1.55, "Aktiv (3–5 pass/v)"], [1.725, "Mycket aktiv (6–7 pass/v)"],
+];
+const GOALS = { cut: ["Gå ner (−400 kcal)", -400], keep: ["Behålla", 0], bulk: ["Bygga (+250 kcal)", 250] };
+
+// ---------- Lagring ----------
+const KEY = "ppl-traning-v2";
+const KEY_V1 = "ppl-traning-v1";
+
+function exEntry(spec) {
+  const [id, sr] = spec.split("@");
+  const e = { id, sets: EX[id].sets, reps: EX[id].reps };
+  if (sr) { const [sets, reps] = sr.split("x"); e.sets = +sets; e.reps = reps; }
+  return e;
+}
+
+// Behåller ett befintligt pass på samma plats om typen är densamma, så att egna övningar finns kvar
+function makeDays(prog, count, old = []) {
+  const types = PROGRAMS[prog].days[count];
+  const seen = {};
+  return types.map((type, i) => {
+    const round = seen[type] = (seen[type] || 0) + 1;
+    const repeated = !TYPES[type].fixedName && types.filter(t => t === type).length > 1;
+    const name = TYPES[type].label + (repeated ? " " + "ABC"[(round - 1) % 3] : "");
+    const prev = old[i];
+    if (prev && prev.type === type) return { ...prev, name };
+    const list = DEFAULT_EX[round > 1 && DEFAULT_EX[type + round] ? type + round : type];
+    return { id: `d${i + 1}-${type}-${Date.now().toString(36)}`, type, name, ex: list.map(exEntry) };
+  });
+}
+
+function freshState() {
+  return {
+    v: 2, setupDone: false,
+    profile: { sex: "m", age: 30, height: 180, weight: 80, activity: 1.55, goal: "keep" },
+    kcalOverride: null,
+    meals: [],
+    learned: {},           // rätter som Claude räknat ut, så att de känns igen nästa gång
+    plan: { program: "ppl", count: 3, mode: "flex", weekdays: DEFAULT_WEEKDAYS[3].slice(), days: makeDays("ppl", 3) },
+    daily: DEFAULT_DAILY.map(exEntry),
+    log: {},
+  };
+}
+
+// v1 hade fasta id:n (push0 …) och dagnamn som typ. Övningarna matchas på namn.
+const V1_NAMES = {
+  "Bänkpress": "bankpress", "Lutande hantelpress": "lutande_hantelpress", "Militärpress": "militarpress",
+  "Sidolyft": "sidolyft", "Dips": "dips", "Triceps pushdown": "triceps_pushdown", "Marklyft": "marklyft",
+  "Chins / latsdrag": "chins", "Skivstångsrodd": "skivstangsrodd", "Sittande kabelrodd": "kabelrodd",
+  "Face pulls": "face_pulls", "Bicepscurl": "bicepscurl", "Knäböj": "knaboj", "Rumänsk marklyft": "rumansk_marklyft",
+  "Benpress": "benpress", "Bencurl": "bencurl", "Utfall": "utfall", "Vadpress": "vadpress",
+};
+function migrateV1(old) {
+  const s = freshState();
+  if (old.profile) s.profile = old.profile;
+  s.kcalOverride = old.kcalOverride || null;
+  const idMap = {};
+  for (const d in old.program || {}) for (const ex of old.program[d]) if (V1_NAMES[ex.name]) idMap[ex.id] = V1_NAMES[ex.name];
+  for (const [date, L] of Object.entries(old.log || {})) {
+    const n = { workout: null, dailies: {}, food: L.food || [] };
+    if (L.workout) {
+      const d = s.plan.days.find(x => x.type === L.workout.day);
+      n.workout = { dayId: d ? d.id : "d1", done: !!L.workout.done, sets: {} };
+      for (const [k, v] of Object.entries(L.workout.sets || {})) if (idMap[k]) n.workout.sets[idMap[k]] = v;
+    }
+    const od = L.dailies || {};
+    if (od.mage) for (const id of ["plankan", "hangande_benlyft", "russian_twist"]) n.dailies[id] = true;
+    if (od.lop) n.dailies.lop = od.lop;
+    s.log[date] = n;
+  }
+  return s;
+}
+
+// Äldre data hade dailys som mage/lop/steg; nu är de en lista av övningar
+function upgradeDailies(s) {
+  if (!s.dailies) return s;
+  const old = s.dailies, items = [];
+  if (old.mage && old.mage.on) items.push(...(old.mage.ex || []));
+  if (old.lop && old.lop.on) items.push(exEntry("lop"));
+  if (old.steg && old.steg.on) items.push(exEntry("promenad"));
+  s.daily = items;
+  delete s.dailies;
+  for (const L of Object.values(s.log || {})) {
+    const d = L.dailies || (L.dailies = {});
+    if (d.mage && typeof d.mage === "object") {
+      for (const [id, v] of Object.entries(d.mage)) if (v) d[id] = true;
+    }
+    delete d.mage;
+    if (d.steg) d.promenad = true;
+    delete d.steg;
+  }
+  return s;
+}
+
+function load() {
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (raw) return upgradeDailies(Object.assign(freshState(), JSON.parse(raw)));
+    const v1 = localStorage.getItem(KEY_V1);
+    if (v1) return migrateV1(JSON.parse(v1));
+  } catch (e) { /* tom eller blockerad lagring: börja om */ }
+  return freshState();
+}
+
+let S = load();
+function saveLocal() {
+  try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* ignoreras */ }
+}
+function save() {
+  saveLocal();
+  clearTimeout(cloud.timer);
+  cloud.timer = setTimeout(pushCloud, 600);
+}
+
+// I en publicerad artifact synkas allt till kontots privata databas: ett dokument
+// med inställningar och ett per månad med loggen. localStorage är cache och reserv.
+const cloud = { col: null, sent: {}, queue: {}, status: "local", timer: 0, sample: null };
+
+function splitDocs(state) {
+  const { log, ...settings } = state;
+  const docs = { settings };
+  for (const [date, entry] of Object.entries(log)) {
+    const id = "m-" + date.slice(0, 7);
+    (docs[id] = docs[id] || { days: {} }).days[date] = entry;
+  }
+  return docs;
+}
+function joinDocs(docs) {
+  const s = Object.assign(freshState(), docs.settings || {});
+  s.log = {};
+  for (const [id, d] of Object.entries(docs)) if (id.startsWith("m-")) Object.assign(s.log, d.days || {});
+  return upgradeDailies(s);
+}
+
+// Skriver bara dokument som ändrats, ett anrop i taget per dokument
+function pushCloud() {
+  if (!cloud.col) return;
+  const docs = splitDocs(S);
+  const write = (id, op) => {
+    cloud.queue[id] = (cloud.queue[id] || Promise.resolve()).then(op).catch(e => {
+      delete cloud.sent[id];
+      // Saknar man skrivrätt (t.ex. via en delad länk) sparas allt bara i webbläsaren
+      if (e && e.code === "invalid_argument") { cloud.col = null; cloud.status = "local"; }
+      else cloud.status = "error";
+      render();
+    });
+  };
+  for (const [id, body] of Object.entries(docs)) {
+    const json = JSON.stringify(body);
+    if (cloud.sent[id] === json) continue;
+    cloud.sent[id] = json;
+    write(id, () => cloud.col.doc(id).set(JSON.parse(json)));
+  }
+  for (const id of Object.keys(cloud.sent)) {
+    if (docs[id]) continue;
+    delete cloud.sent[id];
+    write(id, () => cloud.col.doc(id).delete());
+  }
+}
+
+async function connectCloud() {
+  if (!window.claude || !window.claude.use) return;
+  try {
+    const [db, user, sample] = await Promise.all(["db", "user", "sample"].map(n => window.claude.use(n)));
+    cloud.sample = sample;
+    const uid = user && await user.id();
+    if (!db || !uid) return;
+    const col = db.collection("data/users/" + uid);
+    const snap = await col.get();
+    cloud.col = col;
+    cloud.status = "cloud";
+    if (snap.empty) {
+      if (S.setupDone || Object.keys(S.log).length) pushCloud();
+    } else {
+      const docs = {};
+      // Snapshots är frysta; kopiera så att appen kan ändra i datan
+      for (const d of snap.docs) { const json = JSON.stringify(d.data()); docs[d.id] = JSON.parse(json); cloud.sent[d.id] = json; }
+      S = joinDocs(docs);
+      saveLocal();
+      if (S.setupDone && tab === "upplagg") { tab = "idag"; draft = null; }
+    }
+  } catch (e) {
+    cloud.status = "error";
+  }
+  render();
+}
+
+async function exportData() {
+  const filename = `traning-${TODAY}.json`, data = JSON.stringify(S, null, 2);
+  const dl = window.claude && window.claude.use ? await window.claude.use("downloads") : null;
+  if (dl) {
+    try { await dl.save({ filename, data }); } catch (e) { /* nedladdningen avböjdes */ }
+    return;
+  }
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([data], { type: "application/json" }));
+  a.download = filename;
+  a.click();
+}
+
+// ---------- Datum ----------
+function iso(d) {
+  const z = n => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${z(d.getMonth() + 1)}-${z(d.getDate())}`;
+}
+const parse = s => new Date(s + "T12:00:00");
+const shift = (s, days) => { const d = parse(s); d.setDate(d.getDate() + days); return iso(d); };
+const weekdayOf = s => (parse(s).getDay() + 6) % 7;
+const weekStart = s => shift(s, -weekdayOf(s));
+function weekNo(s) {
+  const d = parse(s);
+  d.setDate(d.getDate() + 3 - weekdayOf(s));
+  const jan4 = new Date(d.getFullYear(), 0, 4);
+  return 1 + Math.round(((d - jan4) / 864e5 - 3 + (jan4.getDay() + 6) % 7) / 7);
+}
+const TODAY = iso(new Date());
+
+function day(date = TODAY) {
+  if (!S.log[date]) S.log[date] = { workout: null, dailies: {}, food: [] };
+  return S.log[date];
+}
+const dayById = id => S.plan.days.find(d => d.id === id);
+// "flex": passen körs i ordning vilka dagar som helst. "fixed": varje pass har en veckodag.
+const isFixed = () => S.plan.mode === "fixed";
+function scheduledDay(date) {
+  if (!isFixed()) return null;
+  const i = S.plan.weekdays.indexOf(weekdayOf(date));
+  return i >= 0 ? S.plan.days[i] : null;
+}
+function nextScheduled(from) {
+  for (let i = 1; i <= 7; i++) {
+    const d = shift(from, i), p = scheduledDay(d);
+    if (p) return { date: d, day: p };
+  }
+  return null;
+}
+// Passet efter det senast avklarade, oavsett veckodag
+function nextInRotation() {
+  const dates = Object.keys(S.log).filter(d => d < TODAY && S.log[d].workout && S.log[d].workout.done).sort();
+  const last = dates.length ? S.plan.days.findIndex(x => x.id === S.log[dates[dates.length - 1]].workout.dayId) : -1;
+  return S.plan.days[(last + 1) % S.plan.days.length];
+}
+const suggestedDay = () => isFixed() ? (scheduledDay(TODAY) || nextScheduled(TODAY).day) : nextInRotation();
+const passLabel = d => `Pass ${S.plan.days.indexOf(d) + 1} · ${esc(d.name)}`;
+
+// ---------- Kalorier ----------
+// Mifflin–St Jeor
+const bmr = p => 10 * p.weight + 6.25 * p.height - 5 * p.age + (p.sex === "m" ? 5 : -161);
+const tdee = p => Math.round(bmr(p) * p.activity);
+function kcalGoal() {
+  if (S.kcalOverride) return S.kcalOverride;
+  return Math.round((tdee(S.profile) + GOALS[S.profile.goal][1]) / 10) * 10;
+}
+// Protein 2 g/kg, fett 0,8 g/kg, resten kolhydrater
+function macros() {
+  const kcal = kcalGoal(), w = S.profile.weight;
+  const protein = Math.round(2 * w), fat = Math.round(0.8 * w);
+  return { kcal, protein, fat, carbs: Math.max(0, Math.round((kcal - protein * 4 - fat * 9) / 4)) };
+}
+function eaten(date = TODAY) {
+  return (S.log[date] ? S.log[date].food : []).reduce(
+    (a, f) => ({ kcal: a.kcal + (+f.kcal || 0), protein: a.protein + (+f.protein || 0) }), { kcal: 0, protein: 0 });
+}
+
+// ---------- Veckojämförelse ----------
+function weekDates(ws) { return [0, 1, 2, 3, 4, 5, 6].map(i => shift(ws, i)); }
+const hasData = s => s && (+s.kg > 0 || +s.reps > 0);
+
+// Bästa set (högst vikt, sedan flest reps), total volym och totala reps för en övning en vecka
+function exWeek(exId, ws) {
+  let best = null, vol = 0, reps = 0;
+  for (const d of weekDates(ws)) {
+    const w = S.log[d] && S.log[d].workout;
+    for (const s of (w && w.sets[exId]) || []) {
+      if (!hasData(s)) continue;
+      const kg = +s.kg || 0, r = +s.reps || 0;
+      vol += kg * r; reps += r;
+      if (!best || kg > best.kg || (kg === best.kg && r > best.reps)) best = { kg, reps: r };
+    }
+  }
+  return best && { ...best, vol, totalReps: reps };
+}
+
+const fmtNum = n => (Math.round(n * 10) / 10).toString().replace(".", ",");
+function deltaBadge(v, unit) {
+  if (v === 0) return `<span class="delta same">±0 ${unit}</span>`;
+  return `<span class="delta ${v > 0 ? "up" : "down"}">${v > 0 ? "+" : "−"}${fmtNum(Math.abs(v))} ${unit}</span>`;
+}
+// Jämför mot förra veckan: vikt om övningen körs med vikt, annars reps
+// Övningar på tid (plankan, L-sit …) loggas i sekunder i stället för reps
+const isTimed = id => /\d\s*s\b|sek/.test(EX[id].reps);
+const repUnit = id => isTimed(id) ? "s" : "reps";
+
+// Kroppsviktsövningar jämförs i reps/sekunder, med extra vikt bara om den använts
+function exDelta(cur, prev, id) {
+  if (!cur || !prev) return "";
+  const unit = repUnit(id);
+  if (cur.kg || prev.kg) {
+    const d = cur.kg - prev.kg;
+    return d !== 0 ? deltaBadge(d, "kg") : deltaBadge(cur.reps - prev.reps, unit);
+  }
+  return EX[id].bw ? deltaBadge(cur.reps - prev.reps, unit) : deltaBadge(cur.totalReps - prev.totalReps, unit);
+}
+function fmtSet(b, id) {
+  if (!b) return "–";
+  const r = `${b.reps} ${repUnit(id)}`;
+  if (!b.kg) return r;
+  return EX[id].bw ? `${r} +${fmtNum(b.kg)} kg` : `${fmtNum(b.kg)} kg × ${b.reps}`;
+}
+
+function dailyDone(date, id) {
+  const v = S.log[date] && S.log[date].dailies[id];
+  return isRun(id) ? !!(v && (v.km || v.min)) : v === true;
+}
+const allDailiesDone = date => S.daily.length > 0 && S.daily.every(e => dailyDone(date, e.id));
+// Antal dagar i rad som test(datum) gäller, räknat från idag eller igår
+function streakOf(test) {
+  let n = 0, d = test(TODAY) ? TODAY : shift(TODAY, -1);
+  while (test(d)) { n++; d = shift(d, -1); }
+  return n;
+}
+function weekSummary(ws) {
+  const dates = weekDates(ws);
+  const logged = dates.filter(d => S.log[d]);
+  const kcalDays = logged.filter(d => eaten(d).kcal > 0);
+  return {
+    passes: logged.filter(d => S.log[d].workout && S.log[d].workout.done).length,
+    km: logged.reduce((a, d) => a + (+(S.log[d].dailies.lop || {}).km || 0), 0),
+    dailies: dates.filter(allDailiesDone).length,
+    kcal: kcalDays.length ? Math.round(kcalDays.reduce((a, d) => a + eaten(d).kcal, 0) / kcalDays.length) : 0,
+  };
+}
+
+// ---------- Rendering ----------
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const TABS = [["idag", "🏠", "Idag"], ["pass", "🏋️", "Pass"], ["dailys", "✅", "Dailys"], ["kost", "🍽️", "Kost"], ["vecka", "📈", "Vecka"], ["profil", "⚙️", "Profil"]];
+let tab = S.setupDone ? "idag" : "upplagg";
+let chosenDay = null;
+let editing = false;
+let dailyEditing = false;
+let progQuery = "";
+let progOpen = false;      // listan med upplägg är ihopfälld tills man vill byta
+let modal = null;          // { info: exId } eller { pick: lista, replace, cat, q }
+let weekOffset = 0;
+let draft = null;          // utkast i upplägg-vyn
+let confirmReset = false;
+let importMsg = "";
+
+function render() {
+  const nav = document.getElementById("nav");
+  nav.classList.toggle("hidden", tab === "upplagg");
+  nav.innerHTML = TABS.map(([id, ic, lbl]) =>
+    `<button data-tab="${id}" class="${tab === id ? "on" : ""}"><span>${ic}</span>${lbl}</button>`).join("");
+  document.getElementById("app").innerHTML = VIEWS[tab]() + (modal ? renderModal() : "");
+  if (tab === "upplagg") filterPrograms();
+  if (modal && modal.pick) filterPicker();
+}
+
+function bar(value, goal) {
+  const pct = goal ? Math.min(100, Math.round(value / goal * 100)) : 0;
+  return `<div class="bar ${value > goal * 1.05 ? "over" : ""}"><div style="width:${pct}%"></div></div>`;
+}
+const thumb = (id, cls = "") => `<button class="thumb ${cls}" data-info="${id}" aria-label="Visa ${esc(EX[id].name)}">${figure(id)}</button>`;
+const tag = t => `<span class="tag ${TYPES[t].color || t}">${TYPES[t].label}</span>`;
+
+function currentPassDay() {
+  const L = S.log[TODAY];
+  const id = chosenDay || (L && L.workout ? L.workout.dayId : suggestedDay().id);
+  return dayById(id) || S.plan.days[0];
+}
+
+function dailiesSummary() {
+  if (!S.daily.length) return `<div class="card"><h2>Dailys</h2><div class="muted">Inga dailys ännu.</div>
+    <button style="margin-top:10px" data-go="dailys">Lägg till dailys</button></div>`;
+  const done = S.daily.filter(e => dailyDone(TODAY, e.id)).length, st = streakOf(allDailiesDone);
+  return `<div class="card"><div class="row between"><h2>Dailys</h2><span class="muted">${done} av ${S.daily.length} klara</span></div>
+    <div class="bar ok"><div style="width:${Math.round(done / S.daily.length * 100)}%"></div></div>
+    ${st ? `<div class="muted">🔥 Alla klara ${st} dagar i rad</div>` : ""}
+    <div class="thumbs">${S.daily.map(e => thumb(e.id, "xs" + (dailyDone(TODAY, e.id) ? " done" : ""))).join("")}</div>
+    <div style="margin-top:10px"><button data-go="dailys">Öppna dailys</button></div></div>`;
+}
+
+const VIEWS = {
+  upplagg() {
+    if (!draft) draft = {
+      program: S.plan.program || "ppl",
+      count: S.plan.count,
+      mode: S.plan.mode || "flex",
+      weekdays: S.plan.weekdays.slice(),
+      days: JSON.parse(JSON.stringify(S.plan.days)),
+    };
+    const n = draft.count, fixed = draft.mode === "fixed";
+    const picked = draft.weekdays.length, ok = !fixed || picked === n;
+    const sorted = draft.weekdays.slice().sort((a, b) => a - b);
+    const p = S.profile;
+    return `<h1>Ditt upplägg</h1>
+      <div class="card"><div class="row between"><h2>1. Vilket upplägg?</h2>
+          <button class="small" data-progtoggle aria-expanded="${progOpen}">${progOpen ? "Fäll ihop" : `Visa alla ${Object.keys(PROGRAMS).length}`}</button></div>
+        ${progOpen ? "" : `<div class="proglist"><button class="on" data-progtoggle><b>${PROGRAMS[draft.program].name}</b>
+          <div class="muted">${PROGRAMS[draft.program].info}</div><div class="muted small">Tryck för att byta upplägg</div></button></div>`}
+        <div ${progOpen ? "" : "hidden"}>
+        <input id="progsearch" type="search" placeholder="Sök, t.ex. hemma, styrka, nybörjare" value="${esc(progQuery)}" autocomplete="off" style="margin-bottom:10px">
+        <div class="proglist">${Object.entries(PROGRAMS).map(([id, pr]) => `<button data-prog="${id}" data-q="${esc(norm(pr.name + " " + pr.info + " " + pr.keys))}" class="${draft.program === id ? "on" : ""}" aria-pressed="${draft.program === id}">
+          <b>${pr.name}</b><div class="muted">${pr.info}</div><div class="muted small">${counts(id).join(", ")} pass i veckan</div></button>`).join("")}</div>
+        <div class="muted" id="noprog" hidden>Inget upplägg matchar sökningen.</div></div></div>
+      <div class="card"><h2>2. Hur många pass i veckan?</h2>
+        <div class="seg" style="grid-template-columns:repeat(${counts(draft.program).length},1fr)">${counts(draft.program).map(c => `<button data-count="${c}" class="${n === c ? "on" : ""}" aria-pressed="${n === c}"><b>${c}</b><div class="muted">pass</div></button>`).join("")}</div>
+        </div>
+      <div class="card"><h2>3. När tränar du?</h2>
+        <div class="seg two">
+          <button data-mode="flex" class="${fixed ? "" : "on"}" aria-pressed="${!fixed}"><b>Olika dagar</b><div class="muted">Pass 1, 2, 3 … i ordning</div></button>
+          <button data-mode="fixed" class="${fixed ? "on" : ""}" aria-pressed="${fixed}"><b>Fasta dagar</b><div class="muted">Varje pass har en veckodag</div></button></div>
+        ${fixed ? `<div class="seg wd" style="margin-top:12px">${WD.map((name, i) => `<button data-wd="${i}" class="${draft.weekdays.includes(i) ? "on" : ""}" aria-pressed="${draft.weekdays.includes(i)}">${name}</button>`).join("")}</div>
+          <div class="muted" style="margin-top:8px">${ok ? `✓ ${n} dagar valda. Tryck på en vald dag för att avmarkera den.` : `Välj ${n} dagar (${picked} valda)`}</div>`
+          : `<div class="muted" style="margin-top:8px">Appen föreslår nästa pass i ordningen när du tränar, vilken dag det än är.</div>`}</div>
+      <div class="card"><h2>4. Övningar</h2>
+        <div class="muted" style="margin-bottom:8px">Förifyllt. Byt, ta bort eller lägg till. Tryck på en bild för att se hur övningen görs.</div>
+        ${draft.days.map((d, i) => `<details class="plan-day" open><summary>${fixed && ok ? `<b>${WD[sorted[i]]}</b> · ` : ""}<b>Pass ${i + 1}</b> ${tag(d.type)}
+            <span class="muted">${d.ex.length} övningar</span></summary>
+          ${exRows("draft:" + i, d.ex, false)}</details>`).join("")}</div>
+      <div class="card"><h2>5. Dailys</h2>
+        <div class="muted" style="margin-bottom:8px">Det du vill göra varje dag. Du ändrar det när som helst under fliken Dailys.</div>
+        ${exRows("daily", S.daily, false)}</div>
+      <div class="card"><h2>6. Kalorimål</h2>${profileFields(p)}
+        <div class="muted" style="margin-top:8px">Mål: <b>${kcalGoal()} kcal</b> · ${macros().protein} g protein per dag</div></div>
+      <button class="primary wide" data-savesetup ${ok ? "" : "disabled"}>${S.setupDone ? "Spara upplägg" : "Kom igång"}</button>
+      ${S.setupDone ? `<button class="ghost wide" data-cancelsetup>Avbryt</button>` : ""}`;
+  },
+
+  idag() {
+    const m = macros(), e = eaten(), L = day();
+    const d = L.workout ? dayById(L.workout.dayId) : isFixed() ? scheduledDay(TODAY) : nextInRotation();
+    const weekPasses = weekSummary(weekStart(TODAY)).passes;
+    let passCard;
+    if (d) {
+      const w = L.workout && L.workout.dayId === d.id ? L.workout : null;
+      const done = d.ex.filter(x => exDone(w, x)).length;
+      passCard = `<div class="card"><div class="row between"><div>${tag(d.type)} ${w && w.done ? `<span class="pill">✓ Klart</span>` : ""}
+        <h2 style="margin-top:8px">${passLabel(d)}</h2>
+        <div class="muted">${TYPES[d.type].muscles} · ${done}/${d.ex.length} övningar klara</div>
+        <div class="muted">${weekPasses} av ${S.plan.count} pass klara denna vecka</div></div>
+        <button class="primary" data-go="pass" data-day="${d.id}">${w ? "Fortsätt" : "Starta"}</button></div>
+        <div class="thumbs">${d.ex.map(x => thumb(x.id, "xs")).join("")}</div></div>`;
+    } else {
+      const nx = nextScheduled(TODAY);
+      passCard = `<div class="card"><h2>Vilodag 😌</h2><div class="muted">Nästa pass: ${WD[weekdayOf(nx.date)]} · ${esc(nx.day.name)}</div>
+        <div style="margin-top:10px"><button data-go="pass" data-day="${nx.day.id}">Kör ett pass ändå</button></div></div>`;
+    }
+    return `<h1>Idag <span class="muted">${new Date().toLocaleDateString("sv-SE", { weekday: "long", day: "numeric", month: "long" })} · v.${weekNo(TODAY)}</span></h1>
+      ${passCard}
+      <div class="card"><div class="row between"><h2>Kalorier</h2><span class="muted">${e.kcal} / ${m.kcal} kcal</span></div>
+        ${bar(e.kcal, m.kcal)}<div class="muted">${Math.max(0, m.kcal - e.kcal)} kcal kvar</div>
+        <div class="row between" style="margin-top:10px"><span>Protein</span><span class="muted">${e.protein} / ${m.protein} g</span></div>
+        ${bar(e.protein, m.protein)}
+        <div style="margin-top:10px"><button data-go="kost">Logga mat</button></div></div>
+      ${dailiesSummary()}`;
+  },
+
+  pass() {
+    const L = day(), d = currentPassDay();
+    const w = L.workout && L.workout.dayId === d.id ? L.workout : null;
+    const other = L.workout && L.workout.dayId !== d.id ? dayById(L.workout.dayId) : null;
+    const done = d.ex.filter(x => exDone(w, x)).length;
+    return `<h1>Pass <span class="muted">v.${weekNo(TODAY)}</span></h1>
+      <div class="daypick" style="grid-template-columns:repeat(${Math.min(S.plan.days.length, 6)},1fr)">${S.plan.days.map((k, i) =>
+        `<button data-pick="${k.id}" class="${k.id === d.id ? "on" : ""}">${tag(k.type)}<div class="muted">${isFixed() ? WD[S.plan.weekdays[i]] : `Pass ${i + 1}`}</div></button>`).join("")}</div>
+      ${other && !editing ? `<div class="card warn">Idag har du redan loggat ${esc(other.name)}. Loggar du här ersätts det.</div>` : ""}
+      <div class="card"><div class="row between"><h2>${passLabel(d)}</h2>
+        <button class="small ghost" data-edit>${editing ? "Klar" : "Redigera"}</button></div>
+        <div class="muted">${TYPES[d.type].muscles}${editing ? "" : ` · ${done}/${d.ex.length} klara`}</div>
+        ${!editing && d.ex.length ? `<div class="bar ok"><div style="width:${Math.round(done / d.ex.length * 100)}%"></div></div>` : ""}
+      </div>
+      ${editing ? editList(d) : d.ex.map(ex => exBlock(d, ex, w)).join("")}
+      ${editing ? "" : `<button class="primary wide" data-finish="${d.id}">${w && w.done ? "✓ Passet är klart – ångra" : "Avsluta passet"}</button>`}`;
+  },
+
+  dailys() {
+    const n = S.daily.length, L = day();
+    if (dailyEditing) return `<h1>Dailys</h1>
+      <div class="card"><div class="row between"><h2>Redigera dailys</h2><button class="small ghost" data-dedit>Klar</button></div>
+        ${exRows("daily", S.daily, true)}</div>`;
+    const done = S.daily.filter(e => dailyDone(TODAY, e.id)).length, st = streakOf(allDailiesDone);
+    const thisW = weekSummary(weekStart(TODAY)), prevW = weekSummary(shift(weekStart(TODAY), -7));
+    const items = S.daily.map(e => {
+      const id = e.id, ok = dailyDone(TODAY, id), its = streakOf(d => dailyDone(d, id)), v = L.dailies[id] || {};
+      const ctl = isRun(id)
+        ? `<div class="row"><input type="number" inputmode="decimal" step="0.1" placeholder="km" value="${v.km || ""}" data-run="${id}" data-f="km" aria-label="Kilometer">
+            <input type="number" inputmode="numeric" placeholder="min" value="${v.min || ""}" data-run="${id}" data-f="min" aria-label="Minuter"></div>`
+        : `<button class="done-btn big ${ok ? "on" : ""}" data-dcheck="${id}" aria-pressed="${ok}" aria-label="${esc(EX[id].name)} klar idag">✓</button>`;
+      const sub = isRun(id)
+        ? `Veckan: ${fmtNum(thisW.km)} km ${thisW.km || prevW.km ? deltaBadge(Math.round((thisW.km - prevW.km) * 10) / 10, "km") : ""}`
+        : EX[id].cat === "cardio" ? esc(e.reps || EX[id].muscles) : `${e.sets} × ${esc(e.reps)}`;
+      return `<div class="card ex ${ok ? "complete" : ""}"><div class="row">${thumb(id)}
+        <div class="grow"><b>${esc(EX[id].name)}</b> ${its ? `<span class="pill">🔥 ${its} d</span>` : ""}<div class="muted">${sub}</div></div>${isRun(id) ? "" : ctl}</div>
+        ${isRun(id) ? `<div style="margin-top:10px">${ctl}</div>` : ""}</div>`;
+    }).join("");
+    return `<h1>Dailys <span class="muted">${new Date().toLocaleDateString("sv-SE", { weekday: "long", day: "numeric", month: "long" })}</span></h1>
+      <div class="card"><div class="row between"><h2>Idag</h2><button class="small ghost" data-dedit>Redigera</button></div>
+        ${n ? `<div class="muted">${done} av ${n} klara${st ? ` · 🔥 alla klara ${st} dagar i rad` : ""}</div>
+          <div class="bar ok"><div style="width:${Math.round(done / n * 100)}%"></div></div>`
+          : `<div class="muted">Lägg till det du vill göra varje dag, till exempel plankan eller löpning.</div>`}</div>
+      ${items}
+      <button class="wide" data-openpick="daily">+ Lägg till daily</button>`;
+  },
+
+  kost() {
+    const m = macros(), e = eaten(), L = day();
+    const recent = recentFoods();
+    return `<h1>Kost</h1>
+      <div class="card"><h2>Dagens mål</h2>
+        <div class="grid2"><div><div class="stat">${m.kcal}</div><div class="muted">kcal</div></div>
+        <div><div class="stat">${m.protein} g</div><div class="muted">protein</div></div></div>
+        <div class="muted" style="margin-top:6px">Fett ${m.fat} g · Kolhydrater ${m.carbs} g</div>
+        ${bar(e.kcal, m.kcal)}<div class="muted">Ätit ${e.kcal} kcal · ${e.protein} g protein</div></div>
+      <div class="card"><h2>Logga mat</h2>
+        <input id="fname" placeholder="T.ex. 2 dl mjölk, 2 ägg och 1 banan" autocomplete="off">
+        <div id="fpreview" class="muted fpreview"></div>
+        <div class="row" style="margin-top:8px">
+          <label class="field grow">kcal<input id="fkcal" type="number" inputmode="numeric"></label>
+          <label class="field grow">Protein (g)<input id="fprot" type="number" inputmode="numeric"></label>
+          <button class="primary" data-addfood style="align-self:flex-end">Logga</button></div>
+        <button class="small" data-savemeal style="margin-top:8px">Spara som min måltid</button></div>
+      <div class="card"><h2>Ät igen</h2>
+        ${S.meals.length ? `<div class="muted" style="margin-bottom:4px">Mina måltider</div>
+          ${S.meals.map((cm, i) => `<div class="food"><button class="grow mealbtn" data-meal="${i}">${esc(cm.name)} <span class="muted">${cm.kcal} kcal · ${cm.protein} g</span></button>
+          <button class="small ghost" data-delmeal="${i}" aria-label="Ta bort ${esc(cm.name)}">✕</button></div>`).join("")}` : ""}
+        <div class="muted" style="margin:${S.meals.length ? 12 : 0}px 0 4px">Tidigare loggat</div>
+        ${recent.length ? `<div class="chips">${recent.map((f, i) => `<button data-again="${i}">${esc(f.name)} <span class="muted">${f.kcal}</span></button>`).join("")}</div>`
+          : `<div class="muted">Det du loggar hamnar här, så att du kan logga samma sak igen med ett tryck.</div>`}</div>
+      <div class="card"><h2>Kostschema</h2>
+        <div class="muted" style="margin-bottom:6px">Logga en måltid med ungefär hur många kalorier den var.</div>
+        ${MEALS.map(([n, share], i) => {
+          const target = Math.round(m.kcal * share / 10) * 10;
+          return `<div class="meal-row"><div class="grow"><b>${n}</b> <span class="muted">mål ${target} kcal · ${Math.round(m.protein * share)} g protein</span>
+            </div>
+            <input id="qm-${i}" type="number" inputmode="numeric" placeholder="${target}" aria-label="kcal för ${n}" style="width:76px">
+            <button class="primary" data-qmeal="${i}" aria-label="Logga ${n}">+</button></div>`;
+        }).join("")}</div>
+      <div class="card"><h2>Idag</h2>${L.food.length ? L.food.map((f, i) => `<div class="food"><div class="grow">${esc(f.name)}</div><span class="muted">${f.kcal} kcal · ${f.protein} g</span><button class="small ghost" data-delfood="${i}">✕</button></div>`).join("") : `<div class="muted">Inget loggat än.</div>`}</div>`;
+  },
+
+  vecka() {
+    const ws = shift(weekStart(TODAY), weekOffset * 7), prevWs = shift(ws, -7);
+    const cur = weekSummary(ws), prev = weekSummary(prevWs);
+    const ids = [];
+    for (const d of S.plan.days) for (const e of d.ex) if (!ids.includes(e.id)) ids.push(e.id);
+    const rows = ids.map(id => {
+      const c = exWeek(id, ws), p = exWeek(id, prevWs);
+      if (!c && !p) return "";
+      const vol = c && p && p.vol ? Math.round((c.vol - p.vol) / p.vol * 100) : null;
+      return `<tr><td><div class="row">${thumb(id, "xs")}<span>${esc(EX[id].name)}</span></div></td><td>${fmtSet(c, id)}</td><td class="muted">${fmtSet(p, id)}</td>
+        <td>${exDelta(c, p, id)}${vol !== null && vol !== 0 ? `<div>${deltaBadge(vol, "% vol")}</div>` : ""}</td></tr>`;
+    }).join("");
+    const dates = weekDates(ws);
+    const m = macros();
+    const stat = (label, c, p, unit = "") => `<div><div class="stat">${fmtNum(c)}${unit}</div><div class="muted">${label}</div>${c || p ? deltaBadge(Math.round((c - p) * 10) / 10, unit.trim() || "st") : ""}</div>`;
+    return `<h1>Vecka ${weekNo(ws)}</h1>
+      <div class="row between" style="margin-bottom:12px"><button data-week="-1">‹ Förra</button>
+        <span class="muted">${ws.slice(5)} – ${shift(ws, 6).slice(5)}</span>
+        <button data-week="1" ${weekOffset >= 0 ? "disabled" : ""}>Nästa ›</button></div>
+      <div class="card"><h2>Jämfört med vecka ${weekNo(prevWs)}</h2><div class="grid2">
+        ${stat(`pass av ${S.plan.count}`, cur.passes, prev.passes)}
+        ${stat("dagar alla dailys klara", cur.dailies, prev.dailies)}
+        ${stat("löpning", cur.km, prev.km, " km")}
+        <div><div class="stat">${cur.kcal || "–"}</div><div class="muted">kcal/dag i snitt (mål ${m.kcal})</div></div>
+      </div></div>
+      <div class="card"><h2>Övningar</h2>${rows ? `<table class="wk"><tr><th>Övning</th><th>Bästa set</th><th>Förra v.</th><th>±</th></tr>${rows}</table>`
+        : `<div class="muted">Inga loggade set de här två veckorna.</div>`}</div>
+      <div class="card"><h2>Dagar</h2><table>${dates.map(d => {
+        const L = S.log[d], e = eaten(d);
+        const wk = L && L.workout && L.workout.done && dayById(L.workout.dayId);
+        const dn = S.daily.filter(x => dailyDone(d, x.id)).length;
+        const dl = S.daily.length ? `${dn}/${S.daily.length} dailys` : "";
+        return `<tr><td>${WD[weekdayOf(d)]} ${d.slice(8)}</td><td>${wk ? tag(wk.type) : "–"}</td><td>${dl || "–"}</td><td>${e.kcal || "–"}</td></tr>`;
+      }).join("")}</table></div>`;
+  },
+
+  profil() {
+    const p = S.profile, m = macros();
+    return `<h1>Profil</h1>
+      <div class="card"><h2>Upplägg</h2><div class="muted">${PROGRAMS[S.plan.program || "ppl"].name} · ${isFixed() ? S.plan.weekdays.map(i => WD[i]).join(", ") : `${S.plan.count} pass i veckan, valfria dagar`}</div>
+        <button style="margin-top:10px" data-tab="upplagg">Ändra upplägg</button></div>
+      <div class="card"><h2>Kalorimål</h2>${profileFields(p)}
+        <div class="muted" style="margin-top:10px">Underhåll (TDEE): ${tdee(p)} kcal · Mål: ${m.kcal} kcal</div>
+        <div class="muted">Protein ${m.protein} g · Fett ${m.fat} g · Kolhydrater ${m.carbs} g</div>
+        <label class="field" style="margin-top:10px">Eget kalorimål (lämna tomt för beräknat)
+          <input type="number" inputmode="numeric" id="override" value="${S.kcalOverride || ""}" placeholder="${m.kcal}"></label></div>
+      <div class="card"><h2>Data</h2><div class="muted" style="margin-bottom:8px">${{
+          cloud: "✓ Sparas på ditt konto och följer med mellan mobil och dator.",
+          error: "Kunde inte spara till kontot just nu. Allt finns kvar i den här webbläsaren och sparas igen vid nästa ändring.",
+          local: "Sparas i den här webbläsaren. Exportera för en säkerhetskopia.",
+        }[cloud.status]}</div>
+        <div class="row wrap"><button data-export>Exportera</button><button data-import>Importera</button>
+        <button class="${confirmReset ? "primary" : "ghost"}" data-reset>${confirmReset ? "Tryck igen för att radera allt" : "Nollställ allt"}</button></div>
+        ${importMsg ? `<div class="muted" style="margin-top:8px">${esc(importMsg)}</div>` : ""}
+        <input type="file" id="importfile" accept="application/json" class="hidden"></div>`;
+  },
+};
+
+// Unika livsmedel/måltider från loggen, senast först
+let recentCache = [];
+function recentFoods() {
+  const seen = new Set(), out = [];
+  for (const d of Object.keys(S.log).sort().reverse()) {
+    for (const f of S.log[d].food.slice().reverse()) {
+      const key = f.name.trim().toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push(f);
+      if (out.length >= 16) return (recentCache = out);
+    }
+  }
+  return (recentCache = out);
+}
+
+function profileFields(p) {
+  const sel = (f, opts) => `<select data-prof="${f}">${opts.map(([v, l]) => `<option value="${v}" ${String(p[f]) === String(v) ? "selected" : ""}>${l}</option>`).join("")}</select>`;
+  const num = (f, l) => `<label class="field">${l}<input type="number" inputmode="decimal" data-prof="${f}" value="${p[f]}"></label>`;
+  return `<div class="grid2"><label class="field">Kön${sel("sex", [["m", "Man"], ["f", "Kvinna"]])}</label>${num("age", "Ålder")}
+    ${num("height", "Längd (cm)")}${num("weight", "Vikt (kg)")}</div>
+    <label class="field" style="margin-top:10px">Aktivitet${sel("activity", ACTIVITY)}</label>
+    <label class="field" style="margin-top:10px">Mål${sel("goal", Object.entries(GOALS).map(([k, v]) => [k, v[0]]))}</label>`;
+}
+
+function exDone(w, ex) {
+  const sets = w && w.sets[ex.id];
+  if (!sets) return false;
+  for (let i = 0; i < ex.sets; i++) if (!(sets[i] && sets[i].ok)) return false;
+  return true;
+}
+
+// Senaste loggade set före idag, som platshållare
+function lastSets(exId) {
+  const dates = Object.keys(S.log).filter(d => d < TODAY).sort().reverse();
+  for (const d of dates) {
+    const w = S.log[d].workout;
+    if (w && w.sets[exId] && w.sets[exId].some(hasData)) return w.sets[exId];
+  }
+  return null;
+}
+
+function exBlock(d, ex, w) {
+  const sets = (w && w.sets[ex.id]) || [];
+  const prev = lastSets(ex.id);
+  const ws = weekStart(TODAY);
+  const cur = exWeek(ex.id, ws), last = exWeek(ex.id, shift(ws, -7));
+  const all = exDone(w, ex);
+  // Kroppsvikt: reps (eller sekunder) först, extra vikt valfritt
+  const bw = !!EX[ex.id].bw, unitName = isTimed(ex.id) ? "Sekunder" : "Reps";
+  let rows = "";
+  for (let i = 0; i < ex.sets; i++) {
+    const s = sets[i] || {}, p = hintSet(prev, i);
+    const kg = `<input type="number" inputmode="decimal" step="0.5" placeholder="${p.kg || (bw ? "+kg" : "kg")}" value="${s.kg ?? ""}" data-set="${ex.id}" data-i="${i}" data-f="kg" aria-label="${bw ? "Extra vikt" : "Vikt"} set ${i + 1}">`;
+    const reps = `<input type="number" inputmode="numeric" placeholder="${p.reps || esc(ex.reps)}" value="${s.reps ?? ""}" data-set="${ex.id}" data-i="${i}" data-f="reps" aria-label="${unitName} set ${i + 1}">`;
+    rows += `<div class="n">${i + 1}</div>${bw ? reps + kg : kg + reps}
+      <button class="done-btn ${s.ok ? "on" : ""}" data-ok="${ex.id}" data-i="${i}" aria-label="Set ${i + 1} klart">✓</button>`;
+  }
+  return `<div class="card ex ${all ? "complete" : ""}"><div class="row">${thumb(ex.id)}
+      <div class="grow"><b>${esc(EX[ex.id].name)}</b><div class="muted">${ex.sets} × ${esc(ex.reps)}</div>
+        <div class="muted">Förra veckan: ${fmtSet(last, ex.id)}</div>
+        ${cur ? `<div>Denna vecka: ${fmtSet(cur, ex.id)} ${exDelta(cur, last, ex.id)}</div>` : ""}</div>
+      <button class="done-btn big ${all ? "on" : ""}" data-exok="${ex.id}" aria-label="Hela övningen klar">✓</button></div>
+    <div class="sets ${bw ? "bw" : ""}"><div></div>${bw
+      ? `<div class="muted">${isTimed(ex.id) ? "sek" : "reps"}</div><div class="muted">extra kg</div>`
+      : `<div class="muted">kg</div><div class="muted">reps</div>`}<div></div>${rows}</div>
+    <div class="row" style="margin-top:8px"><button class="small" data-setcount="-1" data-ex="${ex.id}" ${ex.sets > 1 ? "" : "disabled"}>− Set</button>
+      <button class="small" data-setcount="1" data-ex="${ex.id}">+ Set</button></div></div>`;
+}
+
+// Övningslistor kan ligga i ett passdag-id, "draft:<index>" (upplägget) eller "daily"
+function exList(target) {
+  if (target === "daily") return S.daily;
+  if (target.startsWith("draft:")) return draft.days[+target.slice(6)].ex;
+  return dayById(target).ex;
+}
+function targetCats(target) {
+  if (target === "daily") return ["core"];
+  const d = target.startsWith("draft:") ? draft.days[+target.slice(6)] : dayById(target);
+  return TYPES[d.type].cats;
+}
+
+// Rader med byt/ta bort; withOrder lägger till sortering och set × reps
+function exRows(target, list, withOrder) {
+  return list.map((e, i) => `<div class="subex">${thumb(e.id, "sm")}
+      <div class="grow"><b>${esc(EX[e.id].name)}</b>${EX[e.id].cat === "cardio" ? `<div class="muted">${esc(e.reps || EX[e.id].muscles)}</div>`
+        : `<div class="row" style="margin-top:4px">
+        <input type="number" inputmode="numeric" min="1" style="width:52px" value="${e.sets}" data-ed="${i}" data-t="${target}" data-f="sets" aria-label="Antal set"><span class="muted">×</span>
+        <input style="width:76px" value="${esc(e.reps)}" data-ed="${i}" data-t="${target}" data-f="reps" aria-label="Reps"></div>`}</div>
+      ${withOrder ? `<div class="col"><button class="small ghost" data-mv="-1" data-t="${target}" data-idx="${i}" ${i ? "" : "disabled"} aria-label="Flytta upp">↑</button>
+        <button class="small ghost" data-mv="1" data-t="${target}" data-idx="${i}" ${i < list.length - 1 ? "" : "disabled"} aria-label="Flytta ned">↓</button></div>` : ""}
+      <button class="small" data-swap="${target}" data-idx="${i}">Byt</button>
+      <button class="small ghost" data-xdel="${target}" data-idx="${i}" aria-label="Ta bort">✕</button></div>`).join("") +
+    `<button class="small" style="margin-top:8px" data-openpick="${target}">+ Lägg till övning</button>`;
+}
+
+function editList(d) {
+  return `<div class="card">${exRows(d.id, d.ex, true)}</div>`;
+}
+
+const norm = s => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+
+function renderModal() {
+  if (modal.info) {
+    const e = EX[modal.info];
+    return `<div class="overlay" data-close><div class="sheet"><div class="row between"><h2>${esc(e.name)}</h2><button class="small ghost" data-close>✕</button></div>
+      ${figure(modal.info, "big")}<div class="muted">${esc(e.muscles)}</div>
+      <ol>${e.cues.map(c => `<li>${esc(c)}</li>`).join("")}</ol></div></div>`;
+  }
+  const list = exList(modal.pick);
+  const replacing = modal.replace != null ? list[modal.replace] : null;
+  const first = targetCats(modal.pick)[0];
+  const cat = modal.cat || (replacing && first !== "bw" ? EX[replacing.id].cat : first);
+  modal.cat = cat;
+  const have = list.map(e => e.id);
+  const forDaily = modal.pick === "daily";
+  const ids = Object.keys(EX).filter(id => forDaily || EX[id].cat !== "cardio");
+  const chips = [...Object.keys(CATS), "bw", ...(forDaily ? ["cardio"] : []), "all"];
+  const chipName = c => CATS[c] || { bw: "Kroppsvikt", cardio: "Kondition", all: "Alla" }[c];
+  return `<div class="overlay" data-close><div class="sheet"><div class="row between">
+      <h2>${replacing ? `Byt ut ${esc(EX[replacing.id].name)}` : "Välj övning"}</h2><button class="small ghost" data-close>✕</button></div>
+    <input id="exsearch" type="search" placeholder="Sök övning eller muskel, t.ex. bröst" value="${esc(modal.q || "")}" autocomplete="off" style="margin-bottom:10px">
+    <div class="chips" style="margin-bottom:10px">${chips.map(c => `<button data-cat="${c}" class="${c === cat ? "on" : ""}">${chipName(c)}</button>`).join("")}</div>
+    <div class="pickgrid">${ids.map(id => `<div class="pick ${have.includes(id) ? "have" : ""}" data-cat="${EX[id].cat}" data-bw="${EX[id].bw ? 1 : ""}" data-q="${esc(norm(EX[id].name + " " + EX[id].muscles + " " + (CATS[EX[id].cat] || "")))}">
+      ${thumb(id)}<div class="pname">${esc(EX[id].name)}</div><div class="muted small">${esc(EX[id].muscles)}</div>
+      ${have.includes(id) ? `<span class="muted small">Finns redan</span>` : `<button class="small primary" data-add="${id}">${replacing ? "Välj" : "Lägg till"}</button>`}</div>`).join("")}</div>
+    <div class="muted" id="nohits" hidden>Inga övningar matchar sökningen.</div></div></div>`;
+}
+
+// Upplägg som matchar alla sökord; det valda visas alltid
+function filterPrograms() {
+  const words = norm(progQuery).split(/\s+/).filter(Boolean);
+  let shown = 0;
+  for (const el of document.querySelectorAll("[data-prog]")) {
+    const hit = el.classList.contains("on") || words.every(w => el.dataset.q.includes(w));
+    el.hidden = !hit;
+    if (hit) shown++;
+  }
+  const none = document.getElementById("noprog");
+  if (none) none.hidden = shown > 1 || !words.length;
+}
+
+// Sökning filtrerar alla kategorier; utan sökord visas vald kategori
+function filterPicker() {
+  const q = norm((modal && modal.q || "").trim());
+  let shown = 0;
+  for (const el of document.querySelectorAll(".pick")) {
+    const hit = q ? el.dataset.q.includes(q)
+      : modal.cat === "all" || el.dataset.cat === modal.cat || (modal.cat === "bw" && el.dataset.bw);
+    el.hidden = !hit;
+    if (hit) shown++;
+  }
+  const none = document.getElementById("nohits");
+  if (none) none.hidden = shown > 0;
+}
+
+// ---------- Logg ----------
+function workoutFor(d) {
+  const L = day();
+  if (!L.workout || L.workout.dayId !== d.id) L.workout = { dayId: d.id, sets: {}, done: false };
+  return L.workout;
+}
+function setAt(d, exId, i) {
+  const w = workoutFor(d);
+  w.sets[exId] = w.sets[exId] || [];
+  return (w.sets[exId][i] = w.sets[exId][i] || {});
+}
+// Förra gångens set på samma plats, eller dess sista set om det var färre
+const hintSet = (prev, i) => prev ? prev[i] || prev.filter(hasData).pop() || {} : {};
+
+// Ett avbockat set med tomma fält får exempelvärdena: förra gångens set, annars målet
+// (vid ett intervall som 8–10 det lägsta värdet)
+function fillFromHint(d, exId, i) {
+  const s = setAt(d, exId, i), prev = hintSet(lastSets(exId), i);
+  const ex = d.ex.find(x => x.id === exId);
+  const target = parseInt(String(ex && ex.reps || ""), 10);
+  if (s.reps === undefined || s.reps === "") s.reps = +prev.reps || (target > 0 ? target : "");
+  if ((s.kg === undefined || s.kg === "") && +prev.kg) s.kg = +prev.kg;
+}
+
+// Passet räknas som klart när alla övningar är avbockade
+function syncDone(d) {
+  const w = day().workout;
+  if (w && w.dayId === d.id) w.done = d.ex.length > 0 && d.ex.every(x => exDone(w, x));
+}
+
+function saveSetup() {
+  const weekdays = draft.weekdays.slice().sort((a, b) => a - b);
+  S.plan = { program: draft.program, count: draft.count, mode: draft.mode, weekdays, days: draft.days };
+  S.setupDone = true;
+  draft = null;
+  tab = "idag";
+}
+
+// ---------- Händelser ----------
+document.addEventListener("click", ev => {
+  const t = ev.target.closest("button, input[type=checkbox], .overlay");
+  if (!t || t.disabled) return;
+  if (t.classList.contains("overlay") && ev.target !== t) return;   // klick inne i rutan
+  const ds = t.dataset;
+  if (ds.close !== undefined) { modal = null; render(); return; }
+  if (ds.info) { modal = { info: ds.info }; render(); return; }
+  if (ds.openpick) { modal = { pick: ds.openpick }; render(); return; }
+  if (ds.swap) { modal = { pick: ds.swap, replace: +ds.idx }; render(); filterPicker(); return; }
+  if (ds.cat) {
+    modal.cat = ds.cat;
+    modal.q = "";
+    render();
+    filterPicker();
+    return;
+  }
+  if (ds.askai !== undefined) { askClaude(); return; }
+  if (ds.tab) { tab = ds.tab; editing = false; dailyEditing = false; draft = null; if (tab !== "pass") chosenDay = null; }
+  else if (ds.go) { tab = ds.go; if (ds.day) chosenDay = ds.day; }
+  else if (ds.pick) { chosenDay = ds.pick; }
+  else if (ds.edit !== undefined) editing = !editing;
+  else if (ds.ok) {
+    const d = currentPassDay(), s = setAt(d, ds.ok, +ds.i);
+    s.ok = !s.ok;
+    if (s.ok) fillFromHint(d, ds.ok, +ds.i);
+    syncDone(d);
+  }
+  else if (ds.exok) {
+    const d = currentPassDay(), ex = d.ex.find(x => x.id === ds.exok), w = day().workout;
+    const val = !exDone(w && w.dayId === d.id ? w : null, ex);
+    for (let i = 0; i < ex.sets; i++) {
+      setAt(d, ex.id, i).ok = val;
+      if (val) fillFromHint(d, ex.id, i);
+    }
+    syncDone(d);
+  }
+  else if (ds.finish) { const w = workoutFor(dayById(ds.finish)); w.done = !w.done; if (w.done) tab = "vecka"; }
+  else if (ds.setcount) {
+    const d = currentPassDay(), ex = d.ex.find(x => x.id === ds.ex);
+    ex.sets = Math.max(1, ex.sets + +ds.setcount);
+    syncDone(d);
+  }
+  else if (ds.dcheck) day().dailies[ds.dcheck] = !dailyDone(TODAY, ds.dcheck);
+  else if (ds.dedit !== undefined) dailyEditing = !dailyEditing;
+  else if (ds.addfood !== undefined || ds.savemeal !== undefined) {
+    const name = document.getElementById("fname").value.trim();
+    const kcal = Math.round(+document.getElementById("fkcal").value || 0);
+    const protein = Math.round(+document.getElementById("fprot").value || 0);
+    if (!name && !kcal) return;
+    // Okänd rätt utan egna värden: låt Claude uppskatta och logga sedan
+    if (ds.addfood !== undefined && name && cloud.sample && !$("fkcal").dataset.manual
+      && !(S.learned || {})[norm(name)] && parseFood(name).unknown.length) {
+      askClaude(true);
+      return;
+    }
+    const item = { name: name || "Mat", kcal, protein };
+    if (ds.savemeal !== undefined) S.meals.push(item);
+    else day().food.push(item);
+  }
+  else if (ds.qmeal) {
+    const [slot, share] = MEALS[+ds.qmeal], m = macros();
+    const kcal = Math.round(+document.getElementById("qm-" + ds.qmeal).value || Math.round(m.kcal * share / 10) * 10);
+    // Protein uppskattas med samma andel som i dagens mål
+    day().food.push({ name: `${slot} (ca ${kcal} kcal)`, kcal, protein: Math.round(kcal * m.protein / m.kcal) });
+  }
+  else if (ds.meal) { const { name, kcal, protein } = S.meals[+ds.meal]; day().food.push({ name, kcal, protein }); }
+  else if (ds.again) { const { name, kcal, protein } = recentCache[+ds.again]; day().food.push({ name, kcal, protein }); }
+  else if (ds.delmeal) S.meals.splice(+ds.delmeal, 1);
+  else if (ds.delfood) day().food.splice(+ds.delfood, 1);
+  else if (ds.xdel) exList(ds.xdel).splice(+ds.idx, 1);
+  else if (ds.mv) {
+    const list = exList(ds.t), i = +ds.idx, j = i + +ds.mv;
+    [list[i], list[j]] = [list[j], list[i]];
+  }
+  else if (ds.add) {
+    const list = exList(modal.pick);
+    if (modal.replace != null) list[modal.replace] = exEntry(ds.add);
+    else list.push(exEntry(ds.add));
+    modal = null;
+  }
+  else if (ds.count) {
+    draft.count = +ds.count;
+    draft.days = makeDays(draft.program, draft.count, draft.days);
+    if (draft.weekdays.length !== draft.count) draft.weekdays = DEFAULT_WEEKDAYS[draft.count].slice();
+  }
+  else if (ds.mode) draft.mode = ds.mode;
+  else if (ds.progtoggle !== undefined) progOpen = !progOpen;
+  else if (ds.prog) {
+    draft.program = ds.prog;
+    progOpen = false;
+    const c = counts(ds.prog);
+    if (!c.includes(draft.count)) draft.count = c.includes(3) ? 3 : c[0];
+    if (draft.weekdays.length !== draft.count) draft.weekdays = DEFAULT_WEEKDAYS[draft.count].slice();
+    draft.days = makeDays(draft.program, draft.count, draft.days);
+  }
+  else if (ds.wd) {
+    const i = +ds.wd, w = draft.weekdays;
+    if (w.includes(i)) w.splice(w.indexOf(i), 1);
+    else if (w.length < draft.count) w.push(i);
+  }
+  else if (ds.savesetup !== undefined) saveSetup();
+  else if (ds.cancelsetup !== undefined) { draft = null; tab = "profil"; }
+  else if (ds.week) weekOffset = Math.min(0, weekOffset + +ds.week);
+  else if (ds.export !== undefined) { exportData(); return; }
+  else if (ds.import !== undefined) { document.getElementById("importfile").click(); return; }
+  else if (ds.reset !== undefined) {
+    if (!confirmReset) { confirmReset = true; render(); return; }
+    S = freshState(); tab = "upplagg"; draft = null;
+  }
+  else return;
+  confirmReset = false;
+  save();
+  render();
+});
+
+document.addEventListener("change", ev => {
+  const t = ev.target, ds = t.dataset;
+  if (ds.set) {
+    setAt(currentPassDay(), ds.set, +ds.i)[ds.f] = t.value === "" ? "" : +t.value;
+    save();
+    return;   // ingen omritning, så att fokus stannar kvar i fältet
+  }
+  if (ds.run) { const L = day(); L.dailies[ds.run] = Object.assign({}, L.dailies[ds.run], { [ds.f]: +t.value || 0 }); }
+  else if (ds.prof) S.profile[ds.prof] = ds.prof === "sex" || ds.prof === "goal" ? t.value : +t.value;
+  else if (ds.ed) { const ex = exList(ds.t)[+ds.ed]; ex[ds.f] = ds.f === "sets" ? Math.max(1, +t.value || 1) : t.value; }
+  else if (t.id === "override") S.kcalOverride = +t.value || null;
+  else if (t.id === "importfile" && t.files[0]) {
+    t.files[0].text().then(txt => {
+      try {
+        const data = JSON.parse(txt);
+        S = data.v === 2 ? upgradeDailies(Object.assign(freshState(), data)) : migrateV1(data);
+        importMsg = "Importerat.";
+        save();
+      } catch (e) { importMsg = "Kunde inte läsa filen. Välj en JSON-fil som exporterats från appen."; }
+      render();
+    });
+    return;
+  }
+  else return;
+  save();
+  render();
+});
+
+// Matloggen räknas ut medan man skriver; egna värden i kcal/protein skrivs inte över
+const $ = id => document.getElementById(id);
+function foodPreview() {
+  const text = $("fname").value, out = $("fpreview");
+  if (!text.trim()) { out.innerHTML = ""; return; }
+  const known = (S.learned || {})[norm(text.trim())];
+  if (known) {
+    for (const [id, v] of [["fkcal", known.kcal], ["fprot", known.protein]]) if (!$(id).dataset.manual) $(id).value = v;
+    out.innerHTML = `${esc(text)} <span class="fg">≈ ${known.kcal} kcal · ${known.protein} g protein</span> <span class="small">(sparad uträkning)</span>`;
+    return;
+  }
+  const r = parseFood(text);
+  for (const [id, v] of [["fkcal", r.kcal], ["fprot", r.protein]]) if (!$(id).dataset.manual) $(id).value = v || "";
+  const lines = r.items.map(i => i.known
+    ? `${esc(i.text)} <span class="fg">≈ ${i.kcal} kcal · ${fmtNum(i.protein)} g protein</span> <span class="small">(${i.grams} g)</span>`
+    : `${esc(i.text)} <span class="unk">känns inte igen</span>`);
+  let tip = "";
+  if (r.unknown.length) tip = cloud.sample
+    ? `<div style="margin-top:6px"><button class="small" data-askai>Räkna ut med Claude</button> eller tryck Logga direkt</div>`
+    : `<div>Skriv mängd och livsmedel, t.ex. "150 g kyckling", eller fyll i kcal själv.</div>`;
+  out.innerHTML = lines.join("<br>") + tip;
+}
+
+async function askClaude(logAfter = false) {
+  const text = $("fname").value.trim(), out = $("fpreview");
+  if (!text || !cloud.sample) return;
+  out.textContent = "Räknar ut…";
+  try {
+    const r = await cloud.sample.json(
+      `Uppskatta energi och protein för det här som en person i Sverige har ätit: "${text}". ` +
+      `Anta vanliga svenska portionsstorlekar där mängd saknas. Svara bara med JSON: ` +
+      `{"kcal": heltal, "protein": heltal i gram, "tolkning": "kort beskrivning på svenska av mängderna du antog"}`,
+      { modelTier: "quick" });
+    $("fkcal").value = Math.round(+r.kcal || 0);
+    $("fprot").value = Math.round(+r.protein || 0);
+    $("fkcal").dataset.manual = $("fprot").dataset.manual = "1";
+    out.innerHTML = `Claude: ${esc(r.tolkning || text)} <span class="fg">≈ ${Math.round(+r.kcal || 0)} kcal · ${Math.round(+r.protein || 0)} g protein</span>`;
+    S.learned = S.learned || {};
+    S.learned[norm(text)] = { kcal: Math.round(+r.kcal || 0), protein: Math.round(+r.protein || 0) };
+    save();
+    if (logAfter) {
+      day().food.push({ name: text, kcal: Math.round(+r.kcal || 0), protein: Math.round(+r.protein || 0) });
+      save();
+      render();
+    }
+  } catch (e) {
+    out.textContent = e && e.code === "not_granted"
+      ? "Claude får inte användas här. Fyll i kcal själv."
+      : "Kunde inte räkna ut just nu. Fyll i kcal själv eller försök igen.";
+  }
+}
+
+document.addEventListener("input", ev => {
+  const t = ev.target;
+  if (t.id === "exsearch") { modal.q = t.value; filterPicker(); }
+  else if (t.id === "progsearch") { progQuery = t.value; filterPrograms(); }
+  else if (t.id === "fname") foodPreview();
+  else if (t.id === "fkcal" || t.id === "fprot") t.dataset.manual = t.value ? "1" : "";
+});
+
+render();
+connectCloud();
