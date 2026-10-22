@@ -1,0 +1,22 @@
+name: Tester
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  webblasartester:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Installera testverktyg
+        run: |
+          pip install -r tests/requirements.txt
+          python -m playwright install --with-deps chromium
+      - name: Kör testerna
+        run: python -m pytest tests -v

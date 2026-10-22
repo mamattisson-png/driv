@@ -52,6 +52,16 @@ Näringsvärden kommer delvis från [Livsmedelsverkets livsmedelsdatabas](https:
 4. Under *Authentication → Email Templates → Magic Link*: lägg till `{{ .Token }}` i mejlet, så får användaren en kod att skriva in i appen. Det behövs i en installerad app på iPhone, där länken öppnas i webbläsaren i stället för i appen.
 5. Fyll i *Project URL* och *anon public key* (under *Project Settings → API*) i [`config.js`](config.js).
 
+## Tester
+
+Webbläsartesterna i [`tests/`](tests) går igenom upplägg, pass och veckojämförelse, dagens mål, vilotimer, dailys, vikt, påminnelser, kost, streckkod och lagring. Externa tjänster (Supabase, Open Food Facts) simuleras. De körs automatiskt i GitHub vid varje push, och lokalt med:
+
+```bash
+pip install -r tests/requirements.txt
+python -m playwright install chromium
+python -m pytest tests
+```
+
 ## Publicera
 
 Appen är statiska filer. Med GitHub Pages: *Settings → Pages → Build and deployment → Deploy from a branch → `main` / `(root)`*.
