@@ -4,7 +4,7 @@
 
 **Hitta ditt driv.** Träning, dailys och kost i en app, med plus eller minus mot förra veckan så att du ser att du blir bättre. Inga konton och inga beroenden: allt sparas i din webbläsare.
 
-**Öppna appen:** https://mamattisson-png.github.io/traningsapp/
+**Öppna appen:** https://mamattisson-png.github.io/driv/
 
 På mobilen kan du lägga den på hemskärmen: *Dela → Lägg till på hemskärmen* i Safari, eller *Installera app* i Chrome. Den fungerar sedan även utan nät.
 
