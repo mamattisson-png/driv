@@ -257,8 +257,19 @@
 <script src="app.js"></script>
 <script>
   // Offline och installation på hemskärmen när appen ligger på en vanlig webbplats
-  if (!window.claude && "serviceWorker" in navigator && location.protocol === "https:") {
-    navigator.serviceWorker.register("sw.js").catch(() => {});
+  if (!window.claude && "serviceWorker" in navigator && (location.protocol === "https:" || window.__swTest)) {
+    // Appen startar från cachen. Finns en ny version installeras den i bakgrunden och
+    // tas i bruk nästa gång appen kommer tillbaka i förgrunden.
+    const hadWorker = !!navigator.serviceWorker.controller;
+    let updated = false;
+    navigator.serviceWorker.register("sw.js").then(reg => {
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState !== "visible") return;
+        if (updated) location.reload();
+        else reg.update().catch(() => {});
+      });
+    }).catch(() => {});
+    navigator.serviceWorker.addEventListener("controllerchange", () => { if (hadWorker) updated = true; });
   }
 </script>
 </body>

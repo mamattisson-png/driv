@@ -198,11 +198,12 @@ function migrateV1(old) {
   const idMap = {};
   for (const d in old.program || {}) for (const ex of old.program[d]) if (V1_NAMES[ex.name]) idMap[ex.id] = V1_NAMES[ex.name];
   for (const [date, L] of Object.entries(old.log || {})) {
-    const n = { workout: null, dailies: {}, food: L.food || [] };
+    const n = { workouts: [], dailies: {}, food: L.food || [] };
     if (L.workout) {
       const d = s.plan.days.find(x => x.type === L.workout.day);
-      n.workout = { dayId: d ? d.id : "d1", done: !!L.workout.done, sets: {} };
-      for (const [k, v] of Object.entries(L.workout.sets || {})) if (idMap[k]) n.workout.sets[idMap[k]] = v;
+      const w = { dayId: d ? d.id : "d1", done: !!L.workout.done, sets: {} };
+      for (const [k, v] of Object.entries(L.workout.sets || {})) if (idMap[k]) w.sets[idMap[k]] = v;
+      n.workouts.push(w);
     }
     const od = L.dailies || {};
     if (od.mage) for (const id of ["plankan", "hangande_benlyft", "russian_twist"]) n.dailies[id] = true;
@@ -233,10 +234,26 @@ function upgradeDailies(s) {
   return s;
 }
 
+// Tidigare fick en dag bara ha ett pass (workout); nu är det en lista (workouts)
+function upgradeWorkouts(s) {
+  for (const L of Object.values(s.log || {})) {
+    if ("workout" in L) {
+      // En äldre version av appen kan ha loggat i det gamla fältet efter uppgraderingen
+      const ws = L.workouts || [], w = L.workout;
+      if (w) { const i = ws.findIndex(x => x.dayId === w.dayId); if (i >= 0) ws[i] = w; else ws.push(w); }
+      L.workouts = ws;
+      delete L.workout;
+    }
+    if (!L.workouts) L.workouts = [];
+  }
+  return s;
+}
+const normalize = s => upgradeWorkouts(upgradeDailies(s));
+
 function load() {
   try {
     const raw = localStorage.getItem(KEY);
-    if (raw) return upgradeDailies(Object.assign(freshState(), JSON.parse(raw)));
+    if (raw) return normalize(Object.assign(freshState(), JSON.parse(raw)));
     const v1 = localStorage.getItem(KEY_V1);
     if (v1) return migrateV1(JSON.parse(v1));
   } catch (e) { /* tom eller blockerad lagring: börja om */ }
@@ -248,10 +265,60 @@ function saveLocal() {
   try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* ignoreras */ }
 }
 function save() {
+  stamp();
   saveLocal();
   clearTimeout(cloud.timer);
   cloud.timer = setTimeout(pushCloud, 600);
 }
+
+// ---------- Tidsstämplar för synk ----------
+// Varje inställning och varje del av en dag (pass, mat, dailys …) får en tidsstämpel i _t när den
+// ändras. Vid synk vinner den nyaste versionen av varje del, så att två enheter inte skriver över
+// varandras loggning. Saknas stämpel räknas den som 0, och vid lika vinner kontots version.
+const stampSnap = {};
+function stampParts(obj, prefix, now, initial) {
+  const t = obj._t || (obj._t = {});
+  const keys = new Set([...Object.keys(obj), ...Object.keys(t)]);
+  keys.delete("_t");
+  if (prefix === "s:") keys.delete("log");
+  for (const k of keys) {
+    const json = String(JSON.stringify(obj[k]));
+    const id = prefix + k;
+    if (!initial && id in stampSnap && stampSnap[id] !== json) t[k] = now;
+    // En ny dag eller ett nytt fält räknas också som en ändring
+    else if (!initial && !(id in stampSnap) && obj[k] !== undefined) t[k] = now;
+    stampSnap[id] = json;
+  }
+}
+function stamp(initial = false) {
+  const now = Date.now();
+  stampParts(S, "s:", now, initial);
+  for (const [date, L] of Object.entries(S.log)) stampParts(L, date + ":", now, initial);
+}
+// Väljer del för del den version som ändrats senast. b är kontots version.
+function mergeParts(a, b) {
+  const ta = a._t || {}, tb = b._t || {}, out = { _t: {} };
+  const keys = new Set([...Object.keys(a), ...Object.keys(b), ...Object.keys(ta), ...Object.keys(tb)]);
+  keys.delete("_t");
+  for (const k of keys) {
+    const x = ta[k] || 0, y = tb[k] || 0;
+    const src = x > y ? a : y > x ? b : k in b ? b : a;
+    if (k in src) out[k] = src[k];
+    if ((src === a ? x : y)) out._t[k] = src === a ? x : y;
+  }
+  return out;
+}
+function mergeLog(a, b) {
+  const out = {};
+  for (const date of new Set([...Object.keys(a), ...Object.keys(b)]))
+    out[date] = a[date] && b[date] ? mergeParts(a[date], b[date]) : a[date] || b[date];
+  return out;
+}
+function mergeState(local, remote) {
+  const { log: la, ...sa } = local, { log: lb, ...sb } = remote;
+  return normalize(Object.assign(mergeParts(sa, sb), { log: mergeLog(la, lb) }));
+}
+stamp(true);
 
 // I en publicerad artifact synkas allt till kontots privata databas: ett dokument
 // med inställningar och ett per månad med loggen. localStorage är cache och reserv.
@@ -270,11 +337,43 @@ function joinDocs(docs) {
   const s = Object.assign(freshState(), docs.settings || {});
   s.log = {};
   for (const [id, d] of Object.entries(docs)) if (id.startsWith("m-")) Object.assign(s.log, d.days || {});
-  return upgradeDailies(s);
+  return normalize(s);
 }
 
-// Skriver bara dokument som ändrats, ett anrop i taget per dokument
+// Skriver bara dokument som ändrats. Har någon annan enhet ändrat samma dokument sedan sist
+// slås deras version ihop med vår först, så att inget skrivs över.
 function pushCloud() {
+  if (!cloud.col) return;
+  if (cloud.pushing) { cloud.again = true; return; }
+  cloud.pushing = pullChanged().catch(() => {}).then(writeDocs).finally(() => {
+    cloud.pushing = null;
+    if (cloud.again) { cloud.again = false; pushCloud(); }
+  });
+}
+async function pullChanged() {
+  const col = cloud.col;
+  if (!col || !col.getMany) return;
+  const docs = splitDocs(S);
+  const ids = Object.keys(docs).filter(id => cloud.sent[id] !== JSON.stringify(docs[id]));
+  if (!ids.length) return;
+  let pulled = false;
+  for (const d of await col.getMany(ids)) {
+    const json = JSON.stringify(d.data());
+    if (cloud.sent[d.id] === json) continue;
+    const body = JSON.parse(json);
+    if (d.id === "settings") {
+      const { log, ...cur } = S;
+      S = normalize(Object.assign(mergeParts(cur, body), { log }));
+    } else {
+      const days = upgradeWorkouts({ log: body.days || {} }).log;
+      for (const [date, L] of Object.entries(days)) S.log[date] = S.log[date] ? mergeParts(S.log[date], L) : L;
+    }
+    cloud.sent[d.id] = json;
+    pulled = true;
+  }
+  if (pulled) { stamp(true); saveLocal(); render(); }
+}
+function writeDocs() {
   if (!cloud.col) return;
   const docs = splitDocs(S);
   const write = (id, op) => {
@@ -285,18 +384,21 @@ function pushCloud() {
       else cloud.status = "error";
       render();
     });
+    return cloud.queue[id];
   };
+  const writes = [];
   for (const [id, body] of Object.entries(docs)) {
     const json = JSON.stringify(body);
     if (cloud.sent[id] === json) continue;
     cloud.sent[id] = json;
-    write(id, () => cloud.col.doc(id).set(JSON.parse(json)));
+    writes.push(write(id, () => cloud.col.doc(id).set(JSON.parse(json))));
   }
   for (const id of Object.keys(cloud.sent)) {
     if (docs[id]) continue;
     delete cloud.sent[id];
-    write(id, () => cloud.col.doc(id).delete());
+    writes.push(write(id, () => cloud.col.doc(id).delete()));
   }
+  return Promise.all(writes);
 }
 
 async function connectCloud() {
@@ -313,9 +415,10 @@ async function connectCloud() {
   render();
 }
 
-// Kopplar appen till ett kontos dokument. Med merge slås det som redan finns på enheten
-// ihop med kontot (kontots inställningar vinner, loggen slås ihop dag för dag).
-async function attachCollection(col, merge) {
+// Kopplar appen till ett kontos dokument. Med merge slås det som redan finns på enheten ihop
+// med kontot, del för del efter tidsstämpel. Första gången enheten kopplas till kontot vinner
+// kontots upplägg, så att en ny telefon inte skriver över det man redan har.
+async function attachCollection(col, merge, firstSync = false) {
   const snap = await col.get();
   cloud.col = col;
   cloud.sent = {};
@@ -328,11 +431,12 @@ async function attachCollection(col, merge) {
   // Snapshots kan vara frysta; kopiera så att appen kan ändra i datan
   for (const d of snap.docs) { const json = JSON.stringify(d.data()); docs[d.id] = JSON.parse(json); cloud.sent[d.id] = json; }
   const remote = joinDocs(docs);
-  if (merge) {
-    for (const [date, entry] of Object.entries(S.log)) if (!remote.log[date]) remote.log[date] = entry;
-    if (!remote.setupDone && S.setupDone) Object.assign(remote, { ...S, log: remote.log });
-  }
-  S = remote;
+  if (!merge) S = remote;
+  else if (firstSync) {
+    const log = mergeLog(S.log, remote.log);
+    S = normalize(Object.assign(!remote.setupDone && S.setupDone ? { ...S } : remote, { log }));
+  } else S = mergeState(S, remote);
+  stamp(true);
   saveLocal();
   if (merge) pushCloud();
   if (S.setupDone && tab === "upplagg") { tab = "idag"; draft = null; }
@@ -365,6 +469,11 @@ function supabaseCollection(sb, uid) {
       fail(error);
       return { empty: !data.length, docs: data.map(r => ({ id: r.id, data: () => r.data })) };
     },
+    async getMany(ids) {
+      const { data, error } = await table().select("id, data").in("id", ids);
+      fail(error);
+      return data.map(r => ({ id: r.id, data: () => r.data }));
+    },
     doc: id => ({
       set: async body => fail((await table().upsert({ user_id: uid, id, data: body, updated_at: new Date().toISOString() })).error),
       delete: async () => fail((await table().delete().eq("id", id)).error),
@@ -381,7 +490,11 @@ async function connectSupabase() {
     if (!user) return;
     account.email = user.email || "";
     account.step = "in";
-    await attachCollection(supabaseCollection(sb, user.id), true);
+    // Första gången den här enheten kopplas till kontot vinner kontots upplägg
+    let synced = null;
+    try { synced = localStorage.getItem("driv-synced"); } catch (e) { /* blockerad lagring */ }
+    await attachCollection(supabaseCollection(sb, user.id), true, synced !== user.id);
+    try { localStorage.setItem("driv-synced", user.id); } catch (e) { /* blockerad lagring */ }
   } catch (e) {
     cloud.status = "error";
   }
@@ -570,12 +683,25 @@ function weekNo(s) {
   const jan4 = new Date(d.getFullYear(), 0, 4);
   return 1 + Math.round(((d - jan4) / 864e5 - 3 + (jan4.getDay() + 6) % 7) / 7);
 }
-const TODAY = iso(new Date());
+let TODAY = iso(new Date());
+// Appen kan ligga öppen över midnatt; då ska det nya datumet gälla
+function refreshToday() {
+  const now = iso(new Date());
+  if (now === TODAY) return false;
+  TODAY = now; chosenDay = null; editing = false;
+  return true;
+}
 
 function day(date = TODAY) {
-  if (!S.log[date]) S.log[date] = { workout: null, dailies: {}, food: [] };
+  if (!S.log[date]) S.log[date] = { workouts: [], dailies: {}, food: [] };
   return S.log[date];
 }
+// En dag kan ha flera pass, men bara ett av varje pass i upplägget
+const workoutsOn = date => (S.log[date] && S.log[date].workouts) || [];
+const workoutOn = (date, dayId) => workoutsOn(date).find(w => w.dayId === dayId) || null;
+// Alla set för en övning en dag, från alla pass
+const setsOn = (date, exId) => workoutsOn(date).flatMap(w => w.sets[exId] || []);
+const exIdsOn = date => workoutsOn(date).flatMap(w => Object.keys(w.sets));
 const dayById = id => S.plan.days.find(d => d.id === id);
 // "flex": passen körs i ordning vilka dagar som helst. "fixed": varje pass har en veckodag.
 const isFixed = () => S.plan.mode === "fixed";
@@ -593,8 +719,9 @@ function nextScheduled(from) {
 }
 // Passet efter det senast avklarade, oavsett veckodag
 function nextInRotation() {
-  const dates = Object.keys(S.log).filter(d => d < TODAY && S.log[d].workout && S.log[d].workout.done).sort();
-  const last = dates.length ? S.plan.days.findIndex(x => x.id === S.log[dates[dates.length - 1]].workout.dayId) : -1;
+  const dates = Object.keys(S.log).filter(d => d < TODAY && workoutsOn(d).some(w => w.done)).sort();
+  const lastW = dates.length ? workoutsOn(dates[dates.length - 1]).filter(w => w.done).pop() : null;
+  const last = lastW ? S.plan.days.findIndex(x => x.id === lastW.dayId) : -1;
   return S.plan.days[(last + 1) % S.plan.days.length];
 }
 const suggestedDay = () => isFixed() ? (scheduledDay(TODAY) || nextScheduled(TODAY).day) : nextInRotation();
@@ -627,8 +754,7 @@ const hasData = s => s && (+s.kg > 0 || +s.reps > 0);
 function exWeek(exId, ws) {
   let best = null, vol = 0, reps = 0;
   for (const d of weekDates(ws)) {
-    const w = S.log[d] && S.log[d].workout;
-    for (const s of (w && w.sets[exId]) || []) {
+    for (const s of setsOn(d, exId)) {
       if (!hasData(s)) continue;
       const kg = +s.kg || 0, r = +s.reps || 0;
       vol += kg * r; reps += r;
@@ -681,7 +807,7 @@ function weekSummary(ws) {
   const logged = dates.filter(d => S.log[d]);
   const kcalDays = logged.filter(d => eaten(d).kcal > 0);
   return {
-    passes: logged.filter(d => S.log[d].workout && S.log[d].workout.done).length,
+    passes: logged.reduce((a, d) => a + workoutsOn(d).filter(w => w.done).length, 0),
     km: logged.reduce((a, d) => a + (+(S.log[d].dailies.lop || {}).km || 0), 0),
     dailies: dates.filter(allDailiesDone).length,
     kcal: kcalDays.length ? Math.round(kcalDays.reduce((a, d) => a + eaten(d).kcal, 0) / kcalDays.length) : 0,
@@ -789,7 +915,8 @@ const tag = t => `<span class="tag ${TYPES[t].color || t}">${TYPES[t].label}</sp
 
 function currentPassDay() {
   const L = S.log[TODAY];
-  const id = chosenDay || (L && L.workout ? L.workout.dayId : suggestedDay().id);
+  const todays = workoutsOn(TODAY);
+  const id = chosenDay || (todays.length ? todays[todays.length - 1].dayId : suggestedDay().id);
   return dayById(id) || S.plan.days[0];
 }
 
@@ -806,7 +933,7 @@ function dailiesSummary() {
 
 // Alla pass som knappar; används på Idag och under Pass
 function dayPicker(selected) {
-  return `<div class="daypick" style="grid-template-columns:repeat(${Math.min(S.plan.days.length, 6)},1fr)">${S.plan.days.map((k, i) =>
+  return `<div class="daypick" style="grid-template-columns:repeat(${S.plan.days.length <= 4 ? S.plan.days.length : Math.ceil(S.plan.days.length / 2)},1fr)">${S.plan.days.map((k, i) =>
     `<button data-pick="${k.id}" class="${k.id === selected ? "on" : ""}" aria-pressed="${k.id === selected}">${tag(k.type)}<div class="muted">${isFixed() ? WD[S.plan.weekdays[i]] : `Pass ${i + 1}`}</div></button>`).join("")}</div>`;
 }
 
@@ -872,19 +999,20 @@ const VIEWS = {
 
   idag() {
     const m = macros(), e = eaten(), L = day();
-    const suggested = L.workout ? dayById(L.workout.dayId) : isFixed() ? scheduledDay(TODAY) : nextInRotation();
+    const todays = workoutsOn(TODAY);
+    const suggested = todays.length ? dayById(todays[todays.length - 1].dayId) : isFixed() ? scheduledDay(TODAY) : nextInRotation();
     const d = (chosenDay && dayById(chosenDay)) || suggested;
     const weekPasses = weekSummary(weekStart(TODAY)).passes;
-    const other = L.workout && d && L.workout.dayId !== d.id ? dayById(L.workout.dayId) : null;
+    const others = todays.filter(w => !d || w.dayId !== d.id).map(w => dayById(w.dayId)).filter(Boolean);
     let passCard;
     if (d) {
-      const w = L.workout && L.workout.dayId === d.id ? L.workout : null;
+      const w = workoutOn(TODAY, d.id);
       const done = d.ex.filter(x => exDone(w, x)).length;
       passCard = `<div class="card"><div class="row between"><div>${tag(d.type)} ${w && w.done ? `<span class="pill">✓ Klart</span>` : ""}
         <h2 style="margin-top:8px">${passLabel(d)}</h2>
         <div class="muted">${TYPES[d.type].muscles} · ${done}/${d.ex.length} övningar klara</div>
         <div class="muted">${weekPasses} av ${S.plan.count} pass klara denna vecka</div>
-        ${other ? `<div class="muted">Idag har du redan loggat ${esc(other.name)}.</div>` : ""}</div>
+        ${others.length ? `<div class="muted">Idag har du även loggat ${others.map(o => esc(o.name)).join(", ")}.</div>` : ""}</div>
         <button class="primary" data-go="pass" data-day="${d.id}">${w ? "Fortsätt" : "Starta"}</button></div>
         <div class="thumbs">${d.ex.map(x => thumb(x.id, "xs")).join("")}</div></div>`;
     } else {
@@ -912,12 +1040,10 @@ const VIEWS = {
 
   pass() {
     const L = day(), d = currentPassDay();
-    const w = L.workout && L.workout.dayId === d.id ? L.workout : null;
-    const other = L.workout && L.workout.dayId !== d.id ? dayById(L.workout.dayId) : null;
+    const w = workoutOn(TODAY, d.id);
     const done = d.ex.filter(x => exDone(w, x)).length;
     return `<h1>Pass <span class="muted">v.${weekNo(TODAY)}</span></h1>
       ${dayPicker(d && d.id)}
-      ${other && !editing ? `<div class="card warn">Idag har du redan loggat ${esc(other.name)}. Loggar du här ersätts det.</div>` : ""}
       <div class="card"><div class="row between"><h2>${passLabel(d)}</h2>
         <button class="small ghost" data-edit>${editing ? "Klar" : "Redigera"}</button></div>
         <div class="muted">${TYPES[d.type].muscles}${editing ? "" : ` · ${done}/${d.ex.length} klara`}</div>
@@ -1037,10 +1163,10 @@ const VIEWS = {
         : `<div class="muted">Inga loggade set de här två veckorna.</div>`}</div>
       <div class="card"><h2>Dagar</h2><table>${dates.map(d => {
         const L = S.log[d], e = eaten(d);
-        const wk = L && L.workout && L.workout.done && dayById(L.workout.dayId);
+        const wk = workoutsOn(d).filter(w => w.done).map(w => dayById(w.dayId)).filter(Boolean);
         const dn = S.daily.filter(x => dailyDone(d, x.id)).length;
         const dl = S.daily.length ? `${dn}/${S.daily.length} dailys` : "";
-        return `<tr><td>${WD[weekdayOf(d)]} ${d.slice(8)}</td><td>${wk ? tag(wk.type) : "–"}</td><td>${dl || "–"}</td><td>${e.kcal || "–"}</td></tr>`;
+        return `<tr><td>${WD[weekdayOf(d)]} ${d.slice(8)}</td><td>${wk.length ? wk.map(k => tag(k.type)).join(" ") : "–"}</td><td>${dl || "–"}</td><td>${e.kcal || "–"}</td></tr>`;
       }).join("")}</table></div>`;
   },
 
@@ -1112,8 +1238,8 @@ function exDone(w, ex) {
 function lastSets(exId) {
   const dates = Object.keys(S.log).filter(d => d < TODAY).sort().reverse();
   for (const d of dates) {
-    const w = S.log[d].workout;
-    if (w && w.sets[exId] && w.sets[exId].some(hasData)) return w.sets[exId];
+    const w = workoutsOn(d).filter(x => (x.sets[exId] || []).some(hasData)).pop();
+    if (w) return w.sets[exId];
   }
   return null;
 }
@@ -1227,8 +1353,7 @@ function chartModal(id) {
 function weekRecords(ws) {
   const ids = new Set();
   for (const d of weekDates(ws)) {
-    const w = S.log[d] && S.log[d].workout;
-    if (w) for (const id of Object.keys(w.sets)) if (EX[id]) ids.add(id);
+    for (const id of exIdsOn(d)) if (EX[id]) ids.add(id);
   }
   const out = [];
   for (const id of ids) {
@@ -1318,8 +1443,9 @@ function filterPicker() {
 // ---------- Logg ----------
 function workoutFor(d) {
   const L = day();
-  if (!L.workout || L.workout.dayId !== d.id) L.workout = { dayId: d.id, sets: {}, done: false };
-  return L.workout;
+  let w = L.workouts.find(x => x.dayId === d.id);
+  if (!w) L.workouts.push(w = { dayId: d.id, sets: {}, done: false });
+  return w;
 }
 function setAt(d, exId, i) {
   const w = workoutFor(d);
@@ -1368,8 +1494,7 @@ function bestBefore(exId, date) {
   let best = null;
   for (const d of Object.keys(S.log)) {
     if (d >= date) continue;
-    const w = S.log[d].workout;
-    const t = topSet((w && w.sets[exId]) || []);
+    const t = topSet(setsOn(d, exId));
     if (t && betterSet(t, best)) best = t;
   }
   return best;
@@ -1478,8 +1603,7 @@ function weekPlus(ws) {
   const prevWs = shift(ws, -7), res = { plus: 0, same: 0, minus: 0, ids: [] };
   const ids = new Set();
   for (const d of weekDates(ws)) {
-    const w = S.log[d] && S.log[d].workout;
-    if (w) for (const id of Object.keys(w.sets)) if (EX[id]) ids.add(id);
+    for (const id of exIdsOn(d)) if (EX[id]) ids.add(id);
   }
   for (const id of ids) {
     const c = exWeek(id, ws), p = exWeek(id, prevWs);
@@ -1525,8 +1649,8 @@ function fillFromHint(d, exId, i) {
 
 // Passet räknas som klart när alla övningar är avbockade
 function syncDone(d) {
-  const w = day().workout;
-  if (w && w.dayId === d.id) w.done = d.ex.length > 0 && d.ex.every(x => exDone(w, x));
+  const w = workoutOn(TODAY, d.id);
+  if (w) w.done = d.ex.length > 0 && d.ex.every(x => exDone(w, x));
 }
 
 function saveSetup() {
@@ -1580,13 +1704,13 @@ document.addEventListener("click", ev => {
     syncDone(d);
   }
   else if (ds.exok) {
-    const d = currentPassDay(), ex = d.ex.find(x => x.id === ds.exok), w = day().workout;
-    const val = !exDone(w && w.dayId === d.id ? w : null, ex);
+    const d = currentPassDay(), ex = d.ex.find(x => x.id === ds.exok);
+    const val = !exDone(workoutOn(TODAY, d.id), ex);
     for (let i = 0; i < ex.sets; i++) {
       setAt(d, ex.id, i).ok = val;
       if (val) fillFromHint(d, ex.id, i);
     }
-    if (val) checkRecord(ex.id, topSet(day().workout.sets[ex.id] || []) || {});
+    if (val) checkRecord(ex.id, topSet(workoutOn(TODAY, d.id).sets[ex.id] || []) || {});
     syncDone(d);
   }
   else if (ds.finish) { const w = workoutFor(dayById(ds.finish)); w.done = !w.done; if (w.done) tab = "vecka"; }
@@ -1720,7 +1844,7 @@ document.addEventListener("change", ev => {
     t.files[0].text().then(txt => {
       try {
         const data = JSON.parse(txt);
-        S = data.v === 2 ? upgradeDailies(Object.assign(freshState(), data)) : migrateV1(data);
+        S = data.v === 2 ? normalize(Object.assign(freshState(), data)) : migrateV1(data);
         importMsg = "Importerat.";
         save();
       } catch (e) { importMsg = "Kunde inte läsa filen. Välj en JSON-fil som exporterats från appen."; }
@@ -1992,5 +2116,15 @@ connectCloud();
 connectSupabase();
 remindIfDue();
 document.addEventListener("visibilitychange", () => {
-  if (document.visibilityState === "visible" && account.step === "in") connectSupabase();
+  if (document.visibilityState !== "visible") return;
+  if (refreshToday()) render();
+  if (account.step === "in") connectSupabase();
 });
+// Ett tryck efter midnatt visar först den nya dagen, så att inget loggas på gårdagen
+document.addEventListener("click", ev => {
+  if (refreshToday()) { ev.stopPropagation(); ev.preventDefault(); render(); }
+}, true);
+setInterval(() => {
+  const typing = document.activeElement && /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName);
+  if (document.visibilityState === "visible" && !typing && refreshToday()) render();
+}, 60000);

@@ -1,10 +1,16 @@
-// Gör appen tillgänglig offline: filerna hämtas från nätet när det går, annars från cachen
-const CACHE = "driv-v9";
-const FILES = ["./", "index.html", "app.js", "figur.js", "ovningar.js", "livsmedel.js", "mat.js", "config.js",
+// Gör att appen startar direkt från cachen, även med dålig täckning på gymmet.
+// Alla filer sparas när en ny version installeras och används sedan därifrån.
+// CACHE innehåller en kontrollsumma av filerna: kör tools/sw-version.py efter ändringar
+// (testerna larmar om den inte stämmer). En ny summa gör att webbläsaren installerar om.
+const CACHE = "driv-63e34998";
+const FILES = ["index.html", "app.js", "figur.js", "ovningar.js", "livsmedel.js", "mat.js", "config.js",
   "manifest.webmanifest", "icons/favicon.png", "icons/apple-touch-icon.png", "icons/icon-192.png", "icons/icon-512.png", "icons/icon-maskable-512.png"];
 
 self.addEventListener("install", e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)).then(() => self.skipWaiting()));
+  // cache: "reload" hoppar över webbläsarens vanliga cache så att alla filer kommer från samma version
+  e.waitUntil(caches.open(CACHE)
+    .then(c => c.addAll(FILES.map(f => new Request(f, { cache: "reload" }))))
+    .then(() => self.skipWaiting()));
 });
 
 self.addEventListener("activate", e => {
@@ -14,12 +20,10 @@ self.addEventListener("activate", e => {
 });
 
 self.addEventListener("fetch", e => {
-  if (e.request.method !== "GET" || new URL(e.request.url).origin !== location.origin) return;
-  e.respondWith(fetch(e.request)
-    .then(res => {
-      const copy = res.clone();
-      caches.open(CACHE).then(c => c.put(e.request, copy));
-      return res;
-    })
-    .catch(() => caches.match(e.request).then(r => r || caches.match("index.html"))));
+  const url = new URL(e.request.url);
+  if (e.request.method !== "GET" || url.origin !== location.origin) return;
+  const key = e.request.mode === "navigate" ? "index.html" : e.request;
+  e.respondWith(caches.match(key, { ignoreSearch: true, cacheName: CACHE })
+    .then(hit => hit || fetch(e.request))
+    .catch(() => caches.match("index.html")));
 });

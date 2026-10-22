@@ -96,7 +96,7 @@ def test_dagens_mal_fylls_i_och_pers_firas(page):
     assert "82,5 kg × 6" in page.locator(".card.ex", has_text="Bänkpress").first.locator(".goal").inner_text()
     assert "11 reps" in page.locator(".card.ex", has_text="Dips").first.locator(".goal").inner_text()
     page.click('[data-ok=bankpress][data-i="0"]')
-    assert page.evaluate("JSON.stringify(day().workout.sets.bankpress[0])") == '{"ok":true,"reps":6,"kg":82.5}'
+    assert page.evaluate("JSON.stringify(day().workouts[0].sets.bankpress[0])") == '{"ok":true,"reps":6,"kg":82.5}'
     assert "Nytt pers" in page.inner_text(".toast")
 
 
@@ -257,8 +257,13 @@ window.supabase = { createClient: () => ({
     async signOut() { this.session = null; sessionStorage.removeItem('sess'); return { error: null }; },
   },
   from: () => ({
-    select: async () => ({ data: Object.entries(window.__db).map(([id, data]) => ({ id, data })), error: null }),
-    upsert: async row => { window.__db[row.id] = row.data; keep(); return { error: null }; },
+    select: () => {
+      const all = Object.entries(window.__db).map(([id, data]) => ({ id, data: JSON.parse(JSON.stringify(data)) }));
+      const res = Promise.resolve({ data: all, error: null });
+      res.in = async (k, ids) => ({ data: all.filter(r => ids.includes(r.id)), error: null });
+      return res;
+    },
+    upsert: async row => { window.__db[row.id] = JSON.parse(JSON.stringify(row.data)); keep(); return { error: null }; },
     insert: async row => { if (window.__fbFail) return { error: { message: 'nere' } }; window.__fb = row; return { error: null }; },
     delete: () => ({ eq: async (k, id) => { delete window.__db[id]; keep(); return { error: null }; } }),
   }),
@@ -343,6 +348,104 @@ def test_startsidan_utan_konto_visar_ingen_inloggning(page):
     open_app(page)
     assert page.locator("[data-welcomelogin]").count() == 0
 
+
+
+SB_CONFIG = 'window.DRIV_CONFIG = { supabaseUrl: "https://exempel.supabase.co", supabaseAnonKey: "nyckel" };'
+
+
+def login(page, email="test@exempel.se"):
+    go(page, "profil")
+    page.fill("#acctemail", email)
+    page.click("[data-sendcode]")
+    page.fill("#acctcode", "123456")
+    page.click("[data-verifycode]")
+    page.wait_for_function("account.step === 'in' && cloud.status === 'cloud' && !cloud.pushing && window.__db.settings")
+
+
+def month_doc(page):
+    return page.evaluate("window.__db['m-' + TODAY.slice(0, 7)]")
+
+
+def test_synk_tappar_inte_pass_som_loggats_offline(page):
+    """Mat loggad på datorn och ett pass loggat på mobilen samma dag finns båda kvar."""
+    page.context.route("**/config.js", lambda r: r.fulfill(body=SB_CONFIG, content_type="application/javascript"))
+    start(page, SUPABASE_MOCK)
+    page.evaluate("day().food.push({name:'Gröt',kcal:300,protein:10}); save()")
+    login(page)
+    page.wait_for_function("(() => { const m = window.__db['m-' + TODAY.slice(0, 7)]; return m && m.days[TODAY]; })()")
+    # Datorn loggar middag efter att mobilen senast synkade
+    page.evaluate("""() => { const m = window.__db['m-' + TODAY.slice(0, 7)], L = m.days[TODAY];
+      L.food.push({name:'Lax', kcal:500, protein:40}); L._t.food = Date.now() + 1000; }""")
+    # Mobilen loggar ett set utan att ha sett middagen
+    go(page, "pass")
+    page.click('[data-ok=bankpress][data-i="0"]')
+    page.wait_for_function("""(() => { const L = window.__db['m-' + TODAY.slice(0, 7)].days[TODAY];
+      return L.workouts && L.workouts.length && L.food.length === 2; })()""")
+    L = month_doc(page)["days"][page.evaluate("TODAY")]
+    assert [f["name"] for f in L["food"]] == ["Gröt", "Lax"]
+    assert L["workouts"][0]["sets"]["bankpress"][0]["ok"] is True
+    # Och mobilen visar middagen också
+    assert page.evaluate("S.log[TODAY].food.length") == 2
+
+
+def test_synk_vid_ateranslutning_valjer_nyaste_delen(page):
+    page.context.route("**/config.js", lambda r: r.fulfill(body=SB_CONFIG, content_type="application/javascript"))
+    start(page, SUPABASE_MOCK)
+    login(page)
+    # Mobilen tappar kontakten och loggar ett pass medan datorn ändrar kalorimålet
+    page.evaluate("cloud.col = null")
+    go(page, "pass")
+    page.click('[data-ok=bankpress][data-i="0"]')
+    page.evaluate("""() => { const st = window.__db.settings; st.kcalOverride = 2500; st._t = Object.assign({}, st._t, { kcalOverride: Date.now() + 1000 }); }""")
+    page.evaluate("connectSupabase()")
+    page.wait_for_function("S.kcalOverride === 2500 && !cloud.pushing")
+    page.wait_for_function("""(() => { const m = window.__db['m-' + TODAY.slice(0, 7)];
+      return m && m.days[TODAY] && m.days[TODAY].workouts.length === 1; })()""")
+    assert page.evaluate("workoutsOn(TODAY)[0].sets.bankpress[0].ok") is True
+
+
+def test_sammanslagning_del_for_del(page):
+    open_app(page)
+    r = page.evaluate("""() => {
+      const a = { food: [1], dailies: { x: true }, _t: { food: 5, dailies: 1 } };
+      const b = { food: [2], dailies: {}, workouts: [9], _t: { food: 3, dailies: 2 } };
+      const lika = mergeParts({ food: [1] }, { food: [2] });
+      const bortTagen = mergeParts({ _t: { note: 9 } }, { note: 'gammal', _t: { note: 1 } });
+      return { m: mergeParts(a, b), lika, bortTagen };
+    }""")
+    assert r["m"]["food"] == [1] and r["m"]["dailies"] == {} and r["m"]["workouts"] == [9]
+    assert r["lika"]["food"] == [2]          # lika gammalt: kontots version
+    assert "note" not in r["bortTagen"]      # det som tagits bort senast förblir borttaget
+
+
+def test_tva_pass_samma_dag_och_gammalt_format(page):
+    start(page)
+    seed(page, "S.log['2026-01-05'] = {workout:{dayId:S.plan.days[0].id,done:true,sets:{bankpress:[{kg:80,reps:8,ok:true}]}},dailies:{},food:[]}")
+    assert page.evaluate("S.log['2026-01-05'].workouts.length") == 1
+    assert page.evaluate("'workout' in S.log['2026-01-05']") is False
+    go(page, "pass")
+    page.click(f'[data-pick="{page.evaluate("S.plan.days[0].id")}"]')
+    page.click('[data-ok=bankpress][data-i="0"]')
+    page.click(f'[data-pick="{page.evaluate("S.plan.days[1].id")}"]')
+    page.click('[data-ok=marklyft][data-i="0"]')
+    assert page.evaluate("workoutsOn(TODAY).map(w => Object.keys(w.sets)[0])") == ["bankpress", "marklyft"]
+    for d in page.evaluate("S.plan.days.slice(0, 2).map(d => d.id)"):
+        page.click(f'[data-pick="{d}"]')
+        page.click(f'[data-finish="{d}"]')
+        go(page, "pass")
+    assert page.evaluate("weekSummary(weekStart(TODAY)).passes") == 2
+
+
+def test_nytt_datum_efter_midnatt(page):
+    import datetime
+    page.clock.install(time=datetime.datetime(2026, 10, 21, 23, 59, 0))
+    start(page)
+    assert page.evaluate("TODAY") == "2026-10-21"
+    page.clock.fast_forward("02:00")
+    page.evaluate("document.querySelector('[data-tab=kost]').click()")
+    assert page.evaluate("TODAY") == "2026-10-22"
+    page.evaluate("document.querySelector('[data-tab=kost]').click()")
+    assert page.evaluate("tab") == "kost"
 
 # ---------- Veckobrev ----------
 
