@@ -16,6 +16,7 @@ På mobilen kan du lägga den på hemskärmen: *Dela → Lägg till på hemskär
 - **Utveckling:** förslag på vikt och reps för varje övning utifrån förra gången, besked när du slår pers och en graf per övning.
 - **Historik:** en kalender med alla pass och dagar då alla dailys gjorts. Tryck på en dag för att ändra den: bocka dailys och väg dig i efterhand, eller öppna Träna eller Kost för den dagen och logga ett pass eller mat du glömt. Under kalendern jämförs veckan med veckan innan: bästa set per övning med + eller −, samt pass, dailys, löpning, kalorier och veckobrevet.
 - **Dailys:** egna övningar, löpning eller promenad att bocka av direkt på Hem, med streaks och påminnelse i kalendern.
+- **Vänner:** lägg till varandra med en vänkod eller länk, se när vänner kört ett pass och peppa dem 👏. Bara att ett pass är gjort delas – aldrig vikter, mat eller kroppsvikt – och delningen går att stänga av.
 - **Fyra flikar:** Hem, Träna (med kommande pass), Kost och Historik. Profil och inställningar nås via kugghjulet.
 - **Kost:** kalorimål och makron från ålder, längd, vikt, aktivitet och mål. Skriv vad du åt i fritext, till exempel "2 dl mjölk och 1 banan", så räknas kalorier och protein ut från drygt 2 800 livsmedel och rätter. Medan du skriver föreslår appen träffar, och felstavningar som "kottbullar" hittar rätt. Sidan visar en ruta per måltid (frukost, lunch, mellanmål, middag); *+ Lägg till* öppnar sök och snabbval för just den måltiden. Mängden styr: varje livsmedel får antal, gram, dl eller portioner som går att ändra, och kalorier och protein räknas fram. Favoriter, egna måltider och det du ätit nyligen ligger som snabbval, och samma snabbval två gånger blir två stycken. En måltid kan upprepas från förra gången med ett tryck, och flera saker kan sparas som en måltid. Logga även en måltid med ungefärliga kalorier eller skanna streckkoden på en vara.
 
@@ -52,6 +53,10 @@ Näringsvärden kommer delvis från [Livsmedelsverkets livsmedelsdatabas](https:
 3. Under *Authentication → URL Configuration*: sätt *Site URL* till appens adress, till exempel `https://driv.driveify.se/`, och lägg till samma adress under *Redirect URLs*.
 4. Under *Authentication → Email Templates → Magic Link*: lägg till `{{ .Token }}` i mejlet, så får användaren en kod att skriva in i appen. Det behövs i en installerad app på iPhone, där länken öppnas i webbläsaren i stället för i appen.
 5. Fyll i *Project URL* och *anon public key* (under *Project Settings → API*) i [`config.js`](config.js).
+
+### Vänner
+
+Kör även [`supabase/vanner.sql`](supabase/vanner.sql) i SQL Editor. Den skapar tabellerna för profiler, vänner, delade pass och peppningar, samt funktionerna appen använder. Tabellerna kan inte läsas direkt; funktionerna kontrollerar själva vem som frågar. Där finns också funktionen som raderar ett konto med allt som hör till det.
 
 ## Tester
 

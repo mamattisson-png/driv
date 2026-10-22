@@ -518,6 +518,7 @@ async function connectSupabase() {
     try { synced = localStorage.getItem("driv-synced"); } catch (e) { /* blockerad lagring */ }
     await attachCollection(supabaseCollection(sb, user.id), true, synced !== user.id);
     try { localStorage.setItem("driv-synced", user.id); } catch (e) { /* blockerad lagring */ }
+    loadSocial();
   } catch (e) {
     cloud.status = "error";
   }
@@ -559,6 +560,7 @@ async function verifyLoginCode() {
 async function signOut() {
   try { await (await supabaseClient()).auth.signOut(); } catch (e) { /* redan utloggad */ }
   cloud.col = null; cloud.sent = {}; cloud.status = "local";
+  Object.assign(social, { profile: null, friends: [], feed: [], loaded: false, msg: "" });
   account.step = "email"; account.msg = "Utloggad. Det du loggat finns kvar på den här enheten.";
   render();
 }
@@ -618,7 +620,9 @@ function accountBody(mode) {
   if (a.step === "in") {
     body = `<div>Inloggad som <b>${esc(a.email)}</b>.</div>
       <div class="muted small" style="margin-top:4px">Allt du loggar sparas på ditt konto och följer med till alla enheter där du loggar in.</div>
-      <button class="small" style="margin-top:10px" data-signout>Logga ut</button>`;
+      <div class="row wrap" style="margin-top:10px"><button class="small" data-signout>Logga ut</button>
+        <button class="small ${a.confirmDelete ? "primary" : "ghost"}" data-delacct>${a.confirmDelete ? "Tryck igen för att radera kontot" : "Radera konto"}</button></div>
+      ${a.confirmDelete ? `<div class="muted small" style="margin-top:6px">Kontot, molnkopian, vänner och delade pass raderas. Det som finns på den här enheten ligger kvar.</div>` : ""}`;
   } else if (a.step === "code") {
     body = `<div class="muted">Vi har skickat en kod till <b>${esc(a.email)}</b>. Skriv in den här, eller tryck på länken i mejlet.</div>
       <div class="row" style="margin-top:8px"><input id="acctcode" inputmode="numeric" autocomplete="one-time-code" placeholder="Kod från mejlet">
@@ -1132,6 +1136,7 @@ const VIEWS = {
       })()}
       ${S.plan.days.length > 1 ? dayPicker(d && d.id) : ""}
       ${accountNudge()}
+      ${social.pendingCode ? friendsHome() : ""}
       ${passCard}
       ${dailiesCard()}
       <div class="card"><div class="row between"><h2>Mat</h2><span class="muted">${e.kcal} / ${m.kcal} kcal</span></div>
@@ -1139,7 +1144,8 @@ const VIEWS = {
         <div class="row between" style="margin-top:10px"><span>Protein</span><span class="muted">${e.protein} / ${m.protein} g</span></div>
         ${bar(e.protein, m.protein, true)}
         <div style="margin-top:10px"><button data-go="kost">Logga mat</button></div></div>
-      ${S.hideWeight ? "" : weightCard()}`;
+      ${S.hideWeight ? "" : weightCard()}
+      ${social.pendingCode ? "" : friendsHome()}`;
   },
 
   pass() {
@@ -1192,6 +1198,7 @@ const VIEWS = {
           <input type="number" inputmode="numeric" id="override" value="${S.kcalOverride || ""}" placeholder="${m.kcal}"></label></div>
       ${feedbackCard()}
       ${accountCard()}
+      ${friendsCard()}
       <div class="card"><h2>Data</h2><div class="muted" style="margin-bottom:8px">${{
           cloud: account.step === "in" ? `✓ Sparas på ditt konto (${esc(account.email)}).` : "✓ Sparas på ditt konto och följer med mellan mobil och dator.",
           error: "Kunde inte spara till kontot just nu. Allt finns kvar i den här webbläsaren och sparas igen vid nästa ändring.",
@@ -1709,6 +1716,7 @@ document.addEventListener("click", ev => {
   else if (ds.finish) {
     const w = workoutFor(dayById(ds.finish));
     w.done = !w.done;
+    shareWorkout(dayById(ds.finish), logDate(), w.done);
     // Ett sparat pass visar veckan; i efterhand går man tillbaka till dagen i Historik
     if (w.done) { histDay = editDate; editDate = null; tab = "historik"; }
   }
@@ -1750,6 +1758,17 @@ document.addEventListener("click", ev => {
   else if (ds.nudgelater !== undefined) S.nudgeUntil = shift(TODAY, 14);
   else if (ds.changeemail !== undefined) { account.step = "email"; account.msg = ""; }
   else if (ds.signout !== undefined) { signOut(); return; }
+  else if (ds.delacct !== undefined) {
+    if (!account.confirmDelete) { account.confirmDelete = true; render(); return; }
+    account.confirmDelete = false;
+    socialRpc("driv_delete_me").then(async () => {
+      try { localStorage.removeItem("driv-synced"); } catch (e) { /* blockerad lagring */ }
+      await signOut();
+      account.msg = "Kontot är raderat. Det du loggat finns kvar på den här enheten.";
+      render();
+    }, () => { account.msg = "Kunde inte radera kontot just nu. Försök igen."; render(); });
+    return;
+  }
   else if (ds.remcal !== undefined) {
     const time = (S.reminder && S.reminder.time) || "20:00";
     saveFile("driv-dailys.ics", reminderIcs(time), "text/calendar");

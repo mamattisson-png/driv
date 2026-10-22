@@ -559,6 +559,51 @@ window.supabase = { createClient: () => ({
       this.session = { user: { id: 'u1', email } }; sessionStorage.setItem('sess', JSON.stringify(this.session)); return { error: null }; },
     async signOut() { this.session = null; sessionStorage.removeItem('sess'); return { error: null }; },
   },
+  // Funktionerna i supabase/vanner.sql, i minnet. Inloggad användare är u1.
+  async rpc(name, a = {}) {
+    const st = window.__social || (window.__social = { profiles: {}, friends: [], activity: [], kudos: [], calls: [] });
+    st.calls.push(name);
+    const me = this.auth.session && this.auth.session.user.id, prof = st.profiles[me];
+    const fail = message => ({ data: null, error: { message } });
+    const friendsOf = u => st.friends.filter(f => f[0] === u).map(f => f[1]);
+    if (window.__noSocial) return fail("Funktionen saknas");
+    if (!me) return fail("Inte inloggad");
+    switch (name) {
+      case "driv_profile_get": return { data: prof ? { ...prof } : null, error: null };
+      case "driv_profile_save":
+        st.profiles[me] = { name: a.p_name, code: prof ? prof.code : "ANNA01", sharing: a.p_sharing };
+        return { data: { ...st.profiles[me] }, error: null };
+      case "driv_add_friend": {
+        if (!prof) return fail("Skapa en profil först");
+        const id = Object.keys(st.profiles).find(k => st.profiles[k].code === a.p_code);
+        if (!id) return fail("Hittade ingen med den koden");
+        if (id === me) return fail("Det är din egen kod");
+        st.friends.push([me, id], [id, me]);
+        return { data: st.profiles[id].name, error: null };
+      }
+      case "driv_remove_friend": st.friends = st.friends.filter(f => !f.includes(a.p_friend) || !f.includes(me)); return { data: null, error: null };
+      case "driv_friends": return { data: friendsOf(me).map(id => ({ id, name: st.profiles[id].name })), error: null };
+      case "driv_log_activity": {
+        if (!prof || !prof.sharing) return { data: null, error: null };
+        st.activity = st.activity.filter(x => !(x.user_id === me && x.day === a.p_day && x.pass === a.p_pass));
+        if (a.p_done) st.activity.push({ id: st.activity.length + 100, user_id: me, day: a.p_day, pass: a.p_pass, exercises: a.p_exercises });
+        return { data: null, error: null };
+      }
+      case "driv_feed": return { data: st.activity.filter(x => (x.user_id === me || friendsOf(me).includes(x.user_id)) && st.profiles[x.user_id].sharing)
+        .map(x => ({ ...x, name: st.profiles[x.user_id].name, mine: x.user_id === me,
+          kudos: st.kudos.filter(k => k[0] === x.id).length, kudoed: st.kudos.some(k => k[0] === x.id && k[1] === me) }))
+        .sort((x, y) => y.day.localeCompare(x.day)), error: null };
+      case "driv_kudos": {
+        const x = st.activity.find(y => y.id === a.p_activity);
+        if (!x || !friendsOf(me).includes(x.user_id)) return fail("Inte en väns pass");
+        const i = st.kudos.findIndex(k => k[0] === x.id && k[1] === me);
+        if (i >= 0) st.kudos.splice(i, 1); else st.kudos.push([x.id, me]);
+        return { data: null, error: null };
+      }
+      case "driv_delete_me": delete st.profiles[me]; st.deleted = me; return { data: null, error: null };
+    }
+    return fail("okänd funktion " + name);
+  },
   from: () => ({
     select: () => {
       const all = Object.entries(window.__db).map(([id, data]) => ({ id, data: JSON.parse(JSON.stringify(data)) }));
@@ -848,6 +893,83 @@ def test_historik_andra_en_tidigare_dag(page):
     # Till en annan flik: tillbaka till idag
     go(page, "idag")
     assert page.evaluate("logDate()") == "2026-10-22"
+
+
+SOCIAL_SEED = """window.__social = { profiles: { u2: { name: 'Bo', code: 'BO1234', sharing: true } }, friends: [], kudos: [], calls: [],
+  activity: [{ id: 1, user_id: 'u2', day: '2026-10-21', pass: 'Push', exercises: 6 }] };"""
+
+
+def test_vanner_kod_flode_och_peppning(page):
+    import datetime
+    page.clock.install(time=datetime.datetime(2026, 10, 22, 12, 0))
+    page.context.route("**/config.js", lambda r: r.fulfill(body=SB_CONFIG, content_type="application/javascript"))
+    start(page, SUPABASE_MOCK + SOCIAL_SEED)
+    # Utan konto: vänner kräver ett konto
+    go(page, "profil")
+    assert "Kräver ett konto" in page.inner_text("#vanner")
+    login(page)
+    go(page, "profil")
+    page.wait_for_selector("#sname")
+    assert "aldrig vikter, mat eller kroppsvikt" in page.inner_text("#vanner")
+    page.fill("#sname", "Anna")
+    page.click("[data-profsave]")
+    page.wait_for_selector(".vcode")
+    assert page.inner_text(".vcode") == "ANNA01"
+    # Lägg till Bo med kod; fel kod ger ett begripligt besked
+    page.fill("#vcode", "XXXXXX")
+    page.click("[data-addfriend]")
+    page.wait_for_function("social.msg.includes('Hittade ingen')")
+    page.fill("#vcode", "bo1234")
+    page.click("[data-addfriend]")
+    page.wait_for_function("social.friends.length === 1")
+    assert "Bo" in page.inner_text("#vanner")
+    # Hem visar Bos pass, och peppningen sparas
+    go(page, "idag")
+    page.wait_for_selector(".feed-row")
+    assert "Bo körde Push · 6 övningar" in page.inner_text(".feed-row") and "igår" in page.inner_text(".feed-row")
+    page.click("[data-kudos='1']")
+    page.wait_for_function("window.__social.kudos.length === 1")
+    assert "👏 1" in page.inner_text("[data-kudos='1']")
+    # Ett sparat pass delas med antal övningar, inget annat
+    go(page, "pass")
+    open_ex(page, "bankpress")
+    page.click('[data-ok=bankpress][data-i="0"]')
+    to_list(page)
+    page.click("button[data-finish]")
+    page.wait_for_function("window.__social.activity.some(x => x.user_id === 'u1')")
+    mine = page.evaluate("window.__social.activity.find(x => x.user_id === 'u1')")
+    assert {k: mine[k] for k in ("day", "pass", "exercises")} == {"day": "2026-10-22", "pass": "Push", "exercises": 1}
+    # Slutar man dela sparas inga fler pass
+    go(page, "profil")
+    page.click("[data-sharing]")
+    page.wait_for_function("social.profile && social.profile.sharing === false")
+    # Radera konto kräver två tryck
+    page.click("[data-delacct]")
+    assert page.evaluate("window.__social.deleted") is None
+    page.click("[data-delacct]")
+    page.wait_for_function("window.__social.deleted === 'u1' && account.step === 'email'")
+
+
+def test_vanner_utan_funktioner_i_supabase(page):
+    page.context.route("**/config.js", lambda r: r.fulfill(body=SB_CONFIG, content_type="application/javascript"))
+    start(page, SUPABASE_MOCK + "window.__noSocial = true;")
+    login(page)
+    go(page, "profil")
+    page.wait_for_function("social.loaded")
+    assert "går inte att nå just nu" in page.inner_text("#vanner")
+
+
+def test_vanlank_visar_forfragan(page):
+    page.context.route("**/config.js", lambda r: r.fulfill(body=SB_CONFIG, content_type="application/javascript"))
+    page.add_init_script(SUPABASE_MOCK)
+    page.goto(page.base_url + "?v=BO1234")
+    page.click("[data-savesetup]")
+    assert "BO1234" in page.inner_text(".nudge")
+    page.click("[data-gofriends]")
+    assert page.evaluate("tab") == "profil"
+    page.evaluate("document.querySelector('[data-tab=idag]').click()")
+    page.click("[data-dropcode]")
+    assert page.locator(".nudge").count() == 0
 
 # ---------- Veckobrev ----------
 
