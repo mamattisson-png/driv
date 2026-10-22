@@ -23,7 +23,7 @@ På mobilen kan du lägga den på hemskärmen: *Dela → Lägg till på hemskär
 
 Utan konto sparas allt bara i webbläsaren på den enhet du använder. Under *Profil → Data* kan du exportera en säkerhetskopia och importera den på en annan enhet.
 
-Med konto (*Profil → Konto*, inloggning med e-post utan lösenord) sparas inställningar och logg även i en Supabase-databas, så att inget försvinner och samma data finns på alla dina enheter. Varje användare kan bara läsa och ändra sina egna rader.
+Med konto (*Profil → Konto*, inloggning med e-post utan lösenord) sparas inställningar och logg även i en Supabase-databas, så att inget försvinner och samma data finns på alla dina enheter. Varje användare kan bara läsa och ändra sina egna rader. E-postadressen används bara för att logga in, aldrig för reklam eller utskick.
 
 Streckkodsskannern hämtar produktdata från [Open Food Facts](https://world.openfoodfacts.org) (ODbL). Kameran används bara medan skannern är öppen.
 

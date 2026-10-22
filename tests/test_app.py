@@ -604,6 +604,7 @@ def test_logga_in_fran_startsidan(page):
     assert page.locator('[data-welcomelogin="create"]').count() == 1
     page.click('[data-welcomelogin="login"]')
     assert "Logga in" in page.inner_text(".card:has(#acctemail) h2")
+    assert "bara för att logga in" in page.inner_text(".card:has(#acctemail)")
     page.fill("#acctemail", "test@exempel.se")
     page.click("[data-sendcode]")
     page.fill("#acctcode", "123456")

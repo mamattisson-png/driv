@@ -630,7 +630,8 @@ function accountBody(mode) {
         : mode === "create" ? "Skriv din e-post, så skickar vi en kod. Inget lösenord."
         : "Spara dina loggar i molnet, på alla dina enheter. Bara e-post och en kod – inget lösenord."}</div>
       <div class="row" style="margin-top:8px"><input id="acctemail" type="email" autocomplete="email" placeholder="din@epost.se" value="${esc(a.email)}">
-        <button class="primary small" data-sendcode ${a.busy ? "disabled" : ""}>Skicka kod</button></div>`;
+        <button class="primary small" data-sendcode ${a.busy ? "disabled" : ""}>Skicka kod</button></div>
+      <div class="muted small" style="margin-top:6px">🔒 Din e-post används bara för att logga in – aldrig för reklam eller utskick.</div>`;
   }
   return `${body}${a.msg ? `<div class="muted small" style="margin-top:8px">${esc(a.msg)}</div>` : ""}`;
 }
