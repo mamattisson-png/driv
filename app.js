@@ -1553,6 +1553,10 @@ function startRest(exId) {
         <div class="row"><button class="small" data-restadd="-15">−15</button><button class="small" data-restadd="15">+15</button>
           <button class="small" data-restskip>Klar</button></div></div>`;
     document.body.appendChild(rest.el);
+    // Dialoger lägger sig ovanför timern; höjden mäts eftersom den beror på textstorleken
+    const measure = () => rest.el && document.body.style.setProperty("--rest-h", rest.el.offsetHeight + "px");
+    if (window.ResizeObserver) new ResizeObserver(measure).observe(rest.el);
+    measure();
   }
   document.body.classList.add("resting");
   rest.el.classList.remove("ding");
