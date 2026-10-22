@@ -262,6 +262,39 @@ def test_fritext_forslag_och_felstavning(page):
     assert page.evaluate("day().food.length") == 1
 
 
+def test_kost_maltider_snabbval_och_upprepa(page):
+    import datetime
+    page.clock.install(time=datetime.datetime(2026, 10, 22, 12, 30))
+    start(page)
+    seed(page, """S.log[shift(TODAY, -1)] = {workouts:[], dailies:{}, food:[
+      {name:'Gröt', kcal:300, protein:10, meal:0}, {name:'Kaffe', kcal:40, protein:2, meal:0}, {name:'Pasta', kcal:700, protein:25, meal:1}]}""")
+    go(page, "kost")
+    # Halv ett är det lunch; fritext loggas där
+    page.fill("#fname", "1 banan")
+    page.click("[data-addfood]")
+    assert page.evaluate("day().food.map(f => [f.name, f.meal])") == [["1 banan", 1]]
+    # Frukost som igår med ett tryck
+    page.click('[data-repeat="0"]')
+    assert page.evaluate("day().food.filter(f => f.meal === 0).map(f => f.name)") == ["Gröt", "Kaffe"]
+    # Snabbval loggas i vald måltid, och en favorit hamnar först
+    page.click('[data-mealpick="3"]')
+    page.click('.qrow:has-text("Pasta") [data-qfav]')
+    assert "Pasta" in page.inner_text(".qrow >> nth=0") and "★" in page.inner_text(".qrow >> nth=0")
+    page.click('.qrow:has-text("Pasta") [data-quick]')
+    assert page.evaluate("day().food.at(-1)") == {"name": "Pasta", "kcal": 700, "protein": 25, "meal": 3}
+    # Frukosten sparad som måltid loggas del för del
+    page.click('[data-savegroup="0"]')
+    page.click('[data-mealpick="2"]')
+    page.click('.qrow:has-text("Frukost:") [data-quick]')
+    assert page.evaluate("day().food.filter(f => f.meal === 2).map(f => f.name)") == ["Gröt", "Kaffe"]
+    # Ungefärlig måltid
+    page.click('[data-mealpick="3"]')
+    page.click('[data-delfood="3"]')
+    page.fill("#qm-3", "650")
+    page.click('[data-qmeal="3"]')
+    assert page.evaluate("day().food.at(-1).name") == "Middag (ca 650 kcal)"
+
+
 def test_streckkod_fran_open_food_facts(page):
     start(page, "window.BarcodeDetector = class { async detect() { return window.__code ? [{ rawValue: window.__code }] : []; } };")
     go(page, "kost")

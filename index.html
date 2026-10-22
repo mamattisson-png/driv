@@ -182,6 +182,22 @@
   .letter-foot { margin-top: 10px; font-weight: 600; }
   .letter-card { border-color: var(--accent); }
   .nudge { border-color: var(--accent); }
+  /* Kost */
+  .mealpick { grid-template-columns: repeat(4, 1fr); gap: 4px; margin-bottom: 10px; }
+  .mealpick button { padding: 8px 2px; font-size: 13px; }
+  .qrow { display: flex; align-items: center; gap: 4px; border-top: 1px solid var(--line); }
+  .qadd { display: flex; gap: 8px; align-items: baseline; text-align: left; border: 0; background: none; padding: 10px 0; min-width: 0; }
+  .qadd .plus { color: var(--accent); font-weight: 700; }
+  .qadd .muted { margin-left: auto; }
+  .nowrap { white-space: nowrap; }
+  .star { font-size: 18px; color: var(--muted); }
+  .star.on { color: var(--accent); }
+  .mgroup { padding: 10px 0; border-top: 1px solid var(--line); }
+  .mgroup:first-of-type { border-top: 0; padding-top: 0; }
+  .mgroup .food:first-of-type { border-top: 0; }
+  .mgroup .again { display: block; width: 100%; text-align: left; margin-top: 8px; }
+  .qkcal { margin-top: 8px; }
+  .qkcal input { flex: 1; }
   /* Fokusläge */
   .fdots { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; margin: 4px 0 12px; }
   .fdots button { width: 22px; height: 22px; padding: 0; border: 0; background: none; position: relative; }
@@ -289,6 +305,7 @@
 <script src="mat.js"></script>
 <script src="config.js"></script>
 <script src="fokus.js"></script>
+<script src="kost.js"></script>
 <script src="app.js"></script>
 <script>
   // Offline och installation på hemskärmen när appen ligger på en vanlig webbplats

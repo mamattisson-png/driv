@@ -16,7 +16,7 @@ På mobilen kan du lägga den på hemskärmen: *Dela → Lägg till på hemskär
 - **Slå förra veckan:** dagens mål på varje övning, besked när du slår pers, hur många övningar som gått upp den här veckan och en graf per övning.
 - **Vecka för vecka:** bästa set per övning jämfört med förra veckan, med + eller −, samt pass, dailys, löpning och kalorier.
 - **Dailys:** egna övningar, löpning eller promenad att bocka av varje dag, med streaks och påminnelse i kalendern.
-- **Kost:** kalorimål och makron från ålder, längd, vikt, aktivitet och mål. Skriv vad du åt i fritext, till exempel "2 dl mjölk och 1 banan", så räknas kalorier och protein ut från drygt 2 800 livsmedel och rätter. Medan du skriver föreslår appen träffar, och felstavningar som "kottbullar" hittar rätt. Logga även en måltid med ungefärliga kalorier, välj bland det du ätit tidigare eller skanna streckkoden på en vara.
+- **Kost:** kalorimål och makron från ålder, längd, vikt, aktivitet och mål. Skriv vad du åt i fritext, till exempel "2 dl mjölk och 1 banan", så räknas kalorier och protein ut från drygt 2 800 livsmedel och rätter. Medan du skriver föreslår appen träffar, och felstavningar som "kottbullar" hittar rätt. Allt loggas i en måltid (frukost, lunch, mellanmål eller middag, förvald efter klockan). Favoriter, egna måltider och det du ätit nyligen ligger överst som snabbval, en måltid kan upprepas från förra gången med ett tryck, och flera saker kan sparas som en måltid. Logga även en måltid med ungefärliga kalorier eller skanna streckkoden på en vara.
 
 ## Data och integritet
 

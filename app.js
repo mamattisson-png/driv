@@ -703,7 +703,7 @@ let TODAY = iso(new Date());
 function refreshToday() {
   const now = iso(new Date());
   if (now === TODAY) return false;
-  TODAY = now; chosenDay = null; editing = false;
+  TODAY = now; chosenDay = null; editing = false; foodMeal = null;
   if (focus) endFocus();
   return true;
 }
@@ -1109,45 +1109,7 @@ const VIEWS = {
       ${S.daily.length ? reminderCard() : ""}`;
   },
 
-  kost() {
-    const m = macros(), e = eaten(), L = day();
-    const recent = recentFoods();
-    return `<h1>Kost</h1>
-      <div class="card"><h2>Dagens mål</h2>
-        <div class="grid2"><div><div class="stat">${m.kcal}</div><div class="muted">kcal</div></div>
-        <div><div class="stat">${m.protein} g</div><div class="muted">protein</div></div></div>
-        <div class="muted" style="margin-top:6px">Fett ${m.fat} g · Kolhydrater ${m.carbs} g</div>
-        ${bar(e.kcal, m.kcal)}<div class="muted">Ätit ${e.kcal} kcal · ${e.protein} g protein</div></div>
-      <div class="card"><h2>Logga mat</h2>
-        <div class="fwrap"><input id="fname" placeholder="Sök eller skriv, t.ex. 2 dl mjölk och 1 banan" autocomplete="off"
-          role="combobox" aria-autocomplete="list" aria-controls="fsugg">
-          <div id="fsugg" class="sugg" role="listbox" hidden></div></div>
-        <div id="fpreview" class="muted fpreview"></div>
-        <div class="row" style="margin-top:8px">
-          <label class="field grow">kcal<input id="fkcal" type="number" inputmode="numeric"></label>
-          <label class="field grow">Protein (g)<input id="fprot" type="number" inputmode="numeric"></label>
-          <button class="primary" data-addfood style="align-self:flex-end">Logga</button></div>
-        <div class="row wrap" style="margin-top:8px"><button class="small" data-savemeal>Spara som min måltid</button>
-          ${CAN_SCAN ? `<button class="small" data-scan>📷 Skanna streckkod</button>` : ""}</div>
-        <div class="muted small" style="margin-top:10px">Näringsvärden: Livsmedelsverkets livsmedelsdatabas (CC BY 4.0) och egna uppskattningar.</div></div>
-      <div class="card"><h2>Ät igen</h2>
-        ${S.meals.length ? `<div class="muted" style="margin-bottom:4px">Mina måltider</div>
-          ${S.meals.map((cm, i) => `<div class="food"><button class="grow mealbtn" data-meal="${i}">${esc(cm.name)} <span class="muted">${cm.kcal} kcal · ${cm.protein} g</span></button>
-          <button class="small ghost" data-delmeal="${i}" aria-label="Ta bort ${esc(cm.name)}">✕</button></div>`).join("")}` : ""}
-        <div class="muted" style="margin:${S.meals.length ? 12 : 0}px 0 4px">Tidigare loggat</div>
-        ${recent.length ? `<div class="chips">${recent.map((f, i) => `<button data-again="${i}">${esc(f.name)} <span class="muted">${f.kcal}</span></button>`).join("")}</div>`
-          : `<div class="muted">Det du loggar hamnar här, så att du kan logga samma sak igen med ett tryck.</div>`}</div>
-      <div class="card"><h2>Kostschema</h2>
-        <div class="muted" style="margin-bottom:6px">Logga en måltid med ungefär hur många kalorier den var.</div>
-        ${MEALS.map(([n, share], i) => {
-          const target = Math.round(m.kcal * share / 10) * 10;
-          return `<div class="meal-row"><div class="grow"><b>${n}</b> <span class="muted">mål ${target} kcal · ${Math.round(m.protein * share)} g protein</span>
-            </div>
-            <input id="qm-${i}" type="number" inputmode="numeric" placeholder="${target}" aria-label="kcal för ${n}" style="width:76px">
-            <button class="primary" data-qmeal="${i}" aria-label="Logga ${n}">+</button></div>`;
-        }).join("")}</div>
-      <div class="card"><h2>Idag</h2>${L.food.length ? L.food.map((f, i) => `<div class="food"><div class="grow">${esc(f.name)}</div><span class="muted">${f.kcal} kcal · ${f.protein} g</span><button class="small ghost" data-delfood="${i}">✕</button></div>`).join("") : `<div class="muted">Inget loggat än.</div>`}</div>`;
-  },
+  kost: () => kostView(),
 
   vecka() {
     const ws = shift(weekStart(TODAY), weekOffset * 7), prevWs = shift(ws, -7);
@@ -1232,7 +1194,7 @@ function recentFoods() {
       if (seen.has(key)) continue;
       seen.add(key);
       out.push(f);
-      if (out.length >= 16) return (recentCache = out);
+      if (out.length >= 30) return (recentCache = out);
     }
   }
   return (recentCache = out);
@@ -1812,17 +1774,15 @@ document.addEventListener("click", ev => {
       return;
     }
     const item = { name: name || "Mat", kcal, protein };
-    if (ds.savemeal !== undefined) S.meals.push(item);
-    else day().food.push(item);
+    if (ds.savemeal !== undefined) { S.meals.push(item); toast("Sparad bland snabbvalen"); }
+    else logFood(item);
   }
   else if (ds.qmeal) {
     const [slot, share] = MEALS[+ds.qmeal], m = macros();
     const kcal = Math.round(+document.getElementById("qm-" + ds.qmeal).value || Math.round(m.kcal * share / 10) * 10);
     // Protein uppskattas med samma andel som i dagens mål
-    day().food.push({ name: `${slot} (ca ${kcal} kcal)`, kcal, protein: Math.round(kcal * m.protein / m.kcal) });
+    logFood({ name: `${slot} (ca ${kcal} kcal)`, kcal, protein: Math.round(kcal * m.protein / m.kcal) }, +ds.qmeal);
   }
-  else if (ds.meal) { const { name, kcal, protein } = S.meals[+ds.meal]; day().food.push({ name, kcal, protein }); }
-  else if (ds.again) { const { name, kcal, protein } = recentCache[+ds.again]; day().food.push({ name, kcal, protein }); }
   else if (ds.delmeal) S.meals.splice(+ds.delmeal, 1);
   else if (ds.delfood) day().food.splice(+ds.delfood, 1);
   else if (ds.xdel) exList(ds.xdel).splice(+ds.idx, 1);
@@ -2111,7 +2071,7 @@ function updateScanCalc() {
 function logScanned() {
   const pr = scanner.product, g = +scanner.el.querySelector("#scangrams").value || 0;
   if (!pr || !g) return;
-  day().food.push({ name: `${pr.name} ${Math.round(g)} g`, kcal: Math.round(pr.kcal * g / 100), protein: Math.round(pr.p * g / 100) });
+  logFood({ name: `${pr.name} ${Math.round(g)} g`, kcal: pr.kcal * g / 100, protein: pr.p * g / 100 });
   closeScanner();
   save();
   render();
@@ -2155,7 +2115,7 @@ async function askClaude(logAfter = false) {
     S.learned[norm(text)] = { kcal: Math.round(+r.kcal || 0), protein: Math.round(+r.protein || 0) };
     save();
     if (logAfter) {
-      day().food.push({ name: text, kcal: Math.round(+r.kcal || 0), protein: Math.round(+r.protein || 0) });
+      logFood({ name: text, kcal: +r.kcal || 0, protein: +r.protein || 0 });
       save();
       render();
     }
