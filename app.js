@@ -1236,10 +1236,12 @@ function exDone(w, ex) {
   return true;
 }
 
-// Senaste loggade set före idag, som platshållare
+// Förra gångens set, som förslag: senaste gången före dagen man loggar. Loggar man en tidigare
+// dag och övningen inte gjorts före den, används närmaste gången efter.
 function lastSets(exId) {
-  const dates = Object.keys(S.log).filter(d => d < logDate()).sort().reverse();
-  for (const d of dates) {
+  const date = logDate(), dates = Object.keys(S.log).filter(d => d !== date).sort();
+  const order = [...dates.filter(d => d < date).reverse(), ...dates.filter(d => d > date)];
+  for (const d of order) {
     const w = workoutsOn(d).filter(x => (x.sets[exId] || []).some(hasData)).pop();
     if (w) return w.sets[exId];
   }

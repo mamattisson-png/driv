@@ -222,6 +222,24 @@ def test_bilder_ar_stilla_i_listor_men_animeras_ensamma(page):
     assert page.locator(".sheet .fig animate").count() > 0
 
 
+def test_forslag_i_efterhand_tar_narmaste_gangen(page):
+    import datetime
+    page.clock.install(time=datetime.datetime(2026, 10, 22, 12, 0))
+    start(page)
+    seed(page, """const D = S.plan.days;
+      S.log['2026-10-15'] = {workouts:[{dayId:D[0].id,done:true,sets:{militarpress:[{kg:40,reps:8,ok:true}]}}],dailies:{},food:[]};
+      S.log['2026-10-01'] = {workouts:[{dayId:D[0].id,done:true,sets:{bankpress:[{kg:70,reps:8,ok:true}]}}],dailies:{},food:[]}""")
+    # Ett pass den 8 oktober i efterhand: militärpress gjordes först efteråt, bänkpress före
+    go(page, "historik")
+    page.click('[data-histday="2026-10-08"]')
+    page.click("[data-hpass='']")
+    page.click(f'[data-pick="{page.evaluate("S.plan.days[0].id")}"]')
+    open_ex(page, "militarpress")
+    assert "Första gången" not in page.inner_text(".focus")
+    assert page.get_attribute('[data-set=militarpress][data-f=kg][data-i="0"]', "placeholder") == "40"
+    open_ex(page, "bankpress")
+    assert page.get_attribute('[data-set=bankpress][data-f=kg][data-i="0"]', "placeholder") == "72.5"
+
 def test_vilotimer(page):
     start(page, "window.__vib = []; navigator.vibrate = p => { window.__vib.push(p); return true; };")
     go(page, "pass")
