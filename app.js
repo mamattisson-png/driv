@@ -607,12 +607,13 @@ function accountNudge() {
 }
 
 // Visas på startsidan så att den som redan har konto slipper göra om upplägget
-let welcomeLogin = false;
+let welcomeLogin = null;   // "create" eller "login" när rutan på startsidan är öppen
 function accountCard() {
   if (!sbEnabled) return "";
   return `<div class="card" id="konto"><h2>${account.step === "in" ? "Konto" : "Skapa konto eller logga in"}</h2>${accountBody()}</div>`;
 }
-function accountBody() {
+// mode: "create" eller "login" ger en kortare text på startsidan
+function accountBody(mode) {
   const a = account;
   let body;
   if (a.step === "in") {
@@ -625,8 +626,9 @@ function accountBody() {
         <button class="primary small" data-verifycode ${a.busy ? "disabled" : ""}>Fortsätt</button></div>
       <button class="small ghost" style="margin-top:6px" data-changeemail>Byt e-postadress</button>`;
   } else {
-    body = `<div class="muted">Med ett konto sparas allt du loggar tryggt i molnet och finns på alla dina enheter.
-        Skriv din e-post så får du en kod. Har du inget konto skapas det automatiskt – inget lösenord behövs.</div>
+    body = `<div class="muted">${mode === "login" ? "Skriv e-posten du använde, så skickar vi en kod."
+        : mode === "create" ? "Skriv din e-post, så skickar vi en kod. Inget lösenord."
+        : "Spara dina loggar i molnet, på alla dina enheter. Bara e-post och en kod – inget lösenord."}</div>
       <div class="row" style="margin-top:8px"><input id="acctemail" type="email" autocomplete="email" placeholder="din@epost.se" value="${esc(a.email)}">
         <button class="primary small" data-sendcode ${a.busy ? "disabled" : ""}>Skicka kod</button></div>`;
   }
@@ -1047,9 +1049,10 @@ const VIEWS = {
       ${!S.setupDone && account.step === "in" ? `<div class="muted" style="margin:-4px 0 12px">Inloggad som <b>${esc(account.email)}</b>.
         ${cloud.status === "cloud" ? "Kontot har inget sparat upplägg än. Välj ett nedan och tryck Kom igång, så sparas det på kontot." : cloud.status === "error" ? "Kunde inte hämta från kontot. Ladda om sidan." : "Hämtar från kontot…"}</div>`
       : !S.setupDone && sbEnabled ? (welcomeLogin
-        ? `<div class="card"><div class="row between"><h2>Logga in</h2><button class="small ghost" data-welcomelogin aria-label="Stäng">✕</button></div>
-            ${accountBody()}<div class="muted small" style="margin-top:8px">Ditt upplägg och allt du loggat hämtas från kontot.</div></div>`
-        : `<div class="welcome-acct"><span>Har du använt Driv förut?</span><button class="small" data-welcomelogin>Logga in</button></div>`) : ""}
+        ? `<div class="card"><div class="row between"><h2>${welcomeLogin === "login" ? "Logga in" : "Skapa konto"}</h2>
+              <button class="small ghost" data-welcomelogin="" aria-label="Stäng">✕</button></div>${accountBody(welcomeLogin)}</div>`
+        : `<div class="card welcome-acct"><div><b>💾 Spara dina loggar</b><div class="muted small">Valfritt · bara e-post, klart på en minut</div></div>
+            <div class="row"><button class="small primary" data-welcomelogin="create">Skapa konto</button><button class="small" data-welcomelogin="login">Logga in</button></div></div>`) : ""}
       <div class="card"><div class="row between"><h2>1. Vilket upplägg?</h2>
           <button class="small" data-progtoggle aria-expanded="${progOpen}">${progOpen ? "Fäll ihop" : `Visa alla ${Object.keys(PROGRAMS).length}`}</button></div>
         ${progOpen ? "" : `<div class="proglist"><button class="on" data-progtoggle><b>${PROGRAMS[draft.program].name}</b>
@@ -1087,7 +1090,7 @@ const VIEWS = {
       <div class="card"><h2>6. Kalorimål</h2>${profileFields(p)}
         <div class="muted" style="margin-top:8px">Mål: <b>${kcalGoal()} kcal</b> · ${macros().protein} g protein per dag</div></div>`}
       <button class="primary wide" data-savesetup ${ok ? "" : "disabled"}>${S.setupDone ? "Spara upplägg" : "Kom igång"}</button>
-      ${S.setupDone || !sbEnabled ? "" : `<div class="muted small" style="text-align:center;margin-top:-2px">Inget konto behövs för att börja. Vill du spara i molnet kan du skapa ett konto senare under Profil.</div>`}
+
       ${S.setupDone ? `<button class="ghost wide" data-cancelsetup>Avbryt</button>` : ""}`;
   },
 
@@ -1733,7 +1736,7 @@ document.addEventListener("click", ev => {
   else if (ds.fbsend !== undefined) { sendFeedback(); return; }
   else if (ds.fbagain !== undefined) { feedback.sent = false; feedback.msg = ""; }
   else if (ds.verifycode !== undefined) { verifyLoginCode(); return; }
-  else if (ds.welcomelogin !== undefined) welcomeLogin = !welcomeLogin;
+  else if (ds.welcomelogin !== undefined) welcomeLogin = ds.welcomelogin || null;
   else if (ds.gokonto !== undefined) {
     tab = "profil"; render();
     const k = document.getElementById("konto");
