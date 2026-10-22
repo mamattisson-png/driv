@@ -54,13 +54,23 @@ Näringsvärden kommer delvis från [Livsmedelsverkets livsmedelsdatabas](https:
 
 ## Tester
 
-Webbläsartesterna i [`tests/`](tests) går igenom upplägg, pass och veckojämförelse, dagens mål, vilotimer, dailys, vikt, påminnelser, kost, streckkod och lagring. Externa tjänster (Supabase, Open Food Facts) simuleras. De körs automatiskt i GitHub vid varje push, och lokalt med:
+Webbläsartesterna i [`tests/`](tests) går igenom upplägg, pass och veckojämförelse, dagens mål, vilotimer, dailys, vikt, påminnelser, kost, streckkod, lagring, synk mellan enheter och start utan nät. Externa tjänster (Supabase, Open Food Facts) simuleras. De körs automatiskt i GitHub vid varje push, och lokalt med:
 
 ```bash
 pip install -r tests/requirements.txt
 python -m playwright install chromium
 python -m pytest tests
 ```
+
+## Ny version
+
+Appen startar från filer som service workern (`sw.js`) har sparat. När filerna ändras måste versionen i `sw.js` uppdateras, annars får användarna inte den nya versionen. Kör:
+
+```bash
+python tools/sw-version.py
+```
+
+Testerna larmar om versionen inte stämmer med filerna.
 
 ## Publicera
 

@@ -388,6 +388,19 @@ def test_synk_tappar_inte_pass_som_loggats_offline(page):
     assert page.evaluate("S.log[TODAY].food.length") == 2
 
 
+def test_tom_dag_skriver_inte_over_annan_enhets_loggning(page):
+    page.context.route("**/config.js", lambda r: r.fulfill(body=SB_CONFIG, content_type="application/javascript"))
+    start(page, SUPABASE_MOCK)
+    login(page)
+    # En annan enhet har loggat mat en dag som den här enheten bara har en tom post för
+    page.evaluate("""() => { window.__D = TODAY.slice(0, 8) + (TODAY.endsWith('-01') ? '02' : '01');
+      const m = window.__db['m-' + TODAY.slice(0, 7)];
+      m.days[__D] = { workouts: [], dailies: {}, food: [{ name: 'Lax', kcal: 500, protein: 40 }], _t: { food: 1 } }; }""")
+    page.evaluate("day(__D); S.letterSeen = 'x'; save()")
+    page.wait_for_function("S.log[__D].food.length === 1 && !cloud.pushing")
+    page.wait_for_function("window.__db['m-' + TODAY.slice(0, 7)].days[__D].food.length === 1")
+
+
 def test_synk_vid_ateranslutning_valjer_nyaste_delen(page):
     page.context.route("**/config.js", lambda r: r.fulfill(body=SB_CONFIG, content_type="application/javascript"))
     start(page, SUPABASE_MOCK)
@@ -435,6 +448,22 @@ def test_tva_pass_samma_dag_och_gammalt_format(page):
         go(page, "pass")
     assert page.evaluate("weekSummary(weekStart(TODAY)).passes") == 2
 
+
+def test_paminnelse_om_konto_efter_tre_dagar(page):
+    page.context.route("**/config.js", lambda r: r.fulfill(body=SB_CONFIG, content_type="application/javascript"))
+    start(page, SUPABASE_MOCK)
+    seed(page, "for (const i of [1, 2]) S.log[shift(TODAY, -i)] = {workouts:[],dailies:{},food:[{name:'Ägg',kcal:150,protein:12}]}")
+    assert page.locator(".nudge").count() == 0
+    seed(page, "S.log[shift(TODAY, -3)] = {workouts:[],dailies:{},food:[{name:'Ägg',kcal:150,protein:12}]}")
+    page.click("[data-nudgelater]")
+    assert page.locator(".nudge").count() == 0
+    page.evaluate("S.nudgeUntil = null; render()")
+    page.click("[data-gokonto]")
+    assert page.evaluate("tab") == "profil"
+    assert page.evaluate("document.activeElement.id") == "acctemail"
+    login(page)
+    go(page, "idag")
+    assert page.locator(".nudge").count() == 0
 
 def test_nytt_datum_efter_midnatt(page):
     import datetime

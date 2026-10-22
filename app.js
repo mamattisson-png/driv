@@ -276,6 +276,9 @@ function save() {
 // ändras. Vid synk vinner den nyaste versionen av varje del, så att två enheter inte skriver över
 // varandras loggning. Saknas stämpel räknas den som 0, och vid lika vinner kontots version.
 const stampSnap = {};
+// En tom dag som bara skapats när appen visades får aldrig vinna över riktig loggning
+const isEmpty = v => v == null || v === false || v === "" ||
+  (typeof v === "object" && !Object.keys(v).length);
 function stampParts(obj, prefix, now, initial) {
   const t = obj._t || (obj._t = {});
   const keys = new Set([...Object.keys(obj), ...Object.keys(t)]);
@@ -286,7 +289,7 @@ function stampParts(obj, prefix, now, initial) {
     const id = prefix + k;
     if (!initial && id in stampSnap && stampSnap[id] !== json) t[k] = now;
     // En ny dag eller ett nytt fält räknas också som en ändring
-    else if (!initial && !(id in stampSnap) && obj[k] !== undefined) t[k] = now;
+    else if (!initial && !(id in stampSnap) && !isEmpty(obj[k])) t[k] = now;
     stampSnap[id] = json;
   }
 }
@@ -571,11 +574,23 @@ async function sendFeedback() {
   feedback.busy = false; render();
 }
 
+// Utan konto finns allt bara i webbläsaren. Efter några dagars loggning föreslås ett konto.
+function accountNudge() {
+  if (!sbEnabled || account.step === "in" || (S.nudgeUntil && S.nudgeUntil > TODAY)) return "";
+  const days = Object.values(S.log).filter(L => L.food.length || L.workouts.length || Object.keys(L.dailies).length).length;
+  if (days < 3) return "";
+  return `<div class="card nudge"><h2>💾 Spara din träning säkert</h2>
+    <div class="muted">Just nu finns allt du loggat bara på den här enheten. Rensas webbläsaren försvinner det.
+      Med ett gratis konto sparas det tryggt och följer med till andra enheter. Bara e-post, inget lösenord.</div>
+    <div class="row" style="margin-top:10px"><button class="primary" data-gokonto>Skapa konto</button>
+      <button class="ghost" data-nudgelater>Inte nu</button></div></div>`;
+}
+
 // Visas på startsidan så att den som redan har konto slipper göra om upplägget
 let welcomeLogin = false;
 function accountCard() {
   if (!sbEnabled) return "";
-  return `<div class="card"><h2>Konto</h2>${accountBody()}</div>`;
+  return `<div class="card" id="konto"><h2>Konto</h2>${accountBody()}</div>`;
 }
 function accountBody() {
   const a = account;
@@ -1027,6 +1042,7 @@ const VIEWS = {
           <button class="small ghost" data-letterclose="${lw}" aria-label="Stäng veckobrevet">✕</button></div>${weekLetter(lw)}</div>` : "";
       })()}
       ${S.plan.days.length > 1 ? dayPicker(d && d.id) : ""}
+      ${accountNudge()}
       ${passCard}
       ${plusCard()}
       ${S.hideWeight ? "" : weightCard()}
@@ -1734,6 +1750,13 @@ document.addEventListener("click", ev => {
   else if (ds.fbagain !== undefined) { feedback.sent = false; feedback.msg = ""; }
   else if (ds.verifycode !== undefined) { verifyLoginCode(); return; }
   else if (ds.welcomelogin !== undefined) welcomeLogin = !welcomeLogin;
+  else if (ds.gokonto !== undefined) {
+    tab = "profil"; render();
+    const k = document.getElementById("konto");
+    if (k) { k.scrollIntoView({ block: "start" }); const i = document.getElementById("acctemail"); if (i) i.focus({ preventScroll: true }); }
+    return;
+  }
+  else if (ds.nudgelater !== undefined) S.nudgeUntil = shift(TODAY, 14);
   else if (ds.changeemail !== undefined) { account.step = "email"; account.msg = ""; }
   else if (ds.signout !== undefined) { signOut(); return; }
   else if (ds.remcal !== undefined) {
