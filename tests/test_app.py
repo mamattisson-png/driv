@@ -284,6 +284,14 @@ def test_kost_maltider_snabbval_antal_och_upprepa(page):
     page.click('.qrow:has-text("Ägg") [data-quick]')
     page.click('.qrow:has-text("Ägg") [data-qminus]')
     assert page.evaluate("day().food.filter(f => f.meal === 1 && f.name === 'Ägg').map(f => [f.qty, f.kcal])") == [[2, 154]]
+    # + bredvid antalet ökar, och Klar syns även i ett lågt fönster
+    page.click('.qrow:has-text("Ägg") [aria-label="Mer Ägg"]')
+    assert page.evaluate("day().food.find(f => f.meal === 1 && f.name === 'Ägg').qty") == 3
+    page.click('.qrow:has-text("Ägg") [data-qminus]')
+    page.set_viewport_size({"width": 1200, "height": 500})
+    klar = page.locator(".sheet [data-fsclose].wide").bounding_box()
+    assert klar["y"] + klar["height"] <= 500
+    page.set_viewport_size({"width": 390, "height": 844})
     page.click('.sheet [data-fsclose].wide')
     assert page.locator(".sheet").count() == 0
     assert "Ägg × 2" in page.inner_text(".mcard >> nth=1")

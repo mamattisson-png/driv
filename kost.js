@@ -181,7 +181,8 @@ function addSheet(m) {
     return `<div class="qrow ${n ? "has" : ""}"><button class="grow qadd" data-quick="${i}" aria-label="Lägg till ${esc(f.name)}">
         <span class="plus">+</span><span class="grow">${f.kind === "fav" ? "★ " : ""}${esc(f.name)}${f.amt ? `<span class="muted"> · ${amtText(f.amt)}</span>` : ""}</span>
         <span class="muted nowrap">${f.kcal} kcal</span></button>
-      ${n ? `<button class="small qminus" data-qminus="${i}" aria-label="Mindre ${esc(f.name)}">−</button><b class="qcount">${n}</b>` : ""}</div>`;
+      ${n ? `<button class="small qminus" data-qminus="${i}" aria-label="Mindre ${esc(f.name)}">−</button><b class="qcount">${n}</b>
+        <button class="small qminus" data-quick="${i}" aria-label="Mer ${esc(f.name)}">+</button>` : ""}</div>`;
   }).join("");
   return `<div class="overlay" data-fsclose><div class="sheet">
     <div class="row between"><h2>Lägg till i ${MEALS[meal][0].toLowerCase()}</h2><button class="small ghost" data-fsclose aria-label="Stäng">✕</button></div>
@@ -201,8 +202,8 @@ function addSheet(m) {
       <input id="qm-${meal}" type="number" inputmode="numeric" placeholder="ca ${mealTarget(meal, m)} kcal" aria-label="Ungefär hur många kcal">
       <button data-qmeal="${meal}">Lägg till</button></div>` : ""}
     ${items.length > 1 ? `<button class="small ghost" data-savegroup="${meal}" style="margin-top:12px">Spara ${MEALS[meal][0].toLowerCase()}en som en måltid</button>` : ""}
-    <button class="wide" data-fsclose style="margin-top:14px">Klar${items.length ? ` · ${sumKcal(items)} kcal` : ""}</button>
-    <div class="muted small">Näringsvärden: Livsmedelsverkets livsmedelsdatabas (CC BY 4.0) och egna uppskattningar.</div>
+    <div class="muted small" style="margin-top:14px">Näringsvärden: Livsmedelsverkets livsmedelsdatabas (CC BY 4.0) och egna uppskattningar.</div>
+    <div class="sheet-foot"><button class="wide" data-fsclose>Klar${items.length ? ` · ${sumKcal(items)} kcal` : ""}</button></div>
   </div></div>`;
 }
 
