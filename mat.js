@@ -318,9 +318,9 @@ function startsWord(text, name) {
   return false;
 }
 
-function findFood(text) {
+function findFood(text, list = FOODS) {
   let best = null, len = 0;
-  for (const f of FOODS) for (const name of f.n) {
+  for (const f of list) for (const name of f.n) {
     if (name.length > len && startsWord(text, name)) { best = f; len = name.length; }
   }
   return best;
@@ -364,13 +364,17 @@ function parseItem(raw) {
     const m = names.find(n => s === n || s.startsWith(n + " ") || s.startsWith(n + "."));
     if (m) { unit = key; s = s.slice(m.length).replace(/^\.?\s*/, ""); break; }
   }
-  const food = findFood(s);
+  let food = findFood(s), corrected = null;
+  if (!food) {
+    const fz = fuzzyFood(s);
+    if (fz) { food = fz.food; corrected = fz.label; }
+  }
   if (!food) return { text: raw.trim(), known: false };
   // Utan mängd: en portion, en styck, eller två matskedar för såser och pålägg
   const g = qty == null && !unit
     ? food.portion || food.st || (food.msk ? 2 * food.msk : 100)
     : grams(food, qty == null ? 1 : qty, unit);
-  return { text: raw.trim(), known: true, grams: Math.round(g), kcal: Math.round(food.kcal * g / 100), protein: Math.round(food.p * g / 10) / 10 };
+  return { text: raw.trim(), known: true, corrected, grams: Math.round(g), kcal: Math.round(food.kcal * g / 100), protein: Math.round(food.p * g / 10) / 10 };
 }
 
 // Delar på komma (inte decimalkomma), "och", "+" och radbrytning
@@ -392,3 +396,123 @@ function parseFood(text) {
   };
 }
 
+
+// ---------- Livsmedelsverket ----------
+// Läggs efter de egna livsmedlen, så att egna namn med portionsstorlekar vinner vid lika långa träffar.
+// Ett livsmedel ärver styck- och portionsvikter från det egna livsmedel namnet börjar med ("Ägg stekt" → ägg).
+const CURATED = FOODS.length;
+const UNIT_KEYS = ["dl", "st", "msk", "tsk", "skiva", "portion", "bit", "burk", "glas", "kopp", "skopa", "nave", "pase", "klyfta"];
+// Det längsta egna namn som hela namnet börjar med
+function baseFood(name, list) {
+  let best = null, len = 0;
+  for (const f of list) for (const a of f.n) {
+    if (a.length > len && (name === a || name.startsWith(a + " "))) { best = f; len = a.length; }
+  }
+  return best;
+}
+if (typeof LMV !== "undefined") {
+  const own = FOODS.slice(0, CURATED);
+  for (const [label, kcal, p] of LMV) {
+    const n = label.toLowerCase();
+    const base = baseFood(n, own), units = {};
+    if (base) for (const k of UNIT_KEYS) if (base[k]) units[k] = base[k];
+    FOODS.push({ ...units, n: [n], kcal, p, lmv: true, label });
+  }
+}
+
+// ---------- Sökning och felstavning ----------
+const fold = s => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+
+// Avstånd mellan två ord där en bokstavsförväxling räknas som ett fel (Damerau–Levenshtein)
+function editDistance(a, b, max) {
+  if (Math.abs(a.length - b.length) > max) return max + 1;
+  const d = [];
+  for (let i = 0; i <= a.length; i++) d[i] = [i];
+  for (let j = 0; j <= b.length; j++) d[0][j] = j;
+  for (let i = 1; i <= a.length; i++) {
+    let rowMin = Infinity;
+    for (let j = 1; j <= b.length; j++) {
+      const c = a[i - 1] === b[j - 1] ? 0 : 1;
+      d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + c);
+      if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) d[i][j] = Math.min(d[i][j], d[i - 2][j - 2] + 1);
+      rowMin = Math.min(rowMin, d[i][j]);
+    }
+    if (rowMin > max) return max + 1;
+  }
+  return d[a.length][b.length];
+}
+const allowedErrors = len => len <= 3 ? 0 : len <= 6 ? 1 : 2;
+
+// Ett sökord per namn; egna livsmedel får ett per alias
+let SEARCH = null;
+function searchIndex() {
+  if (!SEARCH) {
+    SEARCH = [];
+    FOODS.forEach((f, i) => {
+      for (const n of f.n) SEARCH.push({ i, name: n, label: f.label || cap(n), key: fold(n), words: fold(n).split(/\s+/), lmv: !!f.lmv });
+    });
+  }
+  return SEARCH;
+}
+
+// Hur väl ett sökord passar ett namn: 0 början, 1 början av ett ord, 2 inuti, 3 felstavat, annars null
+function matchScore(q, e) {
+  if (e.key.startsWith(q)) return 0;
+  if (e.words.some(w => w.startsWith(q))) return 1;
+  if (q.length >= 3 && e.key.includes(q)) return 2;
+  const max = allowedErrors(q.length);
+  if (!max) return null;
+  for (const w of [e.key, ...e.words]) {
+    for (const len of [q.length - 1, q.length, q.length + 1]) {
+      if (len > 0 && len <= w.length && editDistance(q, w.slice(0, len), max) <= max) return 3;
+    }
+  }
+  return null;
+}
+
+// Förslag medan man skriver: bästa träffar först, egna livsmedel före Livsmedelsverkets vid lika träff
+function suggestFoods(query, limit = 8) {
+  const q = fold(query.trim().replace(/\s+/g, " "));
+  if (q.length < 2) return [];
+  const hits = [];
+  for (const e of searchIndex()) {
+    const sc = matchScore(q, e);
+    if (sc != null) hits.push({ e, sc });
+  }
+  hits.sort((a, b) => a.sc - b.sc || a.e.lmv - b.e.lmv || a.e.name.length - b.e.name.length);
+  const seen = new Set(), out = [];
+  for (const { e, sc } of hits) {
+    if (seen.has(e.i) || seen.has(e.label)) continue;
+    seen.add(e.i); seen.add(e.label);
+    out.push({ food: FOODS[e.i], name: e.name, label: e.label, fuzzy: sc === 3 });
+    if (out.length >= limit) break;
+  }
+  return out;
+}
+
+// Felstavat namn i fritext: närmaste hela namn, bara om det är tydligt nära
+function fuzzyFood(text) {
+  const q = fold(text.trim());
+  const max = allowedErrors(q.length);
+  if (!max) return null;
+  let best = null, bestD = max + 1;
+  for (const e of searchIndex()) {
+    const d = editDistance(q, e.key, Math.min(max, bestD - (best && !best.lmv ? 1 : 0)));
+    if (d < bestD || (d === bestD && best && best.lmv && !e.lmv)) { best = e; bestD = d; }
+  }
+  return best && bestD <= max ? { food: FOODS[best.i], label: best.label } : null;
+}
+
+// Delar upp början av en del i mängd och namn: "150 g ryggb" → { prefix: "150 g ", rest: "ryggb" }
+function splitAmount(seg) {
+  const m = seg.match(/^\s*((?:\d+(?:[.,]\d+)?|\d+\/\d+|en halv|ett halvt|en|ett|två|tre|fyra|fem|sex|halv|halva)\s*)?/i);
+  let prefix = m[0], rest = seg.slice(prefix.length);
+  if (m[1]) {
+    for (const [names] of UNITS) {
+      const u = names.find(n => rest.toLowerCase() === n || rest.toLowerCase().startsWith(n + " "));
+      if (u) { prefix += rest.slice(0, u.length + 1); rest = rest.slice(u.length + 1); break; }
+    }
+  }
+  return { prefix, rest };
+}

@@ -174,6 +174,11 @@
   .meal-row:first-of-type { border-top: 0; }
   .mealbtn { text-align: left; border: 0; background: transparent; padding: 4px 0; }
   .fpreview { margin-top: 6px; line-height: 1.6; }
+  .sugg { margin-top: 6px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+  .sugg button { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; width: 100%; text-align: left;
+    border: 0; border-top: 1px solid var(--line); border-radius: 0; padding: 10px 12px; background: transparent; }
+  .sugg-head { display: flex; justify-content: space-between; gap: 10px; padding: 6px 12px; background: var(--bg); }
+  .sugg button > span:last-child { white-space: nowrap; }
   .fpreview .fg { color: var(--text); font-weight: 600; }
   .fpreview .unk { color: var(--bad); }
   .plan-day { border-top: 1px solid var(--line); padding: 8px 0; }
@@ -187,6 +192,7 @@
 <nav id="nav"></nav>
 <script src="ovningar.js"></script>
 <script src="figur.js"></script>
+<script src="livsmedel.js"></script>
 <script src="mat.js"></script>
 <script src="app.js"></script>
 <script>

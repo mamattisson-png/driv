@@ -1,6 +1,6 @@
 // Gör appen tillgänglig offline: filerna hämtas från nätet när det går, annars från cachen
-const CACHE = "driv-v2";
-const FILES = ["./", "index.html", "app.js", "figur.js", "ovningar.js", "mat.js",
+const CACHE = "driv-v3";
+const FILES = ["./", "index.html", "app.js", "figur.js", "ovningar.js", "livsmedel.js", "mat.js",
   "manifest.webmanifest", "icons/icon.svg", "icons/icon-192.png", "icons/icon-512.png", "icons/icon-maskable-512.png"];
 
 self.addEventListener("install", e => {

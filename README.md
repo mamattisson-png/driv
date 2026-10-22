@@ -15,13 +15,15 @@ På mobilen kan du lägga den på hemskärmen: *Dela → Lägg till på hemskär
 - **Under passet:** logga vikt och reps per set, eller reps/sekunder och valfri extra vikt för kroppsviktsövningar. Bocka av set eller hela övningen; tomma fält får förra gångens värden.
 - **Vecka för vecka:** bästa set per övning jämfört med förra veckan, med + eller −, samt pass, dailys, löpning och kalorier.
 - **Dailys:** egna övningar, löpning eller promenad att bocka av varje dag, med streaks.
-- **Kost:** kalorimål och makron från ålder, längd, vikt, aktivitet och mål. Skriv vad du åt i fritext, till exempel "2 dl mjölk och 1 banan", så räknas kalorier och protein ut från drygt 260 livsmedel och rätter. Logga även en måltid med ungefärliga kalorier eller välj bland det du ätit tidigare.
+- **Kost:** kalorimål och makron från ålder, längd, vikt, aktivitet och mål. Skriv vad du åt i fritext, till exempel "2 dl mjölk och 1 banan", så räknas kalorier och protein ut från drygt 2 800 livsmedel och rätter. Medan du skriver föreslår appen träffar, och felstavningar som "kottbullar" hittar rätt. Logga även en måltid med ungefärliga kalorier eller välj bland det du ätit tidigare.
 
 ## Data och integritet
 
 Allt du loggar sparas bara i webbläsaren på den enhet du använder. Inget skickas till någon server. Under *Profil → Data* kan du exportera en säkerhetskopia och importera den på en annan enhet.
 
 Kalorivärden och kalorimål är uppskattningar och ersätter inte råd från vården.
+
+Näringsvärden kommer delvis från [Livsmedelsverkets livsmedelsdatabas](https://www.livsmedelsverket.se/livsmedelsdatabasen), licens CC BY 4.0.
 
 ## Filer
 
@@ -31,7 +33,8 @@ Kalorivärden och kalorimål är uppskattningar och ersätter inte råd från v�
 | `app.js` | Appen: upplägg, pass, dailys, kost, veckovy och lagring |
 | `ovningar.js` | Övningsbiblioteket med instruktioner och poser |
 | `figur.js` | Ritar de animerade övningsbilderna som SVG |
-| `mat.js` | Livsmedelstabellen och tolkningen av fritext |
+| `mat.js` | Egna livsmedel med portionsstorlekar, tolkning av fritext, förslag och felstavning |
+| `livsmedel.js` | Livsmedelsverkets livsmedelsdatabas (namn, kcal och protein per 100 g) |
 | `manifest.webmanifest`, `sw.js`, `icons/` | Installation på hemskärmen och offlinestöd |
 
 ## Publicera
