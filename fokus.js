@@ -71,7 +71,7 @@ function focusView() {
   let rows = "";
   for (let i = 0; i < ex.sets; i++) {
     const s = sets[i] || {}, h = liveHint(d, ex, i), p = prev ? hintSet(prev, i) : null;
-    const kg = stepper(ex.id, i, "kg", s.kg, h.kg || "", bw ? "Extra vikt" : "Vikt", bw ? "extra kg" : "kg");
+    const kg = stepper(ex.id, i, "kg", s.kg, h.kg || "", bw ? "Extra vikt" : "Vikt", GEAR[gearOf(ex.id)][2]);
     const reps = stepper(ex.id, i, "reps", s.reps, h.reps, isTimed(ex.id) ? "Sekunder" : "Reps", repLabel);
     const last = p && hasData(p) ? fmtSet({ kg: +p.kg || 0, reps: +p.reps || 0 }, ex.id) : "";
     rows += `<div class="fset ${s.ok ? "done" : ""} ${i === active ? "active" : ""}">
@@ -90,7 +90,7 @@ function focusView() {
     <div class="card">
       <div class="row"><button class="thumb" data-info="${ex.id}" aria-label="Visa ${esc(EX[ex.id].name)}">${figure(ex.id, "", true)}</button>
         <div class="grow"><div class="muted small">${passLabel(d)}</div><h2 style="margin:2px 0">${esc(EX[ex.id].name)}</h2>
-          <div class="muted">${ex.sets} × ${esc(ex.reps)}</div>
+          <div class="muted">${ex.sets} × ${esc(ex.reps)} · ${GEAR[gearOf(ex.id)][0]}</div>
           ${target ? `<div class="goal">Förslag idag: <b>${fmtTarget(target, ex.id)}</b></div>`
             : `<div class="muted">Första gången: välj en vikt du klarar ${esc(ex.reps)}.</div>`}</div></div>
       ${rows}

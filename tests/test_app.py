@@ -192,6 +192,17 @@ def test_fokuslage_en_ovning_i_taget(page):
     assert page.evaluate("window.__wake") == ["på", "av"]
 
 
+def test_ovningar_visar_utrustning_och_hur_vikten_skrivs(page):
+    open_app(page)
+    assert page.evaluate("Object.keys(EX).filter(id => EX[id].cat !== 'cardio' && !GEAR[gearOf(id)])") == []
+    assert page.evaluate("Object.keys(EX).filter(id => !EX[id].A || !EX[id].cues.length)") == []
+    assert page.evaluate("Object.keys(EX).length") >= 75
+    page.evaluate("modal = { info: 'bencurl' }; render()")
+    assert "Maskin" in page.inner_text(".gearbox") and "sprinten" in page.inner_text(".gearbox")
+    page.evaluate("modal = { info: 'bankpress' }; render()")
+    assert "stången (oftast 20 kg)" in page.inner_text(".gearbox")
+
+
 def test_dailys_under_passet(page):
     start(page)
     seed(page, "S.daily = [{id:'plankan',sets:3,reps:'45 sek'},{id:'lop',sets:1,reps:''}]")
