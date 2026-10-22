@@ -896,6 +896,11 @@ const VIEWS = {
     return `<h1>Profil</h1>
       <div class="card"><h2>Upplägg</h2><div class="muted">${PROGRAMS[S.plan.program || "ppl"].name} · ${isFixed() ? S.plan.weekdays.map(i => WD[i]).join(", ") : `${S.plan.count} pass i veckan, valfria dagar`}</div>
         <button style="margin-top:10px" data-tab="upplagg">Ändra upplägg</button></div>
+      <div class="card"><h2>Vilotimer</h2>
+        <label class="row"><input type="checkbox" data-resttoggle ${restSettings().on ? "checked" : ""}><span>Starta en vilotimer när jag bockar av ett set</span></label>
+        <div class="grid2" style="margin-top:10px">
+          <label class="field">Basövningar (sek)<input type="number" inputmode="numeric" id="restcompound" value="${restSettings().compound}"></label>
+          <label class="field">Isolering och mage (sek)<input type="number" inputmode="numeric" id="restiso" value="${restSettings().iso}"></label></div></div>
       <div class="card"><h2>Kalorimål</h2>${profileFields(p)}
         <div class="muted" style="margin-top:10px">Underhåll (TDEE): ${tdee(p)} kcal · Mål: ${m.kcal} kcal</div>
         <div class="muted">Protein ${m.protein} g · Fett ${m.fat} g · Kolhydrater ${m.carbs} g</div>
@@ -1175,6 +1180,84 @@ function checkRecord(exId, s) {
   else return;
   toasted.add(exId);
 }
+// ---------- Vilotimer ----------
+// Startar när ett set bockas av. Isoleringsövningar och mage vilar kortare än basövningar.
+const ISOLATION = new Set(["sidolyft", "triceps_pushdown", "fransk_press", "bicepscurl", "hammercurl", "face_pulls",
+  "benspark", "bencurl", "vadpress", "glute_bridge"]);
+const restSettings = () => Object.assign({ on: true, compound: 90, iso: 60 }, S.rest);
+const restFor = id => ISOLATION.has(id) || EX[id].cat === "core" ? restSettings().iso : restSettings().compound;
+const rest = { el: null, end: 0, total: 0, timer: 0, name: "" };
+
+function startRest(exId) {
+  if (!restSettings().on) return;
+  rest.total = restFor(exId);
+  rest.end = Date.now() + rest.total * 1000;
+  rest.name = EX[exId].name;
+  if (!rest.el) {
+    rest.el = document.createElement("div");
+    rest.el.className = "rest";
+    rest.el.setAttribute("role", "timer");
+    rest.el.innerHTML = `<div class="rest-bar"><div></div></div>
+      <div class="rest-row"><div><b class="rest-time"></b> <span class="rest-label muted small"></span></div>
+        <div class="row"><button class="small" data-restadd="-15">−15</button><button class="small" data-restadd="15">+15</button>
+          <button class="small" data-restskip>Klar</button></div></div>`;
+    document.body.appendChild(rest.el);
+  }
+  document.body.classList.add("resting");
+  rest.el.classList.remove("ding");
+  clearInterval(rest.timer);
+  rest.timer = setInterval(tickRest, 250);
+  tickRest();
+}
+
+function tickRest() {
+  const left = Math.max(0, Math.ceil((rest.end - Date.now()) / 1000));
+  rest.el.querySelector(".rest-time").textContent = `${Math.floor(left / 60)}:${String(left % 60).padStart(2, "0")}`;
+  rest.el.querySelector(".rest-label").textContent = left ? `vila efter ${rest.name}` : "dags för nästa set!";
+  rest.el.querySelector(".rest-bar div").style.width = `${rest.total ? (1 - left / rest.total) * 100 : 100}%`;
+  if (left) return;
+  clearInterval(rest.timer);
+  rest.el.classList.add("ding");
+  if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+  beep();
+  setTimeout(stopRest, 6000);
+}
+
+function stopRest() {
+  clearInterval(rest.timer);
+  if (rest.el) rest.el.remove();
+  rest.el = null;
+  document.body.classList.remove("resting");
+}
+
+// Kort ljudsignal; tillåts eftersom timern startas av ett tryck
+let audioCtx = null;
+function beep() {
+  try {
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    for (const [at, freq] of [[0, 880], [0.25, 1175]]) {
+      const o = audioCtx.createOscillator(), g = audioCtx.createGain(), t = audioCtx.currentTime + at;
+      o.frequency.value = freq;
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(0.25, t + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.2);
+      o.connect(g).connect(audioCtx.destination);
+      o.start(t); o.stop(t + 0.22);
+    }
+  } catch (e) { /* ljud stöds inte här */ }
+}
+
+document.addEventListener("click", ev => {
+  const t = ev.target.closest && ev.target.closest("[data-restadd], [data-restskip]");
+  if (!t) return;
+  ev.stopImmediatePropagation();
+  if (t.dataset.restskip !== undefined) return stopRest();
+  rest.end = Math.max(Date.now(), rest.end + +t.dataset.restadd * 1000);
+  rest.total = Math.max(rest.total, Math.ceil((rest.end - Date.now()) / 1000));
+  if (!rest.timer || rest.el.classList.contains("ding")) { rest.el.classList.remove("ding"); clearInterval(rest.timer); rest.timer = setInterval(tickRest, 250); }
+  tickRest();
+}, true);
+
 function toast(msg) {
   const el = document.createElement("div");
   el.className = "toast";
@@ -1286,7 +1369,7 @@ document.addEventListener("click", ev => {
   else if (ds.ok) {
     const d = currentPassDay(), s = setAt(d, ds.ok, +ds.i);
     s.ok = !s.ok;
-    if (s.ok) { fillFromHint(d, ds.ok, +ds.i); checkRecord(ds.ok, s); }
+    if (s.ok) { fillFromHint(d, ds.ok, +ds.i); checkRecord(ds.ok, s); startRest(ds.ok); }
     syncDone(d);
   }
   else if (ds.exok) {
@@ -1307,6 +1390,7 @@ document.addEventListener("click", ev => {
   }
   else if (ds.dcheck) day().dailies[ds.dcheck] = !dailyDone(TODAY, ds.dcheck);
   else if (ds.dedit !== undefined) dailyEditing = !dailyEditing;
+  else if (ds.resttoggle !== undefined) S.rest = Object.assign({}, restSettings(), { on: t.checked });
   else if (ds.sendcode !== undefined) { sendLoginCode(); return; }
   else if (ds.verifycode !== undefined) { verifyLoginCode(); return; }
   else if (ds.changeemail !== undefined) { account.step = "email"; account.msg = ""; }
@@ -1411,6 +1495,9 @@ document.addEventListener("change", ev => {
   }
   else if (ds.ed) { const ex = exList(ds.t)[+ds.ed]; ex[ds.f] = ds.f === "sets" ? Math.max(1, +t.value || 1) : t.value; }
   else if (t.id === "override") S.kcalOverride = +t.value || null;
+  else if (t.id === "restcompound" || t.id === "restiso") {
+    S.rest = Object.assign({}, restSettings(), { [t.id === "restiso" ? "iso" : "compound"]: Math.max(10, Math.min(600, +t.value || 60)) });
+  }
   else if (t.id === "remtime") S.reminder = Object.assign({}, S.reminder, { time: t.value || "20:00" });
   else if (t.id === "importfile" && t.files[0]) {
     t.files[0].text().then(txt => {

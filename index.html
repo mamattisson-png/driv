@@ -170,6 +170,16 @@
   table.wk .row { gap: 6px; }
   .hidden { display: none; }
   .goal { margin: 2px 0; }
+  .rest { position: fixed; left: 0; right: 0; bottom: calc(64px + env(safe-area-inset-bottom, 0px)); z-index: 15;
+    background: var(--card); border-top: 1px solid var(--line); box-shadow: 0 -6px 18px rgba(0, 0, 0, .12);
+    padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  .rest-bar { height: 4px; background: var(--line); margin: 0 -16px; }
+  .rest-bar div { height: 100%; background: var(--accent); transition: width .25s linear; }
+  .rest-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 8px 0; max-width: 640px; margin: 0 auto; }
+  .rest-time { font-size: 24px; font-variant-numeric: tabular-nums; }
+  body.resting { padding-bottom: calc(136px + env(safe-area-inset-bottom, 0px)); }
+  .rest.ding { background: var(--ok-soft); }
+  .rest.ding .rest-bar div { background: var(--ok); }
   .finish-note { text-align: center; margin: -4px 0 12px; }
   .done-card { background: var(--ok-soft); border-color: transparent; }
   .done-card b { color: var(--ok); }
