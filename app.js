@@ -935,7 +935,7 @@ function weightChart() {
 // ---------- Rendering ----------
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 // Fyra flikar; Profil nås via kugghjulet uppe till höger
-const TABS = [["idag", "🏠", "Idag"], ["pass", "🏋️", "Träna"], ["kost", "🍽️", "Kost"], ["historik", "📅", "Historik"]];
+const TABS = [["idag", "🏠", "Min dag"], ["pass", "🏋️", "Träna"], ["kost", "🍽️", "Kost"], ["historik", "📅", "Historik"]];
 let tab = S.setupDone ? "idag" : "upplagg";
 let chosenDay = null;
 let editing = false;
@@ -1082,7 +1082,7 @@ const VIEWS = {
           ${d.ex.length ? "" : `<div class="muted" style="margin:6px 0">Inga övningar än. Lägg till dem nedan.</div>`}
           ${exRows("draft:" + i, d.ex, false)}</details>`).join("")}</div>
       <div class="card"><h2>5. Dailys</h2>
-        <div class="muted" style="margin-bottom:8px">Det du vill göra varje dag. Du bockar av och ändrar dem på Idag.</div>
+        <div class="muted" style="margin-bottom:8px">Det du vill göra varje dag. Du bockar av och ändrar dem under Min dag.</div>
         ${exRows("daily", S.daily, false)}</div>
       <div class="card"><h2>6. Kalorimål</h2>${profileFields(p)}
         <div class="muted" style="margin-top:8px">Mål: <b>${kcalGoal()} kcal</b> · ${macros().protein} g protein per dag</div></div>`}
@@ -1099,39 +1099,40 @@ const VIEWS = {
     const others = todays.filter(w => !d || w.dayId !== d.id).map(w => dayById(w.dayId)).filter(Boolean);
     let passCard;
     if (d) {
+      // Dagens pass med alla övningar, så att man vet vad som ska göras när man kommer till gymmet
       const w = workoutOn(TODAY, d.id);
-      const done = d.ex.filter(x => exDone(w, x)).length;
-      // Etiketten visas bara när passväljaren ovanför inte redan visar den
-      passCard = `<div class="card"><div class="row between"><div>${S.plan.days.length > 1 ? "" : tag(d.type)} ${w && w.done ? `<span class="pill">✓ Klart</span>` : ""}
-        <h2 style="margin-top:${S.plan.days.length > 1 && !(w && w.done) ? 0 : 8}px">${passLabel(d)}</h2>
-        <div class="muted">${TYPES[d.type].muscles} · ${done}/${d.ex.length} övningar klara</div>
-        <div class="muted">${weekPasses} av ${S.plan.count} pass klara denna vecka</div>
-        ${others.length ? `<div class="muted">Idag har du även loggat ${others.map(o => esc(o.name)).join(", ")}.</div>` : ""}</div>
-        <button class="primary" data-focusstart="${d.id}">${w ? "Fortsätt" : "Starta"}</button></div>
-        <div class="thumbs">${d.ex.map(x => thumb(x.id, "xs")).join("")}</div></div>`;
+      const rows = d.ex.map(x => {
+        const t = todayTarget(x), ok = exDone(w, x);
+        return `<li class="${ok ? "done" : ""}"><span class="grow">${ok ? "✓ " : ""}${esc(EX[x.id].name)}</span>
+          <span class="muted small nowrap">${x.sets} × ${esc(x.reps)}${t ? ` · ${fmtTarget(t, x.id)}` : ""}</span></li>`;
+      }).join("");
+      passCard = `<div class="card daypass"><div class="row between"><div>${S.plan.days.length > 1 ? "" : `${tag(d.type)} `}<h2 style="display:inline">${passLabel(d)}</h2>
+          <div class="muted">${TYPES[d.type].muscles}</div></div>${w && w.done ? `<span class="pill">✓ Klart</span>` : ""}</div>
+        ${d.ex.length ? `<ol class="exnames">${rows}</ol>` : `<div class="muted" style="margin-top:8px">Passet har inga övningar än.</div>`}
+        ${others.length ? `<div class="muted small">Idag har du även loggat ${others.map(o => esc(o.name)).join(", ")}.</div>` : ""}
+        <button class="primary wide" style="margin:10px 0 6px" data-focusstart="${d.id}">${w && w.done ? "Öppna passet" : w ? "Fortsätt passet" : "Starta passet"}</button>
+        <div class="muted small">${weekPasses} av ${S.plan.count} pass den här veckan</div></div>`;
     } else {
       const nx = nextScheduled(TODAY);
       passCard = `<div class="card"><h2>Vilodag 😌</h2><div class="muted">Nästa pass: ${WD[weekdayOf(nx.date)]} · ${esc(nx.day.name)}</div>
         <div style="margin-top:10px"><button data-focusstart="${nx.day.id}">Kör ett pass ändå</button></div></div>`;
     }
-    return `<h1>Idag <span class="muted">${new Date().toLocaleDateString("sv-SE", { weekday: "long", day: "numeric", month: "long" })} · v.${weekNo(TODAY)}</span></h1>
+    return `<h1>Min dag <span class="muted">${new Date().toLocaleDateString("sv-SE", { weekday: "long", day: "numeric", month: "long" })} · v.${weekNo(TODAY)}</span></h1>
       ${(() => {
         const lw = letterWeekToShow();
-        return lw ? `<div class="card letter-card"><div class="row between"><h2>📬 Ditt veckobrev</h2>
-          <button class="small ghost" data-letterclose="${lw}" aria-label="Stäng veckobrevet">✕</button></div>${weekLetter(lw)}</div>` : "";
+        return lw ? `<div class="card letter-card"><div class="row between"><h2>📬 Din vecka</h2>
+          <button class="small ghost" data-letterclose="${lw}" aria-label="Stäng sammanfattningen">✕</button></div>${weekLetter(lw)}</div>` : "";
       })()}
       ${S.plan.days.length > 1 ? dayPicker(d && d.id) : ""}
       ${accountNudge()}
       ${passCard}
       ${dailiesCard()}
-      ${plusCard()}
-      ${S.hideWeight ? "" : weightCard()}
-      <div class="card"><div class="row between"><h2>Kalorier</h2><span class="muted">${e.kcal} / ${m.kcal} kcal</span></div>
+      <div class="card"><div class="row between"><h2>Mat</h2><span class="muted">${e.kcal} / ${m.kcal} kcal</span></div>
         ${bar(e.kcal, m.kcal)}<div class="muted">${Math.max(0, m.kcal - e.kcal)} kcal kvar</div>
         <div class="row between" style="margin-top:10px"><span>Protein</span><span class="muted">${e.protein} / ${m.protein} g</span></div>
         ${bar(e.protein, m.protein, true)}
         <div style="margin-top:10px"><button data-go="kost">Logga mat</button></div></div>
-      `;
+      ${S.hideWeight ? "" : weightCard()}`;
   },
 
   pass() {
@@ -1168,7 +1169,7 @@ const VIEWS = {
       <div class="card"><h2>Upplägg</h2><div class="muted">${PROGRAMS[S.plan.program || "ppl"].name} · ${isFixed() ? S.plan.weekdays.map(i => WD[i]).join(", ") : `${S.plan.count} pass i veckan, valfria dagar`}</div>
         <button style="margin-top:10px" data-tab="upplagg">Ändra upplägg</button></div>
       <div class="card"><h2>Vikt</h2>
-        <label class="row"><input type="checkbox" data-showweight ${S.hideWeight ? "" : "checked"}><span>Visa vikt på Idag och i Historik</span></label>
+        <label class="row"><input type="checkbox" data-showweight ${S.hideWeight ? "" : "checked"}><span>Visa vikt under Min dag och i Historik</span></label>
         <label class="field" style="margin-top:8px">Vägningsdag<select data-weighday>${WD.map((w, i) => `<option value="${i}" ${weighDay() === i ? "selected" : ""}>${WD_LONG[i].replace(/^./, c => c.toUpperCase())}</option>`).join("")}</select></label>
         <div class="muted small" style="margin-top:4px">Döljer du vikten används vikten i Kalorimål nedan, och sparade vägningar finns kvar.</div></div>
       ${S.daily.length ? reminderCard() : ""}
@@ -1338,7 +1339,7 @@ function weekLetter(ws) {
     <div class="muted small">Vecka ${weekNo(ws)} · ${ws.slice(8)}/${+ws.slice(5, 7)} – ${shift(ws, 6).slice(8)}/${+shift(ws, 6).slice(5, 7)}</div>
     <h3>${headline}</h3>
     ${line("🏋️", "Pass", `${cur.passes} av ${goalPasses}`, prev.passes || cur.passes ? deltaBadge(cur.passes - prev.passes, "st") : "")}
-    ${plus.plus + plus.same + plus.minus ? line("📈", "Övningar i plus", `${plus.plus} av ${plus.plus + plus.same + plus.minus}`) : ""}
+    ${plus.plus + plus.same + plus.minus ? line("📈", "Övningar som gått framåt", `${plus.plus} av ${plus.plus + plus.same + plus.minus}`) : ""}
     ${recs.length ? line("🏆", "Nya pers", recs.map(r => `${esc(EX[r.id].name)} ${fmtSet(r.best, r.id)}`).join(", ")) : ""}
     ${S.daily.length ? line("✅", "Dagar med alla dailys", `${cur.dailies} av 7`) : ""}
     ${cur.km || prev.km ? line("🏃", "Löpning", `${fmtNum(cur.km)} km`, deltaBadge(Math.round((cur.km - prev.km) * 10) / 10, "km")) : ""}
@@ -1357,7 +1358,7 @@ function letterWeekToShow() {
 
 function renderModal() {
   if (modal.letter) {
-    return `<div class="overlay" data-close><div class="sheet"><div class="row between"><h2>Veckobrev</h2><button class="small ghost" data-close>✕</button></div>
+    return `<div class="overlay" data-close><div class="sheet"><div class="row between"><h2>Din vecka</h2><button class="small ghost" data-close>✕</button></div>
       ${weekLetter(modal.letter)}</div></div>`;
   }
   if (modal.chart) {
@@ -1601,16 +1602,6 @@ function plusStreak() {
     n++;
   }
   return n;
-}
-function plusCard() {
-  // Har du inte jämfört något än den här veckan visas förra veckans resultat
-  let r = weekPlus(weekStart(TODAY)), label = "Den här veckan";
-  if (!(r.plus + r.same + r.minus)) { r = weekPlus(shift(weekStart(TODAY), -7)); label = "Förra veckan"; }
-  const streak = plusStreak(), total = r.plus + r.same + r.minus;
-  return `<div class="card plus-card"><div class="row between"><h2>Slå förra veckan</h2>${streak ? `<span class="pill">🔥 ${streak} ${streak === 1 ? "plusvecka" : "plusveckor"} i rad</span>` : ""}</div>
-    ${total ? `<div class="plus-row"><div><b class="up">${r.plus}</b><span class="muted">i plus</span></div><div><b>${r.same}</b><span class="muted">lika</span></div><div><b class="down">${r.minus}</b><span class="muted">i minus</span></div></div>
-      <div class="muted">${label}: ${total} övningar jämförda med veckan innan</div>`
-      : `<div class="muted">När du kört samma övning två veckor i rad ser du här hur många som gått upp. Dagens mål på varje övning visar hur du tar ditt plus.</div>`}</div>`;
 }
 
 // Ett avbockat set med tomma fält får exempelvärdena: förra gångens set, annars målet

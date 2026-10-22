@@ -55,6 +55,18 @@ def test_eget_upplagg_med_egna_namn_och_ovningar(page):
     assert "Bröst & triceps" in page.inner_text(".card >> nth=0")
 
 
+def test_min_dag_visar_dagens_ovningar(page):
+    start(page)
+    seed(page, "S.log[shift(TODAY,-7)] = {workouts:[{dayId:S.plan.days[0].id,done:true,sets:{bankpress:[{kg:80,reps:8,ok:true}]}}],dailies:{},food:[]}")
+    page.click(f'[data-pick="{page.evaluate("S.plan.days[0].id")}"]')
+    assert page.inner_text("#nav [data-tab=idag]").endswith("Min dag")
+    rows = page.locator(".daypass .exnames li")
+    assert rows.count() == page.evaluate("S.plan.days[0].ex.length")
+    assert "Bänkpress" in rows.first.inner_text() and "4 × 6–8 · 82,5 kg × 6" in rows.first.inner_text()
+    assert page.locator(".plus-card").count() == 0
+    page.click(".daypass [data-focusstart]")
+    assert page.locator(".focus").count() == 1
+
 def test_kort_start_och_paminnelse_om_kalorimal(page):
     open_app(page)
     # Första gången: bara upplägg, antal och dagar; resten är valfritt
@@ -121,9 +133,9 @@ def test_dagens_mal_fylls_i_och_pers_firas(page):
     seed(page, "S.log[shift(TODAY,-7)] = {workout:{dayId:S.plan.days[0].id,done:true,sets:{bankpress:[{kg:80,reps:8,ok:true}],dips:[{reps:10,ok:true}]}},dailies:{},food:[]}")
     go(page, "pass")
     page.click("[data-pick]")
-    # Listan visar varje övning på en rad med dagens mål
-    assert "mål 82,5 kg × 6" in page.locator(".exlist .tile", has_text="Bänkpress").inner_text()
-    assert "mål 11 reps" in page.locator(".exlist .tile", has_text="Dips").inner_text()
+    # Listan visar varje övning på en rad med förslag utifrån förra gången
+    assert "förslag 82,5 kg × 6" in page.locator(".exlist .tile", has_text="Bänkpress").inner_text()
+    assert "förslag 11 reps" in page.locator(".exlist .tile", has_text="Dips").inner_text()
     open_ex(page, "bankpress")
     assert "Bänkpress" in page.inner_text(".focus h2")
     page.click('[data-ok=bankpress][data-i="0"]')
@@ -203,8 +215,10 @@ def test_vikten_foljer_med_och_orimliga_tal_begransas(page):
 
 def test_bilder_ar_stilla_i_listor_men_animeras_ensamma(page):
     start(page)
+    go(page, "pass")
     assert page.locator(".thumb animate").count() == 0
-    page.click(".thumbs .thumb >> nth=0")
+    page.click('[data-focusex="0"]')
+    page.click(".focus .thumb")
     assert page.locator(".sheet .fig animate").count() > 0
 
 

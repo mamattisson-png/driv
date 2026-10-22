@@ -2,7 +2,7 @@
 
 # Driv
 
-**Ditt mål. Ditt driv.** Träning, dailys och kost i en app, med plus eller minus mot förra veckan så att du ser att du blir bättre. Inga beroenden och inget konto krävs: allt sparas i din webbläsare, och med ett gratis konto även tryggt i molnet.
+**Ditt mål. Ditt driv.** Träning, mat och vanor – enkelt, på ett ställe. Min dag visar dagens pass med alla övningar, dina dailys och dagens mat. Logga passet en övning i taget, håll koll på kalorierna och följ din utveckling i Historik. Inga beroenden och inget konto krävs: allt sparas i din webbläsare, och med ett gratis konto även tryggt i molnet.
 
 **Öppna appen:** https://driv.driveify.se/
 
@@ -13,10 +13,10 @@ På mobilen kan du lägga den på hemskärmen: *Dela → Lägg till på hemskär
 - **Upplägg:** elva program att söka bland, bland annat Push/Pull/Legs, Helkropp, Över/Underkropp, Calisthenics, Styrka 5×5, Styrkelyft, Arnold split, Hemma med hantlar och Rumpa & ben. Välj 1–7 pass i veckan, i ordning valfria dagar eller på fasta veckodagar.
 - **Övningar:** drygt 45 övningar, var och en med en illustration och tips (animerad när du öppnar övningen). Förifyllt per upplägg, sökbart och utbytbart, med egna set och reps.
 - **Under passet:** Träna visar passet med en rad per övning (mål och set klara); ett tryck öppnar fokusläget på den övningen. Fokusläget har en övning i taget, stora − och +-knappar för vikt och reps, förra gångens resultat på varje set och skärmen tänd så länge passet pågår. Bocka av ett set så startar vilotimern, och när övningen är klar visas nästa. Kroppsviktsövningar loggas i reps eller sekunder med valfri extra vikt. Flera pass samma dag går bra.
-- **Slå förra veckan:** dagens mål på varje övning, besked när du slår pers, hur många övningar som gått upp den här veckan och en graf per övning.
+- **Utveckling:** förslag på vikt och reps för varje övning utifrån förra gången, besked när du slår pers och en graf per övning.
 - **Historik:** en kalender med alla pass och dagar då alla dailys gjorts. Tryck på en dag för att ändra den: bocka dailys och väg dig i efterhand, eller öppna Träna eller Kost för den dagen och logga ett pass eller mat du glömt. Under kalendern jämförs veckan med veckan innan: bästa set per övning med + eller −, samt pass, dailys, löpning, kalorier och veckobrevet.
-- **Dailys:** egna övningar, löpning eller promenad att bocka av direkt på Idag, med streaks och påminnelse i kalendern.
-- **Fyra flikar:** Idag, Träna (med kommande pass), Kost och Historik. Profil och inställningar nås via kugghjulet.
+- **Dailys:** egna övningar, löpning eller promenad att bocka av direkt under Min dag, med streaks och påminnelse i kalendern.
+- **Fyra flikar:** Min dag, Träna (med kommande pass), Kost och Historik. Profil och inställningar nås via kugghjulet.
 - **Kost:** kalorimål och makron från ålder, längd, vikt, aktivitet och mål. Skriv vad du åt i fritext, till exempel "2 dl mjölk och 1 banan", så räknas kalorier och protein ut från drygt 2 800 livsmedel och rätter. Medan du skriver föreslår appen träffar, och felstavningar som "kottbullar" hittar rätt. Sidan visar en ruta per måltid (frukost, lunch, mellanmål, middag); *+ Lägg till* öppnar sök och snabbval för just den måltiden. Mängden styr: varje livsmedel får antal, gram, dl eller portioner som går att ändra, och kalorier och protein räknas fram. Favoriter, egna måltider och det du ätit nyligen ligger som snabbval, och samma snabbval två gånger blir två stycken. En måltid kan upprepas från förra gången med ett tryck, och flera saker kan sparas som en måltid. Logga även en måltid med ungefärliga kalorier eller skanna streckkoden på en vara.
 
 ## Data och integritet

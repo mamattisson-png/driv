@@ -89,7 +89,7 @@ function focusView() {
       <div class="row"><button class="thumb" data-info="${ex.id}" aria-label="Visa ${esc(EX[ex.id].name)}">${figure(ex.id, "", true)}</button>
         <div class="grow"><div class="muted small">${passLabel(d)}</div><h2 style="margin:2px 0">${esc(EX[ex.id].name)}</h2>
           <div class="muted">${ex.sets} × ${esc(ex.reps)}</div>
-          ${target ? `<div class="goal">🎯 Dagens mål: <b>${fmtTarget(target, ex.id)}</b></div>`
+          ${target ? `<div class="goal">Förslag idag: <b>${fmtTarget(target, ex.id)}</b></div>`
             : `<div class="muted">Första gången: välj en vikt du klarar ${esc(ex.reps)}.</div>`}</div></div>
       ${rows}
       <div class="row" style="margin-top:10px"><button class="small" data-setcount="-1" data-ex="${ex.id}" ${ex.sets > 1 ? "" : "disabled"}>− Set</button>
@@ -106,7 +106,7 @@ function passOverview(d, w) {
   return `<div class="card exlist">${d.ex.map((ex, i) => {
     const sets = (w && w.sets[ex.id]) || [], done = sets.filter(x => x && x.ok).length, all = exDone(w, ex), target = todayTarget(ex);
     return `<button class="tile ${all ? "done" : ""}" data-focusex="${i}"><span class="thumb xs" aria-hidden="true">${figure(ex.id)}</span>
-      <span class="grow"><b>${esc(EX[ex.id].name)}</b><span class="muted small">${ex.sets} × ${esc(ex.reps)}${target ? ` · mål ${fmtTarget(target, ex.id)}` : ""}</span></span>
+      <span class="grow"><b>${esc(EX[ex.id].name)}</b><span class="muted small">${ex.sets} × ${esc(ex.reps)}${target ? ` · förslag ${fmtTarget(target, ex.id)}` : ""}</span></span>
       <span class="setcount ${all ? "ok" : ""}">${all ? "✓" : `${done}/${ex.sets}`}</span></button>`;
   }).join("")}</div>`;
 }

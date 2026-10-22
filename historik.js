@@ -89,7 +89,7 @@ function weekSection() {
         ${stat("löpning", cur.km, prev.km, " km")}
         <div><div class="stat">${cur.kcal || "–"}</div><div class="muted">kcal/dag i snitt (mål ${m.kcal})</div></div>
       </div>
-      <button class="wide" style="margin-top:12px" data-letter="${ws}">📬 Veckobrevet</button></div>
+      <button class="wide" style="margin-top:12px" data-letter="${ws}">📬 Sammanfattning av veckan</button></div>
     ${!S.hideWeight && Object.keys(weights()).length ? `<div class="card"><h2>Vikt</h2>${(() => {
       const a = weekAvgWeight(ws), b = weekAvgWeight(prevWs);
       return a != null ? `<div>Snitt vecka ${weekNo(ws)}: <b>${fmtNum(a)} kg</b> ${b != null ? weightBadge(a - b) : ""}</div>` : "";
