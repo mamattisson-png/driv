@@ -2,7 +2,7 @@
 // Alla filer sparas när en ny version installeras och används sedan därifrån.
 // CACHE innehåller en kontrollsumma av filerna: kör tools/sw-version.py efter ändringar
 // (testerna larmar om den inte stämmer). En ny summa gör att webbläsaren installerar om.
-const CACHE = "driv-4d4e04e4";
+const CACHE = "driv-3db2d554";
 const FILES = ["index.html", "app.js", "figur.js", "fokus.js", "kost.js", "historik.js", "ovningar.js", "livsmedel.js", "mat.js", "config.js",
   "manifest.webmanifest", "icons/favicon.png", "icons/apple-touch-icon.png", "icons/icon-192.png", "icons/icon-512.png", "icons/icon-maskable-512.png"];
 

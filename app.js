@@ -610,7 +610,7 @@ function accountNudge() {
 let welcomeLogin = false;
 function accountCard() {
   if (!sbEnabled) return "";
-  return `<div class="card" id="konto"><h2>Konto</h2>${accountBody()}</div>`;
+  return `<div class="card" id="konto"><h2>${account.step === "in" ? "Konto" : "Skapa konto eller logga in"}</h2>${accountBody()}</div>`;
 }
 function accountBody() {
   const a = account;
@@ -620,12 +620,13 @@ function accountBody() {
       <div class="muted small" style="margin-top:4px">Allt du loggar sparas på ditt konto och följer med till alla enheter där du loggar in.</div>
       <button class="small" style="margin-top:10px" data-signout>Logga ut</button>`;
   } else if (a.step === "code") {
-    body = `<div class="muted">Mejl skickat till <b>${esc(a.email)}</b>.</div>
+    body = `<div class="muted">Vi har skickat en kod till <b>${esc(a.email)}</b>. Skriv in den här, eller tryck på länken i mejlet.</div>
       <div class="row" style="margin-top:8px"><input id="acctcode" inputmode="numeric" autocomplete="one-time-code" placeholder="Kod från mejlet">
-        <button class="primary small" data-verifycode ${a.busy ? "disabled" : ""}>Logga in</button></div>
+        <button class="primary small" data-verifycode ${a.busy ? "disabled" : ""}>Fortsätt</button></div>
       <button class="small ghost" style="margin-top:6px" data-changeemail>Byt e-postadress</button>`;
   } else {
-    body = `<div class="muted">Logga in för att spara din träning tryggt och använda samma data på flera enheter. Inget lösenord behövs.</div>
+    body = `<div class="muted">Med ett konto sparas allt du loggar tryggt i molnet och finns på alla dina enheter.
+        Skriv din e-post så får du en kod. Har du inget konto skapas det automatiskt – inget lösenord behövs.</div>
       <div class="row" style="margin-top:8px"><input id="acctemail" type="email" autocomplete="email" placeholder="din@epost.se" value="${esc(a.email)}">
         <button class="primary small" data-sendcode ${a.busy ? "disabled" : ""}>Skicka kod</button></div>`;
   }
@@ -935,7 +936,7 @@ function weightChart() {
 // ---------- Rendering ----------
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 // Fyra flikar; Profil nås via kugghjulet uppe till höger
-const TABS = [["idag", "🏠", "Min dag"], ["pass", "🏋️", "Träna"], ["kost", "🍽️", "Kost"], ["historik", "📅", "Historik"]];
+const TABS = [["idag", "🏠", "Hem"], ["pass", "🏋️", "Träna"], ["kost", "🍽️", "Kost"], ["historik", "📅", "Historik"]];
 let tab = S.setupDone ? "idag" : "upplagg";
 let chosenDay = null;
 let editing = false;
@@ -1048,8 +1049,7 @@ const VIEWS = {
       : !S.setupDone && sbEnabled ? (welcomeLogin
         ? `<div class="card"><div class="row between"><h2>Logga in</h2><button class="small ghost" data-welcomelogin aria-label="Stäng">✕</button></div>
             ${accountBody()}<div class="muted small" style="margin-top:8px">Ditt upplägg och allt du loggat hämtas från kontot.</div></div>`
-        : `<div class="muted" style="margin:-4px 0 12px">Välj upplägg och tryck Kom igång – inget konto behövs. Konto kan du skapa senare under Profil.
-            <button class="link" data-welcomelogin>Har du redan ett konto? Logga in</button></div>`) : ""}
+        : `<div class="welcome-acct"><span>Har du använt Driv förut?</span><button class="small" data-welcomelogin>Logga in</button></div>`) : ""}
       <div class="card"><div class="row between"><h2>1. Vilket upplägg?</h2>
           <button class="small" data-progtoggle aria-expanded="${progOpen}">${progOpen ? "Fäll ihop" : `Visa alla ${Object.keys(PROGRAMS).length}`}</button></div>
         ${progOpen ? "" : `<div class="proglist"><button class="on" data-progtoggle><b>${PROGRAMS[draft.program].name}</b>
@@ -1082,11 +1082,12 @@ const VIEWS = {
           ${d.ex.length ? "" : `<div class="muted" style="margin:6px 0">Inga övningar än. Lägg till dem nedan.</div>`}
           ${exRows("draft:" + i, d.ex, false)}</details>`).join("")}</div>
       <div class="card"><h2>5. Dailys</h2>
-        <div class="muted" style="margin-bottom:8px">Det du vill göra varje dag. Du bockar av och ändrar dem under Min dag.</div>
+        <div class="muted" style="margin-bottom:8px">Det du vill göra varje dag. Du bockar av och ändrar dem på Hem.</div>
         ${exRows("daily", S.daily, false)}</div>
       <div class="card"><h2>6. Kalorimål</h2>${profileFields(p)}
         <div class="muted" style="margin-top:8px">Mål: <b>${kcalGoal()} kcal</b> · ${macros().protein} g protein per dag</div></div>`}
       <button class="primary wide" data-savesetup ${ok ? "" : "disabled"}>${S.setupDone ? "Spara upplägg" : "Kom igång"}</button>
+      ${S.setupDone || !sbEnabled ? "" : `<div class="muted small" style="text-align:center;margin-top:-2px">Inget konto behövs för att börja. Vill du spara i molnet kan du skapa ett konto senare under Profil.</div>`}
       ${S.setupDone ? `<button class="ghost wide" data-cancelsetup>Avbryt</button>` : ""}`;
   },
 
@@ -1117,7 +1118,8 @@ const VIEWS = {
       passCard = `<div class="card"><h2>Vilodag 😌</h2><div class="muted">Nästa pass: ${WD[weekdayOf(nx.date)]} · ${esc(nx.day.name)}</div>
         <div style="margin-top:10px"><button data-focusstart="${nx.day.id}">Kör ett pass ändå</button></div></div>`;
     }
-    return `<h1>Min dag <span class="muted">${new Date().toLocaleDateString("sv-SE", { weekday: "long", day: "numeric", month: "long" })} · v.${weekNo(TODAY)}</span></h1>
+    // Hem har dagens datum som rubrik
+    return `<h1>${new Date().toLocaleDateString("sv-SE", { weekday: "long", day: "numeric", month: "long" }).replace(/^./, c => c.toUpperCase())} <span class="muted">v.${weekNo(TODAY)}</span></h1>
       ${(() => {
         const lw = letterWeekToShow();
         return lw ? `<div class="card letter-card"><div class="row between"><h2>📬 Din vecka</h2>
@@ -1169,7 +1171,7 @@ const VIEWS = {
       <div class="card"><h2>Upplägg</h2><div class="muted">${PROGRAMS[S.plan.program || "ppl"].name} · ${isFixed() ? S.plan.weekdays.map(i => WD[i]).join(", ") : `${S.plan.count} pass i veckan, valfria dagar`}</div>
         <button style="margin-top:10px" data-tab="upplagg">Ändra upplägg</button></div>
       <div class="card"><h2>Vikt</h2>
-        <label class="row"><input type="checkbox" data-showweight ${S.hideWeight ? "" : "checked"}><span>Visa vikt under Min dag och i Historik</span></label>
+        <label class="row"><input type="checkbox" data-showweight ${S.hideWeight ? "" : "checked"}><span>Visa vikt på Hem och i Historik</span></label>
         <label class="field" style="margin-top:8px">Vägningsdag<select data-weighday>${WD.map((w, i) => `<option value="${i}" ${weighDay() === i ? "selected" : ""}>${WD_LONG[i].replace(/^./, c => c.toUpperCase())}</option>`).join("")}</select></label>
         <div class="muted small" style="margin-top:4px">Döljer du vikten används vikten i Kalorimål nedan, och sparade vägningar finns kvar.</div></div>
       ${S.daily.length ? reminderCard() : ""}

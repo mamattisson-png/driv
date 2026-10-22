@@ -55,11 +55,11 @@ def test_eget_upplagg_med_egna_namn_och_ovningar(page):
     assert "Bröst & triceps" in page.inner_text(".card >> nth=0")
 
 
-def test_min_dag_visar_dagens_ovningar(page):
+def test_hem_visar_dagens_ovningar(page):
     start(page)
     seed(page, "S.log[shift(TODAY,-7)] = {workouts:[{dayId:S.plan.days[0].id,done:true,sets:{bankpress:[{kg:80,reps:8,ok:true}]}}],dailies:{},food:[]}")
     page.click(f'[data-pick="{page.evaluate("S.plan.days[0].id")}"]')
-    assert page.inner_text("#nav [data-tab=idag]").endswith("Min dag")
+    assert page.inner_text("#nav [data-tab=idag]").endswith("Hem")
     rows = page.locator(".daypass .exnames li")
     assert rows.count() == page.evaluate("S.plan.days[0].ex.length")
     assert "Bänkpress" in rows.first.inner_text() and "4 × 6–8 · 82,5 kg × 6" in rows.first.inner_text()
