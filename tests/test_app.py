@@ -283,3 +283,20 @@ def test_supabase_inloggning_synk_och_sammanslagning(page):
     page.click("[data-tab=profil]")
     page.click("[data-signout]")
     assert page.evaluate("cloud.status") == "local"
+
+
+# ---------- Veckobrev ----------
+
+def test_veckobrev_pa_sondag(page):
+    import datetime
+    page.clock.set_fixed_time(datetime.datetime(2026, 10, 25, 18, 0))  # söndag
+    start(page)
+    seed(page, """const d = S.plan.days;
+      S.log['2026-10-13'] = {workout:{dayId:d[0].id,done:true,sets:{bankpress:[{kg:80,reps:8,ok:true}]}},dailies:{},food:[]};
+      S.log['2026-10-20'] = {workout:{dayId:d[0].id,done:true,sets:{bankpress:[{kg:82.5,reps:8,ok:true}]}},dailies:{},food:[]}""")
+    letter = page.inner_text(".letter-card")
+    assert "1 av 3" in letter and "Bänkpress 82,5 kg × 8" in letter
+    page.click("[data-letterclose]")
+    assert page.locator(".letter-card").count() == 0
+    page.reload()
+    assert page.locator(".letter-card").count() == 0

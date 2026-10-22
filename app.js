@@ -820,6 +820,11 @@ const VIEWS = {
         <div style="margin-top:10px"><button data-go="pass" data-day="${nx.day.id}">Kör ett pass ändå</button></div></div>`;
     }
     return `<h1>Idag <span class="muted">${new Date().toLocaleDateString("sv-SE", { weekday: "long", day: "numeric", month: "long" })} · v.${weekNo(TODAY)}</span></h1>
+      ${(() => {
+        const lw = letterWeekToShow();
+        return lw ? `<div class="card letter-card"><div class="row between"><h2>📬 Ditt veckobrev</h2>
+          <button class="small ghost" data-letterclose="${lw}" aria-label="Stäng veckobrevet">✕</button></div>${weekLetter(lw)}</div>` : "";
+      })()}
       ${S.plan.days.length > 1 ? dayPicker(d && d.id) : ""}
       ${passCard}
       ${plusCard()}
@@ -944,6 +949,7 @@ const VIEWS = {
       <div class="row between" style="margin-bottom:12px"><button data-week="-1">‹ Förra</button>
         <span class="muted">${ws.slice(5)} – ${shift(ws, 6).slice(5)}</span>
         <button data-week="1" ${weekOffset >= 0 ? "disabled" : ""}>Nästa ›</button></div>
+      <button class="wide" data-letter="${ws}">📬 Visa veckobrevet för vecka ${weekNo(ws)}</button>
       <div class="card"><h2>Jämfört med vecka ${weekNo(prevWs)}</h2><div class="grid2">
         ${stat(`pass av ${S.plan.count}`, cur.passes, prev.passes)}
         ${stat("dagar alla dailys klara", cur.dailies, prev.dailies)}
@@ -1142,7 +1148,55 @@ function chartModal(id) {
       ${pts.slice().reverse().map(s => `<tr><td>v.${s.week}</td><td>${fmtSet(s.best, id)}</td></tr>`).join("")}</table>`;
 }
 
+// ---------- Veckobrev ----------
+// Övningar där veckans bästa set slog allt du gjort tidigare
+function weekRecords(ws) {
+  const ids = new Set();
+  for (const d of weekDates(ws)) {
+    const w = S.log[d] && S.log[d].workout;
+    if (w) for (const id of Object.keys(w.sets)) if (EX[id]) ids.add(id);
+  }
+  const out = [];
+  for (const id of ids) {
+    const best = exWeek(id, ws), before = bestBefore(id, ws);
+    if (best && before && betterSet(best, before)) out.push({ id, best });
+  }
+  return out;
+}
+function weekLetter(ws) {
+  const prevWs = shift(ws, -7), cur = weekSummary(ws), prev = weekSummary(prevWs);
+  const plus = weekPlus(ws), recs = weekRecords(ws);
+  const wNow = weekAvgWeight(ws), wPrev = weekAvgWeight(prevWs);
+  const goalPasses = S.plan.count;
+  const headline = cur.passes >= goalPasses ? "Alla pass klara – starkt jobbat! 💪"
+    : cur.passes ? `${cur.passes} av ${goalPasses} pass. Varje pass räknas.` : "Ingen träning loggad den här veckan. Ny chans nu!";
+  const line = (icon, label, value, extra = "") => `<div class="letter-row"><span>${icon}</span><span class="grow">${label}</span><b>${value}</b>${extra}</div>`;
+  return `<div class="letter">
+    <div class="muted small">Vecka ${weekNo(ws)} · ${ws.slice(8)}/${+ws.slice(5, 7)} – ${shift(ws, 6).slice(8)}/${+shift(ws, 6).slice(5, 7)}</div>
+    <h3>${headline}</h3>
+    ${line("🏋️", "Pass", `${cur.passes} av ${goalPasses}`, prev.passes || cur.passes ? deltaBadge(cur.passes - prev.passes, "st") : "")}
+    ${plus.plus + plus.same + plus.minus ? line("📈", "Övningar i plus", `${plus.plus} av ${plus.plus + plus.same + plus.minus}`) : ""}
+    ${recs.length ? line("🏆", "Nya pers", recs.map(r => `${esc(EX[r.id].name)} ${fmtSet(r.best, r.id)}`).join(", ")) : ""}
+    ${S.daily.length ? line("✅", "Dagar med alla dailys", `${cur.dailies} av 7`) : ""}
+    ${cur.km || prev.km ? line("🏃", "Löpning", `${fmtNum(cur.km)} km`, deltaBadge(Math.round((cur.km - prev.km) * 10) / 10, "km")) : ""}
+    ${!S.hideWeight && wNow != null ? line("⚖️", "Vikt, snitt", `${fmtNum(wNow)} kg`, wPrev != null ? weightBadge(wNow - wPrev) : "") : ""}
+    ${cur.kcal ? line("🍽️", "Kalorier per dag", `${cur.kcal}`, `<span class="muted small">mål ${macros().kcal}</span>`) : ""}
+    ${plusStreak() > 1 ? `<div class="letter-foot">🔥 ${plusStreak()} plusveckor i rad. Håll i!</div>` : ""}
+  </div>`;
+}
+// På söndagar visas den här veckan, på måndagar förra veckan, tills man stänger brevet
+function letterWeekToShow() {
+  const wd = weekdayOf(TODAY), ws = wd === 6 ? weekStart(TODAY) : wd === 0 ? shift(weekStart(TODAY), -7) : null;
+  if (!ws || S.letterSeen === ws) return null;
+  const sum = weekSummary(ws);
+  return sum.passes || sum.dailies || sum.kcal || Object.keys(S.log).some(d => d >= ws && d < shift(ws, 7)) ? ws : null;
+}
+
 function renderModal() {
+  if (modal.letter) {
+    return `<div class="overlay" data-close><div class="sheet"><div class="row between"><h2>Veckobrev</h2><button class="small ghost" data-close>✕</button></div>
+      ${weekLetter(modal.letter)}</div></div>`;
+  }
   if (modal.chart) {
     return `<div class="overlay" data-close><div class="sheet"><div class="row between"><h2>${esc(EX[modal.chart].name)}</h2><button class="small ghost" data-close>✕</button></div>
       <div class="muted">Bästa set per vecka, senaste 12 veckorna</div>${chartModal(modal.chart)}</div></div>`;
@@ -1429,6 +1483,7 @@ document.addEventListener("click", ev => {
   if (ds.close !== undefined) { modal = null; render(); return; }
   if (ds.info) { modal = { info: ds.info }; render(); return; }
   if (ds.chart) { modal = { chart: ds.chart }; render(); return; }
+  if (ds.letter) { modal = { letter: ds.letter }; render(); return; }
   if (ds.openpick) { modal = { pick: ds.openpick }; render(); return; }
   if (ds.swap) { modal = { pick: ds.swap, replace: +ds.idx }; render(); filterPicker(); return; }
   if (ds.cat) {
@@ -1468,6 +1523,7 @@ document.addEventListener("click", ev => {
   }
   else if (ds.dcheck) day().dailies[ds.dcheck] = !dailyDone(TODAY, ds.dcheck);
   else if (ds.dedit !== undefined) dailyEditing = !dailyEditing;
+  else if (ds.letterclose) S.letterSeen = ds.letterclose;
   else if (ds.hideweight !== undefined) { S.hideWeight = true; toast("Vikten är dold. Visa den igen under Profil."); }
   else if (ds.showweight !== undefined) S.hideWeight = !t.checked;
   else if (ds.wsave !== undefined) {
