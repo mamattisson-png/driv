@@ -153,6 +153,15 @@ def test_kroppsvikt_och_kalorimal(page):
     assert page.evaluate("S.profile.weight") == 70
     assert page.evaluate("kcalGoal()") < 2360
     assert "mot förra veckan" in page.locator('.card:has(h2:text-is("Vikt"))').inner_text()
+    # Vikten kan döljas och visas igen
+    page.click("[data-hideweight]")
+    assert page.locator("#wkg").count() == 0
+    go(page, "vecka")
+    assert page.locator('.card:has(h2:text-is("Vikt"))').count() == 0
+    go(page, "profil")
+    page.click("[data-showweight]")
+    go(page, "idag")
+    assert page.locator("#wkg").count() == 1
 
 
 def test_paminnelse_i_kalendern(page):

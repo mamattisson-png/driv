@@ -656,7 +656,8 @@ function weightCard() {
     <div class="row"><input id="wkg" type="number" inputmode="decimal" step="0.1" placeholder="${last ? fmtNum(last.kg).replace(",", ".") : "kg"}" aria-label="Dagens vikt i kg"
       value="${weights()[TODAY] ?? ""}"><button class="primary" data-wsave>${weights()[TODAY] ? "Ändra" : "Spara"}</button></div>
     ${now != null ? `<div class="muted" style="margin-top:8px">Veckosnitt ${fmtNum(now)} kg ${prev != null ? weightBadge(now - prev) + " mot förra veckan" : ""}</div>` : ""}
-    <div class="muted small" style="margin-top:4px">Väg dig gärna samma tid på dagen. Kalorimålet följer din senaste vikt.</div></div>`;
+    <div class="row between" style="margin-top:4px"><span class="muted small">Väg dig gärna samma tid på dagen. Kalorimålet följer din senaste vikt.</span>
+      <button class="small ghost" data-hideweight>Dölj vikt</button></div></div>`;
 }
 // Vägningar som punkter och veckosnitt som linje, de senaste åtta veckorna
 function weightChart() {
@@ -822,7 +823,7 @@ const VIEWS = {
       ${S.plan.days.length > 1 ? dayPicker(d && d.id) : ""}
       ${passCard}
       ${plusCard()}
-      ${weightCard()}
+      ${S.hideWeight ? "" : weightCard()}
       <div class="card"><div class="row between"><h2>Kalorier</h2><span class="muted">${e.kcal} / ${m.kcal} kcal</span></div>
         ${bar(e.kcal, m.kcal)}<div class="muted">${Math.max(0, m.kcal - e.kcal)} kcal kvar</div>
         <div class="row between" style="margin-top:10px"><span>Protein</span><span class="muted">${e.protein} / ${m.protein} g</span></div>
@@ -949,7 +950,7 @@ const VIEWS = {
         ${stat("löpning", cur.km, prev.km, " km")}
         <div><div class="stat">${cur.kcal || "–"}</div><div class="muted">kcal/dag i snitt (mål ${m.kcal})</div></div>
       </div></div>
-      ${Object.keys(weights()).length ? `<div class="card"><h2>Vikt</h2>${(() => {
+      ${!S.hideWeight && Object.keys(weights()).length ? `<div class="card"><h2>Vikt</h2>${(() => {
         const a = weekAvgWeight(ws), b = weekAvgWeight(prevWs);
         return a != null ? `<div>Snitt vecka ${weekNo(ws)}: <b>${fmtNum(a)} kg</b> ${b != null ? weightBadge(a - b) : ""}</div>` : "";
       })()}${weightChart()}</div>` : ""}
@@ -969,6 +970,9 @@ const VIEWS = {
     return `<h1>Profil</h1>
       <div class="card"><h2>Upplägg</h2><div class="muted">${PROGRAMS[S.plan.program || "ppl"].name} · ${isFixed() ? S.plan.weekdays.map(i => WD[i]).join(", ") : `${S.plan.count} pass i veckan, valfria dagar`}</div>
         <button style="margin-top:10px" data-tab="upplagg">Ändra upplägg</button></div>
+      <div class="card"><h2>Vikt</h2>
+        <label class="row"><input type="checkbox" data-showweight ${S.hideWeight ? "" : "checked"}><span>Visa vikt på Idag och under Vecka</span></label>
+        <div class="muted small" style="margin-top:4px">Döljer du vikten används vikten i Kalorimål nedan, och sparade vägningar finns kvar.</div></div>
       <div class="card"><h2>Vilotimer</h2>
         <label class="row"><input type="checkbox" data-resttoggle ${restSettings().on ? "checked" : ""}><span>Starta en vilotimer när jag bockar av ett set</span></label>
         <div class="grid2" style="margin-top:10px">
@@ -1464,6 +1468,8 @@ document.addEventListener("click", ev => {
   }
   else if (ds.dcheck) day().dailies[ds.dcheck] = !dailyDone(TODAY, ds.dcheck);
   else if (ds.dedit !== undefined) dailyEditing = !dailyEditing;
+  else if (ds.hideweight !== undefined) { S.hideWeight = true; toast("Vikten är dold. Visa den igen under Profil."); }
+  else if (ds.showweight !== undefined) S.hideWeight = !t.checked;
   else if (ds.wsave !== undefined) {
     if (!logWeight(+String($("wkg").value).replace(",", "."))) { toast("Skriv vikten i kg, till exempel 80,5"); return; }
     toast(`Vikt sparad: ${fmtNum(weights()[TODAY])} kg`);
