@@ -122,13 +122,14 @@ function holds(ex, A, B, still) {
   return out;
 }
 
-function figure(id, cls = "") {
+// Animeras bara där en övning visas ensam (övningsrutan, fokusläget); i listor är bilden stilla
+function figure(id, cls = "", animate = false) {
   const ex = EX[id];
   if (!ex) return "";
   const front = ex.view === "front";
   const J = front ? frontJoints : sideJoints;
   const A = J(ex.A), B = J(ex.B || ex.A);
-  const still = !ex.B || REDUCED;   // utan animation visas startläget
+  const still = !ex.B || REDUCED || !animate;   // utan animation visas startläget
   const far = front ? "fb" : "fb ff";
   let body = poly(A.leg2, B.leg2, far, still) + poly(A.arm2, B.arm2, far, still);
   if (front) body += poly(A.hips, B.hips, "fb", still) + poly(A.shoulders, B.shoulders, "fb", still);

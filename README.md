@@ -2,7 +2,7 @@
 
 # Driv
 
-**Ditt mål. Ditt driv.** Träning, dailys och kost i en app, med plus eller minus mot förra veckan så att du ser att du blir bättre. Inga konton och inga beroenden: allt sparas i din webbläsare.
+**Ditt mål. Ditt driv.** Träning, dailys och kost i en app, med plus eller minus mot förra veckan så att du ser att du blir bättre. Inga beroenden och inget konto krävs: allt sparas i din webbläsare, och med ett gratis konto även tryggt i molnet.
 
 **Öppna appen:** https://driv.driveify.se/
 
@@ -10,9 +10,9 @@ På mobilen kan du lägga den på hemskärmen: *Dela → Lägg till på hemskär
 
 ## Funktioner
 
-- **Upplägg:** tio program att söka bland, bland annat Push/Pull/Legs, Helkropp, Över/Underkropp, Calisthenics, Styrka 5×5, Styrkelyft, Arnold split, Hemma med hantlar och Rumpa & ben. Välj 2–6 pass i veckan, i ordning valfria dagar eller på fasta veckodagar.
-- **Övningar:** drygt 45 övningar, var och en med en animerad illustration och tips. Förifyllt per upplägg, sökbart och utbytbart, med egna set och reps.
-- **Under passet:** logga vikt och reps per set, eller reps/sekunder och valfri extra vikt för kroppsviktsövningar. Bocka av set eller hela övningen; tomma fält får förra gångens värden.
+- **Upplägg:** elva program att söka bland, bland annat Push/Pull/Legs, Helkropp, Över/Underkropp, Calisthenics, Styrka 5×5, Styrkelyft, Arnold split, Hemma med hantlar och Rumpa & ben. Välj 1–7 pass i veckan, i ordning valfria dagar eller på fasta veckodagar.
+- **Övningar:** drygt 45 övningar, var och en med en illustration och tips (animerad när du öppnar övningen). Förifyllt per upplägg, sökbart och utbytbart, med egna set och reps.
+- **Under passet:** fokusläge med en övning i taget, stora − och +-knappar för vikt och reps, förra gångens resultat på varje set och skärmen tänd så länge passet pågår. Bocka av ett set så startar vilotimern, och när övningen är klar visas nästa. Kroppsviktsövningar loggas i reps eller sekunder med valfri extra vikt. Flera pass samma dag går bra.
 - **Slå förra veckan:** dagens mål på varje övning, besked när du slår pers, hur många övningar som gått upp den här veckan och en graf per övning.
 - **Vecka för vecka:** bästa set per övning jämfört med förra veckan, med + eller −, samt pass, dailys, löpning och kalorier.
 - **Dailys:** egna övningar, löpning eller promenad att bocka av varje dag, med streaks och påminnelse i kalendern.

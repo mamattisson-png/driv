@@ -182,6 +182,37 @@
   .letter-foot { margin-top: 10px; font-weight: 600; }
   .letter-card { border-color: var(--accent); }
   .nudge { border-color: var(--accent); }
+  /* Fokusläge */
+  .fdots { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; margin: 4px 0 12px; }
+  .fdots button { width: 22px; height: 22px; padding: 0; border: 0; background: none; position: relative; }
+  .fdots button::after { content: ""; position: absolute; inset: 6px; border-radius: 50%; background: var(--line); }
+  .fdots button.done::after { background: var(--ok); }
+  .fdots button.on::after { background: var(--accent); inset: 4px; }
+  .fset { padding: 10px 8px; margin: 0 -8px; border-top: 1px solid var(--line); border-radius: 10px;
+    display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "head head" "fields done"; column-gap: 8px; }
+  .fset-head { grid-area: head; }
+  .fset-fields { grid-area: fields; display: flex; gap: 8px; min-width: 0; }
+  .fset > .done-btn { grid-area: done; }
+  /* Smala telefoner: ✓ flyttar upp bredvid rubriken så att siffrorna får plats */
+  @media (max-width: 359px) {
+    .fset { grid-template-areas: "head done" "fields fields"; align-items: center; }
+    .fset > .done-btn.big { width: 44px; height: 44px; margin-bottom: 6px; }
+  }
+  .fset.active { background: var(--accent-soft); border-top-color: transparent; }
+  .fset.done .stepper input { color: var(--muted); }
+  .fset-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
+  .fset > .done-btn.big { width: 52px; height: 52px; font-size: 20px; }
+  .stepper { flex: 1; min-width: 0; display: grid; grid-template-columns: 38px minmax(0, 1fr) 38px; }
+  .stepper .step { height: 52px; padding: 0; font-size: 22px; font-weight: 600; }
+  .stepper .step:first-child { border-radius: 10px 0 0 10px; }
+  .stepper .step:nth-child(3) { border-radius: 0 10px 10px 0; }
+  .stepper input { height: 52px; min-width: 0; border-radius: 0; border-left: 0; border-right: 0; text-align: center;
+    font-size: 19px; font-weight: 600; font-variant-numeric: tabular-nums; padding: 0; width: 100%; -moz-appearance: textfield; }
+  .stepper input::-webkit-inner-spin-button, .stepper input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+  .stepper .unit { grid-column: 1 / -1; text-align: center; font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .fnav { gap: 8px; margin-bottom: 14px; }
+  .fnav button { min-height: 52px; }
+  .fnav button.grow { flex: 1; }
   .rest { position: fixed; left: 0; right: 0; bottom: calc(64px + env(safe-area-inset-bottom, 0px)); z-index: 15;
     background: var(--card); border-top: 1px solid var(--line); box-shadow: 0 -6px 18px rgba(0, 0, 0, .12);
     padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
@@ -255,6 +286,7 @@
 <script src="livsmedel.js"></script>
 <script src="mat.js"></script>
 <script src="config.js"></script>
+<script src="fokus.js"></script>
 <script src="app.js"></script>
 <script>
   // Offline och installation på hemskärmen när appen ligger på en vanlig webbplats

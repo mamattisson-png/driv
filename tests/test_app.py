@@ -113,6 +113,45 @@ def test_spara_pass_och_oppna_igen(page):
     assert page.inner_text("button[data-finish]").startswith("✓ Spara passet")
 
 
+WAKELOCK_MOCK = """window.__wake = []; Object.defineProperty(navigator, 'wakeLock', { value: { request: async () => {
+  window.__wake.push('på'); const l = new EventTarget(); l.release = async () => { window.__wake.push('av'); }; return l; } } });"""
+
+
+def test_fokuslage_en_ovning_i_taget(page):
+    start(page, WAKELOCK_MOCK)
+    seed(page, "S.log[shift(TODAY,-7)] = {workouts:[{dayId:S.plan.days[0].id,done:true,sets:{bankpress:[{kg:80,reps:8,ok:true},{kg:80,reps:7,ok:true}]}}],dailies:{},food:[]}")
+    page.click(f'[data-pick="{page.evaluate("S.plan.days[0].id")}"]')
+    page.click("[data-focusstart]")
+    assert page.evaluate("tab") == "pass" and page.locator(".focus").count() == 1
+    assert "Bänkpress" in page.inner_text(".focus h2")
+    assert "förra: 80 kg × 8" in page.inner_text(".fset >> nth=0")
+    page.wait_for_function("window.__wake.includes('på')")
+    # Stegen utgår från dagens mål (82,5 × 6) som syns i de tomma fälten
+    page.click('[data-step=kg][data-i="0"][data-dir="1"]')
+    assert page.evaluate("workoutsOn(TODAY)[0].sets.bankpress[0].kg") == 85
+    page.click('[data-step=kg][data-i="0"][data-dir="1"]')
+    page.click('[data-step=reps][data-i="0"][data-dir="-1"]')
+    assert page.evaluate("JSON.stringify(workoutsOn(TODAY)[0].sets.bankpress[0])") == '{"kg":87.5,"reps":5}'
+    # Alla set avbockade: fokus går vidare till nästa övning
+    for i in range(4):
+        page.click(f'[data-ok=bankpress][data-i="{i}"]')
+    assert page.evaluate("focus.idx") == 1
+    assert "Lutande hantelpress" in page.inner_text(".focus h2")
+    # Till sista övningen och spara passet
+    page.click(f'[data-focusgo="{page.evaluate("S.plan.days[0].ex.length - 1")}"]')
+    page.click("[data-focusend]")
+    assert page.evaluate("focus") is None and page.evaluate("tab") == "vecka"
+    assert page.evaluate("workoutsOn(TODAY)[0].done") is True
+    assert page.evaluate("window.__wake") == ["på", "av"]
+
+
+def test_bilder_ar_stilla_i_listor_men_animeras_ensamma(page):
+    start(page)
+    assert page.locator(".thumb animate").count() == 0
+    page.click(".thumbs .thumb >> nth=0")
+    assert page.locator(".sheet .fig animate").count() > 0
+
+
 def test_vilotimer(page):
     start(page, "window.__vib = []; navigator.vibrate = p => { window.__vib.push(p); return true; };")
     go(page, "pass")

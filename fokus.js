@@ -1,0 +1,134 @@
+"use strict";
+// ---------- Fokusläge under passet ----------
+// En övning i taget med stora knappar. Vikt och reps ändras med − och +, och siffran går också
+// att trycka på för att skriva. Skärmen hålls tänd så länge fokusläget är öppet.
+// Laddas före app.js; funktionerna härifrån anropas först när appen ritas.
+
+let focus = null;   // { dayId, idx } medan fokusläget är öppet
+
+function startFocus(dayId) {
+  const d = dayById(dayId);
+  if (!d || !d.ex.length) return false;
+  const w = workoutOn(TODAY, d.id);
+  focus = { dayId, idx: Math.max(0, d.ex.findIndex(x => !exDone(w, x))) };
+  chosenDay = dayId;
+  keepAwake(true);
+  return true;
+}
+function endFocus() {
+  focus = null;
+  keepAwake(false);
+}
+
+// Efter ett avbockat set: är övningen klar går fokus vidare till nästa medan vilan räknar ned
+function focusAfterSet(d) {
+  if (!focus || focus.dayId !== d.id) return;
+  const w = workoutOn(TODAY, d.id);
+  const advance = exDone(w, d.ex[focus.idx]) && focus.idx < d.ex.length - 1;
+  if (advance) focus.idx++;
+  focus.scroll = advance ? "top" : "active";
+}
+// Anropas efter varje ritning: nästa set (eller nästa övning) hamnar i bild
+function afterFocusRender() {
+  if (!focus || !focus.scroll) return;
+  const where = focus.scroll;
+  focus.scroll = null;
+  if (where === "top") window.scrollTo(0, 0);
+  else { const a = document.querySelector(".fset.active"); if (a && a.scrollIntoView) a.scrollIntoView({ block: "nearest" }); }
+}
+
+// Stegstorlek: hantlar 2 kg, annars 2,5 kg; reps 1; sekunder 5
+const stepFor = (exId, f) => f === "kg" ? (EX[exId].hold === "db" ? 2 : 2.5) : isTimed(exId) ? 5 : 1;
+
+function stepSet(d, exId, i, f, dir) {
+  const ex = d.ex.find(x => x.id === exId);
+  const s = setAt(d, exId, i), hint = setHint(ex, i);
+  // Ett tomt fält visar förslaget (dagens mål eller förra gången); stegen utgår från det
+  const cur = s[f] === undefined || s[f] === "" ? +hint[f] || 0 : +s[f];
+  const next = cur + dir * stepFor(exId, f);
+  s[f] = Math.max(0, f === "kg" ? Math.round(next * 4) / 4 : Math.round(next));
+}
+
+function stepper(exId, i, f, val, hint, label, unit) {
+  const btn = (dir, txt) => `<button class="step" data-step="${f}" data-ex="${exId}" data-i="${i}" data-dir="${dir}" aria-label="${txt} ${label}, set ${i + 1}">${dir > 0 ? "+" : "−"}</button>`;
+  return `<div class="stepper">${btn(-1, "Minska")}
+    <input type="number" inputmode="${f === "kg" ? "decimal" : "numeric"}" step="${f === "kg" ? 0.25 : 1}" value="${val ?? ""}"
+      placeholder="${hint ?? ""}" data-set="${exId}" data-i="${i}" data-f="${f}" aria-label="${label}, set ${i + 1}">
+    ${btn(1, "Öka")}<div class="unit">${unit}</div></div>`;
+}
+
+function focusView() {
+  const d = dayById(focus.dayId);
+  if (!d || !d.ex.length) { endFocus(); return VIEWS.pass(); }
+  focus.idx = Math.min(focus.idx, d.ex.length - 1);
+  const ex = d.ex[focus.idx], w = workoutOn(TODAY, d.id);
+  const sets = (w && w.sets[ex.id]) || [], prev = lastSets(ex.id), target = todayTarget(ex);
+  const bw = !!EX[ex.id].bw, repLabel = isTimed(ex.id) ? "sek" : "reps";
+  let active = -1;
+  for (let i = 0; i < ex.sets; i++) if (!(sets[i] && sets[i].ok)) { active = i; break; }
+  let rows = "";
+  for (let i = 0; i < ex.sets; i++) {
+    const s = sets[i] || {}, h = setHint(ex, i), p = prev ? hintSet(prev, i) : null;
+    const kg = stepper(ex.id, i, "kg", s.kg, h.kg || "", bw ? "Extra vikt" : "Vikt", bw ? "extra kg" : "kg");
+    const reps = stepper(ex.id, i, "reps", s.reps, h.reps, isTimed(ex.id) ? "Sekunder" : "Reps", repLabel);
+    const last = p && hasData(p) ? fmtSet({ kg: +p.kg || 0, reps: +p.reps || 0 }, ex.id) : "";
+    rows += `<div class="fset ${s.ok ? "done" : ""} ${i === active ? "active" : ""}">
+      <div class="fset-head"><b>Set ${i + 1}</b>${last ? `<span class="muted small">förra: ${last}</span>` : ""}</div>
+      <div class="fset-fields">${bw ? reps + kg : kg + reps}</div>
+      <button class="done-btn big ${s.ok ? "on" : ""}" data-ok="${ex.id}" data-i="${i}" aria-label="Set ${i + 1} klart">✓</button></div>`;
+  }
+  const next = d.ex[focus.idx + 1], allDone = active < 0;
+  const finish = w && w.done
+    ? `<button class="primary grow" data-focusexit>✓ Passet är sparat</button>`
+    : `<button class="primary grow" data-finish="${d.id}" data-focusend>✓ Spara passet</button>`;
+  return `<div class="focus">
+    <div class="row between"><button class="small ghost" data-focusexit>‹ Alla övningar</button>
+      <span class="muted">Övning ${focus.idx + 1} av ${d.ex.length}</span></div>
+    <div class="fdots">${d.ex.map((x, k) => `<button data-focusgo="${k}" class="${k === focus.idx ? "on" : ""} ${exDone(w, x) ? "done" : ""}" aria-label="${esc(EX[x.id].name)}"></button>`).join("")}</div>
+    <div class="card">
+      <div class="row"><button class="thumb" data-info="${ex.id}" aria-label="Visa ${esc(EX[ex.id].name)}">${figure(ex.id, "", true)}</button>
+        <div class="grow"><div class="muted small">${passLabel(d)}</div><h2 style="margin:2px 0">${esc(EX[ex.id].name)}</h2>
+          <div class="muted">${ex.sets} × ${esc(ex.reps)}</div>
+          ${target ? `<div class="goal">🎯 Dagens mål: <b>${fmtTarget(target, ex.id)}</b></div>`
+            : `<div class="muted">Första gången: välj en vikt du klarar ${esc(ex.reps)}.</div>`}</div></div>
+      ${rows}
+      <div class="row" style="margin-top:10px"><button class="small" data-setcount="-1" data-ex="${ex.id}" ${ex.sets > 1 ? "" : "disabled"}>− Set</button>
+        <button class="small" data-setcount="1" data-ex="${ex.id}">+ Set</button></div>
+    </div>
+    <div class="row fnav"><button data-focusgo="${focus.idx - 1}" ${focus.idx ? "" : "disabled"} aria-label="Föregående övning">‹</button>
+      ${next ? `<button class="${allDone ? "primary" : ""} grow" data-focusgo="${focus.idx + 1}">Nästa: ${esc(EX[next.id].name)} ›</button>` : finish}</div>
+  </div>`;
+}
+
+// ---------- Skärmen tänd ----------
+let wakeLock = null;
+async function keepAwake(on) {
+  try {
+    if (on && !wakeLock && navigator.wakeLock && document.visibilityState === "visible") {
+      wakeLock = await navigator.wakeLock.request("screen");
+      wakeLock.addEventListener("release", () => { wakeLock = null; });
+    } else if (!on && wakeLock) {
+      const l = wakeLock;
+      wakeLock = null;
+      await l.release();
+    }
+  } catch (e) { /* stöds inte eller nekades: appen fungerar ändå */ }
+}
+// Låset släpps automatiskt när appen göms; ta det igen när man kommer tillbaka
+document.addEventListener("visibilitychange", () => {
+  if (focus && document.visibilityState === "visible") keepAwake(true);
+});
+
+document.addEventListener("click", ev => {
+  const t = ev.target.closest("[data-step],[data-focusgo],[data-focusexit],[data-focusend],[data-focusstart]");
+  if (!t) return;
+  const ds = t.dataset;
+  if (ds.focusend !== undefined) { endFocus(); return; }   // själva sparandet sköts av data-finish
+  if (ds.focusstart) { tab = "pass"; editing = false; startFocus(ds.focusstart); }
+  else if (ds.focusexit !== undefined) endFocus();
+  else if (ds.focusgo !== undefined) focus.idx = Math.max(0, +ds.focusgo);
+  else if (ds.step) stepSet(currentPassDay(), ds.ex, +ds.i, ds.step, +ds.dir);
+  save();
+  render();
+  if (ds.focusgo !== undefined || ds.focusstart) window.scrollTo(0, 0);
+});

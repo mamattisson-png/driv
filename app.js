@@ -704,6 +704,7 @@ function refreshToday() {
   const now = iso(new Date());
   if (now === TODAY) return false;
   TODAY = now; chosenDay = null; editing = false;
+  if (focus) endFocus();
   return true;
 }
 
@@ -918,6 +919,7 @@ function render() {
     `<button data-tab="${id}" class="${tab === id ? "on" : ""}"><span>${ic}</span>${lbl}</button>`).join("");
   document.getElementById("app").innerHTML = VIEWS[tab]() + (modal ? renderModal() : "");
   if (modal && modal.pick) filterPicker();
+  afterFocusRender();
   updateBadge();
 }
 
@@ -931,7 +933,7 @@ const tag = t => `<span class="tag ${TYPES[t].color || t}">${TYPES[t].label}</sp
 function currentPassDay() {
   const L = S.log[TODAY];
   const todays = workoutsOn(TODAY);
-  const id = chosenDay || (todays.length ? todays[todays.length - 1].dayId : suggestedDay().id);
+  const id = (focus && focus.dayId) || chosenDay || (todays.length ? todays[todays.length - 1].dayId : suggestedDay().id);
   return dayById(id) || S.plan.days[0];
 }
 
@@ -1028,12 +1030,12 @@ const VIEWS = {
         <div class="muted">${TYPES[d.type].muscles} · ${done}/${d.ex.length} övningar klara</div>
         <div class="muted">${weekPasses} av ${S.plan.count} pass klara denna vecka</div>
         ${others.length ? `<div class="muted">Idag har du även loggat ${others.map(o => esc(o.name)).join(", ")}.</div>` : ""}</div>
-        <button class="primary" data-go="pass" data-day="${d.id}">${w ? "Fortsätt" : "Starta"}</button></div>
+        <button class="primary" data-focusstart="${d.id}">${w ? "Fortsätt" : "Starta"}</button></div>
         <div class="thumbs">${d.ex.map(x => thumb(x.id, "xs")).join("")}</div></div>`;
     } else {
       const nx = nextScheduled(TODAY);
       passCard = `<div class="card"><h2>Vilodag 😌</h2><div class="muted">Nästa pass: ${WD[weekdayOf(nx.date)]} · ${esc(nx.day.name)}</div>
-        <div style="margin-top:10px"><button data-go="pass" data-day="${nx.day.id}">Kör ett pass ändå</button></div></div>`;
+        <div style="margin-top:10px"><button data-focusstart="${nx.day.id}">Kör ett pass ändå</button></div></div>`;
     }
     return `<h1>Idag <span class="muted">${new Date().toLocaleDateString("sv-SE", { weekday: "long", day: "numeric", month: "long" })} · v.${weekNo(TODAY)}</span></h1>
       ${(() => {
@@ -1055,7 +1057,8 @@ const VIEWS = {
   },
 
   pass() {
-    const L = day(), d = currentPassDay();
+    if (focus && !editing) return focusView();
+    const d = currentPassDay();
     const w = workoutOn(TODAY, d.id);
     const done = d.ex.filter(x => exDone(w, x)).length;
     return `<h1>Pass <span class="muted">v.${weekNo(TODAY)}</span></h1>
@@ -1065,6 +1068,7 @@ const VIEWS = {
         <div class="muted">${TYPES[d.type].muscles}${editing ? "" : ` · ${done}/${d.ex.length} klara`}</div>
         ${!editing && d.ex.length ? `<div class="bar ok"><div style="width:${Math.round(done / d.ex.length * 100)}%"></div></div>` : ""}
       </div>
+      ${!editing && d.ex.length && !(w && w.done) ? `<button class="primary wide" data-focusstart="${d.id}">▶ ${w ? "Fortsätt" : "Kör"} passet – en övning i taget</button>` : ""}
       ${editing ? editList(d) : d.ex.length ? d.ex.map(ex => exBlock(d, ex, w)).join("")
         : `<div class="card muted">Passet har inga övningar än. Tryck på Redigera för att lägga till.</div>`}
       ${editing ? "" : w && w.done
@@ -1419,7 +1423,7 @@ function renderModal() {
   if (modal.info) {
     const e = EX[modal.info];
     return `<div class="overlay" data-close><div class="sheet"><div class="row between"><h2>${esc(e.name)}</h2><button class="small ghost" data-close>✕</button></div>
-      ${figure(modal.info, "big")}<div class="muted">${esc(e.muscles)}</div>
+      ${figure(modal.info, "big", true)}<div class="muted">${esc(e.muscles)}</div>
       <ol>${e.cues.map(c => `<li>${esc(c)}</li>`).join("")}</ol></div></div>`;
   }
   const list = exList(modal.pick);
@@ -1536,6 +1540,7 @@ const rest = { el: null, end: 0, total: 0, timer: 0, name: "" };
 
 function startRest(exId) {
   if (!restSettings().on) return;
+  unlockAudio();
   rest.total = restFor(exId);
   rest.end = Date.now() + rest.total * 1000;
   rest.name = EX[exId].name;
@@ -1578,6 +1583,13 @@ function stopRest() {
 
 // Kort ljudsignal; tillåts eftersom timern startas av ett tryck
 let audioCtx = null;
+// iOS tillåter bara ljud som startats av ett tryck; därför väcks ljudet när vilan startar
+function unlockAudio() {
+  try {
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === "suspended") audioCtx.resume();
+  } catch (e) { /* inget ljud */ }
+}
 function beep() {
   try {
     audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
@@ -1718,6 +1730,7 @@ document.addEventListener("click", ev => {
     s.ok = !s.ok;
     if (s.ok) { fillFromHint(d, ds.ok, +ds.i); checkRecord(ds.ok, s); startRest(ds.ok); }
     syncDone(d);
+    if (s.ok) focusAfterSet(d);
   }
   else if (ds.exok) {
     const d = currentPassDay(), ex = d.ex.find(x => x.id === ds.exok);
