@@ -760,7 +760,7 @@ const VIEWS = {
     const picked = draft.weekdays.length, ok = !fixed || picked === n;
     const sorted = draft.weekdays.slice().sort((a, b) => a - b);
     const p = S.profile;
-    return `${S.setupDone ? "" : `<div class="brand"><img src="icons/icon-192.png" alt=""><div><b>Driv</b><span class="muted">Hitta ditt driv</span></div></div>`}
+    return `${S.setupDone ? "" : `<div class="brand"><img src="icons/icon-192.png" alt=""><div><b>Driv</b><span class="muted">Ditt mål. Ditt drive.</span></div></div>`}
       <h1>${S.setupDone ? "Ditt upplägg" : "Välj ditt upplägg"}</h1>
       <div class="card"><div class="row between"><h2>1. Vilket upplägg?</h2>
           <button class="small" data-progtoggle aria-expanded="${progOpen}">${progOpen ? "Fäll ihop" : `Visa alla ${Object.keys(PROGRAMS).length}`}</button></div>

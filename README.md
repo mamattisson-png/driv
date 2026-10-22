@@ -2,7 +2,7 @@
 
 # Driv
 
-**Hitta ditt driv.** Träning, dailys och kost i en app, med plus eller minus mot förra veckan så att du ser att du blir bättre. Inga konton och inga beroenden: allt sparas i din webbläsare.
+**Ditt mål. Ditt drive.** Träning, dailys och kost i en app, med plus eller minus mot förra veckan så att du ser att du blir bättre. Inga konton och inga beroenden: allt sparas i din webbläsare.
 
 **Öppna appen:** https://mamattisson-png.github.io/driv/
 
