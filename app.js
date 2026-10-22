@@ -278,24 +278,146 @@ async function connectCloud() {
     cloud.sample = sample;
     const uid = user && await user.id();
     if (!db || !uid) return;
-    const col = db.collection("data/users/" + uid);
-    const snap = await col.get();
-    cloud.col = col;
-    cloud.status = "cloud";
-    if (snap.empty) {
-      if (S.setupDone || Object.keys(S.log).length) pushCloud();
-    } else {
-      const docs = {};
-      // Snapshots är frysta; kopiera så att appen kan ändra i datan
-      for (const d of snap.docs) { const json = JSON.stringify(d.data()); docs[d.id] = JSON.parse(json); cloud.sent[d.id] = json; }
-      S = joinDocs(docs);
-      saveLocal();
-      if (S.setupDone && tab === "upplagg") { tab = "idag"; draft = null; }
-    }
+    await attachCollection(db.collection("data/users/" + uid), false);
   } catch (e) {
     cloud.status = "error";
   }
   render();
+}
+
+// Kopplar appen till ett kontos dokument. Med merge slås det som redan finns på enheten
+// ihop med kontot (kontots inställningar vinner, loggen slås ihop dag för dag).
+async function attachCollection(col, merge) {
+  const snap = await col.get();
+  cloud.col = col;
+  cloud.sent = {};
+  cloud.status = "cloud";
+  if (snap.empty) {
+    if (S.setupDone || Object.keys(S.log).length) pushCloud();
+    return;
+  }
+  const docs = {};
+  // Snapshots kan vara frysta; kopiera så att appen kan ändra i datan
+  for (const d of snap.docs) { const json = JSON.stringify(d.data()); docs[d.id] = JSON.parse(json); cloud.sent[d.id] = json; }
+  const remote = joinDocs(docs);
+  if (merge) {
+    for (const [date, entry] of Object.entries(S.log)) if (!remote.log[date]) remote.log[date] = entry;
+    if (!remote.setupDone && S.setupDone) Object.assign(remote, { ...S, log: remote.log });
+  }
+  S = remote;
+  saveLocal();
+  if (merge) pushCloud();
+  if (S.setupDone && tab === "upplagg") { tab = "idag"; draft = null; }
+}
+
+// ---------- Konto via Supabase (publika versionen) ----------
+// Inloggning med kod eller länk via e-post. Varje användare ser bara sina egna rader (RLS).
+const SUPABASE_JS = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js";
+const sbConf = window.DRIV_CONFIG || {};
+const sbEnabled = !window.claude && !!(sbConf.supabaseUrl && sbConf.supabaseAnonKey);
+const account = { sb: null, email: "", step: "email", msg: "", busy: false };
+
+async function supabaseClient() {
+  if (!account.sb) {
+    if (!window.supabase) await loadScript(SUPABASE_JS);
+    account.sb = window.supabase.createClient(sbConf.supabaseUrl, sbConf.supabaseAnonKey, {
+      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
+    });
+  }
+  return account.sb;
+}
+
+// Får Supabase att se ut som appens övriga lagring: get(), doc(id).set() och doc(id).delete()
+function supabaseCollection(sb, uid) {
+  const table = () => sb.from("driv_docs");
+  const fail = error => { if (error) throw error; };
+  return {
+    async get() {
+      const { data, error } = await table().select("id, data");
+      fail(error);
+      return { empty: !data.length, docs: data.map(r => ({ id: r.id, data: () => r.data })) };
+    },
+    doc: id => ({
+      set: async body => fail((await table().upsert({ user_id: uid, id, data: body, updated_at: new Date().toISOString() })).error),
+      delete: async () => fail((await table().delete().eq("id", id)).error),
+    }),
+  };
+}
+
+async function connectSupabase() {
+  if (!sbEnabled) return;
+  try {
+    const sb = await supabaseClient();
+    const { data } = await sb.auth.getSession();
+    const user = data.session && data.session.user;
+    if (!user) return;
+    account.email = user.email || "";
+    account.step = "in";
+    await attachCollection(supabaseCollection(sb, user.id), true);
+  } catch (e) {
+    cloud.status = "error";
+  }
+  render();
+}
+
+async function sendLoginCode() {
+  const email = ($("acctemail").value || "").trim();
+  if (!/^\S+@\S+\.\S+$/.test(email)) { account.msg = "Skriv en giltig e-postadress."; return render(); }
+  account.busy = true; account.msg = ""; render();
+  try {
+    const sb = await supabaseClient();
+    const { error } = await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: location.href.split("#")[0] } });
+    if (error) throw error;
+    account.email = email; account.step = "code";
+    account.msg = "Vi har skickat ett mejl. Skriv koden här, eller tryck på länken i mejlet.";
+  } catch (e) {
+    account.msg = "Kunde inte skicka mejlet just nu. Försök igen om en stund.";
+  }
+  account.busy = false; render();
+}
+
+async function verifyLoginCode() {
+  const token = ($("acctcode").value || "").replace(/\s/g, "");
+  if (!token) return;
+  account.busy = true; account.msg = ""; render();
+  try {
+    const sb = await supabaseClient();
+    const { error } = await sb.auth.verifyOtp({ email: account.email, token, type: "email" });
+    if (error) throw error;
+    account.msg = "";
+    await connectSupabase();
+  } catch (e) {
+    account.msg = "Koden stämmer inte eller har gått ut. Be om en ny kod.";
+  }
+  account.busy = false; render();
+}
+
+async function signOut() {
+  try { await (await supabaseClient()).auth.signOut(); } catch (e) { /* redan utloggad */ }
+  cloud.col = null; cloud.sent = {}; cloud.status = "local";
+  account.step = "email"; account.msg = "Utloggad. Det du loggat finns kvar på den här enheten.";
+  render();
+}
+
+function accountCard() {
+  if (!sbEnabled) return "";
+  const a = account;
+  let body;
+  if (a.step === "in") {
+    body = `<div>Inloggad som <b>${esc(a.email)}</b>.</div>
+      <div class="muted small" style="margin-top:4px">Allt du loggar sparas på ditt konto och följer med till alla enheter där du loggar in.</div>
+      <button class="small" style="margin-top:10px" data-signout>Logga ut</button>`;
+  } else if (a.step === "code") {
+    body = `<div class="muted">Mejl skickat till <b>${esc(a.email)}</b>.</div>
+      <div class="row" style="margin-top:8px"><input id="acctcode" inputmode="numeric" autocomplete="one-time-code" placeholder="Kod från mejlet">
+        <button class="primary small" data-verifycode ${a.busy ? "disabled" : ""}>Logga in</button></div>
+      <button class="small ghost" style="margin-top:6px" data-changeemail>Byt e-postadress</button>`;
+  } else {
+    body = `<div class="muted">Logga in för att spara din träning tryggt och använda samma data på flera enheter. Inget lösenord behövs.</div>
+      <div class="row" style="margin-top:8px"><input id="acctemail" type="email" autocomplete="email" placeholder="din@epost.se" value="${esc(a.email)}">
+        <button class="primary small" data-sendcode ${a.busy ? "disabled" : ""}>Skicka kod</button></div>`;
+  }
+  return `<div class="card"><h2>Konto</h2>${body}${a.msg ? `<div class="muted small" style="margin-top:8px">${esc(a.msg)}</div>` : ""}</div>`;
 }
 
 // Sparar en fil: via Claudes nedladdning i Claude-versionen, annars som vanlig nedladdning
@@ -774,8 +896,9 @@ const VIEWS = {
         <div class="muted">Protein ${m.protein} g · Fett ${m.fat} g · Kolhydrater ${m.carbs} g</div>
         <label class="field" style="margin-top:10px">Eget kalorimål (lämna tomt för beräknat)
           <input type="number" inputmode="numeric" id="override" value="${S.kcalOverride || ""}" placeholder="${m.kcal}"></label></div>
+      ${accountCard()}
       <div class="card"><h2>Data</h2><div class="muted" style="margin-bottom:8px">${{
-          cloud: "✓ Sparas på ditt konto och följer med mellan mobil och dator.",
+          cloud: account.step === "in" ? `✓ Sparas på ditt konto (${esc(account.email)}).` : "✓ Sparas på ditt konto och följer med mellan mobil och dator.",
           error: "Kunde inte spara till kontot just nu. Allt finns kvar i den här webbläsaren och sparas igen vid nästa ändring.",
           local: "Sparas i den här webbläsaren. Exportera för en säkerhetskopia.",
         }[cloud.status]}</div>
@@ -1179,6 +1302,10 @@ document.addEventListener("click", ev => {
   }
   else if (ds.dcheck) day().dailies[ds.dcheck] = !dailyDone(TODAY, ds.dcheck);
   else if (ds.dedit !== undefined) dailyEditing = !dailyEditing;
+  else if (ds.sendcode !== undefined) { sendLoginCode(); return; }
+  else if (ds.verifycode !== undefined) { verifyLoginCode(); return; }
+  else if (ds.changeemail !== undefined) { account.step = "email"; account.msg = ""; }
+  else if (ds.signout !== undefined) { signOut(); return; }
   else if (ds.remcal !== undefined) {
     const time = (S.reminder && S.reminder.time) || "20:00";
     saveFile("driv-dailys.ics", reminderIcs(time), "text/calendar");
@@ -1553,4 +1680,8 @@ document.addEventListener("input", ev => {
 
 render();
 connectCloud();
+connectSupabase();
 remindIfDue();
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible" && account.step === "in") connectSupabase();
+});
