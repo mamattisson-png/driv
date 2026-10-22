@@ -298,17 +298,75 @@ async function connectCloud() {
   render();
 }
 
-async function exportData() {
-  const filename = `driv-${TODAY}.json`, data = JSON.stringify(S, null, 2);
+// Sparar en fil: via Claudes nedladdning i Claude-versionen, annars som vanlig nedladdning
+async function saveFile(filename, data, type) {
   const dl = window.claude && window.claude.use ? await window.claude.use("downloads") : null;
   if (dl) {
     try { await dl.save({ filename, data }); } catch (e) { /* nedladdningen avböjdes */ }
     return;
   }
   const a = document.createElement("a");
-  a.href = URL.createObjectURL(new Blob([data], { type: "application/json" }));
+  a.href = URL.createObjectURL(new Blob([data], { type }));
   a.download = filename;
   a.click();
+}
+const exportData = () => saveFile(`driv-${TODAY}.json`, JSON.stringify(S, null, 2), "application/json");
+
+// ---------- Påminnelser om dailys ----------
+// En kalenderhändelse som upprepas varje dag fungerar på alla telefoner, även när appen är stängd
+function reminderIcs(time) {
+  const [hh, mm] = time.split(":");
+  const stamp = new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d+/, "");
+  const start = TODAY.replace(/-/g, "") + "T" + hh + mm + "00";
+  const url = location.protocol === "https:" && !window.claude ? location.href.split("#")[0] : "";
+  return ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Driv//Dailys//SV", "CALSCALE:GREGORIAN",
+    "BEGIN:VEVENT", `UID:driv-dailys-${stamp}@driv`, `DTSTAMP:${stamp}`, `DTSTART:${start}`, "DURATION:PT15M",
+    "RRULE:FREQ=DAILY", "SUMMARY:Driv: dags för dina dailys",
+    `DESCRIPTION:Bocka av dagens dailys i Driv.${url ? "\\n" + url : ""}`, ...(url ? [`URL:${url}`] : []),
+    "BEGIN:VALARM", "ACTION:DISPLAY", "DESCRIPTION:Dags för dina dailys", "TRIGGER:PT0M", "END:VALARM",
+    "END:VEVENT", "END:VCALENDAR"].join("\r\n");
+}
+const dailiesLeft = () => S.daily.filter(e => !dailyDone(TODAY, e.id)).length;
+
+// Siffra på appikonen med antal dailys kvar (där systemet stöder det)
+function updateBadge() {
+  if (!navigator.setAppBadge) return;
+  const left = dailiesLeft();
+  (left ? navigator.setAppBadge(left) : navigator.clearAppBadge()).catch(() => {});
+}
+
+// Notis när appen öppnas efter påminnelsetiden och något är ogjort, högst en gång per dag
+async function remindIfDue() {
+  const r = S.reminder;
+  if (!r || !r.notify || !("Notification" in window) || Notification.permission !== "granted") return;
+  const now = new Date(), [hh, mm] = r.time.split(":").map(Number);
+  if (now.getHours() * 60 + now.getMinutes() < hh * 60 + mm || r.lastNotified === TODAY || !dailiesLeft()) return;
+  r.lastNotified = TODAY;
+  save();
+  const body = `${dailiesLeft()} av ${S.daily.length} dailys kvar idag.`;
+  const opts = { body, icon: "icons/icon-192.png", tag: "dailys" };
+  // Installerade appar visar notiser via service workern; annars en vanlig notis
+  try {
+    const reg = navigator.serviceWorker && await navigator.serviceWorker.getRegistration();
+    if (reg) return await reg.showNotification("Driv: dags för dina dailys", opts);
+  } catch (e) { /* ingen service worker här */ }
+  try { new Notification("Driv: dags för dina dailys", opts); } catch (e) { /* notiser stöds inte här */ }
+}
+
+function reminderCard() {
+  const r = S.reminder || { time: "20:00" };
+  const canNotify = "Notification" in window && !window.claude;
+  const perm = canNotify ? Notification.permission : "denied";
+  return `<div class="card"><h2>Påminnelse</h2>
+    <div class="row"><label class="field grow">Påminn mig varje dag kl.
+      <input type="time" id="remtime" value="${esc(r.time)}"></label>
+      <button class="small" data-remcal style="align-self:flex-end">📅 Lägg till i kalendern</button></div>
+    <div class="muted small" style="margin-top:6px">Kalendern påminner dig även när appen är stängd.</div>
+    ${canNotify ? (perm === "granted"
+      ? `<label class="row" style="margin-top:10px"><input type="checkbox" data-remnotify ${r.notify ? "checked" : ""}>
+          <span>Notis när jag öppnar appen efter den tiden och något är ogjort</span></label>`
+      : perm === "default" ? `<button class="small" style="margin-top:10px" data-remperm>Tillåt notiser från Driv</button>`
+      : `<div class="muted small" style="margin-top:6px">Notiser är avstängda för Driv i telefonens inställningar.</div>`) : ""}</div>`;
 }
 
 // ---------- Datum ----------
@@ -465,6 +523,7 @@ function render() {
     `<button data-tab="${id}" class="${tab === id ? "on" : ""}"><span>${ic}</span>${lbl}</button>`).join("");
   document.getElementById("app").innerHTML = VIEWS[tab]() + (modal ? renderModal() : "");
   if (modal && modal.pick) filterPicker();
+  updateBadge();
 }
 
 function bar(value, goal) {
@@ -625,7 +684,8 @@ const VIEWS = {
           <div class="bar ok"><div style="width:${Math.round(done / n * 100)}%"></div></div>`
           : `<div class="muted">Lägg till det du vill göra varje dag, till exempel plankan eller löpning.</div>`}</div>
       ${items}
-      <button class="wide" data-openpick="daily">+ Lägg till daily</button>`;
+      <button class="wide" data-openpick="daily">+ Lägg till daily</button>
+      ${S.daily.length ? reminderCard() : ""}`;
   },
 
   kost() {
@@ -1119,6 +1179,19 @@ document.addEventListener("click", ev => {
   }
   else if (ds.dcheck) day().dailies[ds.dcheck] = !dailyDone(TODAY, ds.dcheck);
   else if (ds.dedit !== undefined) dailyEditing = !dailyEditing;
+  else if (ds.remcal !== undefined) {
+    const time = (S.reminder && S.reminder.time) || "20:00";
+    saveFile("driv-dailys.ics", reminderIcs(time), "text/calendar");
+    return;
+  }
+  else if (ds.remperm !== undefined) {
+    Notification.requestPermission().then(p => {
+      S.reminder = Object.assign({ time: "20:00" }, S.reminder, { notify: p === "granted" });
+      save(); render();
+    });
+    return;
+  }
+  else if (ds.remnotify !== undefined) S.reminder = Object.assign({ time: "20:00" }, S.reminder, { notify: t.checked });
   else if (ds.addfood !== undefined || ds.savemeal !== undefined) {
     const name = document.getElementById("fname").value.trim();
     const kcal = Math.round(+document.getElementById("fkcal").value || 0);
@@ -1206,6 +1279,7 @@ document.addEventListener("change", ev => {
   }
   else if (ds.ed) { const ex = exList(ds.t)[+ds.ed]; ex[ds.f] = ds.f === "sets" ? Math.max(1, +t.value || 1) : t.value; }
   else if (t.id === "override") S.kcalOverride = +t.value || null;
+  else if (t.id === "remtime") S.reminder = Object.assign({}, S.reminder, { time: t.value || "20:00" });
   else if (t.id === "importfile" && t.files[0]) {
     t.files[0].text().then(txt => {
       try {
@@ -1479,3 +1553,4 @@ document.addEventListener("input", ev => {
 
 render();
 connectCloud();
+remindIfDue();
