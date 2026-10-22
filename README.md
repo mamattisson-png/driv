@@ -4,7 +4,7 @@
 
 **Ditt mål. Ditt driv.** Träning, dailys och kost i en app, med plus eller minus mot förra veckan så att du ser att du blir bättre. Inga konton och inga beroenden: allt sparas i din webbläsare.
 
-**Öppna appen:** https://mamattisson-png.github.io/driv/
+**Öppna appen:** https://driv.driveify.se/
 
 På mobilen kan du lägga den på hemskärmen: *Dela → Lägg till på hemskärmen* i Safari, eller *Installera app* i Chrome. Den fungerar sedan även utan nät.
 
@@ -48,7 +48,7 @@ Näringsvärden kommer delvis från [Livsmedelsverkets livsmedelsdatabas](https:
 
 1. Skapa ett gratis projekt på [supabase.com](https://supabase.com).
 2. Öppna *SQL Editor*, klistra in innehållet i [`supabase/schema.sql`](supabase/schema.sql) och kör det.
-3. Under *Authentication → URL Configuration*: sätt *Site URL* till appens adress, till exempel `https://mamattisson-png.github.io/driv/`, och lägg till samma adress under *Redirect URLs*.
+3. Under *Authentication → URL Configuration*: sätt *Site URL* till appens adress, till exempel `https://driv.driveify.se/`, och lägg till samma adress under *Redirect URLs*.
 4. Under *Authentication → Email Templates → Magic Link*: lägg till `{{ .Token }}` i mejlet, så får användaren en kod att skriva in i appen. Det behövs i en installerad app på iPhone, där länken öppnas i webbläsaren i stället för i appen.
 5. Fyll i *Project URL* och *anon public key* (under *Project Settings → API*) i [`config.js`](config.js).
 
