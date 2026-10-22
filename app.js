@@ -400,6 +400,37 @@ async function signOut() {
   render();
 }
 
+// ---------- Tyck till ----------
+// Synpunkter sparas i tabellen driv_feedback; bara projektägaren kan läsa dem i Supabase
+const feedback = { msg: "", busy: false, sent: false };
+function feedbackCard() {
+  if (!sbEnabled) return "";
+  if (feedback.sent) return `<div class="card"><h2>Tyck till</h2><div>Tack! Din synpunkt är skickad. 🙌</div>
+    <button class="small" style="margin-top:10px" data-fbagain>Skicka en till</button></div>`;
+  return `<div class="card"><h2>Tyck till</h2>
+    <div class="muted" style="margin-bottom:8px">Vad är krångligt, vad saknas, vad gillar du? Allt hjälper Driv att bli bättre.</div>
+    <textarea id="fbtext" rows="4" maxlength="2000" placeholder="Skriv här…"></textarea>
+    <input id="fbemail" type="email" autocomplete="email" style="margin-top:8px" placeholder="E-post om du vill ha svar (valfritt)" value="${esc(account.email || "")}">
+    <button class="primary" style="margin-top:8px" data-fbsend ${feedback.busy ? "disabled" : ""}>Skicka</button>
+    ${feedback.msg ? `<div class="muted small" style="margin-top:8px">${esc(feedback.msg)}</div>` : ""}</div>`;
+}
+async function sendFeedback() {
+  const message = ($("fbtext").value || "").trim(), email = ($("fbemail").value || "").trim();
+  if (!message) { feedback.msg = "Skriv något först."; return render(); }
+  feedback.busy = true; feedback.msg = ""; render();
+  try {
+    const sb = await supabaseClient();
+    const { error } = await sb.from("driv_feedback").insert({ message: message.slice(0, 2000), email: email.slice(0, 200) || null, page: tab });
+    if (error) throw error;
+    feedback.sent = true;
+  } catch (e) {
+    feedback.msg = "Kunde inte skicka just nu. Försök igen om en stund.";
+    // Behåll texten så att inget skrivet försvinner
+    setTimeout(() => { const t = $("fbtext"); if (t) t.value = message; }, 0);
+  }
+  feedback.busy = false; render();
+}
+
 function accountCard() {
   if (!sbEnabled) return "";
   const a = account;
@@ -989,6 +1020,7 @@ const VIEWS = {
         <div class="muted">Protein ${m.protein} g · Fett ${m.fat} g · Kolhydrater ${m.carbs} g</div>
         <label class="field" style="margin-top:10px">Eget kalorimål (lämna tomt för beräknat)
           <input type="number" inputmode="numeric" id="override" value="${S.kcalOverride || ""}" placeholder="${m.kcal}"></label></div>
+      ${feedbackCard()}
       ${accountCard()}
       <div class="card"><h2>Data</h2><div class="muted" style="margin-bottom:8px">${{
           cloud: account.step === "in" ? `✓ Sparas på ditt konto (${esc(account.email)}).` : "✓ Sparas på ditt konto och följer med mellan mobil och dator.",
@@ -1532,6 +1564,8 @@ document.addEventListener("click", ev => {
   }
   else if (ds.resttoggle !== undefined) S.rest = Object.assign({}, restSettings(), { on: t.checked });
   else if (ds.sendcode !== undefined) { sendLoginCode(); return; }
+  else if (ds.fbsend !== undefined) { sendFeedback(); return; }
+  else if (ds.fbagain !== undefined) { feedback.sent = false; feedback.msg = ""; }
   else if (ds.verifycode !== undefined) { verifyLoginCode(); return; }
   else if (ds.changeemail !== undefined) { account.step = "email"; account.msg = ""; }
   else if (ds.signout !== undefined) { signOut(); return; }

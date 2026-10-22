@@ -252,6 +252,7 @@ window.supabase = { createClient: () => ({
   from: () => ({
     select: async () => ({ data: Object.entries(window.__db).map(([id, data]) => ({ id, data })), error: null }),
     upsert: async row => { window.__db[row.id] = row.data; keep(); return { error: null }; },
+    insert: async row => { if (window.__fbFail) return { error: { message: 'nere' } }; window.__fb = row; return { error: null }; },
     delete: () => ({ eq: async (k, id) => { delete window.__db[id]; keep(); return { error: null }; } }),
   }),
 }) };
@@ -300,3 +301,26 @@ def test_veckobrev_pa_sondag(page):
     assert page.locator(".letter-card").count() == 0
     page.reload()
     assert page.locator(".letter-card").count() == 0
+
+
+# ---------- Tyck till ----------
+
+def test_tyck_till_skickar_synpunkt(page):
+    page.context.route("**/config.js", lambda r: r.fulfill(
+        body='window.DRIV_CONFIG = { supabaseUrl: "https://exempel.supabase.co", supabaseAnonKey: "nyckel" };',
+        content_type="application/javascript"))
+    start(page, SUPABASE_MOCK)
+    go(page, "profil")
+    page.click("[data-fbsend]")
+    assert "Skriv något" in page.inner_text('.card:has(h2:text-is("Tyck till"))')
+    page.evaluate("window.__fbFail = true")
+    page.fill("#fbtext", "Vilotimern är toppen")
+    page.click("[data-fbsend]")
+    page.wait_for_function("feedback.msg.includes('Kunde inte')")
+    assert page.input_value("#fbtext") == "Vilotimern är toppen"
+    page.evaluate("window.__fbFail = false")
+    page.fill("#fbemail", "jag@exempel.se")
+    page.click("[data-fbsend]")
+    page.wait_for_function("feedback.sent")
+    assert page.evaluate("window.__fb") == {"message": "Vilotimern är toppen", "email": "jag@exempel.se", "page": "profil"}
+    assert "Tack" in page.inner_text('.card:has(h2:text-is("Tyck till"))')
