@@ -5,6 +5,7 @@
 // Laddas före app.js; funktionerna härifrån anropas först när appen ritas.
 
 let focus = null;   // { dayId, idx } medan fokusläget är öppet
+let focusDailies = false;   // dailys visas i ett fönster ovanpå passet
 
 function startFocus(dayId) {
   const d = dayById(dayId);
@@ -17,6 +18,7 @@ function startFocus(dayId) {
 }
 function endFocus() {
   focus = null;
+  focusDailies = false;
   keepAwake(false);
 }
 
@@ -69,7 +71,7 @@ function focusView() {
   let rows = "";
   for (let i = 0; i < ex.sets; i++) {
     const s = sets[i] || {}, h = liveHint(d, ex, i), p = prev ? hintSet(prev, i) : null;
-    const kg = stepper(ex.id, i, "kg", s.kg, h.kg || "", bw ? "Extra vikt" : "Vikt", bw ? "extra kg" : "kg");
+    const kg = stepper(ex.id, i, "kg", s.kg, h.kg || "", bw ? "Extra vikt" : "Vikt", GEAR[gearOf(ex.id)][2]);
     const reps = stepper(ex.id, i, "reps", s.reps, h.reps, isTimed(ex.id) ? "Sekunder" : "Reps", repLabel);
     const last = p && hasData(p) ? fmtSet({ kg: +p.kg || 0, reps: +p.reps || 0 }, ex.id) : "";
     rows += `<div class="fset ${s.ok ? "done" : ""} ${i === active ? "active" : ""}">
@@ -83,12 +85,12 @@ function focusView() {
     : `<button class="primary grow" data-finish="${d.id}" data-focusend>✓ Spara passet</button>`;
   return `<div class="focus">
     <div class="row between"><button class="small ghost" data-focusexit>‹ Alla övningar</button>
-      <span class="muted">Övning ${focus.idx + 1} av ${d.ex.length}</span></div>
+      <span class="muted small fcount">Övning ${focus.idx + 1} av ${d.ex.length}</span>${dailyChip()}</div>
     <div class="fdots">${d.ex.map((x, k) => `<button data-focusgo="${k}" class="${k === focus.idx ? "on" : ""} ${exDone(w, x) ? "done" : ""}" aria-label="${esc(EX[x.id].name)}"></button>`).join("")}</div>
     <div class="card">
       <div class="row"><button class="thumb" data-info="${ex.id}" aria-label="Visa ${esc(EX[ex.id].name)}">${figure(ex.id, "", true)}</button>
         <div class="grow"><div class="muted small">${passLabel(d)}</div><h2 style="margin:2px 0">${esc(EX[ex.id].name)}</h2>
-          <div class="muted">${ex.sets} × ${esc(ex.reps)}</div>
+          <div class="muted">${ex.sets} × ${esc(ex.reps)} · ${GEAR[gearOf(ex.id)][0]}</div>
           ${target ? `<div class="goal">Förslag idag: <b>${fmtTarget(target, ex.id)}</b></div>`
             : `<div class="muted">Första gången: välj en vikt du klarar ${esc(ex.reps)}.</div>`}</div></div>
       ${rows}
@@ -97,7 +99,16 @@ function focusView() {
     </div>
     <div class="row fnav"><button data-focusgo="${focus.idx - 1}" ${focus.idx ? "" : "disabled"} aria-label="Föregående övning">‹</button>
       ${next ? `<button class="${allDone ? "primary" : ""} grow" data-focusgo="${focus.idx + 1}">Nästa: ${esc(EX[next.id].name)} ›</button>` : finish}</div>
-  </div>`;
+  </div>${focusDailies ? `<div class="overlay" data-fdclose><div class="sheet">
+    <div class="row between"><span class="muted small">Fläta in i passet</span><button class="small ghost" data-fdclose aria-label="Stäng">✕</button></div>
+    ${dailiesCard(true)}<button class="wide" data-fdclose style="margin-top:14px">Tillbaka till passet</button></div></div>` : ""}`;
+}
+
+// Dailys under passet: en liten knapp med hur många som är klara, inget mer
+function dailyChip() {
+  if (!S.daily.length) return "";
+  const date = logDate(), done = S.daily.filter(e => dailyDone(date, e.id)).length, all = done === S.daily.length;
+  return `<button class="small chip ${all ? "ok" : ""}" data-fdopen aria-label="Dailys, ${done} av ${S.daily.length} klara">${all ? "✓" : "☐"} Dailys ${done}/${S.daily.length}</button>`;
 }
 
 // Passet i Träna: en rad per övning med mål och hur många set som är klara. Tryck för att
@@ -131,9 +142,11 @@ document.addEventListener("visibilitychange", () => {
 });
 
 document.addEventListener("click", ev => {
-  const t = ev.target.closest("[data-step],[data-focusgo],[data-focusexit],[data-focusend],[data-focusstart],[data-focusex]");
+  const t = ev.target.closest("[data-step],[data-focusgo],[data-focusexit],[data-focusend],[data-focusstart],[data-focusex],[data-fdopen],[data-fdclose]");
   if (!t) return;
+  if (t.classList.contains("overlay") && ev.target !== t) return;   // klick inne i fönstret
   const ds = t.dataset;
+  if (ds.fdopen !== undefined || ds.fdclose !== undefined) { focusDailies = ds.fdopen !== undefined; dailyEditing = false; render(); return; }
   if (ds.focusend !== undefined) { endFocus(); return; }   // själva sparandet sköts av data-finish
   if (ds.focusstart) { tab = "pass"; editing = false; startFocus(ds.focusstart); }
   else if (ds.focusex !== undefined) { if (startFocus(currentPassDay().id)) focus.idx = +ds.focusex; }

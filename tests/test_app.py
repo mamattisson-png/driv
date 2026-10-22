@@ -140,7 +140,7 @@ def test_dagens_mal_fylls_i_och_pers_firas(page):
     assert "Bänkpress" in page.inner_text(".focus h2")
     page.click('[data-ok=bankpress][data-i="0"]')
     assert page.evaluate("JSON.stringify(day().workouts[0].sets.bankpress[0])") == '{"ok":true,"reps":6,"kg":82.5}'
-    assert "Nytt pers" in page.inner_text(".toast")
+    assert "Nytt PB" in page.inner_text(".toast")
 
 
 def test_spara_pass_och_oppna_igen(page):
@@ -190,6 +190,33 @@ def test_fokuslage_en_ovning_i_taget(page):
     assert page.evaluate("focus") is None and page.evaluate("tab") == "historik"
     assert page.evaluate("workoutsOn(TODAY)[0].done") is True
     assert page.evaluate("window.__wake") == ["på", "av"]
+
+
+def test_ovningar_visar_utrustning_och_hur_vikten_skrivs(page):
+    open_app(page)
+    assert page.evaluate("Object.keys(EX).filter(id => EX[id].cat !== 'cardio' && !GEAR[gearOf(id)])") == []
+    assert page.evaluate("Object.keys(EX).filter(id => !EX[id].A || !EX[id].cues.length)") == []
+    assert page.evaluate("Object.keys(EX).length") >= 75
+    page.evaluate("modal = { info: 'bencurl' }; render()")
+    assert "Maskin" in page.inner_text(".gearbox") and "sprinten" in page.inner_text(".gearbox")
+    page.evaluate("modal = { info: 'bankpress' }; render()")
+    assert "stången (oftast 20 kg)" in page.inner_text(".gearbox")
+
+
+def test_dailys_under_passet(page):
+    start(page)
+    seed(page, "S.daily = [{id:'plankan',sets:3,reps:'45 sek'},{id:'lop',sets:1,reps:''}]")
+    page.click(f'[data-pick="{page.evaluate("S.plan.days[0].id")}"]')
+    page.click("[data-focusstart]")
+    assert "Dailys 0/2" in page.inner_text("[data-fdopen]")
+    page.click("[data-fdopen]")
+    assert page.locator(".overlay [data-dedit]").count() == 0
+    page.click('.overlay [data-dcheck="plankan"]')
+    assert page.evaluate("dailyDone(TODAY, 'plankan')") is True
+    assert page.locator(".overlay").count() == 1   # fönstret står kvar tills man stänger
+    page.click(".overlay button.wide[data-fdclose]")
+    assert page.locator(".overlay").count() == 0 and page.locator(".focus").count() == 1
+    assert "Dailys 1/2" in page.inner_text("[data-fdopen]")
 
 
 def test_vikten_foljer_med_och_orimliga_tal_begransas(page):
