@@ -48,8 +48,8 @@ const EX = {
     cues: ["Stå axelbrett med stången vilande framför axlarna.",
       "Spänn mage och säte, pressa stången rakt upp förbi ansiktet.",
       "Lås ut ovanför huvudet och sänk tillbaka till axlarna."],
-    hold: "bar",
-    A: P(STAND, { a: [69, 23], eb: -1 }), B: P(STAND, { a: [60, -6], eb: -1 }),
+    view: "front", hold: "bar",
+    A: { h: [60, 54], a: [82, 14], eb: 1 }, B: { h: [60, 54], a: [76, -6], eb: 1 },
   },
   sittande_axelpress: {
     name: "Sittande axelpress", cat: "push", muscles: "Axlar, triceps", sets: 3, reps: "8–12",

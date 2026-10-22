@@ -98,7 +98,13 @@ function sceneShape(s) {
 function holds(ex, A, B, still) {
   let out = "";
   const ha = A.arm[2], hb = B.arm[2], ha2 = A.arm2[2], hb2 = B.arm2[2];
-  if (ex.hold === "bar") out += circ(ha, hb, 6.5, "fw", still);
+  // Framifrån syns stången som en linje mellan händerna, från sidan som en skiva
+  if (ex.hold === "bar" && ex.view === "front") {
+    out += seg(add(ha2, [-9, 0]), add(ha, [9, 0]), add(hb2, [-9, 0]), add(hb, [9, 0]), "fwbar", still);
+    // Viktskivor i stångens ändar
+    for (const [a, b, k] of [[ha2, hb2, -9], [ha, hb, 9]])
+      out += seg(add(a, [k, -4.5]), add(a, [k, 4.5]), add(b, [k, -4.5]), add(b, [k, 4.5]), "fwbar fwplate", still);
+  } else if (ex.hold === "bar") out += circ(ha, hb, 6.5, "fw", still);
   if (ex.hold === "db") {
     out += circ(ha, hb, 3.6, "fw", still);
     if (pts([ha2]) !== pts([ha]) || pts([hb2]) !== pts([hb])) out += circ(ha2, hb2, 3.6, "fw", still);

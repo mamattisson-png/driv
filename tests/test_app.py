@@ -120,6 +120,11 @@ def test_vilotimer(page):
     assert page.inner_text(".rest-time") == "1:30"
     page.click('[data-restadd="15"]')
     assert page.inner_text(".rest-time") == "1:45"
+    # Med en övning öppen ligger timern under dialogen, inte över den
+    page.click('[data-info=militarpress]')
+    sheet, timer = page.locator(".sheet").bounding_box(), page.locator(".rest").bounding_box()
+    assert sheet["y"] + sheet["height"] <= timer["y"] + 1
+    page.click(".sheet [data-close]")
     page.click('[data-ok=sidolyft][data-i="0"]')
     assert page.inner_text(".rest-time") == "1:00"
     page.evaluate("rest.end = Date.now() + 500")
