@@ -27,34 +27,37 @@ const TYPES = {
   shoulderarms: { label: "Axlar & armar", color: "upper", muscles: "Axlar, biceps, triceps", cats: ["push", "pull"] },
   hfull: { label: "Hantlar", color: "full", muscles: "Hela kroppen med hantlar", cats: ["push", "pull", "legs"] },
   glutes: { label: "Rumpa", color: "lower", muscles: "Säte, baksida lår", cats: ["legs"] },
+  custom: { label: "Pass", color: "full", muscles: "Dina egna övningar", cats: ["all"] },
 };
 // Program: vilka passtyper som ingår för varje antal pass i veckan
-// keys: extra sökord utöver namn och beskrivning
 const PROGRAMS = {
-  ppl: { name: "Push / Pull / Legs", info: "Tre olika pass som roterar. Klassiskt för att bygga muskler.", keys: "ppl muskler gym", days: {
+  ppl: { name: "Push / Pull / Legs", info: "Tre olika pass som roterar. Klassiskt för att bygga muskler.", days: {
     3: ["push", "pull", "legs"], 4: ["push", "pull", "legs", "upper"],
     5: ["push", "pull", "legs", "upper", "lower"], 6: ["push", "pull", "legs", "push", "pull", "legs"] } },
-  helkropp: { name: "Helkropp", info: "Hela kroppen varje pass. Bra när du tränar få dagar.", keys: "nybörjare full body gym", days: {
+  helkropp: { name: "Helkropp", info: "Hela kroppen varje pass. Bra när du tränar få dagar.", days: {
     2: ["full", "full"], 3: ["full", "full", "full"], 4: ["full", "full", "full", "full"] } },
-  overunder: { name: "Över/Underkropp", info: "Överkropp och underkropp varannan gång.", keys: "upper lower gym muskler", days: {
+  overunder: { name: "Över/Underkropp", info: "Överkropp och underkropp varannan gång.", days: {
     2: ["upper", "lower"], 3: ["upper", "lower", "upper"], 4: ["upper", "lower", "upper", "lower"] } },
-  cali: { name: "Calisthenics", info: "Bara kroppsvikt: golvet, en stång och en bänk räcker.", keys: "kroppsvikt hemma utomhus stång utan gym street workout", days: {
+  cali: { name: "Calisthenics", info: "Bara kroppsvikt: golvet, en stång och en bänk räcker.", days: {
     3: ["cpush", "cpull", "clegs"], 4: ["cpush", "cpull", "clegs", "cfull"],
     5: ["cpush", "cpull", "clegs", "cpush", "cpull"], 6: ["cpush", "cpull", "clegs", "cpush", "cpull", "clegs"] } },
-  split: { name: "Kroppsdelssplit", info: "En muskelgrupp per pass.", keys: "bro split bodybuilding muskler gym", days: {
+  split: { name: "Kroppsdelssplit", info: "En muskelgrupp per pass.", days: {
     4: ["chest", "back", "legs", "shoulders"], 5: ["chest", "back", "legs", "shoulders", "arms"] } },
-  arnold: { name: "Arnold split", info: "Bröst och rygg, axlar och armar, ben. Mycket volym.", keys: "bodybuilding muskler avancerad gym", days: {
+  arnold: { name: "Arnold split", info: "Bröst och rygg, axlar och armar, ben. Mycket volym.", days: {
     3: ["chestback", "shoulderarms", "legs"], 6: ["chestback", "shoulderarms", "legs", "chestback", "shoulderarms", "legs"] } },
-  styrka5x5: { name: "Styrka 5×5", info: "Få basövningar med tunga set om 5. Enkelt sätt att bli starkare.", keys: "nybörjare styrka skivstång stronglifts 5x5 gym", days: {
+  styrka5x5: { name: "Styrka 5×5", info: "Få basövningar med tunga set om 5. Enkelt sätt att bli starkare.", days: {
     3: ["str5a", "str5b", "str5a"] } },
-  styrkelyft: { name: "Styrkelyft", info: "Knäböj, bänkpress och marklyft i fokus, med hjälpövningar.", keys: "powerlifting styrka tungt skivstång gym", days: {
+  styrkelyft: { name: "Styrkelyft", info: "Knäböj, bänkpress och marklyft i fokus, med hjälpövningar.", days: {
     3: ["sq", "bp", "dl"], 4: ["sq", "bp", "dl", "upper"] } },
-  hantlar: { name: "Hemma med hantlar", info: "Helkropp med bara hantlar och en bänk.", keys: "hemma hantlar nybörjare utan gym", days: {
+  hantlar: { name: "Hemma med hantlar", info: "Helkropp med bara hantlar och en bänk.", days: {
     2: ["hfull", "hfull"], 3: ["hfull", "hfull", "hfull"], 4: ["hfull", "hfull", "hfull", "hfull"] } },
-  rumpa: { name: "Rumpa & ben", info: "Extra fokus på säte och baksida lår, plus ett överkroppspass.", keys: "glutes rumpa säte underkropp ben gym", days: {
+  rumpa: { name: "Rumpa & ben", info: "Extra fokus på säte och baksida lår, plus ett överkroppspass.", days: {
     3: ["glutes", "upper", "lower"], 4: ["glutes", "upper", "glutes", "lower"] } },
+  eget: { name: "Eget upplägg", info: "Bygg helt själv: välj antal pass, döp dem och lägg till dina egna övningar.", days: {
+    1: ["custom"], 2: ["custom", "custom"], 3: ["custom", "custom", "custom"], 4: ["custom", "custom", "custom", "custom"],
+    5: ["custom", "custom", "custom", "custom", "custom"], 6: ["custom", "custom", "custom", "custom", "custom", "custom"] } },
 };
-const DEFAULT_WEEKDAYS = { 2: [0, 3], 3: [0, 2, 4], 4: [0, 1, 3, 4], 5: [0, 1, 2, 3, 4], 6: [0, 1, 2, 3, 4, 5] };
+const DEFAULT_WEEKDAYS = { 1: [0], 2: [0, 3], 3: [0, 2, 4], 4: [0, 1, 3, 4], 5: [0, 1, 2, 3, 4], 6: [0, 1, 2, 3, 4, 5] };
 const counts = prog => Object.keys(PROGRAMS[prog].days).map(Number);
 
 // Standardövningar per passtyp; typ2/typ3 används när samma typ återkommer i veckan
@@ -97,6 +100,7 @@ const DEFAULT_EX = {
   hfull3: ["utfall", "armhavningar", "hantelrodd", "sittande_axelpress", "glute_bridge", "hammercurl"],
   glutes: ["hip_thrust", "rumansk_marklyft", "bulgarisk", "utfall", "glute_bridge", "bencurl"],
   glutes2: ["hip_thrust", "knaboj", "bencurl", "bulgarisk", "glute_bridge"],
+  custom: [],
 };
 // Dailys: övningar, löpning eller promenad som bockas av varje dag
 const DEFAULT_DAILY = ["plankan", "hangande_benlyft", "russian_twist", "lop"];
@@ -129,9 +133,10 @@ function makeDays(prog, count, old = []) {
   return types.map((type, i) => {
     const round = seen[type] = (seen[type] || 0) + 1;
     const repeated = !TYPES[type].fixedName && types.filter(t => t === type).length > 1;
-    const name = TYPES[type].label + (repeated ? " " + "ABC"[(round - 1) % 3] : "");
+    const name = TYPES[type].label + (repeated ? " " + "ABCDEF"[(round - 1) % 6] : "");
     const prev = old[i];
-    if (prev && prev.type === type) return { ...prev, name };
+    // Ett pass man själv döpt behåller sitt namn
+    if (prev && prev.type === type) return prev.named ? prev : { ...prev, name };
     const list = DEFAULT_EX[round > 1 && DEFAULT_EX[type + round] ? type + round : type];
     return { id: `d${i + 1}-${type}-${Date.now().toString(36)}`, type, name, ex: list.map(exEntry) };
   });
@@ -446,7 +451,6 @@ let tab = S.setupDone ? "idag" : "upplagg";
 let chosenDay = null;
 let editing = false;
 let dailyEditing = false;
-let progQuery = "";
 let progOpen = false;      // listan med upplägg är ihopfälld tills man vill byta
 let modal = null;          // { info: exId } eller { pick: lista, replace, cat, q }
 let weekOffset = 0;
@@ -460,7 +464,6 @@ function render() {
   nav.innerHTML = TABS.map(([id, ic, lbl]) =>
     `<button data-tab="${id}" class="${tab === id ? "on" : ""}"><span>${ic}</span>${lbl}</button>`).join("");
   document.getElementById("app").innerHTML = VIEWS[tab]() + (modal ? renderModal() : "");
-  if (tab === "upplagg") filterPrograms();
   if (modal && modal.pick) filterPicker();
 }
 
@@ -508,10 +511,9 @@ const VIEWS = {
         ${progOpen ? "" : `<div class="proglist"><button class="on" data-progtoggle><b>${PROGRAMS[draft.program].name}</b>
           <div class="muted">${PROGRAMS[draft.program].info}</div><div class="muted small">Tryck för att byta upplägg</div></button></div>`}
         <div ${progOpen ? "" : "hidden"}>
-        <input id="progsearch" type="search" placeholder="Sök, t.ex. hemma, styrka, nybörjare" value="${esc(progQuery)}" autocomplete="off" style="margin-bottom:10px">
-        <div class="proglist">${Object.entries(PROGRAMS).map(([id, pr]) => `<button data-prog="${id}" data-q="${esc(norm(pr.name + " " + pr.info + " " + pr.keys))}" class="${draft.program === id ? "on" : ""}" aria-pressed="${draft.program === id}">
+        <div class="proglist">${Object.entries(PROGRAMS).map(([id, pr]) => `<button data-prog="${id}" class="${draft.program === id ? "on" : ""}" aria-pressed="${draft.program === id}">
           <b>${pr.name}</b><div class="muted">${pr.info}</div><div class="muted small">${counts(id).join(", ")} pass i veckan</div></button>`).join("")}</div>
-        <div class="muted" id="noprog" hidden>Inget upplägg matchar sökningen.</div></div></div>
+        </div></div>
       <div class="card"><h2>2. Hur många pass i veckan?</h2>
         <div class="seg" style="grid-template-columns:repeat(${counts(draft.program).length},1fr)">${counts(draft.program).map(c => `<button data-count="${c}" class="${n === c ? "on" : ""}" aria-pressed="${n === c}"><b>${c}</b><div class="muted">pass</div></button>`).join("")}</div>
         </div>
@@ -523,9 +525,12 @@ const VIEWS = {
           <div class="muted" style="margin-top:8px">${ok ? `✓ ${n} dagar valda. Tryck på en vald dag för att avmarkera den.` : `Välj ${n} dagar (${picked} valda)`}</div>`
           : `<div class="muted" style="margin-top:8px">Appen föreslår nästa pass i ordningen när du tränar, vilken dag det än är.</div>`}</div>
       <div class="card"><h2>4. Övningar</h2>
-        <div class="muted" style="margin-bottom:8px">Förifyllt. Byt, ta bort eller lägg till. Tryck på en bild för att se hur övningen görs.</div>
+        <div class="muted" style="margin-bottom:8px">${draft.program === "eget" ? "Lägg till övningar i varje pass." : "Förifyllt. Byt, ta bort eller lägg till."} Tryck på en bild för att se hur övningen görs.</div>
         ${draft.days.map((d, i) => `<details class="plan-day" open><summary>${fixed && ok ? `<b>${WD[sorted[i]]}</b> · ` : ""}<b>Pass ${i + 1}</b> ${tag(d.type)}
             <span class="muted">${d.ex.length} övningar</span></summary>
+          ${d.type === "custom" ? `<label class="field" style="margin:4px 0 6px">Namn på passet
+            <input value="${esc(d.name)}" data-dayname="${i}" placeholder="T.ex. Bröst & triceps"></label>` : ""}
+          ${d.ex.length ? "" : `<div class="muted" style="margin:6px 0">Inga övningar än. Lägg till dem nedan.</div>`}
           ${exRows("draft:" + i, d.ex, false)}</details>`).join("")}</div>
       <div class="card"><h2>5. Dailys</h2>
         <div class="muted" style="margin-bottom:8px">Det du vill göra varje dag. Du ändrar det när som helst under fliken Dailys.</div>
@@ -579,7 +584,8 @@ const VIEWS = {
         <div class="muted">${TYPES[d.type].muscles}${editing ? "" : ` · ${done}/${d.ex.length} klara`}</div>
         ${!editing && d.ex.length ? `<div class="bar ok"><div style="width:${Math.round(done / d.ex.length * 100)}%"></div></div>` : ""}
       </div>
-      ${editing ? editList(d) : d.ex.map(ex => exBlock(d, ex, w)).join("")}
+      ${editing ? editList(d) : d.ex.length ? d.ex.map(ex => exBlock(d, ex, w)).join("")
+        : `<div class="card muted">Passet har inga övningar än. Tryck på Redigera för att lägga till.</div>`}
       ${editing ? "" : `<button class="primary wide" data-finish="${d.id}">${w && w.done ? "✓ Passet är klart – ångra" : "Avsluta passet"}</button>`}`;
   },
 
@@ -835,19 +841,6 @@ function renderModal() {
     <div class="muted" id="nohits" hidden>Inga övningar matchar sökningen.</div></div></div>`;
 }
 
-// Upplägg som matchar alla sökord; det valda visas alltid
-function filterPrograms() {
-  const words = norm(progQuery).split(/\s+/).filter(Boolean);
-  let shown = 0;
-  for (const el of document.querySelectorAll("[data-prog]")) {
-    const hit = el.classList.contains("on") || words.every(w => el.dataset.q.includes(w));
-    el.hidden = !hit;
-    if (hit) shown++;
-  }
-  const none = document.getElementById("noprog");
-  if (none) none.hidden = shown > 1 || !words.length;
-}
-
 // Sökning filtrerar alla kategorier; utan sökord visas vald kategori
 function filterPicker() {
   const q = norm((modal && modal.q || "").trim());
@@ -1025,6 +1018,11 @@ document.addEventListener("change", ev => {
   }
   if (ds.run) { const L = day(); L.dailies[ds.run] = Object.assign({}, L.dailies[ds.run], { [ds.f]: +t.value || 0 }); }
   else if (ds.prof) S.profile[ds.prof] = ds.prof === "sex" || ds.prof === "goal" ? t.value : +t.value;
+  else if (ds.dayname) {
+    const d = draft.days[+ds.dayname];
+    d.name = t.value.trim() || d.name;
+    d.named = true;
+  }
   else if (ds.ed) { const ex = exList(ds.t)[+ds.ed]; ex[ds.f] = ds.f === "sets" ? Math.max(1, +t.value || 1) : t.value; }
   else if (t.id === "override") S.kcalOverride = +t.value || null;
   else if (t.id === "importfile" && t.files[0]) {
@@ -1099,7 +1097,6 @@ async function askClaude(logAfter = false) {
 document.addEventListener("input", ev => {
   const t = ev.target;
   if (t.id === "exsearch") { modal.q = t.value; filterPicker(); }
-  else if (t.id === "progsearch") { progQuery = t.value; filterPrograms(); }
   else if (t.id === "fname") foodPreview();
   else if (t.id === "fkcal" || t.id === "fprot") t.dataset.manual = t.value ? "1" : "";
 });
