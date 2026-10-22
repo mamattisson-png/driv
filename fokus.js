@@ -42,17 +42,17 @@ const stepFor = (exId, f) => f === "kg" ? (EX[exId].hold === "db" ? 2 : 2.5) : i
 
 function stepSet(d, exId, i, f, dir) {
   const ex = d.ex.find(x => x.id === exId);
-  const s = setAt(d, exId, i), hint = setHint(ex, i);
+  const s = setAt(d, exId, i), hint = liveHint(d, ex, i);
   // Ett tomt fält visar förslaget (dagens mål eller förra gången); stegen utgår från det
   const cur = s[f] === undefined || s[f] === "" ? +hint[f] || 0 : +s[f];
   const next = cur + dir * stepFor(exId, f);
-  s[f] = Math.max(0, f === "kg" ? Math.round(next * 4) / 4 : Math.round(next));
+  s[f] = clampSet(exId, f, f === "kg" ? Math.round(next * 4) / 4 : Math.round(next));
 }
 
 function stepper(exId, i, f, val, hint, label, unit) {
   const btn = (dir, txt) => `<button class="step" data-step="${f}" data-ex="${exId}" data-i="${i}" data-dir="${dir}" aria-label="${txt} ${label}, set ${i + 1}">${dir > 0 ? "+" : "−"}</button>`;
   return `<div class="stepper">${btn(-1, "Minska")}
-    <input type="number" inputmode="${f === "kg" ? "decimal" : "numeric"}" step="${f === "kg" ? 0.25 : 1}" value="${val ?? ""}"
+    <input type="number" inputmode="${f === "kg" ? "decimal" : "numeric"}" step="${f === "kg" ? 0.25 : 1}" min="0" max="${setMax(exId, f)}" value="${val ?? ""}"
       placeholder="${hint ?? ""}" data-set="${exId}" data-i="${i}" data-f="${f}" aria-label="${label}, set ${i + 1}">
     ${btn(1, "Öka")}<div class="unit">${unit}</div></div>`;
 }
@@ -68,7 +68,7 @@ function focusView() {
   for (let i = 0; i < ex.sets; i++) if (!(sets[i] && sets[i].ok)) { active = i; break; }
   let rows = "";
   for (let i = 0; i < ex.sets; i++) {
-    const s = sets[i] || {}, h = setHint(ex, i), p = prev ? hintSet(prev, i) : null;
+    const s = sets[i] || {}, h = liveHint(d, ex, i), p = prev ? hintSet(prev, i) : null;
     const kg = stepper(ex.id, i, "kg", s.kg, h.kg || "", bw ? "Extra vikt" : "Vikt", bw ? "extra kg" : "kg");
     const reps = stepper(ex.id, i, "reps", s.reps, h.reps, isTimed(ex.id) ? "Sekunder" : "Reps", repLabel);
     const last = p && hasData(p) ? fmtSet({ kg: +p.kg || 0, reps: +p.reps || 0 }, ex.id) : "";

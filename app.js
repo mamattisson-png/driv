@@ -1275,7 +1275,7 @@ function exBlock(d, ex, w) {
   const bw = !!EX[ex.id].bw, unitName = isTimed(ex.id) ? "Sekunder" : "Reps";
   let rows = "";
   for (let i = 0; i < ex.sets; i++) {
-    const s = sets[i] || {}, p = target ? { kg: target.kg || "", reps: target.reps } : hintSet(prev, i);
+    const s = sets[i] || {}, p = liveHint(d, ex, i);
     const kg = `<input type="number" inputmode="decimal" step="0.5" placeholder="${p.kg || (bw ? "+kg" : "kg")}" value="${s.kg ?? ""}" data-set="${ex.id}" data-i="${i}" data-f="kg" aria-label="${bw ? "Extra vikt" : "Vikt"} set ${i + 1}">`;
     const reps = `<input type="number" inputmode="numeric" placeholder="${p.reps || esc(ex.reps)}" value="${s.reps ?? ""}" data-set="${ex.id}" data-i="${i}" data-f="reps" aria-label="${unitName} set ${i + 1}">`;
     rows += `<div class="n">${i + 1}</div>${bw ? reps + kg : kg + reps}
@@ -1671,9 +1671,20 @@ function plusCard() {
 
 // Ett avbockat set med tomma fält får exempelvärdena: förra gångens set, annars målet
 // (vid ett intervall som 8–10 det lägsta värdet)
+// Vikten från ett tidigare set idag följer med till nästa set, om inget annat skrivits där
+function liveHint(d, ex, i) {
+  const h = { ...setHint(ex, i) };
+  const w = workoutOn(TODAY, d.id), sets = (w && w.sets[ex.id]) || [];
+  for (let j = i - 1; j >= 0; j--) if (sets[j] && sets[j].kg !== undefined && sets[j].kg !== "") { h.kg = sets[j].kg; break; }
+  return h;
+}
+// Rimliga gränser, så att ett felskrivet tal inte förstör statistiken
+const setMax = (exId, f) => f === "kg" ? 500 : isTimed(exId) ? 3600 : 300;
+const clampSet = (exId, f, v) => Math.min(setMax(exId, f), Math.max(0, v));
+
 function fillFromHint(d, exId, i) {
   const ex = d.ex.find(x => x.id === exId);
-  const s = setAt(d, exId, i), prev = setHint(ex, i);
+  const s = setAt(d, exId, i), prev = liveHint(d, ex, i);
   const target = parseInt(String(ex && ex.reps || ""), 10);
   if (s.reps === undefined || s.reps === "") s.reps = +prev.reps || (target > 0 ? target : "");
   if ((s.kg === undefined || s.kg === "") && +prev.kg) s.kg = +prev.kg;
@@ -1863,7 +1874,18 @@ document.addEventListener("click", ev => {
 document.addEventListener("change", ev => {
   const t = ev.target, ds = t.dataset;
   if (ds.set) {
-    setAt(currentPassDay(), ds.set, +ds.i)[ds.f] = t.value === "" ? "" : +t.value;
+    const d = currentPassDay(), v = t.value === "" ? "" : clampSet(ds.set, ds.f, +t.value || 0);
+    if (v !== "" && v !== +t.value) {
+      t.value = v;
+      toast(`Högst ${setMax(ds.set, ds.f)} ${ds.f === "kg" ? "kg" : isTimed(ds.set) ? "sekunder" : "reps"}`);
+    }
+    setAt(d, ds.set, +ds.i)[ds.f] = v;
+    // Senare set utan egen vikt visar den nya vikten som förslag
+    const ex = d.ex.find(x => x.id === ds.set);
+    if (ds.f === "kg" && ex) for (const inp of document.querySelectorAll(`[data-set="${ds.set}"][data-f="kg"]`)) {
+      const k = +inp.dataset.i > +ds.i && liveHint(d, ex, +inp.dataset.i).kg;
+      if (k) inp.placeholder = k;
+    }
     save();
     return;   // ingen omritning, så att fokus stannar kvar i fältet
   }

@@ -145,6 +145,27 @@ def test_fokuslage_en_ovning_i_taget(page):
     assert page.evaluate("window.__wake") == ["på", "av"]
 
 
+def test_vikten_foljer_med_och_orimliga_tal_begransas(page):
+    start(page)
+    page.click(f'[data-pick="{page.evaluate("S.plan.days[0].id")}"]')
+    page.click("[data-focusstart]")
+    page.click('[data-focusgo="1"]')   # Lutande hantelpress, första gången
+    kg = lambda i: page.locator(f'[data-set=lutande_hantelpress][data-f=kg][data-i="{i}"]')
+    kg(0).fill("1000000")
+    kg(0).press("Enter")
+    assert kg(0).input_value() == "500"
+    assert "Högst 500 kg" in page.inner_text(".toast")
+    kg(0).fill("24")
+    kg(0).press("Enter")
+    assert kg(1).get_attribute("placeholder") == "24" and kg(2).get_attribute("placeholder") == "24"
+    page.click('[data-ok=lutande_hantelpress][data-i="0"]')
+    page.click('[data-ok=lutande_hantelpress][data-i="1"]')
+    assert page.evaluate("workoutsOn(TODAY)[0].sets.lutande_hantelpress[1].kg") == 24
+    # Stegen utgår också från vikten i setet före
+    page.click('[data-step=kg][data-i="2"][data-dir="1"]')
+    assert page.evaluate("workoutsOn(TODAY)[0].sets.lutande_hantelpress[2].kg") == 26
+
+
 def test_bilder_ar_stilla_i_listor_men_animeras_ensamma(page):
     start(page)
     assert page.locator(".thumb animate").count() == 0
