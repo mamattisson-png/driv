@@ -699,6 +699,9 @@ function weekNo(s) {
   return 1 + Math.round(((d - jan4) / 864e5 - 3 + (jan4.getDay() + 6) % 7) / 7);
 }
 let TODAY = iso(new Date());
+// Dagen man loggar för: idag, eller en tidigare dag som öppnats från Historik
+let editDate = null;
+const logDate = () => editDate || TODAY;
 // Appen kan ligga öppen över midnatt; då ska det nya datumet gälla
 function refreshToday() {
   const now = iso(new Date());
@@ -708,7 +711,7 @@ function refreshToday() {
   return true;
 }
 
-function day(date = TODAY) {
+function day(date = logDate()) {
   if (!S.log[date]) S.log[date] = { workouts: [], dailies: {}, food: [] };
   return S.log[date];
 }
@@ -757,7 +760,7 @@ function macros() {
   const protein = Math.round(2 * w), fat = Math.round(0.8 * w);
   return { kcal, protein, fat, carbs: Math.max(0, Math.round((kcal - protein * 4 - fat * 9) / 4)) };
 }
-function eaten(date = TODAY) {
+function eaten(date = logDate()) {
   return (S.log[date] ? S.log[date].food : []).reduce(
     (a, f) => ({ kcal: a.kcal + (+f.kcal || 0), protein: a.protein + (+f.protein || 0) }), { kcal: 0, protein: 0 });
 }
@@ -849,7 +852,7 @@ function weightBadge(diff) {
 }
 function logWeight(kg) {
   if (!(kg > 20 && kg < 400)) return false;
-  weights()[TODAY] = Math.round(kg * 10) / 10;
+  weights()[logDate()] = Math.round(kg * 10) / 10;
   // Kalorimålet följer den senaste vikten
   S.profile.weight = latestWeight().kg;
   return true;
@@ -900,7 +903,8 @@ function weightChart() {
 
 // ---------- Rendering ----------
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-const TABS = [["idag", "🏠", "Idag"], ["pass", "🏋️", "Pass"], ["dailys", "✅", "Dailys"], ["kost", "🍽️", "Kost"], ["vecka", "📈", "Vecka"], ["profil", "⚙️", "Profil"]];
+// Fyra flikar; Profil nås via kugghjulet uppe till höger
+const TABS = [["idag", "🏠", "Idag"], ["pass", "🏋️", "Träna"], ["kost", "🍽️", "Kost"], ["historik", "📅", "Historik"]];
 let tab = S.setupDone ? "idag" : "upplagg";
 let chosenDay = null;
 let editing = false;
@@ -917,7 +921,10 @@ function render() {
   nav.classList.toggle("hidden", tab === "upplagg");
   nav.innerHTML = TABS.map(([id, ic, lbl]) =>
     `<button data-tab="${id}" class="${tab === id ? "on" : ""}"><span>${ic}</span>${lbl}</button>`).join("");
-  document.getElementById("app").innerHTML = VIEWS[tab]() + (modal ? renderModal() : "");
+  const banner = editDate && (tab === "pass" || tab === "kost")
+    ? `<div class="editbar">📅 Du ändrar <b>${dateLabel(editDate)}</b><button class="small" data-editdone>Klar</button></div>` : "";
+  const gear = tab === "upplagg" ? "" : `<button class="gear ${tab === "profil" ? "on" : ""}" data-tab="profil" aria-label="Profil och inställningar">⚙️</button>`;
+  document.getElementById("app").innerHTML = gear + banner + VIEWS[tab]() + (modal ? renderModal() : "");
   if (modal && modal.pick) filterPicker();
   afterFocusRender();
   updateBadge();
@@ -932,20 +939,51 @@ const tag = t => `<span class="tag ${TYPES[t].color || t}">${TYPES[t].label}</sp
 
 function currentPassDay() {
   const L = S.log[TODAY];
-  const todays = workoutsOn(TODAY);
+  const todays = workoutsOn(logDate());
   const id = (focus && focus.dayId) || chosenDay || (todays.length ? todays[todays.length - 1].dayId : suggestedDay().id);
   return dayById(id) || S.plan.days[0];
 }
 
-function dailiesSummary() {
-  if (!S.daily.length) return `<div class="card"><h2>Dailys</h2><div class="muted">Inga dailys ännu.</div>
-    <button style="margin-top:10px" data-go="dailys">Lägg till dailys</button></div>`;
-  const done = S.daily.filter(e => dailyDone(TODAY, e.id)).length, st = streakOf(allDailiesDone);
-  return `<div class="card"><div class="row between"><h2>Dailys</h2><span class="muted">${done} av ${S.daily.length} klara</span></div>
-    <div class="bar ok"><div style="width:${Math.round(done / S.daily.length * 100)}%"></div></div>
-    ${st ? `<div class="muted">🔥 Alla klara ${st} dagar i rad</div>` : ""}
-    <div class="thumbs">${S.daily.map(e => thumb(e.id, "xs" + (dailyDone(TODAY, e.id) ? " done" : ""))).join("")}</div>
-    <div style="margin-top:10px"><button data-go="dailys">Öppna dailys</button></div></div>`;
+// Schemat: kommande dagar med fasta veckodagar, annars passen i tur och ordning
+function upcomingCard() {
+  if (S.plan.days.length < 2 && !isFixed()) return "";
+  if (isFixed()) {
+    const rows = [];
+    for (let i = 1; i <= 7; i++) {
+      const d = shift(TODAY, i), p = scheduledDay(d);
+      if (p) rows.push(`<div class="hrow"><span class="muted" style="width:72px">${WD[weekdayOf(d)]} ${+d.slice(8)}/${+d.slice(5, 7)}</span>${tag(p.type)}<span class="grow">${esc(p.name)}</span></div>`);
+    }
+    return `<div class="card"><h2>Kommande</h2>${rows.join("")}</div>`;
+  }
+  const start = S.plan.days.indexOf(nextInRotation()), order = [];
+  for (let i = 0; i < S.plan.days.length; i++) order.push(S.plan.days[(start + i) % S.plan.days.length]);
+  return `<div class="card"><h2>Kommande</h2><div class="muted" style="margin-bottom:6px">Passen i tur och ordning, vilka dagar du vill:</div>
+    ${order.map((p, i) => `<div class="hrow"><span class="muted" style="width:72px">${i ? `Sedan` : "Nästa"}</span>${tag(p.type)}<span class="grow">${esc(p.name)}</span></div>`).join("")}</div>`;
+}
+
+// Dagens dailys som en kort lista att bocka av, direkt på Idag
+function dailiesCard() {
+  const n = S.daily.length, date = logDate(), L = day(date);
+  if (dailyEditing) return `<div class="card"><div class="row between"><h2>Redigera dailys</h2><button class="small ghost" data-dedit>Klar</button></div>
+    ${exRows("daily", S.daily, true)}
+    <button class="wide" style="margin-top:10px" data-openpick="daily">+ Lägg till daily</button></div>`;
+  if (!n) return `<div class="card"><h2>Dailys</h2><div class="muted">Det du vill göra varje dag, till exempel plankan eller löpning.</div>
+    <button style="margin-top:10px" data-openpick="daily">+ Lägg till daily</button></div>`;
+  const done = S.daily.filter(e => dailyDone(date, e.id)).length, st = streakOf(allDailiesDone);
+  const rows = S.daily.map(e => {
+    const id = e.id, ok = dailyDone(date, id), its = streakOf(d => dailyDone(d, id)), v = L.dailies[id] || {};
+    const sub = isRun(id) ? "" : EX[id].cat === "cardio" ? esc(e.reps || "") : `${e.sets} × ${esc(e.reps)}`;
+    const ctl = isRun(id)
+      ? `<input class="run" type="number" inputmode="decimal" step="0.1" placeholder="km" value="${v.km || ""}" data-run="${id}" data-f="km" aria-label="Kilometer">
+         <input class="run" type="number" inputmode="numeric" placeholder="min" value="${v.min || ""}" data-run="${id}" data-f="min" aria-label="Minuter">`
+      : `<button class="done-btn big ${ok ? "on" : ""}" data-dcheck="${id}" aria-pressed="${ok}" aria-label="${esc(EX[id].name)} klar">✓</button>`;
+    return `<div class="daily ${ok ? "ok" : ""}">${thumb(id, "xs")}<div class="grow"><b>${esc(EX[id].name)}</b>
+      <span class="muted small">${sub}${its ? ` · 🔥 ${its}` : ""}</span></div>${ctl}</div>`;
+  }).join("");
+  return `<div class="card"><div class="row between"><h2>Dailys</h2><span class="muted">${done} av ${n} klara${st ? ` · 🔥 ${st} d` : ""}</span></div>
+    <div class="bar ok"><div style="width:${Math.round(done / n * 100)}%"></div></div>
+    ${rows}
+    <button class="small ghost" style="margin-top:6px" data-dedit>Redigera dailys</button></div>`;
 }
 
 // Alla pass som knappar; används på Idag och under Pass
@@ -1046,6 +1084,7 @@ const VIEWS = {
       ${S.plan.days.length > 1 ? dayPicker(d && d.id) : ""}
       ${accountNudge()}
       ${passCard}
+      ${dailiesCard()}
       ${plusCard()}
       ${S.hideWeight ? "" : weightCard()}
       <div class="card"><div class="row between"><h2>Kalorier</h2><span class="muted">${e.kcal} / ${m.kcal} kcal</span></div>
@@ -1053,15 +1092,15 @@ const VIEWS = {
         <div class="row between" style="margin-top:10px"><span>Protein</span><span class="muted">${e.protein} / ${m.protein} g</span></div>
         ${bar(e.protein, m.protein)}
         <div style="margin-top:10px"><button data-go="kost">Logga mat</button></div></div>
-      ${dailiesSummary()}`;
+      `;
   },
 
   pass() {
     if (focus && !editing) return focusView();
     const d = currentPassDay();
-    const w = workoutOn(TODAY, d.id);
+    const w = workoutOn(logDate(), d.id);
     const done = d.ex.filter(x => exDone(w, x)).length;
-    return `<h1>Pass <span class="muted">v.${weekNo(TODAY)}</span></h1>
+    return `<h1>Träna <span class="muted">v.${weekNo(logDate())}</span></h1>
       ${dayPicker(d && d.id)}
       <div class="card"><div class="row between"><h2>${passLabel(d)}</h2>
         <button class="small ghost" data-edit>${editing ? "Klar" : "Redigera"}</button></div>
@@ -1076,81 +1115,13 @@ const VIEWS = {
             <div class="muted small">Det räknas in i veckans pass och jämförelsen med förra veckan.</div>
             <button class="small" style="margin-top:8px" data-finish="${d.id}">Öppna passet igen</button></div>`
         : `<button class="primary wide" data-finish="${d.id}">✓ Spara passet${d.ex.length ? ` (${done} av ${d.ex.length} övningar)` : ""}</button>
-          <div class="muted small finish-note">Allt du loggat sparas direkt. Passet räknas även om du inte hunnit alla övningar.</div>`}`;
-  },
-
-  dailys() {
-    const n = S.daily.length, L = day();
-    if (dailyEditing) return `<h1>Dailys</h1>
-      <div class="card"><div class="row between"><h2>Redigera dailys</h2><button class="small ghost" data-dedit>Klar</button></div>
-        ${exRows("daily", S.daily, true)}</div>`;
-    const done = S.daily.filter(e => dailyDone(TODAY, e.id)).length, st = streakOf(allDailiesDone);
-    const thisW = weekSummary(weekStart(TODAY)), prevW = weekSummary(shift(weekStart(TODAY), -7));
-    const items = S.daily.map(e => {
-      const id = e.id, ok = dailyDone(TODAY, id), its = streakOf(d => dailyDone(d, id)), v = L.dailies[id] || {};
-      const ctl = isRun(id)
-        ? `<div class="row"><input type="number" inputmode="decimal" step="0.1" placeholder="km" value="${v.km || ""}" data-run="${id}" data-f="km" aria-label="Kilometer">
-            <input type="number" inputmode="numeric" placeholder="min" value="${v.min || ""}" data-run="${id}" data-f="min" aria-label="Minuter"></div>`
-        : `<button class="done-btn big ${ok ? "on" : ""}" data-dcheck="${id}" aria-pressed="${ok}" aria-label="${esc(EX[id].name)} klar idag">✓</button>`;
-      const sub = isRun(id)
-        ? `Veckan: ${fmtNum(thisW.km)} km ${thisW.km || prevW.km ? deltaBadge(Math.round((thisW.km - prevW.km) * 10) / 10, "km") : ""}`
-        : EX[id].cat === "cardio" ? esc(e.reps || EX[id].muscles) : `${e.sets} × ${esc(e.reps)}`;
-      return `<div class="card ex ${ok ? "complete" : ""}"><div class="row">${thumb(id)}
-        <div class="grow"><b>${esc(EX[id].name)}</b> ${its ? `<span class="pill">🔥 ${its} d</span>` : ""}<div class="muted">${sub}</div></div>${isRun(id) ? "" : ctl}</div>
-        ${isRun(id) ? `<div style="margin-top:10px">${ctl}</div>` : ""}</div>`;
-    }).join("");
-    return `<h1>Dailys <span class="muted">${new Date().toLocaleDateString("sv-SE", { weekday: "long", day: "numeric", month: "long" })}</span></h1>
-      <div class="card"><div class="row between"><h2>Idag</h2><button class="small ghost" data-dedit>Redigera</button></div>
-        ${n ? `<div class="muted">${done} av ${n} klara${st ? ` · 🔥 alla klara ${st} dagar i rad` : ""}</div>
-          <div class="bar ok"><div style="width:${Math.round(done / n * 100)}%"></div></div>`
-          : `<div class="muted">Lägg till det du vill göra varje dag, till exempel plankan eller löpning.</div>`}</div>
-      ${items}
-      <button class="wide" data-openpick="daily">+ Lägg till daily</button>
-      ${S.daily.length ? reminderCard() : ""}`;
+          <div class="muted small finish-note">Allt du loggat sparas direkt. Passet räknas även om du inte hunnit alla övningar.</div>`}
+      ${editing ? "" : upcomingCard()}`;
   },
 
   kost: () => kostView(),
 
-  vecka() {
-    const ws = shift(weekStart(TODAY), weekOffset * 7), prevWs = shift(ws, -7);
-    const cur = weekSummary(ws), prev = weekSummary(prevWs);
-    const ids = [];
-    for (const d of S.plan.days) for (const e of d.ex) if (!ids.includes(e.id)) ids.push(e.id);
-    const rows = ids.map(id => {
-      const c = exWeek(id, ws), p = exWeek(id, prevWs);
-      if (!c && !p) return "";
-      const vol = c && p && p.vol ? Math.round((c.vol - p.vol) / p.vol * 100) : null;
-      return `<tr><td><div class="row">${thumb(id, "xs")}<button class="linkbtn" data-chart="${id}">${esc(EX[id].name)}</button></div></td><td>${fmtSet(c, id)}</td><td class="muted">${fmtSet(p, id)}</td>
-        <td>${exDelta(c, p, id)}${vol !== null && vol !== 0 ? `<div>${deltaBadge(vol, "% vol")}</div>` : ""}</td></tr>`;
-    }).join("");
-    const dates = weekDates(ws);
-    const m = macros();
-    const stat = (label, c, p, unit = "") => `<div><div class="stat">${fmtNum(c)}${unit}</div><div class="muted">${label}</div>${c || p ? deltaBadge(Math.round((c - p) * 10) / 10, unit.trim() || "st") : ""}</div>`;
-    return `<h1>Vecka ${weekNo(ws)}</h1>
-      <div class="row between" style="margin-bottom:12px"><button data-week="-1">‹ Förra</button>
-        <span class="muted">${ws.slice(5)} – ${shift(ws, 6).slice(5)}</span>
-        <button data-week="1" ${weekOffset >= 0 ? "disabled" : ""}>Nästa ›</button></div>
-      <button class="wide" data-letter="${ws}">📬 Visa veckobrevet för vecka ${weekNo(ws)}</button>
-      <div class="card"><h2>Jämfört med vecka ${weekNo(prevWs)}</h2><div class="grid2">
-        ${stat(`pass av ${S.plan.count}`, cur.passes, prev.passes)}
-        ${stat("dagar alla dailys klara", cur.dailies, prev.dailies)}
-        ${stat("löpning", cur.km, prev.km, " km")}
-        <div><div class="stat">${cur.kcal || "–"}</div><div class="muted">kcal/dag i snitt (mål ${m.kcal})</div></div>
-      </div></div>
-      ${!S.hideWeight && Object.keys(weights()).length ? `<div class="card"><h2>Vikt</h2>${(() => {
-        const a = weekAvgWeight(ws), b = weekAvgWeight(prevWs);
-        return a != null ? `<div>Snitt vecka ${weekNo(ws)}: <b>${fmtNum(a)} kg</b> ${b != null ? weightBadge(a - b) : ""}</div>` : "";
-      })()}${weightChart()}</div>` : ""}
-      <div class="card"><h2>Övningar</h2>${rows ? `<table class="wk"><tr><th>Övning</th><th>Bästa set</th><th>Förra v.</th><th>±</th></tr>${rows}</table>`
-        : `<div class="muted">Inga loggade set de här två veckorna.</div>`}</div>
-      <div class="card"><h2>Dagar</h2><table>${dates.map(d => {
-        const L = S.log[d], e = eaten(d);
-        const wk = workoutsOn(d).filter(w => w.done).map(w => dayById(w.dayId)).filter(Boolean);
-        const dn = S.daily.filter(x => dailyDone(d, x.id)).length;
-        const dl = S.daily.length ? `${dn}/${S.daily.length} dailys` : "";
-        return `<tr><td>${WD[weekdayOf(d)]} ${d.slice(8)}</td><td>${wk.length ? wk.map(k => tag(k.type)).join(" ") : "–"}</td><td>${dl || "–"}</td><td>${e.kcal || "–"}</td></tr>`;
-      }).join("")}</table></div>`;
-  },
+  historik: () => historikView(),
 
   profil() {
     const p = S.profile, m = macros();
@@ -1160,6 +1131,7 @@ const VIEWS = {
       <div class="card"><h2>Vikt</h2>
         <label class="row"><input type="checkbox" data-showweight ${S.hideWeight ? "" : "checked"}><span>Visa vikt på Idag och under Vecka</span></label>
         <div class="muted small" style="margin-top:4px">Döljer du vikten används vikten i Kalorimål nedan, och sparade vägningar finns kvar.</div></div>
+      ${S.daily.length ? reminderCard() : ""}
       <div class="card"><h2>Vilotimer</h2>
         <label class="row"><input type="checkbox" data-resttoggle ${restSettings().on ? "checked" : ""}><span>Starta en vilotimer när jag bockar av ett set</span></label>
         <div class="grid2" style="margin-top:10px">
@@ -1218,7 +1190,7 @@ function exDone(w, ex) {
 
 // Senaste loggade set före idag, som platshållare
 function lastSets(exId) {
-  const dates = Object.keys(S.log).filter(d => d < TODAY).sort().reverse();
+  const dates = Object.keys(S.log).filter(d => d < logDate()).sort().reverse();
   for (const d of dates) {
     const w = workoutsOn(d).filter(x => (x.sets[exId] || []).some(hasData)).pop();
     if (w) return w.sets[exId];
@@ -1229,7 +1201,7 @@ function lastSets(exId) {
 function exBlock(d, ex, w) {
   const sets = (w && w.sets[ex.id]) || [];
   const prev = lastSets(ex.id);
-  const ws = weekStart(TODAY);
+  const ws = weekStart(logDate());
   const cur = exWeek(ex.id, ws), last = exWeek(ex.id, shift(ws, -7));
   const all = exDone(w, ex);
   const target = todayTarget(ex);
@@ -1485,7 +1457,7 @@ function bestBefore(exId, date) {
 const toasted = new Set();
 function checkRecord(exId, s) {
   if (!hasData(s) || toasted.has(exId)) return;
-  const ws = weekStart(TODAY), prevWeek = exWeek(exId, shift(ws, -7)), ever = bestBefore(exId, ws);
+  const ws = weekStart(logDate()), prevWeek = exWeek(exId, shift(ws, -7)), ever = bestBefore(exId, ws);
   const set = fmtSet({ kg: +s.kg || 0, reps: +s.reps || 0 }, exId);
   if (ever && betterSet(s, ever)) toast(`🏆 Nytt pers i ${EX[exId].name}: ${set}`);
   else if (prevWeek && betterSet(s, prevWeek)) toast(`📈 Bättre än förra veckan i ${EX[exId].name}: ${set}`);
@@ -1636,7 +1608,7 @@ function plusCard() {
 // Vikten från ett tidigare set idag följer med till nästa set, om inget annat skrivits där
 function liveHint(d, ex, i) {
   const h = { ...setHint(ex, i) };
-  const w = workoutOn(TODAY, d.id), sets = (w && w.sets[ex.id]) || [];
+  const w = workoutOn(logDate(), d.id), sets = (w && w.sets[ex.id]) || [];
   for (let j = i - 1; j >= 0; j--) if (sets[j] && sets[j].kg !== undefined && sets[j].kg !== "") { h.kg = sets[j].kg; break; }
   return h;
 }
@@ -1654,7 +1626,7 @@ function fillFromHint(d, exId, i) {
 
 // Passet räknas som klart när alla övningar är avbockade
 function syncDone(d) {
-  const w = workoutOn(TODAY, d.id);
+  const w = workoutOn(logDate(), d.id);
   if (w) w.done = d.ex.length > 0 && d.ex.every(x => exDone(w, x));
 }
 
@@ -1682,7 +1654,7 @@ document.addEventListener("click", ev => {
   const t = ev.target.closest("button, input[type=checkbox], .overlay");
   if (!t || t.disabled) return;
   if (t.classList.contains("overlay") && ev.target !== t) return;   // klick inne i rutan
-  const ds = t.dataset;
+  const ds = t.dataset, prevTab = tab;
   if (ds.close !== undefined) { modal = null; render(); return; }
   if (ds.info) { modal = { info: ds.info }; render(); return; }
   if (ds.chart) { modal = { chart: ds.chart }; render(); return; }
@@ -1698,7 +1670,10 @@ document.addEventListener("click", ev => {
   }
   if (ds.askai !== undefined) { askClaude(); return; }
   if (ds.sugg !== undefined) { pickSuggestion(+ds.sugg); return; }
-  if (ds.tab) { tab = ds.tab; editing = false; dailyEditing = false; draft = null; if (tab !== "pass") chosenDay = null; }
+  if (ds.tab) {
+    tab = ds.tab; editing = false; dailyEditing = false; draft = null; editDate = null; histDay = null;
+    if (tab !== "pass") chosenDay = null;
+  }
   else if (ds.go) { tab = ds.go; if (ds.day) chosenDay = ds.day; }
   else if (ds.pick) { chosenDay = ds.pick; }
   else if (ds.edit !== undefined) editing = !editing;
@@ -1711,28 +1686,33 @@ document.addEventListener("click", ev => {
   }
   else if (ds.exok) {
     const d = currentPassDay(), ex = d.ex.find(x => x.id === ds.exok);
-    const val = !exDone(workoutOn(TODAY, d.id), ex);
+    const val = !exDone(workoutOn(logDate(), d.id), ex);
     for (let i = 0; i < ex.sets; i++) {
       setAt(d, ex.id, i).ok = val;
       if (val) fillFromHint(d, ex.id, i);
     }
-    if (val) checkRecord(ex.id, topSet(workoutOn(TODAY, d.id).sets[ex.id] || []) || {});
+    if (val) checkRecord(ex.id, topSet(workoutOn(logDate(), d.id).sets[ex.id] || []) || {});
     syncDone(d);
   }
-  else if (ds.finish) { const w = workoutFor(dayById(ds.finish)); w.done = !w.done; if (w.done) tab = "vecka"; }
+  else if (ds.finish) {
+    const w = workoutFor(dayById(ds.finish));
+    w.done = !w.done;
+    // Ett sparat pass visar veckan; i efterhand går man tillbaka till dagen i Historik
+    if (w.done) { histDay = editDate; editDate = null; tab = "historik"; }
+  }
   else if (ds.setcount) {
     const d = currentPassDay(), ex = d.ex.find(x => x.id === ds.ex);
     ex.sets = Math.max(1, ex.sets + +ds.setcount);
     syncDone(d);
   }
-  else if (ds.dcheck) day().dailies[ds.dcheck] = !dailyDone(TODAY, ds.dcheck);
+  else if (ds.dcheck) day().dailies[ds.dcheck] = !dailyDone(logDate(), ds.dcheck);
   else if (ds.dedit !== undefined) dailyEditing = !dailyEditing;
   else if (ds.letterclose) S.letterSeen = ds.letterclose;
   else if (ds.hideweight !== undefined) { S.hideWeight = true; toast("Vikten är dold. Visa den igen under Profil."); }
   else if (ds.showweight !== undefined) S.hideWeight = !t.checked;
   else if (ds.wsave !== undefined) {
     if (!logWeight(+String($("wkg").value).replace(",", "."))) { toast("Skriv vikten i kg, till exempel 80,5"); return; }
-    toast(`Vikt sparad: ${fmtNum(weights()[TODAY])} kg`);
+    toast(`Vikt sparad: ${fmtNum(weights()[logDate()])} kg`);
   }
   else if (ds.resttoggle !== undefined) S.rest = Object.assign({}, restSettings(), { on: t.checked });
   else if (ds.sendcode !== undefined) { sendLoginCode(); return; }
@@ -1819,6 +1799,7 @@ document.addEventListener("click", ev => {
   else if (ds.savesetup !== undefined) saveSetup();
   else if (ds.cancelsetup !== undefined) { draft = null; tab = "profil"; }
   else if (ds.week) weekOffset = Math.min(0, weekOffset + +ds.week);
+  else if (ds.editdone !== undefined) { histDay = editDate; editDate = null; tab = "historik"; chosenDay = null; if (focus) endFocus(); }
   else if (ds.export !== undefined) { exportData(); return; }
   else if (ds.import !== undefined) { document.getElementById("importfile").click(); return; }
   else if (ds.reset !== undefined) {
@@ -1829,6 +1810,8 @@ document.addEventListener("click", ev => {
   confirmReset = false;
   save();
   render();
+  // En ny flik börjar högst upp
+  if (tab !== prevTab) window.scrollTo(0, 0);
 });
 
 document.addEventListener("change", ev => {

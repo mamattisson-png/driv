@@ -65,7 +65,7 @@ def test_vikt_jamfors_med_forra_veckan(page):
     page.fill('[data-set=bankpress][data-i="0"][data-f=reps]', "8")
     page.press('[data-set=bankpress][data-i="0"][data-f=reps]', "Tab")
     page.click('[data-ok=bankpress][data-i="0"]')
-    go(page, "vecka")
+    go(page, "historik")
     row = page.locator("table.wk tr", has_text="Bänkpress").inner_text()
     assert "82,5 kg × 8" in row and "+2,5 kg" in row
 
@@ -83,7 +83,7 @@ def test_kroppsvikt_ovningar_raknas_i_reps_och_sekunder(page):
         sel = f'[data-set={ex}][data-i="0"][data-f=reps]'
         page.fill(sel, val)
         page.press(sel, "Tab")
-    go(page, "vecka")
+    go(page, "historik")
     assert "+3 reps" in page.locator("table.wk tr", has_text="Armhävningar").inner_text()
     assert "+15 s" in page.locator("table.wk tr", has_text="Plankan").inner_text()
 
@@ -140,7 +140,7 @@ def test_fokuslage_en_ovning_i_taget(page):
     # Till sista övningen och spara passet
     page.click(f'[data-focusgo="{page.evaluate("S.plan.days[0].ex.length - 1")}"]')
     page.click("[data-focusend]")
-    assert page.evaluate("focus") is None and page.evaluate("tab") == "vecka"
+    assert page.evaluate("focus") is None and page.evaluate("tab") == "historik"
     assert page.evaluate("workoutsOn(TODAY)[0].done") is True
     assert page.evaluate("window.__wake") == ["på", "av"]
 
@@ -207,7 +207,7 @@ def test_dailys_flyttas_over_fran_gammalt_format(page):
     page.reload()
     assert page.evaluate("S.daily.map(e => e.id)") == ["plankan", "lop", "promenad"]
     assert page.evaluate("S.log['2026-01-05'].dailies") == {"lop": {"km": 5, "min": 30}, "plankan": True, "promenad": True}
-    go(page, "dailys")
+    go(page, "idag")
     page.click("[data-dcheck=plankan]")
     assert page.evaluate("dailyDone(TODAY, 'plankan')")
 
@@ -225,7 +225,7 @@ def test_kroppsvikt_och_kalorimal(page):
     # Vikten kan döljas och visas igen
     page.click("[data-hideweight]")
     assert page.locator("#wkg").count() == 0
-    go(page, "vecka")
+    go(page, "historik")
     assert page.locator('.card:has(h2:text-is("Vikt"))').count() == 0
     go(page, "profil")
     page.click("[data-showweight]")
@@ -235,7 +235,7 @@ def test_kroppsvikt_och_kalorimal(page):
 
 def test_paminnelse_i_kalendern(page):
     start(page)
-    go(page, "dailys")
+    go(page, "profil")
     page.fill("#remtime", "06:30")
     page.press("#remtime", "Tab")
     with page.expect_download() as dl:
@@ -624,6 +624,61 @@ def test_nytt_datum_efter_midnatt(page):
     assert page.evaluate("TODAY") == "2026-10-22"
     page.evaluate("document.querySelector('[data-tab=kost]').click()")
     assert page.evaluate("tab") == "kost"
+
+
+# ---------- Historik ----------
+
+def test_fyra_flikar_och_profil_via_kugghjulet(page):
+    start(page)
+    assert page.evaluate("[...document.querySelectorAll('#nav [data-tab]')].map(b => b.dataset.tab)") == ["idag", "pass", "kost", "historik"]
+    page.click(".gear")
+    assert page.evaluate("tab") == "profil"
+    # Dailys bockas av direkt på Idag
+    go(page, "idag")
+    page.click("[data-dcheck=plankan]")
+    assert page.evaluate("dailyDone(TODAY, 'plankan')")
+
+
+def test_historik_andra_en_tidigare_dag(page):
+    import datetime
+    page.clock.install(time=datetime.datetime(2026, 10, 22, 12, 0))
+    start(page)
+    seed(page, "S.log['2026-10-20'] = {workouts:[{dayId:S.plan.days[0].id,done:true,sets:{bankpress:[{kg:80,reps:8,ok:true}]}}],dailies:{},food:[]}")
+    go(page, "historik")
+    assert page.locator('[data-histday="2026-10-20"] .cdot').count() == 1
+    assert page.locator('[data-histday="2026-10-23"]').is_disabled()
+    # Igår: dailys och vikt direkt i fönstret
+    page.click('[data-histday="2026-10-21"]')
+    assert "Igår" in page.inner_text(".sheet h2")
+    page.click(".sheet [data-dcheck=plankan]")
+    page.fill(".sheet #wkg", "80.5")
+    page.click(".sheet [data-wsave]")
+    assert page.evaluate("S.log['2026-10-21'].dailies.plankan") is True
+    assert page.evaluate("dailyDone('2026-10-22', 'plankan')") is False
+    assert page.evaluate("S.weights['2026-10-21']") == 80.5
+    # Mat i efterhand: Kost öppnas för den dagen och Klar leder tillbaka
+    page.click("[data-hfood]")
+    assert "igår" in page.inner_text(".editbar")
+    page.click('[data-addto="2"]')
+    page.fill("#fname", "1 banan")
+    page.click("[data-addfood]")
+    page.click(".sheet [data-fsclose].wide")
+    page.click("[data-editdone]")
+    assert page.evaluate("tab") == "historik" and "Igår" in page.inner_text(".sheet h2")
+    assert page.evaluate("S.log['2026-10-21'].food.map(f => f.meal)") == [2]
+    assert page.evaluate("(S.log['2026-10-22'] || {food: []}).food.length") == 0
+    # Ett pass i efterhand
+    page.click("[data-hpass='']")
+    assert page.evaluate("[tab, logDate()]") == ["pass", "2026-10-21"]
+    page.click(f'[data-pick="{page.evaluate("S.plan.days[1].id")}"]')
+    page.click('[data-ok=marklyft][data-i="0"]')
+    page.click(f'[data-finish="{page.evaluate("S.plan.days[1].id")}"]')
+    assert page.evaluate("[tab, histDay]") == ["historik", "2026-10-21"]
+    assert page.evaluate("workoutsOn('2026-10-21').map(w => w.done)") == [True]
+    assert page.evaluate("workoutsOn('2026-10-22').length") == 0
+    # Till en annan flik: tillbaka till idag
+    go(page, "idag")
+    assert page.evaluate("logDate()") == "2026-10-22"
 
 # ---------- Veckobrev ----------
 

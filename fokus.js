@@ -9,7 +9,7 @@ let focus = null;   // { dayId, idx } medan fokusläget är öppet
 function startFocus(dayId) {
   const d = dayById(dayId);
   if (!d || !d.ex.length) return false;
-  const w = workoutOn(TODAY, d.id);
+  const w = workoutOn(logDate(), d.id);
   focus = { dayId, idx: Math.max(0, d.ex.findIndex(x => !exDone(w, x))) };
   chosenDay = dayId;
   keepAwake(true);
@@ -23,7 +23,7 @@ function endFocus() {
 // Efter ett avbockat set: är övningen klar går fokus vidare till nästa medan vilan räknar ned
 function focusAfterSet(d) {
   if (!focus || focus.dayId !== d.id) return;
-  const w = workoutOn(TODAY, d.id);
+  const w = workoutOn(logDate(), d.id);
   const advance = exDone(w, d.ex[focus.idx]) && focus.idx < d.ex.length - 1;
   if (advance) focus.idx++;
   focus.scroll = advance ? "top" : "active";
@@ -61,7 +61,7 @@ function focusView() {
   const d = dayById(focus.dayId);
   if (!d || !d.ex.length) { endFocus(); return VIEWS.pass(); }
   focus.idx = Math.min(focus.idx, d.ex.length - 1);
-  const ex = d.ex[focus.idx], w = workoutOn(TODAY, d.id);
+  const ex = d.ex[focus.idx], w = workoutOn(logDate(), d.id);
   const sets = (w && w.sets[ex.id]) || [], prev = lastSets(ex.id), target = todayTarget(ex);
   const bw = !!EX[ex.id].bw, repLabel = isTimed(ex.id) ? "sek" : "reps";
   let active = -1;

@@ -150,12 +150,12 @@ const countIn = (f, meal) => { const h = inMeal(f, meal); return h ? (h.amt ? am
 // Senaste dagen före idag (inom två veckor) då måltiden loggades
 function lastSlot(meal) {
   for (let i = 1; i <= 14; i++) {
-    const d = shift(TODAY, -i), items = ((S.log[d] && S.log[d].food) || []).filter(f => f.meal === meal);
+    const d = shift(logDate(), -i), items = ((S.log[d] && S.log[d].food) || []).filter(f => f.meal === meal);
     if (items.length) return { date: d, items };
   }
   return null;
 }
-const whenText = date => date === shift(TODAY, -1) ? "igår" : `i ${WD[weekdayOf(date)].toLowerCase()}s`;
+const whenText = date => date === shift(logDate(), -1) ? "igår" : `i ${WD[weekdayOf(date)].toLowerCase()}s`;
 const sumKcal = items => items.reduce((a, f) => a + (+f.kcal || 0), 0);
 const mealTarget = (meal, m) => Math.round(m.kcal * MEALS[meal][1] / 10) * 10;
 
