@@ -228,9 +228,20 @@ function mealCard(meal, L) {
       <span class="${sum ? "msum" : "muted"}">${sum} kcal</span></div>
     ${items.map(({ f, i }) => `<button class="tile ${isEst(f) ? "est" : ""}" data-fooditem="${i}">
       <span class="grow"><b>${itemName(f)}</b><span class="muted small">${foodLine(f)}</span></span><span class="chev" aria-hidden="true">›</span></button>`).join("")}
+    ${!items.length && meal >= 0 ? savedFor(meal).slice(0, 3).map(({ m, idx }) => `<button class="again" data-usemeal="${idx}" data-meal="${meal}">🍽 ${esc(m.name)}<span class="muted"> · ${m.kcal} kcal</span></button>`).join("") : ""}
     ${last ? `<button class="again" data-repeat="${meal}">↻ Samma som ${whenText(last.date)}<span class="muted"> · ${esc(last.items.map(f => isEst(f) ? "uppskattning" : f.name).join(", "))}</span></button>` : ""}
     ${meal >= 0 ? `<button class="addfood ${items.length ? "" : "empty"}" data-addto="${meal}">+ Lägg till${items.length ? "" : " mat"}</button>` : ""}
   </div>`;
+}
+
+// Sparade måltider för en viss måltid (äldre sparningar känns igen på namnet, t.ex. "Frukost: …")
+const savedFor = meal => S.meals.map((m, idx) => ({ m, idx }))
+  .filter(({ m }) => m.items && (m.slot === meal || (m.slot == null && m.name.startsWith(MEALS[meal][0] + ":"))));
+// Igår med mat, om dagen man loggar är tom
+function yesterdayFood() {
+  if (day().food.length) return null;
+  const d = shift(logDate(), -1), food = (S.log[d] && S.log[d].food) || [];
+  return food.length ? food : null;
 }
 
 // Dagens kalorier som en ring, med protein bredvid
@@ -305,12 +316,13 @@ function kostView() {
   const m = macros(), e = eaten(), L = day();
   return `<h1>Kost</h1>
     ${dayRing(e, m)}
+    ${yesterdayFood() ? `<button class="again dayagain" data-repeatday>↻ Samma mat som igår<span class="muted"> · hela dagen, ${sumKcal(yesterdayFood())} kcal</span></button>` : ""}
     <div class="meals">${MEALS.map((_, i) => mealCard(i, L)).join("")}${mealCard(-1, L)}</div>
     ${foodSheet ? addSheet(m) : foodItem != null ? itemSheet() : ""}`;
 }
 
 document.addEventListener("click", ev => {
-  const t = ev.target.closest("[data-addfood],[data-addto],[data-fsclose],[data-quick],[data-mstep],[data-mdel],[data-repeat],[data-savegroup],[data-quickmore],[data-manualkcal],[data-fooditem],[data-itemclose],[data-qty],[data-itemfav]");
+  const t = ev.target.closest("[data-addfood],[data-addto],[data-fsclose],[data-quick],[data-mstep],[data-mdel],[data-repeat],[data-savegroup],[data-usemeal],[data-repeatday],[data-quickmore],[data-manualkcal],[data-fooditem],[data-itemclose],[data-qty],[data-itemfav]");
   if (!t || t.disabled) return;
   if (t.classList.contains("overlay") && ev.target !== t) return;   // klick inne i fönstret
   const ds = t.dataset;
@@ -345,11 +357,17 @@ document.addEventListener("click", ev => {
     const meal = +ds.repeat, last = lastSlot(meal);
     if (last) last.items.forEach(f => logFood({ ...perUnit(f), qty: f.qty, est: isEst(f) }, meal));
   }
+  else if (ds.usemeal) addQuick({ ...S.meals[+ds.usemeal], kind: "meal" }, +ds.meal);
+  else if (ds.repeatday !== undefined) {
+    const food = yesterdayFood() || [];
+    food.forEach(f => logFood({ ...perUnit(f), qty: f.qty, est: isEst(f) }, f.meal));
+    toast(`Lade till ${food.length} saker från igår`);
+  }
   else if (ds.savegroup) {
     const meal = +ds.savegroup, items = day().food.filter(f => f.meal === meal && !isEst(f));
     const names = items.map(f => f.name + qtyText(f)).join(", ");
     S.meals.push({
-      name: `${MEALS[meal][0]}: ${names.length > 40 ? names.slice(0, 38) + "…" : names}`,
+      name: names.length > 40 ? names.slice(0, 38) + "…" : names, slot: meal,
       kcal: sumKcal(items), protein: items.reduce((a, f) => a + (+f.protein || 0), 0),
       items: items.map(f => ({ ...perUnit(f), qty: f.qty })),
     });

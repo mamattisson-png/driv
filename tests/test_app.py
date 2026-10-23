@@ -454,9 +454,27 @@ def test_kost_maltider_forslag_mangd_och_upprepa(page):
     page.click('[data-savegroup="0"]')
     page.click('.sheet [data-fsclose].wide')
     page.click('[data-addto="3"]')
-    page.click('.qadd:has-text("Frukost:")')
+    page.click('.qadd:has-text("🍽")')
     assert amounts(3) == [["Gröt", 300, ""], ["Ägg", 154, "2 st"]]
     page.click('.sheet [data-fsclose].wide')
+
+
+def test_hela_garadagen_och_sparad_maltid_med_ett_tryck(page):
+    start(page)
+    seed(page, """S.log[shift(TODAY, -1)] = {workouts:[], dailies:{}, food:[
+      {name:'Gröt', kcal:300, protein:10, meal:0}, {name:'Pasta', kcal:700, protein:25, meal:1}]};
+      S.meals = [{name:'Gröt, kaffe', kcal:320, protein:11, slot:0, items:[{name:'Gröt', kcal:300, protein:10}, {name:'Kaffe', kcal:20, protein:1}]}]""")
+    go(page, "kost")
+    assert "hela dagen, 1000 kcal" in page.inner_text("[data-repeatday]")
+    # Sparad frukost syns direkt i den tomma frukosten, inte i lunchen
+    assert page.locator('[data-usemeal][data-meal="0"]').count() == 1
+    assert page.locator('[data-usemeal][data-meal="1"]').count() == 0
+    page.click('[data-usemeal][data-meal="0"]')
+    assert page.evaluate("day().food.map(f => [f.name, f.meal])") == [["Gröt", 0], ["Kaffe", 0]]
+    assert page.locator("[data-repeatday]").count() == 0   # dagen är inte tom längre
+    page.evaluate("day().food = []; save(); render()")
+    page.click("[data-repeatday]")
+    assert page.evaluate("day().food.map(f => [f.name, f.meal, f.kcal])") == [["Gröt", 0, 300], ["Pasta", 1, 700]]
 
 
 def test_uppskattningar_raknas_inte_dubbelt(page):
