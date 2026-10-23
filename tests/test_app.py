@@ -435,10 +435,10 @@ def test_kost_maltider_forslag_mangd_och_upprepa(page):
     assert amounts(1)[-1] == ["Ägg", 231, "3 st"]
     # Klar syns även i ett lågt fönster
     page.set_viewport_size({"width": 1200, "height": 500})
-    klar = page.locator(".sheet [data-fsclose].wide").bounding_box()
+    klar = page.locator(".sheet-foot [data-fsclose]").bounding_box()
     assert klar["y"] + klar["height"] <= 500
     page.set_viewport_size({"width": 390, "height": 844})
-    page.click('.sheet [data-fsclose].wide')
+    page.click('.sheet-foot [data-fsclose]')
     assert page.locator(".sheet").count() == 0
     assert "Ägg\n3 st · 231 kcal" in page.inner_text(".meals")
     # Tryck på en loggad sak: favorit med sin mängd, ta bort
@@ -452,11 +452,11 @@ def test_kost_maltider_forslag_mangd_och_upprepa(page):
     # Frukosten sparad som måltid och loggad i middag del för del
     page.click('[data-addto="0"]')
     page.click('[data-savegroup="0"]')
-    page.click('.sheet [data-fsclose].wide')
+    page.click('.sheet-foot [data-fsclose]')
     page.click('[data-addto="3"]')
     page.click('.qadd:has-text("🍽")')
     assert amounts(3) == [["Gröt", 300, ""], ["Ägg", 154, "2 st"]]
-    page.click('.sheet [data-fsclose].wide')
+    page.click('.sheet-foot [data-fsclose]')
 
 
 def test_hela_garadagen_och_sparad_maltid_med_ett_tryck(page):
@@ -490,9 +490,9 @@ def test_uppskattningar_raknas_inte_dubbelt(page):
     # Riktig mat i samma måltid: varning och ett tryck för att ta bort uppskattningen
     page.click('.qadd:has-text("Pasta")')
     assert "räknas dubbelt" in page.inner_text(".sheet")
-    page.click(".sheet .warn [data-mdel]")
+    page.click(".sheet .nrow.est [data-mdel]")
     assert page.evaluate("day().food.filter(f => f.meal === 2).map(f => f.name)") == ["Pasta"]
-    page.click('.sheet [data-fsclose].wide')
+    page.click('.sheet-foot [data-fsclose]')
     # En uppskattning visas som just det och kan inte bli favorit
     page.evaluate("day().food.push({name: 'Uppskattning', kcal: 600, protein: 30, meal: 3, est: true}); render()")
     assert "≈ Uppskattning" in page.inner_text(".meals")
@@ -542,7 +542,7 @@ def test_mangd_styr_kalorierna(page):
     f = page.evaluate("day().food[0]")
     assert [f["name"], f["kcal"], f["protein"], f["amt"]["n"], f["amt"]["unit"]] == ["Spaghetti bolognese", 150, 7, 100, "g"]
     # Ändra mängden i efterhand på det loggade
-    page.click('.sheet [data-fsclose].wide')
+    page.click('.sheet-foot [data-fsclose]')
     page.click('[data-fooditem="0"]')
     page.locator('[data-iamt="n"]').fill("300")
     page.locator('[data-iamt="n"]').press("Enter")
@@ -934,7 +934,7 @@ def test_historik_andra_en_tidigare_dag(page):
     page.click('[data-addto="2"]')
     page.fill("#fname", "1 banan")
     page.click("[data-addfood]")
-    page.click(".sheet [data-fsclose].wide")
+    page.click(".sheet-foot [data-fsclose]")
     page.click("[data-editdone]")
     assert page.evaluate("tab") == "historik" and "Igår" in page.inner_text(".sheet h2")
     assert page.evaluate("S.log['2026-10-21'].food.map(f => f.meal)") == [2]

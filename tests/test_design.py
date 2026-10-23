@@ -70,7 +70,7 @@ def views(page):
     page.fill("#fname", "bolognese och 2 ägg")
     page.click(".sheet h2")
     yield "Lägg till mat", ".sheet"
-    page.click(".sheet [data-fsclose].wide")
+    page.click(".sheet-foot [data-fsclose]")
     page.click('[data-fooditem="0"]')
     yield "Ändra mat", ".sheet"
     page.click(".sheet [data-itemclose].primary")

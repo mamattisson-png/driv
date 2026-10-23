@@ -1966,6 +1966,8 @@ function pickSuggestion(i) {
 function foodPreview(suggest = true) {
   const text = $("fname").value, out = $("fpreview");
   if (suggest) showSuggestions();
+  const addrow = document.querySelector(".addrow");
+  if (addrow) addrow.hidden = !text.trim() && !manualKcal;
   if (!text.trim()) { out.innerHTML = ""; return; }
   const known = (S.learned || {})[norm(text.trim())];
   if (known) {
