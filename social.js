@@ -103,9 +103,7 @@ document.addEventListener("click", ev => {
     socialRpc("driv_kudos", { p_activity: +ds.kudos }).catch(() => loadSocial());
   }
   else if (ds.gofriends !== undefined) {
-    tab = "profil"; render();
-    const c = document.getElementById("vanner");
-    if (c) c.scrollIntoView({ block: "start" });
+    openProfRow("vanner");
   }
   else if (ds.dropcode !== undefined) { social.pendingCode = ""; history.replaceState(null, "", location.pathname); render(); }
   else if (ds.profsave !== undefined) {

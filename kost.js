@@ -243,7 +243,7 @@ function dayRing(e, m) {
     <div class="grow"><div class="row between"><span>Protein</span><span class="muted">${e.protein} / ${m.protein} g</span></div>
       ${bar(e.protein, m.protein, true)}
       <div class="muted small" style="margin-top:6px">${e.kcal <= m.kcal ? `${m.kcal - e.kcal} kcal kvar` : `${e.kcal - m.kcal} kcal över målet`}</div>
-      ${S.profileSet === false ? `<button class="link small" data-tab="profil" style="margin-top:6px">Målet bygger på standardvärden – ställ in ditt</button>` : ""}</div></div>`;
+      ${S.profileSet === false ? `<button class="link small" data-tab="profil" data-popen="kalori" style="margin-top:6px">Målet bygger på standardvärden – ställ in ditt</button>` : ""}</div></div>`;
 }
 
 function addSheet(m) {

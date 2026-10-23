@@ -1177,39 +1177,61 @@ const VIEWS = {
   historik: () => historikView(),
 
   profil() {
-    const p = S.profile, m = macros();
-    return `<h1>Profil</h1>
-      <div class="card"><h2>Upplägg</h2><div class="muted">${PROGRAMS[S.plan.program || "ppl"].name} · ${isFixed() ? S.plan.weekdays.map(i => WD[i]).join(", ") : `${S.plan.count} pass i veckan, valfria dagar`}</div>
-        <button style="margin-top:10px" data-tab="upplagg">Ändra upplägg</button></div>
-      <div class="card"><h2>Vikt</h2>
-        <label class="row"><input type="checkbox" data-showweight ${S.hideWeight ? "" : "checked"}><span>Visa vikt på Hem och i Historik</span></label>
-        <label class="field" style="margin-top:8px">Vägningsdag<select data-weighday>${WD.map((w, i) => `<option value="${i}" ${weighDay() === i ? "selected" : ""}>${WD_LONG[i].replace(/^./, c => c.toUpperCase())}</option>`).join("")}</select></label>
-        <div class="muted small" style="margin-top:4px">Döljer du vikten används vikten i Kalorimål nedan, och sparade vägningar finns kvar.</div></div>
-      ${S.daily.length ? reminderCard() : ""}
-      <div class="card"><h2>Vilotimer</h2>
-        <label class="row"><input type="checkbox" data-resttoggle ${restSettings().on ? "checked" : ""}><span>Starta en vilotimer när jag bockar av ett set</span></label>
-        <div class="grid2" style="margin-top:10px">
-          <label class="field">Basövningar (sek)<input type="number" inputmode="numeric" id="restcompound" value="${restSettings().compound}"></label>
-          <label class="field">Isolering och mage (sek)<input type="number" inputmode="numeric" id="restiso" value="${restSettings().iso}"></label></div></div>
-      <div class="card"><h2>Kalorimål</h2>${profileFields(p)}
-        <div class="muted" style="margin-top:10px">Underhåll (TDEE): ${tdee(p)} kcal · Mål: ${m.kcal} kcal</div>
-        <div class="muted">Protein ${m.protein} g · Fett ${m.fat} g · Kolhydrater ${m.carbs} g</div>
-        <label class="field" style="margin-top:10px">Eget kalorimål (lämna tomt för beräknat)
-          <input type="number" inputmode="numeric" id="override" value="${S.kcalOverride || ""}" placeholder="${m.kcal}"></label></div>
-      ${feedbackCard()}
-      ${accountCard()}
-      ${friendsCard()}
-      <div class="card"><h2>Data</h2><div class="muted" style="margin-bottom:8px">${{
-          cloud: account.step === "in" ? `✓ Sparas på ditt konto (${esc(account.email)}).` : "✓ Sparas på ditt konto och följer med mellan mobil och dator.",
-          error: "Kunde inte spara till kontot just nu. Allt finns kvar i den här webbläsaren och sparas igen vid nästa ändring.",
-          local: "Sparas i den här webbläsaren. Exportera för en säkerhetskopia.",
-        }[cloud.status]}</div>
+    const p = S.profile, m = macros(), rs = restSettings(), r = S.reminder;
+    const cloudText = {
+      cloud: account.step === "in" ? `✓ Sparas på ditt konto (${esc(account.email)}).` : "✓ Sparas på ditt konto och följer med mellan mobil och dator.",
+      error: "Kunde inte spara till kontot just nu. Allt finns kvar i den här webbläsaren och sparas igen vid nästa ändring.",
+      local: "Sparas i den här webbläsaren. Exportera för en säkerhetskopia.",
+    }[cloud.status];
+    const data = `<h3 class="sheet-sub">Data</h3><div class="muted" style="margin-bottom:8px">${cloudText}</div>
         <div class="row wrap"><button data-export>Exportera</button><button data-import>Importera</button>
         <button class="${confirmReset ? "primary" : "ghost"}" data-reset>${confirmReset ? "Tryck igen för att radera allt" : "Nollställ allt"}</button></div>
         ${importMsg ? `<div class="muted" style="margin-top:8px">${esc(importMsg)}</div>` : ""}
-        <input type="file" id="importfile" accept="application/json" class="hidden"></div>`;
+        <input type="file" id="importfile" accept="application/json" class="hidden">`;
+    const friends = !sbEnabled ? "" : account.step !== "in" ? "Kräver ett konto"
+      : social.profile ? `${social.friends.length ? `${social.friends.length} ${social.friends.length === 1 ? "vän" : "vänner"}` : "Inga vänner än"} · kod ${esc(social.profile.code)}` : "Välj ditt namn";
+    return `<h1>Profil</h1>
+      <div class="card plist">
+        ${sbEnabled ? profRow("vanner", "👋", "Vänner", friends, friendsCard()) : ""}
+        <button class="prow-head" data-tab="upplagg"><span class="pic">🗓️</span><span class="grow"><b>Upplägg</b>
+          <span class="muted small">${PROGRAMS[S.plan.program || "ppl"].name} · ${isFixed() ? S.plan.weekdays.map(i => WD[i]).join(", ") : `${S.plan.count} pass i veckan`}</span></span><span class="chev">›</span></button>
+        ${profRow("kalori", "🍽️", "Kalorimål", `${m.kcal} kcal · ${GOALS[p.goal][0]}`, `${profileFields(p)}
+          <div class="muted" style="margin-top:10px">Underhåll (TDEE): ${tdee(p)} kcal · Mål: ${m.kcal} kcal</div>
+          <div class="muted">Protein ${m.protein} g · Fett ${m.fat} g · Kolhydrater ${m.carbs} g</div>
+          <label class="field" style="margin-top:10px">Eget kalorimål (lämna tomt för beräknat)
+            <input type="number" inputmode="numeric" id="override" value="${S.kcalOverride || ""}" placeholder="${m.kcal}"></label>`)}
+        ${profRow("vikt", "⚖️", "Vikt", S.hideWeight ? "Dold" : `Vägning varje ${WD_LONG[weighDay()]}`, `
+          <label class="row"><input type="checkbox" data-showweight ${S.hideWeight ? "" : "checked"}><span>Visa vikt på Hem och i Historik</span></label>
+          <label class="field" style="margin-top:8px">Vägningsdag<select data-weighday>${WD.map((w, i) => `<option value="${i}" ${weighDay() === i ? "selected" : ""}>${WD_LONG[i].replace(/^./, c => c.toUpperCase())}</option>`).join("")}</select></label>
+          <div class="muted small" style="margin-top:4px">Döljer du vikten används vikten i Kalorimål, och sparade vägningar finns kvar.</div>`)}
+        ${S.daily.length ? profRow("paminnelse", "🔔", "Påminnelse", r ? `Kl. ${esc(r.time)}` : "Ingen", reminderCard()) : ""}
+        ${profRow("vila", "⏱️", "Vilotimer", rs.on ? `På · ${rs.compound} / ${rs.iso} sek` : "Av", `
+          <label class="row"><input type="checkbox" data-resttoggle ${rs.on ? "checked" : ""}><span>Starta en vilotimer när jag bockar av ett set</span></label>
+          <div class="grid2" style="margin-top:10px">
+            <label class="field">Basövningar (sek)<input type="number" inputmode="numeric" id="restcompound" value="${rs.compound}"></label>
+            <label class="field">Isolering och mage (sek)<input type="number" inputmode="numeric" id="restiso" value="${rs.iso}"></label></div>`)}
+        ${sbEnabled ? profRow("tyck", "💬", "Tyck till", "Vad saknas, vad är krångligt?", feedbackCard()) : ""}
+        ${profRow("konto", "👤", sbEnabled ? "Konto och data" : "Data", account.step === "in" ? esc(account.email) : sbEnabled ? "Inte inloggad" : "Sparas i webbläsaren",
+          `${accountCard()}${data}`)}
+      </div>`;
   },
 };
+
+// Profilen är en lista där en rad i taget kan fällas ut
+let profOpen = null;
+function profRow(id, icon, title, summary, body) {
+  const open = profOpen === id;
+  return `<div class="prow ${open ? "open" : ""}" id="p-${id}"><button class="prow-head" data-psec="${id}" aria-expanded="${open}">
+      <span class="pic">${icon}</span><span class="grow"><b>${title}</b><span class="muted small">${summary}</span></span><span class="chev">›</span></button>
+    ${open ? `<div class="prow-body">${body}</div>` : ""}</div>`;
+}
+function openProfRow(id, focusId) {
+  tab = "profil"; profOpen = id; render();
+  const el = document.getElementById(`p-${id}`);
+  if (el && el.scrollIntoView) el.scrollIntoView({ block: "start" });
+  const f = focusId && document.getElementById(focusId);
+  if (f) f.focus({ preventScroll: true });
+}
 
 // Unika livsmedel/måltider från loggen, senast först
 let recentCache = [];
@@ -1693,7 +1715,9 @@ document.addEventListener("click", ev => {
   if (ds.tab) {
     tab = ds.tab; editing = false; dailyEditing = false; draft = null; editDate = null; histDay = null;
     if (tab !== "pass") chosenDay = null;
+    if (ds.popen) profOpen = ds.popen;
   }
+  else if (ds.psec) profOpen = profOpen === ds.psec ? null : ds.psec;
   else if (ds.go) { tab = ds.go; if (ds.day) chosenDay = ds.day; }
   else if (ds.pick) { chosenDay = ds.pick; }
   else if (ds.edit !== undefined) editing = !editing;
@@ -1751,9 +1775,7 @@ document.addEventListener("click", ev => {
   else if (ds.verifycode !== undefined) { verifyLoginCode(); return; }
   else if (ds.welcomelogin !== undefined) welcomeLogin = ds.welcomelogin || null;
   else if (ds.gokonto !== undefined) {
-    tab = "profil"; render();
-    const k = document.getElementById("konto");
-    if (k) { k.scrollIntoView({ block: "start" }); const i = document.getElementById("acctemail"); if (i) i.focus({ preventScroll: true }); }
+    openProfRow("konto", "acctemail");
     return;
   }
   else if (ds.nudgelater !== undefined) S.nudgeUntil = shift(TODAY, 14);

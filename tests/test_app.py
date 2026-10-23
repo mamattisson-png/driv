@@ -16,6 +16,13 @@ def to_list(page):
         page.click("[data-focusexit]")
 
 
+def prof(page, sec):
+    """Öppnar Profil och fäller ut en rad (om den inte redan är utfälld)."""
+    go(page, "profil")
+    if page.locator(f"#p-{sec}.open").count() == 0:
+        page.click(f'[data-psec="{sec}"]')
+
+
 def seed(page, js):
     """Lägger in historik direkt i appens data och laddar om."""
     page.evaluate(f"() => {{ {js}; save(); }}")
@@ -341,20 +348,20 @@ def test_kroppsvikt_en_gang_i_veckan_och_kalorimal(page):
     page.click("[data-wsave]")
     assert page.evaluate("Object.keys(S.weights).filter(d => d >= '2026-10-19')") == ["2026-10-22"]
     # Före vägningsdagen syns ingen ruta
-    go(page, "profil")
+    prof(page, "vikt")
     page.select_option("[data-weighday]", "4")
     page.evaluate("delete S.weights['2026-10-22']; save()")
     go(page, "idag")
     assert "Veckans" not in page.inner_text("#app")
     # Vikten kan döljas och visas igen
-    go(page, "profil")
+    prof(page, "vikt")
     page.select_option("[data-weighday]", "0")
     go(page, "idag")
     page.click("[data-hideweight]")
     assert page.locator("#wkg").count() == 0
     go(page, "historik")
     assert page.locator('.card:has(h2:text-is("Vikt"))').count() == 0
-    go(page, "profil")
+    prof(page, "vikt")
     page.click("[data-showweight]")
     go(page, "idag")
     assert page.locator("#wkg").count() == 1
@@ -362,7 +369,7 @@ def test_kroppsvikt_en_gang_i_veckan_och_kalorimal(page):
 
 def test_paminnelse_i_kalendern(page):
     start(page)
-    go(page, "profil")
+    prof(page, "paminnelse")
     page.fill("#remtime", "06:30")
     page.press("#remtime", "Tab")
     with page.expect_download() as dl:
@@ -652,7 +659,7 @@ def test_supabase_inloggning_synk_och_sammanslagning(page):
         content_type="application/javascript"))
     start(page, SUPABASE_MOCK)
     page.evaluate("S.log['2026-01-05'] = {workout:null,dailies:{},food:[{name:'Macka',kcal:300,protein:10}]}; save()")
-    go(page, "profil")
+    prof(page, "konto")
     page.fill("#acctemail", "test@exempel.se")
     page.click("[data-sendcode]")
     page.wait_for_selector("#acctcode")
@@ -668,7 +675,7 @@ def test_supabase_inloggning_synk_och_sammanslagning(page):
     page.reload()
     page.wait_for_function("cloud.status === 'cloud'")
     assert page.evaluate("S.log['2026-01-05'].food[0].name") == "Macka"
-    page.click("[data-tab=profil]")
+    prof(page, "konto")
     page.click("[data-signout]")
     assert page.evaluate("cloud.status") == "local"
 
@@ -681,7 +688,7 @@ def test_logga_in_fran_startsidan(page):
     # Ett konto med färdigt upplägg och lite logg
     start(page, SUPABASE_MOCK)
     page.evaluate("S.log['2026-01-05'] = {workout:null,dailies:{},food:[{name:'Macka',kcal:300,protein:10}]}; save()")
-    go(page, "profil")
+    prof(page, "konto")
     page.fill("#acctemail", "test@exempel.se")
     page.click("[data-sendcode]")
     page.fill("#acctcode", "123456")
@@ -731,7 +738,7 @@ SB_CONFIG = 'window.DRIV_CONFIG = { supabaseUrl: "https://exempel.supabase.co", 
 
 
 def login(page, email="test@exempel.se"):
-    go(page, "profil")
+    prof(page, "konto")
     page.fill("#acctemail", email)
     page.click("[data-sendcode]")
     page.fill("#acctcode", "123456")
@@ -932,10 +939,10 @@ def test_vanner_kod_flode_och_peppning(page):
     page.context.route("**/config.js", lambda r: r.fulfill(body=SB_CONFIG, content_type="application/javascript"))
     start(page, SUPABASE_MOCK + SOCIAL_SEED)
     # Utan konto: vänner kräver ett konto
-    go(page, "profil")
+    prof(page, "vanner")
     assert "Kräver ett konto" in page.inner_text("#vanner")
     login(page)
-    go(page, "profil")
+    prof(page, "vanner")
     page.wait_for_selector("#sname")
     assert "aldrig vikter, mat eller kroppsvikt" in page.inner_text("#vanner")
     page.fill("#sname", "Anna")
@@ -967,10 +974,11 @@ def test_vanner_kod_flode_och_peppning(page):
     mine = page.evaluate("window.__social.activity.find(x => x.user_id === 'u1')")
     assert {k: mine[k] for k in ("day", "pass", "exercises")} == {"day": "2026-10-22", "pass": "Push", "exercises": 1}
     # Slutar man dela sparas inga fler pass
-    go(page, "profil")
+    prof(page, "vanner")
     page.click("[data-sharing]")
     page.wait_for_function("social.profile && social.profile.sharing === false")
     # Radera konto kräver två tryck
+    prof(page, "konto")
     page.click("[data-delacct]")
     assert page.evaluate("window.__social.deleted") is None
     page.click("[data-delacct]")
@@ -981,7 +989,7 @@ def test_vanner_utan_funktioner_i_supabase(page):
     page.context.route("**/config.js", lambda r: r.fulfill(body=SB_CONFIG, content_type="application/javascript"))
     start(page, SUPABASE_MOCK + "window.__noSocial = true;")
     login(page)
-    go(page, "profil")
+    prof(page, "vanner")
     page.wait_for_function("social.loaded")
     assert "går inte att nå just nu" in page.inner_text("#vanner")
 
@@ -1022,7 +1030,7 @@ def test_tyck_till_skickar_synpunkt(page):
         body='window.DRIV_CONFIG = { supabaseUrl: "https://exempel.supabase.co", supabaseAnonKey: "nyckel" };',
         content_type="application/javascript"))
     start(page, SUPABASE_MOCK)
-    go(page, "profil")
+    prof(page, "tyck")
     page.click("[data-fbsend]")
     assert "Skriv något" in page.inner_text('.card:has(h2:text-is("Tyck till"))')
     page.evaluate("window.__fbFail = true")

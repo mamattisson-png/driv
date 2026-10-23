@@ -83,6 +83,10 @@ def views(page):
     yield "Veckobrev", ".sheet"
     go(page, "profil")
     yield "Profil", "#app"
+    page.evaluate("document.querySelector('[data-psec=kalori]').click()")
+    yield "Profil, kalorimål", "#app"
+    page.evaluate("document.querySelector('[data-psec=konto]').click()")
+    yield "Profil, konto", "#app"
     page.evaluate("document.querySelector('[data-tab=upplagg]').click()")
     yield "Upplägg", "#app"
     yield "Flikar", "#nav"
