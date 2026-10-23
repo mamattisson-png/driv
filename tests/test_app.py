@@ -440,7 +440,7 @@ def test_kost_maltider_forslag_mangd_och_upprepa(page):
     page.set_viewport_size({"width": 390, "height": 844})
     page.click('.sheet-foot [data-fsclose]')
     assert page.locator(".sheet").count() == 0
-    assert "Ägg\n3 st · 231 kcal" in page.inner_text(".meals")
+    assert "Ägg\n3 st · 21 g protein\n231 kcal" in page.inner_text(".meals")
     # Tryck på en loggad sak: favorit med sin mängd, ta bort
     i = page.evaluate("day().food.findIndex(f => f.meal === 1 && f.name === 'Ägg')")
     page.click(f'[data-fooditem="{i}"]')
@@ -514,7 +514,7 @@ def test_gammal_mat_far_mangd_och_protein_ar_gront_over_malet(page):
     assert L[2]["name"] == "ägg" and L[2]["kcal"] == 100 and L[2].get("plain") is True   # egna kcal skrivs aldrig över
     assert page.evaluate("S.favs.map(f => f.name)") == ["ägg"]
     go(page, "kost")
-    assert page.evaluate("document.querySelector('.dayring .bar').className") == "bar ok"
+    assert page.evaluate("document.querySelectorAll('.dayring .ring-fg')[1].classList.contains('ok')") is True
 
 
 def test_mangd_styr_kalorierna(page):

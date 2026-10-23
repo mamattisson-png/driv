@@ -236,7 +236,29 @@
   .exnames li:first-child { border-top: 0; }
   .exnames li.done .grow { color: var(--muted); }
   /* Kost */
-  .dayring { display: flex; align-items: center; gap: 14px; }
+  .dayring { text-align: center; }
+  .krings { display: flex; justify-content: center; gap: 36px; }
+  .kring { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .klabel { font-weight: 600; font-size: 14px; }
+  .kleft { margin-top: 10px; }
+  .ring-fg.prot { stroke: var(--protein, #8b5cf6); }
+  .ring-fg.ok { stroke: var(--ok); }
+  .meals { padding: 4px 16px 8px; }
+  .kmeal { padding: 12px 0 4px; }
+  .kmeal + .kmeal, .kday + .kmeal { border-top: 1px solid var(--line); }
+  .khead { padding: 4px 0 6px; }
+  .khead h2 { margin: 0; font-size: 17px; }
+  .krow { display: flex; width: 100%; gap: 12px; align-items: center; text-align: left; background: none; border: 0; border-radius: 0;
+    border-top: 1px solid var(--line); padding: 10px 0; color: var(--text); font: inherit; }
+  .krow .grow { display: flex; flex-direction: column; min-width: 0; }
+  .krow b { font-weight: 600; }
+  .krow.est b { font-weight: 400; font-style: italic; color: var(--muted); }
+  .kkcal { color: var(--muted); font-size: 15px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .klink, .kadd { display: block; width: 100%; text-align: left; background: none; border: 0; border-radius: 0; padding: 10px 0; font: inherit; font-size: 15px; color: var(--text); }
+  .klink { border-top: 1px solid var(--line); }
+  .kadd { color: var(--accent-text); font-weight: 600; }
+  .krow + .kadd, .klink + .kadd { border-top: 1px solid var(--line); }
+  .kday { border-top: 0; margin-top: 4px; }
   .ringwrap { position: relative; width: 96px; height: 96px; flex: none; }
   .ring { width: 96px; height: 96px; display: block; }
   .ring-bg, .ring-fg { fill: none; stroke-width: 8; }
