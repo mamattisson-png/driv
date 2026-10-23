@@ -222,7 +222,7 @@ function mealCard(meal, L) {
   if (!items.length) return "";
   const name = meal < 0 ? "Övrigt" : MEALS[meal][0], sum = sumKcal(items.map(x => x.f));
   return `<section class="kmeal">
-    <div class="row between khead"><h2>${name}</h2><span class="muted">${sum} kcal</span></div>
+    <div class="khead"><span>${name}</span><span>${sum} kcal</span></div>
     ${items.map(({ f, i }) => `<button class="krow ${isEst(f) ? "est" : ""}" data-fooditem="${i}">
       <span class="grow"><b>${itemName(f)}</b><span class="muted small">${isEst(f) ? "ungefärligt" : foodSub(f)}</span></span><span class="kkcal">${f.kcal} kcal</span></button>`).join("")}
   </section>`;
@@ -317,10 +317,11 @@ function kostView() {
   return `<h1>Kost</h1>
     ${dayRing(e, m)}
     <div class="card meals">
+      <div class="ktitle"><h2>Måltider</h2>${L.food.length ? `<span><b>${e.kcal}</b> / ${m.kcal} kcal</span>` : ""}</div>
       ${L.food.length ? "" : `<div class="muted kempty">Inget loggat ${editDate ? "den här dagen" : "idag"} än.</div>`}
       ${yesterdayFood() ? `<button class="klink kday" data-repeatday>↻ Samma mat som igår<span class="muted"> · hela dagen, ${sumKcal(yesterdayFood())} kcal</span></button>` : ""}
       ${MEALS.map((_, i) => mealCard(i, L)).join("")}${mealCard(-1, L)}
-      <button class="primary wide kaddbtn" data-addto="${mealByClock()}">+ Lägg till mat</button></div>
+      <button class="kaddbtn" data-addto="${mealByClock()}">+ Lägg till mat</button></div>
     <div class="muted small credit">Näringsvärden: Livsmedelsverkets livsmedelsdatabas (CC BY 4.0) och egna uppskattningar.</div>
     ${foodSheet ? addSheet(m) : foodItem != null ? itemSheet() : ""}`;
 }

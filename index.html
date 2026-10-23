@@ -237,36 +237,42 @@
   .exnames li.done .grow { color: var(--muted); }
   /* Kost */
   .dayring { text-align: center; }
-  .krings { display: flex; justify-content: center; gap: 36px; }
-  .kring { display: flex; flex-direction: column; align-items: center; gap: 6px; }
-  .klabel { font-weight: 600; font-size: 14px; }
-  .kleft { margin-top: 10px; }
-  .ring-fg.prot { stroke: var(--protein, #8b5cf6); }
+  .krings { display: flex; justify-content: center; gap: 40px; }
+  .kring { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .klabel { color: var(--muted); font-size: 13px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
+  .kleft { margin-top: 12px; }
+  .meals { padding: 16px 18px 18px; }
+  .ktitle { display: flex; justify-content: space-between; align-items: baseline; padding-bottom: 4px; }
+  .ktitle h2 { margin: 0; font-size: 20px; }
+  .ktitle span { color: var(--muted); font-size: 14px; font-variant-numeric: tabular-nums; }
+  .ktitle b { color: var(--text); }
+  .kmeal { margin-top: 20px; }
+  .kmeal + .kmeal { margin-top: 26px; }
+  .ring-fg.prot { stroke: #8b5cf6; }
   .ring-fg.ok { stroke: var(--ok); }
-  .meals { padding: 4px 16px 8px; }
-  .kmeal { padding: 12px 0 4px; }
-  .kmeal + .kmeal, .kday + .kmeal { border-top: 1px solid var(--line); }
-  .khead { padding: 4px 0 6px; }
-  .khead h2 { margin: 0; font-size: 17px; }
+  .khead { display: flex; justify-content: space-between; color: var(--muted); font-size: 12px; font-weight: 700;
+    letter-spacing: .07em; text-transform: uppercase; padding-bottom: 2px; }
+  .khead span:last-child { font-variant-numeric: tabular-nums; letter-spacing: 0; text-transform: none; font-weight: 600; }
   .krow { display: flex; width: 100%; gap: 12px; align-items: center; text-align: left; background: none; border: 0; border-radius: 0;
-    border-top: 1px solid var(--line); padding: 10px 0; color: var(--text); font: inherit; }
-  .krow .grow { display: flex; flex-direction: column; min-width: 0; }
-  .krow b { font-weight: 600; }
+    padding: 11px 0; color: var(--text); font: inherit; }
+  .krow + .krow { border-top: 1px solid var(--line); }
+  .krow .grow { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .krow b { font-weight: 600; font-size: 16px; }
+  .krow .small { font-size: 13px; }
   .krow.est b { font-weight: 400; font-style: italic; color: var(--muted); }
-  .kkcal { color: var(--muted); font-size: 15px; font-variant-numeric: tabular-nums; white-space: nowrap; }
-  .klink, .kadd { display: block; width: 100%; text-align: left; background: none; border: 0; border-radius: 0; padding: 10px 0; font: inherit; font-size: 15px; color: var(--text); }
-  .klink { border-top: 1px solid var(--line); }
-  .kadd { color: var(--accent-text); font-weight: 600; }
-  .krow + .kadd, .klink + .kadd { border-top: 1px solid var(--line); }
-  .kday { border-top: 0; margin-top: 4px; }
-  .kempty { padding: 14px 0 4px; }
-  .kaddbtn { margin: 14px 0 8px; }
+  .kkcal { font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .klink { display: block; width: 100%; text-align: left; background: none; border: 0; border-radius: 0; padding: 11px 0; font: inherit; font-size: 15px; color: var(--text); }
+  .klink + .klink { border-top: 1px solid var(--line); }
+  .kday { margin-top: 6px; color: var(--accent-text); font-weight: 600; }
+  .kempty { padding: 14px 0 0; }
+  .kaddbtn { display: block; width: 100%; margin-top: 18px; padding: 14px; border: 0; border-radius: 14px;
+    background: var(--accent-soft); color: var(--accent-text); font: inherit; font-weight: 700; font-size: 16px; }
   .mealpick { margin: 4px 0 12px; }
   .kshort { margin: 6px 0 4px; }
   .kshort .klink:first-child { border-top: 0; }
   .ringwrap { position: relative; width: 96px; height: 96px; flex: none; }
   .ring { width: 96px; height: 96px; display: block; }
-  .ring-bg, .ring-fg { fill: none; stroke-width: 8; }
+  .ring-bg, .ring-fg { fill: none; stroke-width: 7; }
   .ring-bg { stroke: var(--line); }
   .ring-fg { stroke: var(--accent); stroke-linecap: round; }
   .ring-fg.over { stroke: var(--bad); }
