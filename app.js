@@ -1052,6 +1052,7 @@ const VIEWS = {
     const sorted = draft.weekdays.slice().sort((a, b) => a - b);
     const p = S.profile;
     return `${S.setupDone ? "" : `<div class="brand"><img src="icons/icon-192.png" alt=""><div><b>Driv</b><span class="muted">Ditt mål. Ditt driv.</span></div></div>`}
+      ${S.setupDone ? `<button class="small ghost backlink" data-cancelsetup>‹ Profil</button>` : ""}
       <h1>${S.setupDone ? "Ditt upplägg" : "Välj ditt upplägg"}</h1>
       ${!S.setupDone && account.step === "in" ? `<div class="muted" style="margin:-4px 0 12px">Inloggad som <b>${esc(account.email)}</b>.
         ${cloud.status === "cloud" ? "Kontot har inget sparat upplägg än. Välj ett nedan och tryck Kom igång, så sparas det på kontot." : cloud.status === "error" ? "Kunde inte hämta från kontot. Ladda om sidan." : "Hämtar från kontot…"}</div>`

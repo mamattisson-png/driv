@@ -210,6 +210,14 @@ def test_ovningar_visar_utrustning_och_hur_vikten_skrivs(page):
     assert "stången (oftast 20 kg)" in page.inner_text(".gearbox")
 
 
+def test_upplagg_har_tillbaka_till_profil(page):
+    start(page)
+    go(page, "profil")
+    page.click('.prow-head[data-tab="upplagg"]')
+    page.click(".backlink")
+    assert page.evaluate("tab") == "profil" and page.evaluate("draft") is None
+
+
 def test_dailys_under_passet(page):
     start(page)
     seed(page, "S.daily = [{id:'plankan',sets:3,reps:'45 sek'},{id:'lop',sets:1,reps:''}]")
