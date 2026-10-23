@@ -448,7 +448,7 @@ def test_kost_maltider_forslag_mangd_och_upprepa(page):
     page.set_viewport_size({"width": 390, "height": 844})
     page.click('.sheet-foot [data-fsclose]')
     assert page.locator(".sheet").count() == 0
-    assert "Ägg\n3 st · 21 g protein\n231 kcal" in page.inner_text(".meals")
+    assert "Ägg · 3 st\n21 g protein\n231 kcal" in page.inner_text("#app")
     # Tryck på en loggad sak: favorit med sin mängd, ta bort
     i = page.evaluate("day().food.findIndex(f => f.meal === 1 && f.name === 'Ägg')")
     page.click(f'[data-fooditem="{i}"]')
@@ -473,7 +473,7 @@ def test_hela_garadagen_och_sparad_maltid_med_ett_tryck(page):
       {name:'Gröt', kcal:300, protein:10, meal:0}, {name:'Pasta', kcal:700, protein:25, meal:1}]};
       S.meals = [{name:'Gröt, kaffe', kcal:320, protein:11, slot:0, items:[{name:'Gröt', kcal:300, protein:10}, {name:'Kaffe', kcal:20, protein:1}]}]""")
     go(page, "kost")
-    assert "hela dagen, 1000 kcal" in page.inner_text("[data-repeatday]")
+    assert "hela dagen, 1\xa0000 kcal" in page.inner_text("[data-repeatday]")
     # Sparad frukost syns direkt när frukost är vald, inte för lunch
     add_to(page, 1)
     assert page.locator("[data-usemeal]").count() == 0
@@ -505,7 +505,7 @@ def test_uppskattningar_raknas_inte_dubbelt(page):
     page.click('.sheet-foot [data-fsclose]')
     # En uppskattning visas som just det och kan inte bli favorit
     page.evaluate("day().food.push({name: 'Uppskattning', kcal: 600, protein: 30, meal: 3, est: true}); render()")
-    assert "≈ Uppskattning" in page.inner_text(".meals")
+    assert "≈ Uppskattning" in page.inner_text("#app")
     page.click(f'[data-fooditem="{page.evaluate("day().food.length - 1")}"]')
     assert page.locator("[data-itemfav]").count() == 0
 
@@ -524,7 +524,7 @@ def test_gammal_mat_far_mangd_och_protein_ar_gront_over_malet(page):
     assert L[2]["name"] == "ägg" and L[2]["kcal"] == 100 and L[2].get("plain") is True   # egna kcal skrivs aldrig över
     assert page.evaluate("S.favs.map(f => f.name)") == ["ägg"]
     go(page, "kost")
-    assert page.evaluate("document.querySelectorAll('.dayring .ring-fg')[1].classList.contains('ok')") is True
+    assert page.evaluate("document.querySelectorAll('.dayring .bar')[1].classList.contains('ok')") is True
 
 
 def test_mangd_styr_kalorierna(page):
