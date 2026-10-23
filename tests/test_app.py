@@ -16,6 +16,12 @@ def to_list(page):
         page.click("[data-focusexit]")
 
 
+def add_to(page, meal):
+    """Öppnar fönstret för att lägga till mat och väljer måltid."""
+    page.click("[data-addto]")
+    page.click(f'[data-sheetmeal="{meal}"]')
+
+
 def prof(page, sec):
     """Öppnar Profil och fäller ut en rad (om den inte redan är utfälld)."""
     go(page, "profil")
@@ -391,7 +397,7 @@ def test_paminnelse_i_kalendern(page):
 def test_fritext_forslag_och_felstavning(page):
     start(page)
     go(page, "kost")
-    page.click('[data-addto="1"]')
+    add_to(page, 1)
     assert page.evaluate("parseFood('2 dl mjölk och 2 ägg').kcal") == 246
     assert page.evaluate("parseFood('ryggbif').items[0].corrected") == "Ryggbiff"
     page.type("#fname", "150 g ryggb")
@@ -415,10 +421,12 @@ def test_kost_maltider_forslag_mangd_och_upprepa(page):
     # Sidan visar bara måltiderna; att lägga till sker i ett eget fönster per måltid
     assert page.locator("#fname").count() == 0
     # Som igår: gammalt "Ägg × 2" har fått mängden 2 st
+    add_to(page, 0)
     page.click('[data-repeat="0"]')
+    page.click('.sheet-foot [data-fsclose]')
     assert amounts(0) == [["Gröt", 300, ""], ["Ägg", 154, "2 st"]]
     # Fritext i lunch
-    page.click('[data-addto="1"]')
+    add_to(page, 1)
     page.fill("#fname", "1 banan")
     page.click("[data-addfood]")
     assert page.evaluate("day().food.at(-1).meal") == 1
@@ -450,10 +458,10 @@ def test_kost_maltider_forslag_mangd_och_upprepa(page):
     assert page.locator(".sheet").count() == 0
     assert page.evaluate("day().food.some(f => f.meal === 1 && f.name === 'Ägg')") is False
     # Frukosten sparad som måltid och loggad i middag del för del
-    page.click('[data-addto="0"]')
+    add_to(page, 0)
     page.click('[data-savegroup="0"]')
     page.click('.sheet-foot [data-fsclose]')
-    page.click('[data-addto="3"]')
+    add_to(page, 3)
     page.click('.qadd:has-text("🍽")')
     assert amounts(3) == [["Gröt", 300, ""], ["Ägg", 154, "2 st"]]
     page.click('.sheet-foot [data-fsclose]')
@@ -466,10 +474,12 @@ def test_hela_garadagen_och_sparad_maltid_med_ett_tryck(page):
       S.meals = [{name:'Gröt, kaffe', kcal:320, protein:11, slot:0, items:[{name:'Gröt', kcal:300, protein:10}, {name:'Kaffe', kcal:20, protein:1}]}]""")
     go(page, "kost")
     assert "hela dagen, 1000 kcal" in page.inner_text("[data-repeatday]")
-    # Sparad frukost syns direkt i den tomma frukosten, inte i lunchen
-    assert page.locator('[data-usemeal][data-meal="0"]').count() == 1
-    assert page.locator('[data-usemeal][data-meal="1"]').count() == 0
+    # Sparad frukost syns direkt när frukost är vald, inte för lunch
+    add_to(page, 1)
+    assert page.locator("[data-usemeal]").count() == 0
+    page.click('[data-sheetmeal="0"]')
     page.click('[data-usemeal][data-meal="0"]')
+    page.click('.sheet-foot [data-fsclose]')
     assert page.evaluate("day().food.map(f => [f.name, f.meal])") == [["Gröt", 0], ["Kaffe", 0]]
     assert page.locator("[data-repeatday]").count() == 0   # dagen är inte tom längre
     page.evaluate("day().food = []; save(); render()")
@@ -481,7 +491,7 @@ def test_uppskattningar_raknas_inte_dubbelt(page):
     start(page)
     seed(page, "S.log[shift(TODAY, -1)] = {workouts:[], dailies:{}, food:[{name:'Pasta', kcal:700, protein:25, meal:1}]}")
     go(page, "kost")
-    page.click('[data-addto="2"]')
+    add_to(page, 2)
     page.fill("#qm-2", "300")
     page.click('[data-qmeal="2"]')
     assert page.evaluate("day().food.at(-1)") == {"name": "Uppskattning", "kcal": 300, "protein": 17, "meal": 2, "est": True}
@@ -520,7 +530,7 @@ def test_gammal_mat_far_mangd_och_protein_ar_gront_over_malet(page):
 def test_mangd_styr_kalorierna(page):
     start(page)
     go(page, "kost")
-    page.click('[data-addto="1"]')
+    add_to(page, 1)
     page.fill("#fname", "bolognese")
     page.click(".sheet h2")
     row = page.locator("[data-drow]").first
@@ -554,7 +564,7 @@ def test_mangd_styr_kalorierna(page):
     assert page.evaluate("[day().food[0].amt.n, day().food[0].kcal]") == [1, 675]
     # Två ägg: flera rader i en text blir var sin rad med sin mängd
     page.click("[data-itemclose].primary")
-    page.click('[data-addto="0"]')
+    add_to(page, 0)
     page.fill("#fname", "2 ägg och 1 dl mjölk")
     page.click(".sheet h2")
     page.click("[data-addfood]")
@@ -564,7 +574,7 @@ def test_mangd_styr_kalorierna(page):
 def test_streckkod_fran_open_food_facts(page):
     start(page, "window.BarcodeDetector = class { async detect() { return window.__code ? [{ rawValue: window.__code }] : []; } };")
     go(page, "kost")
-    page.click('[data-addto="0"]')
+    add_to(page, 0)
     page.click("[data-scan]")
     page.wait_for_function("scanner.stream !== null")
     page.evaluate("window.__code = '7310000000001'")
@@ -601,7 +611,7 @@ def test_claude_lagring_med_frysta_snapshots(page):
     page.reload()
     page.wait_for_function("cloud.status === 'cloud'")
     go(page, "kost")
-    page.click('[data-addto="0"]')
+    add_to(page, 0)
     page.fill("#fname", "1 dl mjölk")
     page.click("[data-addfood]")
     assert page.evaluate("S.log[TODAY].food.length") == 1
@@ -931,7 +941,7 @@ def test_historik_andra_en_tidigare_dag(page):
     # Mat i efterhand: Kost öppnas för den dagen och Klar leder tillbaka
     page.click("[data-hfood]")
     assert "igår" in page.inner_text(".editbar")
-    page.click('[data-addto="2"]')
+    add_to(page, 2)
     page.fill("#fname", "1 banan")
     page.click("[data-addfood]")
     page.click(".sheet-foot [data-fsclose]")

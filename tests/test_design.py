@@ -66,7 +66,8 @@ def views(page):
     page.click("[data-restskip]")
     go(page, "kost")
     yield "Kost", "#app"
-    page.click('[data-addto="1"]')
+    page.click("[data-addto]")
+    page.click('[data-sheetmeal="1"]')
     page.fill("#fname", "bolognese och 2 ägg")
     page.click(".sheet h2")
     yield "Lägg till mat", ".sheet"
