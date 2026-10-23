@@ -269,6 +269,7 @@
   .chev { color: var(--muted); font-size: 20px; transition: transform .15s; }
   .prow.open .chev { transform: rotate(90deg); }
   .prow-body { padding: 0 0 16px; }
+  .prow { scroll-margin: 12px 0 calc(90px + env(safe-area-inset-bottom, 0px)); }
   .prow-body .card { border: 0; padding: 0; margin: 0; background: none; box-shadow: none; }
   .prow-body .card > h2:first-child { display: none; }
   .gearbox { background: var(--bg); border-radius: 12px; padding: 10px 12px; margin-top: 10px; }

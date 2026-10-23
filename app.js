@@ -1876,6 +1876,8 @@ document.addEventListener("click", ev => {
   render();
   // En ny flik börjar högst upp
   if (tab !== prevTab) window.scrollTo(0, 0);
+  // En utfälld rad längst ned rullas upp så att innehållet syns ovanför flikraden
+  if (ds.psec && profOpen) { const r = document.getElementById(`p-${profOpen}`); if (r && r.scrollIntoView) r.scrollIntoView({ block: "nearest" }); }
 });
 
 document.addEventListener("change", ev => {
