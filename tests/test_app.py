@@ -237,6 +237,22 @@ def test_utseende_kan_valjas(page):
     assert page.evaluate("document.documentElement.dataset.theme") is None
 
 
+def test_upplagg_och_ovningar_andras_fran_hem(page):
+    start(page)
+    go(page, "idag")
+    page.click('.homepasses [data-tab="upplagg"]')
+    assert page.evaluate("tab") == "upplagg" and "Hem" in page.inner_text(".backlink")
+    page.click(".backlink")
+    assert page.evaluate("tab") == "idag"
+    # Övningarna i dagens pass ändras direkt i kortet
+    n = page.evaluate("currentPassDay ? S.plan.days.find(x => x.id === document.querySelector('.daypass [data-focusstart]').dataset.focusstart).ex.length : 0")
+    page.click(".daypass [data-edit]")
+    page.click(".daypass [data-xdel] >> nth=0")
+    assert page.locator(".daypass [data-xdel]").count() == n - 1
+    page.click(".daypass [data-edit]")
+    assert page.locator(".daypass .exnames li").count() == n - 1
+
+
 def test_dailys_under_passet(page):
     start(page)
     seed(page, "S.daily = [{id:'plankan',sets:3,reps:'45 sek'},{id:'lop',sets:1,reps:''}]")

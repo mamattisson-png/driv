@@ -1057,7 +1057,7 @@ const VIEWS = {
     const sorted = draft.weekdays.slice().sort((a, b) => a - b);
     const p = S.profile;
     return `${S.setupDone ? "" : `<div class="brand"><img src="icons/icon-192.png" alt=""><div><b>Driv</b><span class="muted">Ditt mål. Ditt driv.</span></div></div>`}
-      ${S.setupDone ? `<button class="small ghost backlink" data-cancelsetup>‹ Profil</button>` : ""}
+      ${S.setupDone ? `<button class="small ghost backlink" data-cancelsetup>‹ ${setupFrom === "idag" ? "Hem" : "Profil"}</button>` : ""}
       <h1>${S.setupDone ? "Ditt upplägg" : "Välj ditt upplägg"}</h1>
       ${!S.setupDone && account.step === "in" ? `<div class="muted" style="margin:-4px 0 12px">Inloggad som <b>${esc(account.email)}</b>.
         ${cloud.status === "cloud" ? "Kontot har inget sparat upplägg än. Välj ett nedan och tryck Kom igång, så sparas det på kontot." : cloud.status === "error" ? "Kunde inte hämta från kontot. Ladda om sidan." : "Hämtar från kontot…"}</div>`
@@ -1124,12 +1124,14 @@ const VIEWS = {
           <span class="muted small nowrap">${ok ? `<span class="okmark">✓</span>` : `${x.sets} × ${esc(x.reps)}${t ? ` · ${fmtTarget(t, x.id)}` : ""}`}</span></li>`;
       }).join("");
       passCard = `<section class="card kmeal daypass"><div class="khead">${tag(d.type)}<span class="grow">${passBand(d)}</span>
-          <span>${w && w.done ? "✓ Klart" : `${done} / ${d.ex.length}`}</span></div>
+          <span>${editing ? "Ändrar" : w && w.done ? "✓ Klart" : `${done} / ${d.ex.length}`}</span></div>
         <div class="kbody">
+        ${editing ? `${exRows(d.id, d.ex, true)}<button class="primary wide bigbtn" style="margin-top:14px" data-edit>Klar</button></div></section>` : `
         ${d.ex.length ? `<ol class="exnames">${rows}</ol>` : `<div class="muted">Passet har inga övningar än.</div>`}
         ${others.length ? `<div class="muted small">Idag har du även loggat ${others.map(o => esc(o.name)).join(", ")}.</div>` : ""}
         <button class="primary wide bigbtn" style="margin-top:12px" data-focusstart="${d.id}">${w && w.done ? "Öppna passet" : w ? "▶ Fortsätt passet" : "▶ Starta passet"}</button>
-        <div class="muted small" style="margin-top:8px;text-align:center">${weekPasses} av ${S.plan.count} pass den här veckan</div></div></section>`;
+        <div class="row between" style="margin-top:8px"><span class="muted small">${weekPasses} av ${S.plan.count} pass den här veckan</span>
+          <button class="link small" data-edit>Ändra övningar</button></div></div></section>`}`;
     } else {
       const nx = nextScheduled(TODAY);
       passCard = `<section class="card kmeal"><div class="khead"><span class="grow">Vilodag</span><span>😌</span></div>
@@ -1143,6 +1145,8 @@ const VIEWS = {
         return lw ? `<div class="card letter-card"><div class="row between"><h2>📬 Din vecka</h2>
           <button class="small ghost" data-letterclose="${lw}" aria-label="Stäng sammanfattningen">✕</button></div>${weekLetter(lw)}</div>` : "";
       })()}
+      <div class="row between homepasses"><span class="klabel">Ditt upplägg · <span class="nocaps">${PROGRAMS[S.plan.program || "ppl"].name}</span></span>
+        <button class="link small" data-tab="upplagg">Ändra upplägg</button></div>
       ${S.plan.days.length > 1 ? dayPicker(d && d.id) : ""}
       ${accountNudge()}
       ${social.pendingCode ? friendsHome() : ""}
@@ -1235,6 +1239,8 @@ function setTheme(t) {
   try { if (t === "auto") localStorage.removeItem("driv-theme"); else localStorage.setItem("driv-theme", t); } catch (e) {}
   if (t === "auto") delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = t;
 }
+
+let setupFrom = null;   // fliken man öppnade Upplägg från, dit "tillbaka" leder
 
 // Profilen är en lista där en rad i taget kan fällas ut
 let profOpen = null;
@@ -1735,6 +1741,7 @@ document.addEventListener("click", ev => {
     tab = ds.tab; editing = false; dailyEditing = false; draft = null; editDate = null; histDay = null;
     if (tab !== "pass") chosenDay = null;
     if (ds.popen) profOpen = ds.popen;
+    if (tab === "upplagg") setupFrom = prevTab;
   }
   else if (ds.themeSet) setTheme(ds.themeSet);
   else if (ds.psec) profOpen = profOpen === ds.psec ? null : ds.psec;
@@ -1881,7 +1888,7 @@ document.addEventListener("click", ev => {
     else if (w.length < draft.count) w.push(i);
   }
   else if (ds.savesetup !== undefined) saveSetup();
-  else if (ds.cancelsetup !== undefined) { draft = null; tab = "profil"; }
+  else if (ds.cancelsetup !== undefined) { draft = null; tab = setupFrom || "profil"; }
   else if (ds.week) weekOffset = Math.min(0, weekOffset + +ds.week);
   else if (ds.editdone !== undefined) { histDay = editDate; editDate = null; tab = "historik"; chosenDay = null; if (focus) endFocus(); }
   else if (ds.export !== undefined) { exportData(); return; }
