@@ -247,12 +247,14 @@ function yesterdayFood() {
 
 // Dagens intag: kalorier och protein med var sin stapel
 const tnum = n => Math.round(n).toLocaleString("sv-SE");
-function dayRing(e, m) {
-  const col = (label, v, goal, unit, cls) => `<div class="kstat"><div class="klabel">${label}</div>
+// En siffra med mål och stapel; används i Kost och på Hem
+const kstat = (label, v, goal, unit, cls) => `<div class="kstat"><div class="klabel">${label}</div>
     <div class="kbig">${tnum(v)}${unit === "g" ? " g" : ""}</div><div class="muted small">av ${tnum(goal)} ${unit}</div>
     <div class="bar ${cls}"><div style="width:${goal ? Math.min(100, Math.round(v / goal * 100)) : 0}%"></div></div></div>`;
+const kstats = (e, m) => `<div class="kstats">${kstat("Kalorier", e.kcal, m.kcal, "kcal", e.kcal > m.kcal * 1.05 ? "over" : "")}${kstat("Protein", e.protein, m.protein, "g", e.protein >= m.protein ? "ok" : "prot")}</div>`;
+function dayRing(e, m) {
   return `<div class="card dayring"><h2>${editDate ? dateLabel(editDate).replace(/^./, c => c.toUpperCase()) : "Dagens intag"}</h2>
-    <div class="kstats">${col("Kalorier", e.kcal, m.kcal, "kcal", e.kcal > m.kcal * 1.05 ? "over" : "")}${col("Protein", e.protein, m.protein, "g", e.protein >= m.protein ? "ok" : "prot")}</div>
+    ${kstats(e, m)}
     <div class="muted small kleft">${e.kcal <= m.kcal ? `${tnum(m.kcal - e.kcal)} kcal kvar` : `${tnum(e.kcal - m.kcal)} kcal över målet`}</div>
     ${S.profileSet === false ? `<button class="link small" data-tab="profil" data-popen="kalori">Målet bygger på standardvärden – ställ in ditt</button>` : ""}</div>`;
 }

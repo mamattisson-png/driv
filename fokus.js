@@ -84,19 +84,19 @@ function focusView() {
     ? `<button class="primary grow" data-focusexit>✓ Passet är sparat</button>`
     : `<button class="primary grow" data-finish="${d.id}" data-focusend>✓ Spara passet</button>`;
   return `<div class="focus">
-    <div class="row between"><button class="small ghost" data-focusexit>‹ Alla övningar</button>
-      <span class="muted small fcount">Övning ${focus.idx + 1} av ${d.ex.length}</span>${dailyChip()}</div>
+    <div class="row between"><button class="small ghost" data-focusexit>‹ Alla övningar</button>${dailyChip()}</div>
     <div class="fdots">${d.ex.map((x, k) => `<button data-focusgo="${k}" class="${k === focus.idx ? "on" : ""} ${exDone(w, x) ? "done" : ""}" aria-label="${esc(EX[x.id].name)}"></button>`).join("")}</div>
-    <div class="card">
+    <div class="card kmeal fcard"><div class="khead">${tag(d.type)}<span class="grow">${passBand(d)}</span><span>Övning ${focus.idx + 1} av ${d.ex.length}</span></div>
+      <div class="kbody">
       <div class="row"><button class="thumb" data-info="${ex.id}" aria-label="Visa ${esc(EX[ex.id].name)}">${figure(ex.id, "", true)}</button>
-        <div class="grow"><div class="muted small">${passLabel(d)}</div><h2 style="margin:2px 0">${esc(EX[ex.id].name)}</h2>
+        <div class="grow"><h2 style="margin:2px 0">${esc(EX[ex.id].name)}</h2>
           <div class="muted">${ex.sets} × ${esc(ex.reps)} · ${GEAR[gearOf(ex.id)][0]}</div>
           ${target ? `<div class="goal">Förslag idag: <b>${fmtTarget(target, ex.id)}</b></div>`
             : `<div class="muted">Första gången: välj en vikt du klarar ${esc(ex.reps)}.</div>`}</div></div>
       ${rows}
       <div class="row" style="margin-top:10px"><button class="small" data-setcount="-1" data-ex="${ex.id}" ${ex.sets > 1 ? "" : "disabled"}>− Set</button>
         <button class="small" data-setcount="1" data-ex="${ex.id}">+ Set</button></div>
-    </div>
+    </div></div>
     <div class="row fnav"><button data-focusgo="${focus.idx - 1}" ${focus.idx ? "" : "disabled"} aria-label="Föregående övning">‹</button>
       ${next ? `<button class="${allDone ? "primary" : ""} grow" data-focusgo="${focus.idx + 1}">Nästa: ${esc(EX[next.id].name)} ›</button>` : finish}</div>
   </div>${focusDailies ? `<div class="overlay" data-fdclose><div class="sheet">
@@ -117,7 +117,7 @@ function passOverview(d, w) {
   const done = d.ex.filter(x => exDone(w, x)).length, next = w && !w.done ? d.ex.findIndex(x => !exDone(w, x)) : -1;
   const logged = w && Object.values(w.sets).some(a => a.some(hasData));
   return `<section class="card kmeal exlist">
-    <div class="khead">${tag(d.type)}<span class="grow">Pass ${S.plan.days.indexOf(d) + 1}</span><span>${done} / ${d.ex.length}</span></div>
+    <div class="khead">${tag(d.type)}<span class="grow">${passBand(d)}</span><span>${done} / ${d.ex.length}</span></div>
     ${d.ex.map((ex, i) => {
       const sets = (w && w.sets[ex.id]) || [], n = sets.filter(x => x && x.ok).length, all = exDone(w, ex), target = todayTarget(ex);
       return `<button class="krow ${all ? "done" : ""}" data-focusex="${i}"><span class="thumb xs" aria-hidden="true">${figure(ex.id)}</span>

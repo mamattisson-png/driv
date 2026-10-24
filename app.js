@@ -772,6 +772,8 @@ function nextInRotation() {
 }
 const suggestedDay = () => isFixed() ? (scheduledDay(TODAY) || nextScheduled(TODAY).day) : nextInRotation();
 const passLabel = d => `Pass ${S.plan.days.indexOf(d) + 1} · ${esc(d.name)}`;
+// Text i rubrikbandet bredvid etiketten: passets nummer, och namnet om det inte redan står på etiketten
+const passBand = d => `Pass ${S.plan.days.indexOf(d) + 1}${norm(d.name) === norm(TYPES[d.type].label) ? "" : ` · <span class="nocaps">${esc(d.name)}</span>`}`;
 
 // ---------- Kalorier ----------
 // Mifflin–St Jeor
@@ -893,17 +895,17 @@ function weightCard() {
   const weighed = weekDates(ws).filter(d => d <= TODAY && weights()[d] > 0).pop();
   const prev = weekAvgWeight(shift(ws, -7)), now = weekAvgWeight(ws);
   if (weighed && !weightEditing) {
-    return `<div class="card"><div class="row between"><div><h2 style="margin:0">Veckans vikt</h2>
-        <div style="margin-top:4px"><b class="stat-sm">${fmtNum(now)} kg</b> ${prev != null ? `${weightBadge(now - prev)} <span class="muted small">mot förra veckan</span>` : ""}</div></div>
-      <button class="small ghost" data-wedit>Ändra</button></div></div>`;
+    return `<section class="card kmeal"><div class="khead"><svg class="kicon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20h14l-2-12H7zM9 8a3 3 0 0 1 6 0M12 11v3"/></svg><span class="grow">Veckans vikt</span><span>${fmtNum(now)} kg</span></div>
+      <div class="kbody row between"><span>${prev != null ? `${weightBadge(now - prev)} <span class="muted small">mot förra veckan</span>` : `<span class="muted small">Första vägningen</span>`}</span>
+      <button class="small ghost" data-wedit>Ändra</button></div></section>`;
   }
   if (!weighed && weekdayOf(TODAY) < weighDay()) return "";
   const date = weighed || TODAY;
-  return `<div class="card"><div class="row between"><h2>Veckans vägning</h2>${last ? `<span class="muted">Förra: ${fmtNum(last.kg)} kg</span>` : ""}</div>
-    <div class="row"><input id="wkg" type="number" inputmode="decimal" step="0.1" placeholder="${last ? fmtNum(last.kg).replace(",", ".") : "kg"}" aria-label="Vikt i kg"
-      value="${weights()[date] ?? ""}"><button class="primary" data-wsave data-wdate="${date}">Spara</button></div>
+  return `<section class="card kmeal"><div class="khead"><svg class="kicon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20h14l-2-12H7zM9 8a3 3 0 0 1 6 0M12 11v3"/></svg><span class="grow">Veckans vägning</span>${last ? `<span>Förra: ${fmtNum(last.kg)} kg</span>` : ""}</div>
+    <div class="kbody"><div class="row"><input id="wkg" type="number" inputmode="decimal" step="0.1" placeholder="${last ? fmtNum(last.kg).replace(",", ".") : "kg"}" aria-label="Vikt i kg"
+      value="${weights()[date] ?? ""}"><button data-wsave data-wdate="${date}">Spara</button></div>
     <div class="row between" style="margin-top:4px"><span class="muted small">En gång i veckan räcker. Väg dig gärna på morgonen, samma veckodag. Kalorimålet följer din senaste vikt.</span>
-      <button class="small ghost" data-hideweight>Dölj vikt</button></div></div>`;
+      <button class="small ghost" data-hideweight>Dölj vikt</button></div></div></section>`;
 }
 // Vägningar som punkter och veckosnitt som linje, de senaste åtta veckorna
 function weightChart() {
@@ -1007,7 +1009,7 @@ function upcomingCard() {
 }
 
 // Dagens dailys som en kort lista att bocka av, direkt på Idag
-function dailiesCard(inPass) {
+function dailiesCard(inPass, banded) {
   const n = S.daily.length, date = logDate(), L = day(date);
   if (dailyEditing) return `<div class="card"><div class="row between"><h2>Redigera dailys</h2><button class="small ghost" data-dedit>Klar</button></div>
     ${exRows("daily", S.daily, true)}
@@ -1026,6 +1028,9 @@ function dailiesCard(inPass) {
     return `<div class="daily ${ok ? "ok" : ""}">${thumb(id, "xs")}<div class="grow"><b>${esc(EX[id].name)}</b>
       <span class="muted small">${[sub, its ? `🔥 ${its}` : ""].filter(Boolean).join(" · ")}</span></div>${ctl}</div>`;
   }).join("");
+  if (banded) return `<section class="card kmeal dailies"><div class="khead"><span class="kcheck" aria-hidden="true">✓</span><span class="grow">Dailys${st ? ` · 🔥 ${st} d` : ""}</span><span>${done} / ${n}</span></div>
+    <div class="kbody">${rows}
+    <button class="small ghost" style="margin-top:6px" data-dedit>Redigera dailys</button></div></section>`;
   return `<div class="card"><div class="row between"><h2>Dailys</h2><span class="muted">${done} av ${n} klara${st ? ` · 🔥 ${st} d` : ""}</span></div>
     <div class="bar ok"><div style="width:${Math.round(done / n * 100)}%"></div></div>
     ${rows}
@@ -1112,21 +1117,24 @@ const VIEWS = {
     if (d) {
       // Dagens pass med alla övningar, så att man vet vad som ska göras när man kommer till gymmet
       const w = workoutOn(TODAY, d.id);
+      const done = d.ex.filter(x => exDone(w, x)).length;
       const rows = d.ex.map(x => {
         const t = todayTarget(x), ok = exDone(w, x);
-        return `<li class="${ok ? "done" : ""}"><span class="grow">${ok ? "✓ " : ""}${esc(EX[x.id].name)}</span>
-          <span class="muted small nowrap">${x.sets} × ${esc(x.reps)}${t ? ` · ${fmtTarget(t, x.id)}` : ""}</span></li>`;
+        return `<li class="${ok ? "done" : ""}"><span class="grow">${esc(EX[x.id].name)}</span>
+          <span class="muted small nowrap">${ok ? `<span class="okmark">✓</span>` : `${x.sets} × ${esc(x.reps)}${t ? ` · ${fmtTarget(t, x.id)}` : ""}`}</span></li>`;
       }).join("");
-      passCard = `<div class="card daypass"><div class="row between"><div>${S.plan.days.length > 1 ? "" : `${tag(d.type)} `}<h2 style="display:inline">${passLabel(d)}</h2>
-          <div class="muted">${TYPES[d.type].muscles}</div></div>${w && w.done ? `<span class="pill">✓ Klart</span>` : ""}</div>
-        ${d.ex.length ? `<ol class="exnames">${rows}</ol>` : `<div class="muted" style="margin-top:8px">Passet har inga övningar än.</div>`}
+      passCard = `<section class="card kmeal daypass"><div class="khead">${tag(d.type)}<span class="grow">${passBand(d)}</span>
+          <span>${w && w.done ? "✓ Klart" : `${done} / ${d.ex.length}`}</span></div>
+        <div class="kbody">
+        ${d.ex.length ? `<ol class="exnames">${rows}</ol>` : `<div class="muted">Passet har inga övningar än.</div>`}
         ${others.length ? `<div class="muted small">Idag har du även loggat ${others.map(o => esc(o.name)).join(", ")}.</div>` : ""}
-        <button class="primary wide" style="margin:10px 0 6px" data-focusstart="${d.id}">${w && w.done ? "Öppna passet" : w ? "Fortsätt passet" : "Starta passet"}</button>
-        <div class="muted small">${weekPasses} av ${S.plan.count} pass den här veckan</div></div>`;
+        <button class="primary wide bigbtn" style="margin-top:12px" data-focusstart="${d.id}">${w && w.done ? "Öppna passet" : w ? "▶ Fortsätt passet" : "▶ Starta passet"}</button>
+        <div class="muted small" style="margin-top:8px;text-align:center">${weekPasses} av ${S.plan.count} pass den här veckan</div></div></section>`;
     } else {
       const nx = nextScheduled(TODAY);
-      passCard = `<div class="card"><h2>Vilodag 😌</h2><div class="muted">Nästa pass: ${WD[weekdayOf(nx.date)]} · ${esc(nx.day.name)}</div>
-        <div style="margin-top:10px"><button data-focusstart="${nx.day.id}">Kör ett pass ändå</button></div></div>`;
+      passCard = `<section class="card kmeal"><div class="khead"><span class="grow">Vilodag</span><span>😌</span></div>
+        <div class="kbody"><div class="muted">Nästa pass: ${WD[weekdayOf(nx.date)]} · ${esc(nx.day.name)}</div>
+        <button class="wide" style="margin-top:12px" data-focusstart="${nx.day.id}">Kör ett pass ändå</button></div></section>`;
     }
     // Hem har dagens datum som rubrik
     return `<h1>${new Date().toLocaleDateString("sv-SE", { weekday: "long", day: "numeric", month: "long" }).replace(/^./, c => c.toUpperCase())} <span class="muted">v.${weekNo(TODAY)}</span></h1>
@@ -1139,12 +1147,11 @@ const VIEWS = {
       ${accountNudge()}
       ${social.pendingCode ? friendsHome() : ""}
       ${passCard}
-      ${dailiesCard()}
-      <div class="card"><div class="row between"><h2>Mat</h2><span class="muted">${e.kcal} / ${m.kcal} kcal</span></div>
-        ${bar(e.kcal, m.kcal)}<div class="muted">${Math.max(0, m.kcal - e.kcal)} kcal kvar</div>
-        <div class="row between" style="margin-top:10px"><span>Protein</span><span class="muted">${e.protein} / ${m.protein} g</span></div>
-        ${bar(e.protein, m.protein, true)}
-        <div style="margin-top:10px"><button data-go="kost">Logga mat</button></div></div>
+      ${dailiesCard(false, true)}
+      <section class="card kmeal homefood"><div class="khead"><svg class="kicon" viewBox="0 0 24 24" aria-hidden="true">${MEAL_SVG[1]}</svg><span class="grow">Mat idag</span>
+        <span>${tnum(e.kcal)} kcal</span></div>
+        <div class="kbody">${kstats(e, m)}
+        <button class="wide" style="margin-top:14px" data-go="kost">Logga mat</button></div></section>
       ${S.hideWeight ? "" : weightCard()}
       ${social.pendingCode ? "" : friendsHome()}`;
   },

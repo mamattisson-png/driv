@@ -362,13 +362,13 @@ def test_kroppsvikt_en_gang_i_veckan_och_kalorimal(page):
     page.click("[data-savesetup]")
     seed(page, "S.weights['2026-10-15'] = 82; S.weights['2026-10-16'] = 81.8")
     # Ingen vägning den här veckan: rutan ber om en
-    assert "Veckans vägning" in page.inner_text("#app")
+    assert "VECKANS VÄGNING" in page.inner_text("#app").upper()
     page.fill("#wkg", "70")
     page.click("[data-wsave]")
     assert page.evaluate("S.weights['2026-10-22']") == 70 and page.evaluate("S.profile.weight") == 70
     assert page.evaluate("kcalGoal()") < 2360
     # Därefter bara veckans vikt; Ändra skriver över samma vägning
-    card = page.locator('.card:has(h2:text-is("Veckans vikt"))')
+    card = page.locator('.card:has(.khead:has-text("Veckans vikt"))')
     assert page.locator("#wkg").count() == 0 and "mot förra veckan" in card.inner_text()
     page.click("[data-wedit]")
     page.fill("#wkg", "71")
