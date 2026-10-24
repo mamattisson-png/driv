@@ -309,6 +309,19 @@ def test_recept_byggs_och_loggas_per_portion(page):
     assert page.locator('.qadd:has-text("Lasagne")').count() == 1
 
 
+def test_forslag_sorteras_efter_maltiden_och_har_tak(page):
+    start(page)
+    many = ",".join(f"{{name:'Sak {i}', kcal:{100 + i}, protein:1, meal:2}}" for i in range(40))
+    seed(page, f"""S.log[shift(TODAY, -1)] = {{workouts:[], dailies:{{}}, food:[{{name:'Gröt', kcal:300, protein:10, meal:0}}, {many}]}};
+      S.log[shift(TODAY, -2)] = {{workouts:[], dailies:{{}}, food:[{{name:'Gröt', kcal:300, protein:10, meal:0}}]}};
+      S.favs = [{{name:'Kaffe', kcal:20, protein:1}}]""")
+    go(page, "kost")
+    add_to(page, 0)
+    # Gröt äts oftast till frukost och kommer först, före favoriten
+    assert page.evaluate("quickCache.map(f => f.name).slice(0, 2)") == ["Gröt", "Kaffe"]
+    assert page.evaluate("quickCache.length") <= 20
+
+
 def test_dailys_under_passet(page):
     start(page)
     seed(page, "S.daily = [{id:'plankan',sets:3,reps:'45 sek'},{id:'lop',sets:1,reps:''}]")
@@ -541,13 +554,17 @@ def test_kost_maltider_forslag_mangd_och_upprepa(page):
     page.click(".sheet [data-delfood]")
     assert page.locator(".sheet").count() == 0
     assert page.evaluate("day().food.some(f => f.meal === 1 && f.name === 'Ägg')") is False
-    # Frukosten sparad som måltid och loggad i middag del för del
+    # Frukosten sparad som måltid: föreslås bara till frukost och loggas del för del
     add_to(page, 0)
     page.click('[data-savegroup="0"]')
     page.click('.sheet-foot [data-fsclose]')
     add_to(page, 3)
+    assert page.locator('.qadd:has-text("🍽")').count() == 0
+    page.click('.sheet-foot [data-fsclose]')
+    page.evaluate("day().food = day().food.filter(f => f.meal !== 0); save(); render()")
+    add_to(page, 0)
     page.click('.qadd:has-text("🍽")')
-    assert amounts(3) == [["Gröt", 300, ""], ["Ägg", 154, "2 st"]]
+    assert amounts(0) == [["Gröt", 300, ""], ["Ägg", 154, "2 st"]]
     page.click('.sheet-foot [data-fsclose]')
 
 

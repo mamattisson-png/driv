@@ -247,19 +247,39 @@ function recipeSheet() {
   </div></div>`;
 }
 
-// Förslag: favoriter, egna måltider och sedan det man ätit senast, utom det som redan ligger
-// i måltiden och utom uppskattningar
+// Förslag: det du brukar äta till just den här måltiden först. Varje kandidat (favorit, sparad
+// måltid, recept, nyligen ätet) får poäng efter hur ofta den loggats de senaste fyra veckorna,
+// dubbelt så mycket i samma måltid. Högst 20 förslag; resten nås genom att söka.
+const QUICK_MAX = 20;
 function quickList(meal) {
-  const out = [], seen = new Set(day().food.filter(f => f.meal === meal).map(foodKey));
-  favs().forEach((f, idx) => { if (!seen.has(foodKey(f))) out.push({ ...f, kind: "fav", idx }); seen.add(foodKey(f)); });
-  S.meals.forEach((m, idx) => out.push({ ...m, kind: "meal", idx }));
-  recipes().forEach((r, idx) => { const p = perPortion(r); if (!seen.has(foodKey(p))) out.push({ ...p, kind: "recipe", idx }); seen.add(foodKey(p)); });
-  for (const f of recentFoods()) {
-    if (seen.has(foodKey(f)) || isEst(f)) continue;
-    seen.add(foodKey(f));
-    out.push({ ...perUnit(f), kind: "recent" });
+  const date = logDate(), from = shift(date, -28), freq = {};
+  for (const d of Object.keys(S.log).sort()) {
+    if (d < from || d > date) continue;
+    for (const f of S.log[d].food) {
+      const e = freq[foodKey(f)] || (freq[foodKey(f)] = { here: 0, any: 0 });
+      e.any++; e.f = f;
+      if (f.meal === meal) e.here++;
+    }
   }
-  return (quickCache = out);
+  const skip = new Set(day().food.filter(f => f.meal === meal).map(foodKey)), out = [];
+  const add = (f, bonus) => {
+    const k = foodKey(f);
+    if (skip.has(k) || isEst(f)) return;
+    skip.add(k);
+    const e = freq[k] || { here: 0, any: 0 };
+    out.push({ ...f, score: e.here * 2 + e.any + bonus });
+  };
+  favs().forEach((f, idx) => add({ ...f, kind: "fav", idx }, 1.5));
+  // En sparad måltid hör till måltiden den sparades från
+  S.meals.forEach((m, idx) => {
+    const slot = m.slot ?? MEALS.findIndex(([n]) => m.name.startsWith(n + ":"));
+    if (slot < 0 || slot === meal) add({ ...m, kind: "meal", idx }, 2);
+  });
+  recipes().forEach((r, idx) => add({ ...perPortion(r), kind: "recipe", idx }, 0.5));
+  // Allt som ätits de senaste fyra veckorna, och det senaste från tiden innan
+  for (const e of Object.values(freq)) add({ ...perUnit(e.f), kind: "recent" }, 0);
+  for (const f of recentFoods()) add({ ...perUnit(f), kind: "recent" }, 0);
+  return (quickCache = out.sort((x, y) => y.score - x.score).slice(0, QUICK_MAX));
 }
 // Ett snabbval som redan finns i måltiden får ett till i stället för en ny rad
 function addQuick(f, meal) {
