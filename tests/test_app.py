@@ -67,7 +67,7 @@ def test_eget_upplagg_med_egna_namn_och_ovningar(page):
     page.click('[data-count="3"]')
     assert page.evaluate("draft.days[0].name") == "Bröst & triceps"
     page.click("[data-savesetup]")
-    assert "Bröst & triceps" in page.inner_text(".card >> nth=0")
+    assert "Bröst & triceps" in page.inner_text(".daypass")
 
 
 def test_hem_visar_dagens_ovningar(page):
@@ -342,6 +342,15 @@ def test_superset_vaxlar_och_vilar_efter_varvet(page):
     assert page.evaluate("focus.idx") == 0 and page.evaluate("rest.end > Date.now()") is True
 
 
+def test_hem_har_en_rad_med_dagens_siffror(page):
+    start(page)
+    seed(page, "logFood({name: 'Gröt', kcal: 300, protein: 10}, 0)")
+    go(page, "idag")
+    assert "300" in page.inner_text(".homesum") and "10" in page.inner_text(".homesum")
+    page.click(".homesum")
+    assert page.evaluate("tab") == "kost"
+
+
 def test_dailys_under_passet(page):
     start(page)
     seed(page, "S.daily = [{id:'plankan',sets:3,reps:'45 sek'},{id:'lop',sets:1,reps:''}]")
@@ -471,13 +480,8 @@ def test_kroppsvikt_en_gang_i_veckan_och_kalorimal(page):
     page.click("[data-wsave]")
     assert page.evaluate("S.weights['2026-10-22']") == 70 and page.evaluate("S.profile.weight") == 70
     assert page.evaluate("kcalGoal()") < 2360
-    # Därefter bara veckans vikt; Ändra skriver över samma vägning
-    card = page.locator('.card:has(.khead:has-text("Veckans vikt"))')
-    assert page.locator("#wkg").count() == 0 and "mot förra veckan" in card.inner_text()
-    page.click("[data-wedit]")
-    page.fill("#wkg", "71")
-    page.click("[data-wsave]")
-    assert page.evaluate("Object.keys(S.weights).filter(d => d >= '2026-10-19')") == ["2026-10-22"]
+    # Därefter försvinner rutan från Hem; vikten över tid finns under Historik
+    assert page.locator("#wkg").count() == 0 and "VECKANS" not in page.inner_text("#app").upper()
     # Före vägningsdagen syns ingen ruta
     prof(page, "vikt")
     page.select_option("[data-weighday]", "4")

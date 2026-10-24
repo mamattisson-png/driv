@@ -890,6 +890,11 @@ function logWeight(kg, date = logDate()) {
 // sedan bara veckans vikt och skillnaden mot förra veckan.
 let weightEditing = false;
 const weighDay = () => S.weighDay ?? 0;
+// På Hem visas vägningen bara när den är dags; vikten över tid finns under Historik
+function weighCardDue() {
+  const ws = weekStart(TODAY), weighed = weekDates(ws).some(d => d <= TODAY && weights()[d] > 0);
+  return weighed && !weightEditing ? "" : weightCard();
+}
 function weightCard() {
   const ws = weekStart(TODAY), last = latestWeight();
   const weighed = weekDates(ws).filter(d => d <= TODAY && weights()[d] > 0).pop();
@@ -1150,15 +1155,11 @@ const VIEWS = {
       ${S.plan.days.length > 1 ? dayPicker(d && d.id) : ""}
       ${accountNudge()}
       ${social.pendingCode ? friendsHome() : ""}
-      ${HOME_V === "A" ? homeSummary(e, m, weekPasses) : HOME_V === "C" ? homeRings(e, m, weekPasses) : ""}
-      ${HOME_V === "B" ? homeToday(d, e, m, weekPasses) : passCard}
+      ${homeSummary(e, m, weekPasses)}
+      ${passCard}
       ${account.step === "in" && !social.pendingCode ? friendsHome() : ""}
-      ${HOME_V === "B" ? "" : dailiesCard(false, true)}
-      ${HOME_V === "orig" ? `<section class="card kmeal homefood"><div class="khead"><svg class="kicon" viewBox="0 0 24 24" aria-hidden="true">${MEAL_SVG[1]}</svg><span class="grow">Mat idag</span>
-        <span>${tnum(e.kcal)} kcal</span></div>
-        <div class="kbody">${kstats(e, m)}
-        <button class="wide" style="margin-top:14px" data-go="kost">Logga mat</button></div></section>
-      ${S.hideWeight ? "" : weightCard()}` : ""}
+      ${dailiesCard(false, true)}
+      ${S.hideWeight ? "" : weighCardDue()}
       ${social.pendingCode || account.step === "in" ? "" : friendsHome()}`;
   },
 
@@ -1252,37 +1253,14 @@ function setTheme(t) {
   if (t === "auto") delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = t;
 }
 
-let HOME_V = "A";   // prototyp: vilken variant av Hem som visas
 let setupFrom = null;
+// Hem: en rad med dagens kalorier, protein och veckans pass. Tryck för att komma till Kost.
 function homeSummary(e, m, wp) {
   return `<button class="card homesum" data-go="kost">
     <span><b>${tnum(e.kcal)}</b> <span class="muted">/ ${tnum(m.kcal)} kcal</span></span>
     <span><b>${tnum(e.protein)}</b> <span class="muted">/ ${m.protein} g protein</span></span>
     <span><b>${wp}</b> <span class="muted">av ${S.plan.count} pass</span></span></button>`;
 }
-function ringSvg(v, goal, cls, big, small) {
-  const pct = goal ? Math.min(1, v / goal) : 0, r = 30, c = 2 * Math.PI * r;
-  return `<div class="hring"><svg viewBox="0 0 76 76"><circle cx="38" cy="38" r="${r}" class="ring-bg"/><circle cx="38" cy="38" r="${r}" class="ring-fg ${cls}"
-    stroke-dasharray="${(pct * c).toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 38 38)"/></svg>
-    <div class="hringnum"><b>${big}</b></div><div class="muted small">${small}</div></div>`;
-}
-function homeRings(e, m, wp) {
-  const dd = S.daily.filter(x => dailyDone(TODAY, x.id)).length;
-  return `<div class="card hrings">${ringSvg(wp, S.plan.count, "ok", `${wp}/${S.plan.count}`, "pass i veckan")}
-    ${ringSvg(dd, S.daily.length, "prot", `${dd}/${S.daily.length}`, "dailys")}
-    <button class="ringbtn" data-go="kost">${ringSvg(e.kcal, m.kcal, "", tnum(e.kcal), `av ${tnum(m.kcal)} kcal`)}</button></div>`;
-}
-function homeToday(d, e, m, wp) {
-  const w = d && workoutOn(TODAY, d.id), done = d ? d.ex.filter(x => exDone(w, x)).length : 0;
-  const dd = S.daily.filter(x => dailyDone(TODAY, x.id)).length;
-  return `<section class="card kmeal"><div class="khead"><span class="grow">Idag</span><span>${wp} av ${S.plan.count} pass v.${weekNo(TODAY)}</span></div>
-    <div class="krow"><span class="hricon">🏋️</span><span class="grow"><b>${d ? `${esc(d.name)} · ${d.ex.length} övningar` : "Vilodag"}</b><span class="muted small">${d ? d.ex.slice(0, 3).map(x => esc(EX[x.id].name)).join(", ") + (d.ex.length > 3 ? " …" : "") : ""}</span></span>
-      ${d ? `<button class="small primary" data-focusstart="${d.id}">${w ? "Fortsätt" : "Starta"}</button>` : ""}</div>
-    <div class="krow"><span class="hricon">✓</span><span class="grow"><b>Dailys</b><span class="muted small">${S.daily.map(x => `${dailyDone(TODAY, x.id) ? "✓ " : ""}${esc(EX[x.id].name)}`).join(" · ")}</span></span><span class="setcount">${dd}/${S.daily.length}</span></div>
-    <button class="krow" data-go="kost"><span class="hricon">🍽️</span><span class="grow"><b>Mat</b><span class="muted small">${tnum(e.kcal)} / ${tnum(m.kcal)} kcal · ${tnum(e.protein)} g protein</span></span><span class="chev">›</span></button>
-  </section>`;
-}   // fliken man öppnade Upplägg från, dit "tillbaka" leder
-
 // Profilen är en lista där en rad i taget kan fällas ut
 let profOpen = null;
 function profRow(id, icon, title, summary, body) {
