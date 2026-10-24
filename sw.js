@@ -2,8 +2,8 @@
 // Alla filer sparas när en ny version installeras och används sedan därifrån.
 // CACHE innehåller en kontrollsumma av filerna: kör tools/sw-version.py efter ändringar
 // (testerna larmar om den inte stämmer). En ny summa gör att webbläsaren installerar om.
-const CACHE = "driv-514f942f";
-const FILES = ["index.html", "app.js", "figur.js", "fokus.js", "kost.js", "historik.js", "social.js", "ovningar.js", "livsmedel.js", "mat.js", "config.js",
+const CACHE = "driv-c3617f1f";
+const FILES = ["index.html", "app.js", "figur.js", "fokus.js", "kost.js", "historik.js", "social.js", "notiser.js", "ovningar.js", "livsmedel.js", "mat.js", "config.js",
   "manifest.webmanifest", "icons/favicon.png", "icons/apple-touch-icon.png", "icons/icon-192.png", "icons/icon-512.png", "icons/icon-maskable-512.png"];
 
 self.addEventListener("install", e => {
@@ -26,4 +26,20 @@ self.addEventListener("fetch", e => {
   e.respondWith(caches.match(key, { ignoreSearch: true, cacheName: CACHE })
     .then(hit => hit || fetch(e.request))
     .catch(() => caches.match("index.html")));
+});
+
+// Notiser från servern (supabase/functions/driv-push). Ett tryck öppnar appen.
+self.addEventListener("push", e => {
+  let msg = {};
+  try { msg = e.data ? e.data.json() : {}; } catch (err) { msg = { body: e.data && e.data.text() }; }
+  e.waitUntil(self.registration.showNotification(msg.title || "Driv", {
+    body: msg.body || "", icon: "icons/icon-192.png", badge: "icons/favicon.png", data: { url: msg.url || "./" },
+  }));
+});
+self.addEventListener("notificationclick", e => {
+  e.notification.close();
+  e.waitUntil(self.clients.matchAll({ type: "window", includeUncontrolled: true }).then(list => {
+    const open = list.find(c => "focus" in c);
+    return open ? open.focus() : self.clients.openWindow(e.notification.data.url || "./");
+  }));
 });
