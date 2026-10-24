@@ -901,7 +901,7 @@ function weightCard() {
   }
   if (!weighed && weekdayOf(TODAY) < weighDay()) return "";
   const date = weighed || TODAY;
-  return `<section class="card kmeal"><div class="khead"><svg class="kicon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20h14l-2-12H7zM9 8a3 3 0 0 1 6 0M12 11v3"/></svg><span class="grow">Veckans vägning</span>${last ? `<span>Förra: ${fmtNum(last.kg)} kg</span>` : ""}</div>
+  return `<section class="card kmeal"><div class="khead"><svg class="kicon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20h14l-2-12H7zM9 8a3 3 0 0 1 6 0M12 11v3"/></svg><span class="grow">Veckans vägning</span><span>${last ? `Förra: ${fmtNum(last.kg)} kg` : ""}</span></div>
     <div class="kbody"><div class="row"><input id="wkg" type="number" inputmode="decimal" step="0.1" placeholder="${last ? fmtNum(last.kg).replace(",", ".") : "kg"}" aria-label="Vikt i kg"
       value="${weights()[date] ?? ""}"><button data-wsave data-wdate="${date}">Spara</button></div>
     <div class="row between" style="margin-top:4px"><span class="muted small">En gång i veckan räcker. Väg dig gärna på morgonen, samma veckodag. Kalorimålet följer din senaste vikt.</span>
