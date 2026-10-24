@@ -35,7 +35,7 @@ const FOODS = [
   { n: ["bröd", "limpa", "brödskiva", "smörgås", "macka"], kcal: 250, p: 8, skiva: 35, st: 35 },
   { n: ["tortilla", "tortillabröd", "wrap"], kcal: 300, p: 8, st: 40 },
   { n: ["pannkaka", "pannkakor"], kcal: 190, p: 7, st: 60 },
-  { n: ["okokt pasta", "pasta okokt"], kcal: 360, p: 12, dl: 45, portion: 80 },
+  { n: ["okokt pasta", "pasta okokt", "lasagneplattor", "lasagneplatta"], kcal: 360, p: 12, dl: 45, portion: 80 },
   { n: ["pasta", "spaghetti", "makaroner"], kcal: 150, p: 5.5, dl: 50, portion: 220 },
   { n: ["okokt ris", "ris okokt"], kcal: 350, p: 7, dl: 85, portion: 70 },
   { n: ["ris", "jasminris", "basmatiris"], kcal: 130, p: 2.7, dl: 80, portion: 200 },

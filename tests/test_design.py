@@ -71,6 +71,11 @@ def views(page):
     page.fill("#fname", "bolognese och 2 ägg")
     page.click(".sheet h2")
     yield "Lägg till mat", ".sheet"
+    page.evaluate("recipeEdit = { idx: null, name: 'Lasagne', portions: 4, items: [{ name: 'Nötfärs', text: '500 g nötfärs', kcal: 1100, protein: 95 }], msg: 'Känns inte igen: x' }; render()")
+    yield "Recept", ".sheet"
+    page.evaluate("recipeEdit = null; S.recipes = [{ name: 'Lasagne', portions: 4, items: [{ name: 'Nötfärs', text: '500 g', kcal: 1100, protein: 95 }] }]; recipeList = true; render()")
+    yield "Dina recept", ".sheet"
+    page.evaluate("recipeList = false; render()")
     page.click(".sheet-foot [data-fsclose]")
     page.click('[data-fooditem="0"]')
     yield "Ändra mat", ".sheet"

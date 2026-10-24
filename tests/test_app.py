@@ -286,6 +286,29 @@ def test_utveckling_visar_personbasta_och_okning(page):
     assert page.locator(".sheet .chart").count() == 1
 
 
+def test_recept_byggs_och_loggas_per_portion(page):
+    start(page)
+    go(page, "kost")
+    add_to(page, 3)
+    page.click("[data-rlist]")
+    page.click("[data-rnew]")
+    page.fill("#rname", "Lasagne")
+    page.fill("#ring", "500 g nötfärs, 2 dl grädde, okändgrej")
+    page.click("[data-ringadd]")
+    assert page.evaluate("recipeEdit.items.length") == 2
+    assert "okändgrej" in page.inner_text(".sheet") and page.input_value("#ring") == "okändgrej"
+    page.click('[data-rport="1"]')   # 5 portioner
+    total = page.evaluate("recipeTotal(recipeEdit).kcal")
+    page.click("[data-rsave]")
+    assert page.evaluate("S.recipes.map(r => [r.name, r.portions])") == [["Lasagne", 5]]
+    page.click('[data-ruse="0"]')
+    f = page.evaluate("day().food.at(-1)")
+    assert f["name"] == "Lasagne" and f["meal"] == 3 and abs(f["kcal"] - total / 5) <= 1
+    # Receptet syns bland förslagen i andra måltider
+    page.click('[data-sheetmeal="1"]')
+    assert page.locator('.qadd:has-text("Lasagne")').count() == 1
+
+
 def test_dailys_under_passet(page):
     start(page)
     seed(page, "S.daily = [{id:'plankan',sets:3,reps:'45 sek'},{id:'lop',sets:1,reps:''}]")
