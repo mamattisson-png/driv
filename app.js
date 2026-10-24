@@ -895,9 +895,9 @@ function weightCard() {
   const weighed = weekDates(ws).filter(d => d <= TODAY && weights()[d] > 0).pop();
   const prev = weekAvgWeight(shift(ws, -7)), now = weekAvgWeight(ws);
   if (weighed && !weightEditing) {
-    return `<section class="card kmeal"><div class="khead"><svg class="kicon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20h14l-2-12H7zM9 8a3 3 0 0 1 6 0M12 11v3"/></svg><span class="grow">Veckans vikt</span><span>${fmtNum(now)} kg</span></div>
-      <div class="kbody row between"><span>${prev != null ? `${weightBadge(now - prev)} <span class="muted small">mot förra veckan</span>` : `<span class="muted small">Första vägningen</span>`}</span>
-      <button class="small ghost" data-wedit>Ändra</button></div></section>`;
+    return `<div class="card homerow"><span class="hricon" aria-hidden="true">⚖️</span>
+      <span class="grow"><b>Veckans vikt: ${fmtNum(now)} kg</b><span class="muted small">${prev != null ? `${weightBadge(now - prev)} mot förra veckan` : "Första vägningen"}</span></span>
+      <button class="small ghost" data-wedit>Ändra</button></div>`;
   }
   if (!weighed && weekdayOf(TODAY) < weighDay()) return "";
   const date = weighed || TODAY;
@@ -1028,9 +1028,19 @@ function dailiesCard(inPass, banded) {
     return `<div class="daily ${ok ? "ok" : ""}">${thumb(id, "xs")}<div class="grow"><b>${esc(EX[id].name)}</b>
       <span class="muted small">${[sub, its ? `🔥 ${its}` : ""].filter(Boolean).join(" · ")}</span></div>${ctl}</div>`;
   }).join("");
-  if (banded) return `<section class="card kmeal dailies"><div class="khead"><span class="kcheck" aria-hidden="true">✓</span><span class="grow">Dailys${st ? ` · 🔥 ${st} d` : ""}</span><span>${done} / ${n}</span></div>
-    <div class="kbody">${rows}
-    <button class="small ghost" style="margin-top:6px" data-dedit>Redigera dailys</button></div></section>`;
+  // På Hem: en bock per daily som en liten knapp; löpning har sina fält på en egen rad
+  if (banded) {
+    const chips = S.daily.filter(e => !isRun(e.id)).map(e => { const ok = dailyDone(date, e.id);
+      return `<button class="dchip ${ok ? "on" : ""}" data-dcheck="${e.id}" aria-pressed="${ok}">${ok ? "✓ " : ""}${esc(EX[e.id].name)}</button>`; }).join("");
+    const runs = S.daily.filter(e => isRun(e.id)).map(e => { const ok = dailyDone(date, e.id), v = L.dailies[e.id] || {};
+      return `<div class="drun"><span class="grow">${esc(EX[e.id].name)}</span>
+        <label class="runf"><input class="run" type="number" inputmode="decimal" step="0.1" min="0" value="${v.km || ""}" data-run="${e.id}" data-f="km" aria-label="Kilometer"><span>km</span></label>
+        <label class="runf"><input class="run" type="number" inputmode="numeric" min="0" value="${v.min || ""}" data-run="${e.id}" data-f="min" aria-label="Minuter"><span>min</span></label>
+        <button class="done-btn ${ok ? "on" : ""}" data-runcheck="${e.id}" aria-pressed="${ok}" aria-label="${esc(EX[e.id].name)}: ${ok ? "klar" : "fyll i km eller minuter"}">✓</button></div>`; }).join("");
+    return `<section class="card kmeal dailies"><div class="khead"><span class="kcheck" aria-hidden="true">✓</span><span class="grow">Dailys${st ? ` · 🔥 ${st} d` : ""}</span><span>${done} / ${n}</span></div>
+      <div class="kbody"><div class="dchips">${chips}</div>${runs}
+      <button class="link small" style="margin-top:8px" data-dedit>Ändra dailys</button></div></section>`;
+  }
   return `<div class="card"><div class="row between"><h2>Dailys</h2><span class="muted">${done} av ${n} klara${st ? ` · 🔥 ${st} d` : ""}</span></div>
     <div class="bar ok"><div style="width:${Math.round(done / n * 100)}%"></div></div>
     ${rows}
@@ -1153,10 +1163,11 @@ const VIEWS = {
       ${passCard}
       ${account.step === "in" && !social.pendingCode ? friendsHome() : ""}
       ${dailiesCard(false, true)}
-      <section class="card kmeal homefood"><div class="khead"><svg class="kicon" viewBox="0 0 24 24" aria-hidden="true">${MEAL_SVG[1]}</svg><span class="grow">Mat idag</span>
-        <span>${tnum(e.kcal)} kcal</span></div>
-        <div class="kbody">${kstats(e, m)}
-        <button class="wide" style="margin-top:14px" data-go="kost">Logga mat</button></div></section>
+      <button class="card homerow" data-go="kost"><span class="hricon" aria-hidden="true">🍽️</span>
+        <span class="grow"><b>Mat idag</b><span class="hrbars">
+          <span class="hrbar"><span class="muted small">${tnum(e.kcal)} / ${tnum(m.kcal)} kcal</span>${bar(e.kcal, m.kcal)}</span>
+          <span class="hrbar"><span class="muted small">${tnum(e.protein)} / ${m.protein} g protein</span>${bar(e.protein, m.protein, true).replace('class="bar ', 'class="bar prot ')}</span></span></span>
+        <span class="chev" aria-hidden="true">›</span></button>
       ${S.hideWeight ? "" : weightCard()}
       ${social.pendingCode || account.step === "in" ? "" : friendsHome()}`;
   },

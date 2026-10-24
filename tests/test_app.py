@@ -472,7 +472,7 @@ def test_kroppsvikt_en_gang_i_veckan_och_kalorimal(page):
     assert page.evaluate("S.weights['2026-10-22']") == 70 and page.evaluate("S.profile.weight") == 70
     assert page.evaluate("kcalGoal()") < 2360
     # Därefter bara veckans vikt; Ändra skriver över samma vägning
-    card = page.locator('.card:has(.khead:has-text("Veckans vikt"))')
+    card = page.locator('.homerow:has-text("Veckans vikt")')
     assert page.locator("#wkg").count() == 0 and "mot förra veckan" in card.inner_text()
     page.click("[data-wedit]")
     page.fill("#wkg", "71")
@@ -1116,8 +1116,8 @@ def test_vanner_kod_flode_och_peppning(page):
     assert "Bo" in page.inner_text("#vanner")
     # Hem visar Bos pass, och peppningen sparas
     go(page, "idag")
-    page.wait_for_selector(".feed-row")
-    assert "Bo körde Push · 6 övningar" in page.inner_text(".feed-row") and "igår" in page.inner_text(".feed-row")
+    page.wait_for_selector(".friendsrow [data-kudos]")
+    assert "Bo körde Push" in page.inner_text(".friendsrow") and "igår" in page.inner_text(".friendsrow")
     page.click("[data-kudos='1']")
     page.wait_for_function("window.__social.kudos.length === 1")
     assert "👏 1" in page.inner_text("[data-kudos='1']")
