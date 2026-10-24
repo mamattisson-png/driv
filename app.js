@@ -1202,6 +1202,7 @@ const VIEWS = {
   historik: () => historikView(),
 
   profil() {
+    checkPush();
     const p = S.profile, m = macros(), rs = restSettings(), r = S.reminder;
     const cloudText = {
       cloud: account.step === "in" ? `✓ Sparas på ditt konto (${esc(account.email)}).` : "✓ Sparas på ditt konto och följer med mellan mobil och dator.",
@@ -1229,7 +1230,8 @@ const VIEWS = {
           <label class="row"><input type="checkbox" data-showweight ${S.hideWeight ? "" : "checked"}><span>Visa vikt på Hem och i Historik</span></label>
           <label class="field" style="margin-top:8px">Vägningsdag<select data-weighday>${WD.map((w, i) => `<option value="${i}" ${weighDay() === i ? "selected" : ""}>${WD_LONG[i].replace(/^./, c => c.toUpperCase())}</option>`).join("")}</select></label>
           <div class="muted small" style="margin-top:4px">Döljer du vikten används vikten i Kalorimål, och sparade vägningar finns kvar.</div>`)}
-        ${S.daily.length ? profRow("paminnelse", "🔔", "Påminnelse", r ? `Kl. ${esc(r.time)}` : "Ingen", reminderCard()) : ""}
+        ${profRow("notiser", "🔔", "Notiser", pushSummary(), pushBody())}
+        ${S.daily.length ? profRow("paminnelse", "⏰", "Påminnelse i kalendern", r ? `Kl. ${esc(r.time)}` : "Ingen", reminderCard()) : ""}
         ${profRow("utseende", "🌗", "Utseende", THEMES[themeNow()], `<div class="chips">${Object.entries(THEMES).map(([k, n]) =>
           `<button data-theme-set="${k}" class="${themeNow() === k ? "on" : ""}" aria-pressed="${themeNow() === k}">${n}</button>`).join("")}</div>
           <div class="muted small" style="margin-top:8px">Automatiskt följer telefonens inställning. Valet gäller den här enheten.</div>`)}

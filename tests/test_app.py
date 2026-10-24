@@ -796,6 +796,8 @@ window.supabase = { createClient: () => ({
         return { data: null, error: null };
       }
       case "driv_delete_me": delete st.profiles[me]; st.deleted = me; return { data: null, error: null };
+      case "driv_push_save": st.push = { ...a, user: me }; return { data: null, error: null };
+      case "driv_push_delete": st.pushDeleted = a.p_endpoint; st.push = null; return { data: null, error: null };
     }
     return fail("okänd funktion " + name);
   },
@@ -1144,6 +1146,60 @@ def test_vanner_kod_flode_och_peppning(page):
     assert page.evaluate("window.__social.deleted") is None
     page.click("[data-delacct]")
     page.wait_for_function("window.__social.deleted === 'u1' && account.step === 'email'")
+
+
+PUSH_MOCK = r"""
+// Webbläsarens push-tjänst finns inte i testerna: prenumerationen låtsas finnas
+window.__swTest = true;
+PushManager.prototype.getSubscription = async function () { return window.__sub || null; };
+PushManager.prototype.subscribe = async function () {
+  return (window.__sub = { endpoint: 'https://push.example/abc', unsubscribe: async () => { window.__sub = null; return true; },
+    toJSON: () => ({ endpoint: 'https://push.example/abc', keys: { p256dh: 'P', auth: 'A' } }) });
+};
+Object.defineProperty(Notification, 'permission', { get: () => window.__perm || 'default' });
+Notification.requestPermission = async () => (window.__perm = 'granted');
+"""
+
+
+def test_notiser_slas_pa_och_av(page):
+    page.context.route("**/config.js", lambda r: r.fulfill(body=SB_CONFIG.replace(" };", ', vapidPublicKey: "BHM13dgfWzzKV4NL9-b37Q0bkn2xOHwGUU6UYkGpbs1OdH1btJsNwBNQZI2-5Fv7uNDZyH7Knp2fYL5kDlRtzuA" };'),
+        content_type="application/javascript"))
+    start(page, SUPABASE_MOCK + PUSH_MOCK)
+    login(page)
+    prof(page, "notiser")
+    page.click("[data-pushtoggle]")
+    page.wait_for_function("push.on && window.__social.push")
+    saved = page.evaluate("window.__social.push")
+    assert saved["p_endpoint"] == "https://push.example/abc" and saved["p_time"] == "18:00" and saved["p_kudos"] is True
+    assert "På · kl. 18:00" in page.inner_text("#p-notiser")
+    page.fill("#pushtime", "07:30")
+    page.press("#pushtime", "Tab")
+    page.wait_for_function("window.__social.push && window.__social.push.p_time === '07:30'")
+    page.click("[data-pushtoggle]")
+    page.wait_for_function("!push.on && window.__social.pushDeleted")
+
+
+def test_notislogiken_i_edge_function(page):
+    # Samma regler som Supabase-funktionen kör (supabase/functions/driv-push/regler.js)
+    import pathlib
+    fn = pathlib.Path(__file__).parent.parent.joinpath("supabase/functions/driv-push/regler.js").read_text().replace("export ", "")
+    open_app(page)
+    res = page.evaluate("() => {" + fn + """
+      const s = { plan: { mode: 'flex', count: 3, days: [] }, daily: [{ id: 'plankan' }, { id: 'lop' }] };
+      const log = { '2026-10-19': { workouts: [{ done: true, sets: {} }], dailies: {} },
+                    '2026-10-22': { workouts: [], dailies: { plankan: true } } };
+      const a = dailyMessage(s, log, '2026-10-22', 3);
+      log['2026-10-22'].workouts.push({ done: false, sets: { x: [{ ok: true }] } });
+      const b = dailyMessage(s, log, '2026-10-22', 3);
+      log['2026-10-22'].dailies.lop = { km: 5 };
+      const c = dailyMessage(s, log, '2026-10-22', 3);
+      const fixed = { plan: { mode: 'fixed', count: 2, weekdays: [0, 3], days: [{ name: 'Push' }, { name: 'Pull' }] }, daily: [] };
+      const d = dailyMessage(fixed, {}, '2026-10-22', 3), e = dailyMessage(fixed, {}, '2026-10-21', 2);
+      return [a, b, c, d, e]; }""")
+    assert res[0] == {"title": "Dags att träna 💪", "body": "1 av 3 pass den här veckan. 1 av 2 dailys kvar idag."}
+    assert res[1] == {"title": "Dailys kvar ✓", "body": "1 av 2 dailys kvar idag."}
+    assert res[2] is None
+    assert res[3]["body"] == "Pull står på schemat idag." and res[4] is None
 
 
 def test_vanner_utan_funktioner_i_supabase(page):
