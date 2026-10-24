@@ -1153,23 +1153,23 @@ const VIEWS = {
     if (focus && !editing) return focusView();
     const d = currentPassDay();
     const w = workoutOn(logDate(), d.id);
-    const done = d.ex.filter(x => exDone(w, x)).length;
+    const done = d.ex.filter(x => exDone(w, x)).length, logged = w && Object.values(w.sets).some(a => a.some(hasData));
     return `<h1>Träna <span class="muted">v.${weekNo(logDate())}</span></h1>
       ${dayPicker(d && d.id)}
-      <div class="card"><div class="row between"><h2>${passLabel(d)}</h2>
-        <button class="small ghost" data-edit>${editing ? "Klar" : "Redigera"}</button></div>
-        <div class="muted">${TYPES[d.type].muscles}${editing ? "" : ` · ${done}/${d.ex.length} klara`}</div>
-        ${!editing && d.ex.length ? `<div class="bar ok"><div style="width:${Math.round(done / d.ex.length * 100)}%"></div></div>` : ""}
-      </div>
-      ${!editing && d.ex.length && !(w && w.done) ? `<button class="primary wide" data-focusstart="${d.id}">▶ ${w ? "Fortsätt" : "Kör"} passet – en övning i taget</button>` : ""}
-      ${editing ? editList(d) : d.ex.length ? passOverview(d, w)
-        : `<div class="card muted">Passet har inga övningar än. Tryck på Redigera för att lägga till.</div>`}
-      ${editing ? "" : w && w.done
-        ? `<div class="card done-card"><b>✓ Bra jobbat, passet är sparat!</b>
-            <div class="muted small">Det räknas in i veckans pass och jämförelsen med förra veckan.</div>
-            <button class="small" style="margin-top:8px" data-finish="${d.id}">Öppna passet igen</button></div>`
-        : `<button class="primary wide" data-finish="${d.id}">✓ Spara passet${d.ex.length ? ` (${done} av ${d.ex.length} övningar)` : ""}</button>
-          <div class="muted small finish-note">Allt du loggat sparas direkt. Passet räknas även om du inte hunnit alla övningar.</div>`}
+      ${editing ? `<div class="card"><div class="row between"><h2>${passLabel(d)}</h2><button class="small ghost" data-edit>Klar</button></div>
+          <div class="muted">${TYPES[d.type].muscles}</div></div>${editList(d)}`
+        : !d.ex.length ? `<div class="card muted">Passet har inga övningar än. <button class="link" data-edit>Lägg till övningar</button></div>`
+        : `${passOverview(d, w)}
+          <div class="row between passmeta"><span class="muted small">${TYPES[d.type].muscles}</span><button class="link small" data-edit>Redigera passet</button></div>
+          ${w && w.done
+            ? `<div class="card done-card"><b>✓ Bra jobbat, passet är sparat!</b>
+                <div class="muted small">Det räknas in i veckans pass och jämförelsen med förra veckan.</div>
+                <button class="small" style="margin-top:8px" data-finish="${d.id}">Öppna passet igen</button></div>`
+            : logged
+            ? `<button class="primary wide bigbtn" data-finish="${d.id}">✓ Spara passet · ${done} av ${d.ex.length} klara</button>
+               <div class="muted small finish-note">Fortsätt genom att trycka på en övning. Passet räknas även om du inte hunnit alla.</div>`
+            : `<button class="primary wide bigbtn" data-focusstart="${d.id}">▶ Starta passet</button>
+               <div class="muted small finish-note">En övning i taget. Allt du loggar sparas direkt.</div>`}`}
       ${editing ? "" : upcomingCard()}`;
   },
 

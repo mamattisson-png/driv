@@ -147,8 +147,8 @@ def test_dagens_mal_fylls_i_och_pers_firas(page):
     go(page, "pass")
     page.click("[data-pick]")
     # Listan visar varje övning på en rad med förslag utifrån förra gången
-    assert "förslag 82,5 kg × 6" in page.locator(".exlist .tile", has_text="Bänkpress").inner_text()
-    assert "förslag 11 reps" in page.locator(".exlist .tile", has_text="Dips").inner_text()
+    assert "förslag 82,5 kg × 6" in page.locator(".exlist .krow", has_text="Bänkpress").inner_text()
+    assert "förslag 11 reps" in page.locator(".exlist .krow", has_text="Dips").inner_text()
     open_ex(page, "bankpress")
     assert "Bänkpress" in page.inner_text(".focus h2")
     page.click('[data-ok=bankpress][data-i="0"]')
@@ -163,8 +163,8 @@ def test_spara_pass_och_oppna_igen(page):
     for i in range(4):
         page.click(f'[data-ok=bankpress][data-i="{i}"]')
     to_list(page)
-    assert "✓" in page.inner_text('.exlist .tile:has-text("Bänkpress") .setcount')
-    assert "1 av 6 övningar" in page.inner_text("button[data-finish]")
+    assert "✓" in page.inner_text('.exlist .krow:has-text("Bänkpress") .setcount')
+    assert "1 av 6 klara" in page.inner_text("button[data-finish]")
     page.click("button[data-finish]")
     go(page, "pass")
     page.click("[data-pick]")

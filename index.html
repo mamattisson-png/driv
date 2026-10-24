@@ -267,6 +267,13 @@
   .klink { display: block; width: 100%; text-align: left; background: none; border: 0; border-radius: 0; padding: 11px 0; font: inherit; font-size: 15px; color: var(--text); }
   .klink + .klink { border-top: 1px solid var(--line); }
   .kday { margin-top: 6px; color: var(--accent-text); font-weight: 600; padding-bottom: 0; }
+  .exlist .krow { padding: 12px 16px; }
+  .exlist .krow + .krow { border-top: 1px solid var(--line); }
+  .exlist .krow.done b { color: var(--muted); }
+  .exlist .khead .tag { letter-spacing: .04em; }
+  .nextpill { font-size: 12px; font-weight: 700; color: var(--accent-text); background: var(--accent-soft); border-radius: 99px; padding: 3px 9px; }
+  .passmeta { margin: -4px 4px 14px; }
+  .bigbtn { padding: 15px; font-size: 17px; border-radius: 14px; }
   .kaddbtn { margin: 4px 0 8px; padding: 15px; font-size: 17px; border-radius: 14px; }
   .mealpick { margin: 4px 0 12px; }
   .kshort { margin: 6px 0 4px; }
@@ -342,10 +349,6 @@
   .amt-n { width: 56px; flex: none; text-align: center; font-size: 17px; font-weight: 600; padding: 7px 2px; }
   .amt-u { width: auto; flex: none; }
   /* Passet i Träna */
-  .exlist { padding: 8px; }
-  .exlist .tile { margin-top: 0; margin-bottom: 6px; padding: 8px 10px; }
-  .exlist .tile:last-child { margin-bottom: 0; }
-  .exlist .tile .muted { display: block; }
   .setcount { font-variant-numeric: tabular-nums; color: var(--muted); font-weight: 600; min-width: 36px; text-align: right; }
   .setcount.ok { color: var(--ok-text); font-size: 18px; }
   .tile.done b { color: var(--muted); }

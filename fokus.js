@@ -111,15 +111,20 @@ function dailyChip() {
   return `<button class="small chip ${all ? "ok" : ""}" data-fdopen aria-label="Dailys, ${done} av ${S.daily.length} klara">${all ? "✓" : "☐"} Dailys ${done}/${S.daily.length}</button>`;
 }
 
-// Passet i Träna: en rad per övning med mål och hur många set som är klara. Tryck för att
-// öppna fokusläget på just den övningen.
+// Passet i Träna: ett kort med mörk rubrik (som måltiderna i Kost) och en rad per övning med mål
+// och hur många set som är klara. Tryck på en rad för att öppna fokusläget på just den övningen.
 function passOverview(d, w) {
-  return `<div class="card exlist">${d.ex.map((ex, i) => {
-    const sets = (w && w.sets[ex.id]) || [], done = sets.filter(x => x && x.ok).length, all = exDone(w, ex), target = todayTarget(ex);
-    return `<button class="tile ${all ? "done" : ""}" data-focusex="${i}"><span class="thumb xs" aria-hidden="true">${figure(ex.id)}</span>
-      <span class="grow"><b>${esc(EX[ex.id].name)}</b><span class="muted small">${ex.sets} × ${esc(ex.reps)}${target ? ` · förslag ${fmtTarget(target, ex.id)}` : ""}</span></span>
-      <span class="setcount ${all ? "ok" : ""}">${all ? "✓" : `${done}/${ex.sets}`}</span></button>`;
-  }).join("")}</div>`;
+  const done = d.ex.filter(x => exDone(w, x)).length, next = w && !w.done ? d.ex.findIndex(x => !exDone(w, x)) : -1;
+  const logged = w && Object.values(w.sets).some(a => a.some(hasData));
+  return `<section class="card kmeal exlist">
+    <div class="khead">${tag(d.type)}<span class="grow">Pass ${S.plan.days.indexOf(d) + 1}</span><span>${done} / ${d.ex.length}</span></div>
+    ${d.ex.map((ex, i) => {
+      const sets = (w && w.sets[ex.id]) || [], n = sets.filter(x => x && x.ok).length, all = exDone(w, ex), target = todayTarget(ex);
+      return `<button class="krow ${all ? "done" : ""}" data-focusex="${i}"><span class="thumb xs" aria-hidden="true">${figure(ex.id)}</span>
+        <span class="grow"><b>${esc(EX[ex.id].name)}</b><span class="muted small">${ex.sets} × ${esc(ex.reps)}${target ? ` · förslag ${fmtTarget(target, ex.id)}` : ""}</span></span>
+        ${logged && i === next ? `<span class="nextpill">Nästa</span>` : ""}<span class="setcount ${all ? "ok" : ""}">${all ? "✓" : `${n}/${ex.sets}`}</span></button>`;
+    }).join("")}
+  </section>`;
 }
 
 // ---------- Skärmen tänd ----------
