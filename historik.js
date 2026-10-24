@@ -6,7 +6,8 @@
 
 let histMonth = null;     // "YYYY-MM" som visas, null = den här månaden
 let histDay = null;       // öppen dag i kalendern
-let histView = "kalender";   // "kalender" eller "utveckling"
+let histView = "kalender";
+let weekExOpen = false;      // övningarna i veckokortet är utfällda   // "kalender" eller "utveckling"
 
 const MONTHS = ["januari", "februari", "mars", "april", "maj", "juni", "juli", "augusti", "september", "oktober", "november", "december"];
 const WD_LONG = ["måndag", "tisdag", "onsdag", "torsdag", "fredag", "lördag", "söndag"];
@@ -90,13 +91,11 @@ function weekSection() {
         ${stat("löpning", cur.km, prev.km, " km")}
         <div><div class="stat">${cur.kcal || "–"}</div><div class="muted">kcal/dag i snitt (mål ${m.kcal})</div></div>
       </div>
+      ${!S.hideWeight && weekAvgWeight(ws) != null ? `<div class="hwrow">Vikt, snitt: <b>${fmtNum(weekAvgWeight(ws))} kg</b> ${weekAvgWeight(prevWs) != null ? weightBadge(weekAvgWeight(ws) - weekAvgWeight(prevWs)) : ""}</div>` : ""}
+      ${rows ? `<button class="hexbtn" data-weekex aria-expanded="${weekExOpen}"><span class="grow">Övningar den här veckan</span><span class="chev">${weekExOpen ? "▾" : "›"}</span></button>
+        ${weekExOpen ? `<div class="muted small" style="margin:4px 0">Bästa set jämfört med förra veckan.</div>${rows}` : ""}` : ""}
       <button class="wide" style="margin-top:12px" data-letter="${ws}">📬 Sammanfattning av veckan</button></div>
-    ${!S.hideWeight && Object.keys(weights()).length ? `<div class="card"><h2>Vikt</h2>${(() => {
-      const a = weekAvgWeight(ws), b = weekAvgWeight(prevWs);
-      return a != null ? `<div>Snitt vecka ${weekNo(ws)}: <b>${fmtNum(a)} kg</b> ${b != null ? weightBadge(a - b) : ""}</div>` : "";
-    })()}${weightChart()}</div>` : ""}
-    <div class="card"><h2>Övningar</h2>${rows ? `<div class="muted small" style="margin-bottom:4px">Bästa set den här veckan. Tryck på en övning för grafen.</div>${rows}`
-      : `<div class="muted">Inga loggade set de här två veckorna.</div>`}</div>`;
+    <button class="link small hmore" data-hview="utveckling">Personbästa, grafer och vikt över tid finns under Utveckling ›</button>`;
 }
 
 // ---------- Utveckling ----------
@@ -164,11 +163,12 @@ function historikView() {
 }
 
 document.addEventListener("click", ev => {
-  const t = ev.target.closest("[data-histday],[data-hclose],[data-hmonth],[data-hpass],[data-hfood],[data-hview]");
+  const t = ev.target.closest("[data-histday],[data-hclose],[data-hmonth],[data-hpass],[data-hfood],[data-hview],[data-weekex]");
   if (!t || t.disabled) return;
   if (t.classList.contains("overlay") && ev.target !== t) return;   // klick inne i fönstret
   const ds = t.dataset;
-  if (ds.hview) histView = ds.hview;
+  if (ds.weekex !== undefined) weekExOpen = !weekExOpen;
+  else if (ds.hview) histView = ds.hview;
   else if (ds.histday) histDay = ds.histday;
   else if (ds.hclose !== undefined) { histDay = null; editDate = null; }
   else if (ds.hmonth) {
