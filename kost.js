@@ -269,7 +269,7 @@ function addSheet(m) {
       : `<button class="small qminus" data-mstep="-1" data-mi="${i}" aria-label="Mindre ${esc(f.name)}">−</button><b class="qcount">${amountText(f) || "1"}</b>
          <button class="small qminus" data-mstep="1" data-mi="${i}" aria-label="Mer ${esc(f.name)}">+</button>`}</div>`).join("");
   const quick = shown.map((f, i) => `<button class="qadd" data-quick="${i}" aria-label="Lägg till ${esc(f.name)}">
-      <b>${f.kind === "fav" ? "★ " : f.kind === "meal" ? "🍽 " : ""}${esc(f.name)}</b><span class="muted small">${f.amt ? `${amtText(f.amt)} · ` : ""}${f.kcal} kcal</span></button>`).join("");
+      <span class="qplus" aria-hidden="true">${f.kind === "fav" ? "★" : f.kind === "meal" ? "🍽" : "+"}</span><b>${esc(f.name)}</b><span class="muted">${f.kcal} kcal</span></button>`).join("");
   return `<div class="overlay" data-fsclose><div class="sheet">
     <div class="row between"><h2>Lägg till mat</h2><button class="small ghost" data-fsclose aria-label="Stäng">✕</button></div>
     <div class="chips mealpick" role="tablist">${MEALS.map(([n], i) => `<button data-sheetmeal="${i}" class="${i === meal ? "on" : ""}" role="tab" aria-selected="${i === meal}">${n}</button>`).join("")}</div>

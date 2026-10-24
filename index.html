@@ -343,10 +343,12 @@
   .focus > .row:first-child button { white-space: nowrap; }
   .chip.ok { color: var(--ok-text); border-color: var(--ok-text); }
   .sheet-sub { font-size: 14px; color: var(--muted); font-weight: 600; margin: 18px 0 4px; }
-  .qgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 6px; }
-  .qadd { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; text-align: left; background: var(--bg);
-    border: 1px solid var(--line); border-radius: 12px; padding: 9px 11px; min-width: 0; }
-  .qadd b { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+  .qgrid { display: flex; flex-wrap: wrap; gap: 6px; }
+  .qadd { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; background: var(--bg); color: var(--text);
+    border: 1px solid var(--line); border-radius: 99px; padding: 6px 12px 6px 10px; font: inherit; font-size: 14px; min-width: 0; }
+  .qadd b { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+  .qadd .qplus { color: var(--accent-text); font-weight: 700; }
+  .qadd .muted { white-space: nowrap; font-size: 13px; }
   .nrow { gap: 8px; }
   /* Klar ligger alltid i bild längst ner i fönstret */
   .sheet-foot { position: sticky; bottom: calc(-20px - env(safe-area-inset-bottom, 0px)); background: var(--card);
