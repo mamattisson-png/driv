@@ -1118,8 +1118,8 @@ def test_vanner_kod_flode_och_peppning(page):
     assert "Bo" in page.inner_text("#vanner")
     # Hem visar Bos pass, och peppningen sparas
     go(page, "idag")
-    page.wait_for_selector(".feed-row")
-    assert "Bo körde Push · 6 övningar" in page.inner_text(".feed-row") and "igår" in page.inner_text(".feed-row")
+    page.wait_for_selector(".friendsrow [data-kudos]")
+    assert "Bo körde Push" in page.inner_text(".friendsrow") and "igår" in page.inner_text(".friendsrow")
     page.click("[data-kudos='1']")
     page.wait_for_function("window.__social.kudos.length === 1")
     assert "👏 1" in page.inner_text("[data-kudos='1']")
