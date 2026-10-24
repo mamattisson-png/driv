@@ -962,7 +962,7 @@ function render() {
   nav.classList.toggle("hidden", tab === "upplagg");
   nav.innerHTML = TABS.map(([id, ic, lbl]) =>
     `<button data-tab="${id}" class="${tab === id ? "on" : ""}"><span>${ic}</span>${lbl}</button>`).join("");
-  const banner = editDate && (tab === "pass" || tab === "kost")
+  const banner = editDate && (tab === "kost" || (tab === "pass" && focus && !editing))
     ? `<div class="editbar">📅 Du ändrar <b>${dateLabel(editDate)}</b><button class="small" data-editdone>Klar</button></div>` : "";
   // Kugghjulet behövs inte i upplägget eller i fokusläget, där det skulle ligga över texten
   // Första starten: Logga in i hörnet för den som redan har ett konto
@@ -1165,7 +1165,11 @@ const VIEWS = {
     const d = currentPassDay();
     const w = workoutOn(logDate(), d.id);
     const done = d.ex.filter(x => exDone(w, x)).length, logged = w && Object.values(w.sets).some(a => a.some(hasData));
-    return `<h1>Träna <span class="muted">v.${weekNo(logDate())}</span></h1>
+    const Day = editDate ? dateLabel(editDate).replace(/^./, c => c.toUpperCase()) : "";
+    return `${editDate ? `<button class="small ghost backlink" data-editdone>‹ Tillbaka till Historik</button>
+        <h1>Logga i efterhand</h1><div class="pastsub">📅 ${Day} · vecka ${weekNo(editDate)}</div>
+        <div class="muted small pastnote">Ett pass du redan har gjort. Inget startas, fyll bara i vad du lyfte.</div>`
+      : `<h1>Träna <span class="muted">v.${weekNo(logDate())}</span></h1>`}
       ${dayPicker(d && d.id)}
       ${editing ? `<div class="card"><div class="row between"><h2>${passLabel(d)}</h2><button class="small ghost" data-edit>Klar</button></div>
           <div class="muted">${TYPES[d.type].muscles}</div></div>${editList(d)}`
@@ -1174,7 +1178,8 @@ const VIEWS = {
           <div class="row between passmeta"><span class="muted small">${TYPES[d.type].muscles}</span><button class="link small" data-edit>Redigera passet</button></div>
           ${w && w.done ? `<div class="card done-card"><b>✓ Passet är sparat för ${dateLabel(editDate)}.</b>
                 <button class="small" style="margin-top:8px" data-finish="${d.id}">Öppna passet igen</button></div>`
-            : `<button class="primary wide bigbtn" data-finish="${d.id}">✓ Spara passet för ${dateLabel(editDate)}</button>`}`
+            : `<button class="primary wide bigbtn" data-finish="${d.id}">✓ Spara och gå tillbaka till Historik</button>
+               <div class="muted small finish-note">Passet sparas på ${dateLabel(editDate)}.</div>`}`
         : `${passOverview(d, w)}
           <div class="row between passmeta"><span class="muted small">${TYPES[d.type].muscles}</span><button class="link small" data-edit>Redigera passet</button></div>
           ${w && w.done
@@ -1186,7 +1191,7 @@ const VIEWS = {
                <div class="muted small finish-note">Fortsätt genom att trycka på en övning. Passet räknas även om du inte hunnit alla.</div>`
             : `<button class="primary wide bigbtn" data-focusstart="${d.id}">▶ Starta passet</button>
                <div class="muted small finish-note">En övning i taget. Allt du loggar sparas direkt.</div>`}`}
-      ${editing ? "" : upcomingCard()}`;
+      ${editing || editDate ? "" : upcomingCard()}`;
   },
 
   kost: () => kostView(),

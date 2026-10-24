@@ -132,7 +132,7 @@ function passOverview(d, w) {
 function pastLog(d, w) {
   const done = d.ex.filter(x => exDone(w, x)).length;
   return `<section class="card kmeal exlist pastlog">
-    <div class="khead">${tag(d.type)}<span class="grow">${passBand(d)}</span><span>${done} / ${d.ex.length}</span></div>
+    <div class="khead">${tag(d.type)}<span class="grow">${passBand(d)}</span><span>${done} / ${d.ex.length} klara</span></div>
     <div class="kbody"><button class="wide" data-fillall="${d.id}">↻ Fyll i hela passet som förslaget</button>
       <div class="muted small" style="margin-top:6px">Förslagen kommer från passet före eller efter. Ändra det som inte stämmer.</div></div>
     ${d.ex.map(ex => {
