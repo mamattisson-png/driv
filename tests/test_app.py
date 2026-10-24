@@ -472,7 +472,7 @@ def test_kroppsvikt_en_gang_i_veckan_och_kalorimal(page):
     assert page.evaluate("S.weights['2026-10-22']") == 70 and page.evaluate("S.profile.weight") == 70
     assert page.evaluate("kcalGoal()") < 2360
     # Därefter bara veckans vikt; Ändra skriver över samma vägning
-    card = page.locator('.homerow:has-text("Veckans vikt")')
+    card = page.locator('.card:has(.khead:has-text("Veckans vikt"))')
     assert page.locator("#wkg").count() == 0 and "mot förra veckan" in card.inner_text()
     page.click("[data-wedit]")
     page.fill("#wkg", "71")
