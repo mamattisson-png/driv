@@ -1206,6 +1206,9 @@ const VIEWS = {
           <label class="field" style="margin-top:8px">Vägningsdag<select data-weighday>${WD.map((w, i) => `<option value="${i}" ${weighDay() === i ? "selected" : ""}>${WD_LONG[i].replace(/^./, c => c.toUpperCase())}</option>`).join("")}</select></label>
           <div class="muted small" style="margin-top:4px">Döljer du vikten används vikten i Kalorimål, och sparade vägningar finns kvar.</div>`)}
         ${S.daily.length ? profRow("paminnelse", "🔔", "Påminnelse", r ? `Kl. ${esc(r.time)}` : "Ingen", reminderCard()) : ""}
+        ${profRow("utseende", "🌗", "Utseende", THEMES[themeNow()], `<div class="chips">${Object.entries(THEMES).map(([k, n]) =>
+          `<button data-theme-set="${k}" class="${themeNow() === k ? "on" : ""}" aria-pressed="${themeNow() === k}">${n}</button>`).join("")}</div>
+          <div class="muted small" style="margin-top:8px">Automatiskt följer telefonens inställning. Valet gäller den här enheten.</div>`)}
         ${profRow("vila", "⏱️", "Vilotimer", rs.on ? `På · ${rs.compound} / ${rs.iso} sek` : "Av", `
           <label class="row"><input type="checkbox" data-resttoggle ${rs.on ? "checked" : ""}><span>Starta en vilotimer när jag bockar av ett set</span></label>
           <div class="grid2" style="margin-top:10px">
@@ -1217,6 +1220,14 @@ const VIEWS = {
       </div>`;
   },
 };
+
+// Utseende: automatiskt (som telefonen), ljust eller mörkt. Sparas per enhet.
+const THEMES = { auto: "Automatiskt", light: "Ljust", dark: "Mörkt" };
+function themeNow() { try { return localStorage.getItem("driv-theme") || "auto"; } catch (e) { return "auto"; } }
+function setTheme(t) {
+  try { if (t === "auto") localStorage.removeItem("driv-theme"); else localStorage.setItem("driv-theme", t); } catch (e) {}
+  if (t === "auto") delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = t;
+}
 
 // Profilen är en lista där en rad i taget kan fällas ut
 let profOpen = null;
@@ -1718,6 +1729,7 @@ document.addEventListener("click", ev => {
     if (tab !== "pass") chosenDay = null;
     if (ds.popen) profOpen = ds.popen;
   }
+  else if (ds.themeSet) setTheme(ds.themeSet);
   else if (ds.psec) profOpen = profOpen === ds.psec ? null : ds.psec;
   else if (ds.go) { tab = ds.go; if (ds.day) chosenDay = ds.day; }
   else if (ds.pick) { chosenDay = ds.pick; }

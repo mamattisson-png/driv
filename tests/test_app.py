@@ -224,6 +224,19 @@ def test_upplagg_har_tillbaka_till_profil(page):
     assert page.evaluate("tab") == "profil" and page.evaluate("draft") is None
 
 
+def test_utseende_kan_valjas(page):
+    start(page)
+    prof(page, "utseende")
+    page.click('[data-theme-set="dark"]')
+    assert page.evaluate("document.documentElement.dataset.theme") == "dark"
+    page.reload()
+    assert page.evaluate("document.documentElement.dataset.theme") == "dark"
+    assert page.evaluate("getComputedStyle(document.body).backgroundColor") == "rgb(15, 18, 21)"
+    prof(page, "utseende")
+    page.click('[data-theme-set="auto"]')
+    assert page.evaluate("document.documentElement.dataset.theme") is None
+
+
 def test_dailys_under_passet(page):
     start(page)
     seed(page, "S.daily = [{id:'plankan',sets:3,reps:'45 sek'},{id:'lop',sets:1,reps:''}]")
