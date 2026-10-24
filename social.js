@@ -52,9 +52,30 @@ function friendsHome() {
       <div class="muted">Någon har delat sin vänkod <b>${esc(social.pendingCode)}</b> med dig. Som vänner ser ni varandras pass och kan peppa varandra.</div>
       <div class="row wrap" style="margin-top:10px"><button class="primary small" data-gofriends>Lägg till vän</button><button class="ghost small" data-dropcode>Inte nu</button></div></div>`;
   }
-  if (!social.profile || !social.feed.length) return "";
-  return `<div class="card"><div class="row between"><h2>Vänner</h2><button class="small ghost" data-gofriends>Hantera</button></div>
-    ${social.feed.slice(0, 5).map(feedRow).join("")}</div>`;
+  if (S.friendsUntil && S.friendsUntil > TODAY && !(social.friends && social.friends.length)) return "";
+  const icon = `<span class="kcheck" aria-hidden="true">👋</span>`;
+  const later = `<button class="small ghost" data-friendslater>Inte nu</button>`;
+  // Utan konto: en kort uppmaning längst ned
+  if (account.step !== "in") return `<section class="card kmeal friends"><div class="khead">${icon}<span class="grow">Träna med vänner</span></div>
+    <div class="kbody"><div>Se varandras pass och peppa varandra med 👏. Bara de du själv bjuder in, och aldrig vikter eller mat.</div>
+    <div class="row wrap" style="margin-top:12px"><button data-gokonto>Skapa konto och bjud in</button>${later}</div></div></section>`;
+  if (!social.loaded || social.error) return "";
+  const invite = social.profile ? `<button data-sharecode>📤 Bjud in en vän</button>` : `<button data-gofriends>📤 Bjud in en vän</button>`;
+  if (!social.friends.length) return `<section class="card kmeal friends"><div class="khead">${icon}<span class="grow">Träna med vänner</span></div>
+    <div class="kbody"><div>Bjud in en vän så ser ni varandras pass och kan peppa varandra. Det är lättare att hålla i träningen tillsammans.</div>
+    <div class="row wrap" style="margin-top:12px">${invite}${later}</div></div></section>`;
+  const feed = social.feed.slice(0, 4);
+  return `<section class="card kmeal friends"><div class="khead">${icon}<span class="grow">Vänner</span><span>${social.friends.length}</span></div>
+    <div class="kbody">${feed.length ? feed.map(feedRow).join("") : `<div class="muted">Inga pass från vänner de senaste dagarna. Peppa dem att komma igång!</div>`}
+    <div class="row between" style="margin-top:10px"><button class="link small" data-gofriends>Alla vänner</button>${social.profile ? `<button class="link small" data-sharecode>Bjud in fler</button>` : ""}</div></div></section>`;
+}
+
+// Kort rad efter ett sparat pass: vännerna ser det, eller en inbjudan
+function friendsAfterPass() {
+  if (!sbEnabled) return "";
+  if (account.step === "in" && social.profile && social.profile.sharing && social.friends.length)
+    return `<div class="muted small" style="margin-top:6px">👋 ${social.friends.length === 1 ? esc(social.friends[0].name) + " ser" : "Dina vänner ser"} passet och kan peppa dig.</div>`;
+  return `<button class="link small" style="margin-top:6px" data-${account.step === "in" ? (social.profile ? "sharecode" : "gofriends") : "gokonto"}>👋 Bjud in en vän att träna med</button>`;
 }
 
 // Under Profil
@@ -93,7 +114,7 @@ async function socialAction(fn, okMsg) {
 }
 
 document.addEventListener("click", ev => {
-  const t = ev.target.closest("[data-kudos],[data-gofriends],[data-dropcode],[data-profsave],[data-addfriend],[data-unfriend],[data-sharecode],[data-renameprof]");
+  const t = ev.target.closest("[data-kudos],[data-gofriends],[data-friendslater],[data-dropcode],[data-profsave],[data-addfriend],[data-unfriend],[data-sharecode],[data-renameprof]");
   if (!t || t.disabled) return;
   const ds = t.dataset;
   if (ds.kudos) {
@@ -105,6 +126,7 @@ document.addEventListener("click", ev => {
   else if (ds.gofriends !== undefined) {
     openProfRow("vanner");
   }
+  else if (ds.friendslater !== undefined) { S.friendsUntil = shift(TODAY, 21); save(); render(); }
   else if (ds.dropcode !== undefined) { social.pendingCode = ""; history.replaceState(null, "", location.pathname); render(); }
   else if (ds.profsave !== undefined) {
     const name = ($("sname").value || "").trim();

@@ -324,6 +324,24 @@ def test_forslag_sorteras_efter_maltiden_och_har_tak(page):
     assert page.evaluate("quickCache.length") <= 20
 
 
+def test_superset_vaxlar_och_vilar_efter_varvet(page):
+    start(page)
+    go(page, "pass")
+    page.click(f'[data-pick="{page.evaluate("S.plan.days[0].id")}"]')
+    page.click("[data-edit]")
+    page.click('[data-ss][data-idx="0"]')   # bänkpress + lutande hantelpress
+    assert page.evaluate("S.plan.days[0].ex[0].ss") is True
+    page.click("[data-edit]")
+    assert "Superset 1/2" in page.inner_text('.exlist .krow >> nth=0')
+    page.click("[data-focusstart]")
+    page.click('[data-ok=bankpress][data-i="0"]')
+    # Direkt till nästa övning i varvet, utan vila
+    assert page.evaluate("focus.idx") == 1 and page.locator(".rest:not(.hidden)").count() == 0
+    page.click('[data-ok=lutande_hantelpress][data-i="0"]')
+    # Varvet klart: vila och tillbaka till bänkpress
+    assert page.evaluate("focus.idx") == 0 and page.evaluate("rest.end > Date.now()") is True
+
+
 def test_dailys_under_passet(page):
     start(page)
     seed(page, "S.daily = [{id:'plankan',sets:3,reps:'45 sek'},{id:'lop',sets:1,reps:''}]")

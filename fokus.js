@@ -23,12 +23,19 @@ function endFocus() {
 }
 
 // Efter ett avbockat set: är övningen klar går fokus vidare till nästa medan vilan räknar ned
-function focusAfterSet(d) {
+// I ett superset växlar fokus till nästa övning i varvet, och efter varvet tillbaka till gruppens början
+function focusAfterSet(d, idx = focus && focus.idx, i = 0) {
   if (!focus || focus.dayId !== d.id) return;
-  const w = workoutOn(logDate(), d.id);
-  const advance = exDone(w, d.ex[focus.idx]) && focus.idx < d.ex.length - 1;
-  if (advance) focus.idx++;
-  focus.scroll = advance ? "top" : "active";
+  const w = workoutOn(logDate(), d.id), g = ssGroup(d, focus.idx), from = focus.idx;
+  if (g) {
+    const next = ssNext(d, idx, i);
+    if (next != null) focus.idx = next;
+    else {
+      const open = d.ex.findIndex((x, k) => k >= g[0] && k <= g[1] && !exDone(w, x));
+      focus.idx = open >= 0 ? open : Math.min(g[1] + 1, d.ex.length - 1);
+    }
+  } else if (exDone(w, d.ex[focus.idx]) && focus.idx < d.ex.length - 1) focus.idx++;
+  focus.scroll = focus.idx !== from ? "top" : "active";
 }
 // Anropas efter varje ritning: nästa set (eller nästa övning) hamnar i bild
 function afterFocusRender() {
@@ -91,6 +98,7 @@ function focusView() {
       <div class="row"><button class="thumb" data-info="${ex.id}" aria-label="Visa ${esc(EX[ex.id].name)}">${figure(ex.id, "", true)}</button>
         <div class="grow"><h2 style="margin:2px 0">${esc(EX[ex.id].name)}</h2>
           <div class="muted">${ex.sets} × ${esc(ex.reps)} · ${GEAR[gearOf(ex.id)][0]}</div>
+          ${ssGroup(d, focus.idx) ? `<div class="sspill">🔗 ${ssLabel(d, focus.idx)} · växla efter varje set</div>` : ""}
           ${target ? `<div class="goal">Förslag idag: <b>${fmtTarget(target, ex.id)}</b></div>`
             : `<div class="muted">Första gången: välj en vikt du klarar ${esc(ex.reps)}.</div>`}</div></div>
       ${rows}
@@ -120,8 +128,9 @@ function passOverview(d, w) {
     <div class="khead">${tag(d.type)}<span class="grow">${passBand(d)}</span><span>${done} / ${d.ex.length}</span></div>
     ${d.ex.map((ex, i) => {
       const sets = (w && w.sets[ex.id]) || [], n = sets.filter(x => x && x.ok).length, all = exDone(w, ex), target = todayTarget(ex);
-      return `<button class="krow ${all ? "done" : ""}" data-focusex="${i}"><span class="thumb xs" aria-hidden="true">${figure(ex.id)}</span>
-        <span class="grow"><b>${esc(EX[ex.id].name)}</b><span class="muted small">${ex.sets} × ${esc(ex.reps)}${target ? ` · förslag ${fmtTarget(target, ex.id)}` : ""}</span></span>
+      const g = ssGroup(d, i), pos = g ? (i === g[0] ? "first" : i === g[1] ? "last" : "mid") : "";
+      return `<button class="krow ${all ? "done" : ""} ${g ? `ss ss-${pos}` : ""}" data-focusex="${i}"><span class="thumb xs" aria-hidden="true">${figure(ex.id)}</span>
+        <span class="grow"><b>${esc(EX[ex.id].name)}</b><span class="muted small">${g ? `<span class="sstag">${ssLabel(d, i)}</span> ` : ""}${ex.sets} × ${esc(ex.reps)}${target ? ` · förslag ${fmtTarget(target, ex.id)}` : ""}</span></span>
         ${logged && i === next ? `<span class="nextpill">Nästa</span>` : ""}<span class="setcount ${all ? "ok" : ""}">${all ? "✓" : `${n}/${ex.sets}`}</span></button>`;
     }).join("")}
   </section>`;

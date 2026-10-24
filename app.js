@@ -1151,13 +1151,14 @@ const VIEWS = {
       ${accountNudge()}
       ${social.pendingCode ? friendsHome() : ""}
       ${passCard}
+      ${account.step === "in" && !social.pendingCode ? friendsHome() : ""}
       ${dailiesCard(false, true)}
       <section class="card kmeal homefood"><div class="khead"><svg class="kicon" viewBox="0 0 24 24" aria-hidden="true">${MEAL_SVG[1]}</svg><span class="grow">Mat idag</span>
         <span>${tnum(e.kcal)} kcal</span></div>
         <div class="kbody">${kstats(e, m)}
         <button class="wide" style="margin-top:14px" data-go="kost">Logga mat</button></div></section>
       ${S.hideWeight ? "" : weightCard()}
-      ${social.pendingCode ? "" : friendsHome()}`;
+      ${social.pendingCode || account.step === "in" ? "" : friendsHome()}`;
   },
 
   pass() {
@@ -1184,7 +1185,7 @@ const VIEWS = {
           <div class="row between passmeta"><span class="muted small">${TYPES[d.type].muscles}</span><button class="link small" data-edit>Redigera passet</button></div>
           ${w && w.done
             ? `<div class="card done-card"><b>✓ Bra jobbat, passet är sparat!</b>
-                <div class="muted small">Det räknas in i veckans pass och jämförelsen med förra veckan.</div>
+                <div class="muted small">Det räknas in i veckans pass och jämförelsen med förra veckan.</div>${friendsAfterPass()}
                 <button class="small" style="margin-top:8px" data-finish="${d.id}">Öppna passet igen</button></div>`
             : logged
             ? `<button class="primary wide bigbtn" data-finish="${d.id}">✓ Spara passet · ${done} av ${d.ex.length} klara</button>
@@ -1313,6 +1314,26 @@ function lastSets(exId) {
 }
 
 
+// ---------- Supersets ----------
+// ex.ss = true betyder att övningen körs växelvis med nästa. En grupp är övningar i rad som hänger ihop.
+function ssGroup(d, idx) {
+  let a = idx, b = idx;
+  while (a > 0 && d.ex[a - 1].ss) a--;
+  while (b < d.ex.length - 1 && d.ex[b].ss) b++;
+  return b > a ? [a, b] : null;
+}
+// Nästa övning i samma varv som ännu inte gjort set i, eller null om varvet är slut
+function ssNext(d, idx, i) {
+  const g = ssGroup(d, idx), w = workoutOn(logDate(), d.id);
+  if (!g) return null;
+  for (let k = idx + 1; k <= g[1]; k++) {
+    const st = w && w.sets[d.ex[k].id] && w.sets[d.ex[k].id][i];
+    if (i < d.ex[k].sets && !(st && st.ok)) return k;
+  }
+  return null;
+}
+const ssLabel = (d, idx) => { const g = ssGroup(d, idx); return g ? `Superset ${idx - g[0] + 1}/${g[1] - g[0] + 1}` : ""; };
+
 // Övningslistor kan ligga i ett passdag-id, "draft:<index>" (upplägget) eller "daily"
 function exList(target) {
   if (target === "daily") return S.daily;
@@ -1335,7 +1356,9 @@ function exRows(target, list, withOrder) {
       ${withOrder ? `<div class="col"><button class="small ghost" data-mv="-1" data-t="${target}" data-idx="${i}" ${i ? "" : "disabled"} aria-label="Flytta upp">↑</button>
         <button class="small ghost" data-mv="1" data-t="${target}" data-idx="${i}" ${i < list.length - 1 ? "" : "disabled"} aria-label="Flytta ned">↓</button></div>` : ""}
       <button class="small" data-swap="${target}" data-idx="${i}">Byt</button>
-      <button class="small ghost" data-xdel="${target}" data-idx="${i}" aria-label="Ta bort">✕</button></div>`).join("") +
+      <button class="small ghost" data-xdel="${target}" data-idx="${i}" aria-label="Ta bort">✕</button></div>
+      ${withOrder && target !== "daily" && i < list.length - 1 ? `<button class="sslink ${e.ss ? "on" : ""}" data-ss="${target}" data-idx="${i}" aria-pressed="${!!e.ss}">${e.ss
+        ? `🔗 Superset med ${esc(EX[list[i + 1].id].name)} <span class="muted">· tryck för att dela</span>` : "＋ Superset med nästa"}</button>` : ""}`).join("") +
     `<button class="small" style="margin-top:8px" data-openpick="${target}">+ Lägg till övning</button>`;
 }
 
@@ -1763,9 +1786,11 @@ document.addEventListener("click", ev => {
   else if (ds.ok) {
     const d = currentPassDay(), s = setAt(d, ds.ok, +ds.i);
     s.ok = !s.ok;
-    if (s.ok) { fillFromHint(d, ds.ok, +ds.i); checkRecord(ds.ok, s); if (!editDate) startRest(ds.ok); }
+    const idx = d.ex.findIndex(x => x.id === ds.ok), inRound = s.ok && ssNext(d, idx, +ds.i) != null;
+    // I ett superset vilar man först när varvet är klart
+    if (s.ok) { fillFromHint(d, ds.ok, +ds.i); checkRecord(ds.ok, s); if (!editDate && !inRound) startRest(ds.ok); }
     syncDone(d);
-    if (s.ok) focusAfterSet(d);
+    if (s.ok) focusAfterSet(d, idx, +ds.i);
   }
   else if (ds.exok) {
     const d = currentPassDay(), ex = d.ex.find(x => x.id === ds.exok);
@@ -1880,6 +1905,7 @@ document.addEventListener("click", ev => {
     const list = exList(ds.t), i = +ds.idx, j = i + +ds.mv;
     [list[i], list[j]] = [list[j], list[i]];
   }
+  else if (ds.ss) { const e = exList(ds.ss)[+ds.idx]; if (e.ss) delete e.ss; else e.ss = true; }
   else if (ds.add) {
     const list = exList(modal.pick);
     if (modal.replace != null) list[modal.replace] = exEntry(ds.add);
