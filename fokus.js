@@ -127,6 +127,32 @@ function passOverview(d, w) {
   </section>`;
 }
 
+// Ett pass i efterhand: alla övningar och set på en gång, med förra (eller nästa) gångens vikter
+// som förslag i fälten. "Fyll i som förslaget" loggar hela passet med ett tryck.
+function pastLog(d, w) {
+  const done = d.ex.filter(x => exDone(w, x)).length;
+  return `<section class="card kmeal exlist pastlog">
+    <div class="khead">${tag(d.type)}<span class="grow">${passBand(d)}</span><span>${done} / ${d.ex.length}</span></div>
+    <div class="kbody"><button class="wide" data-fillall="${d.id}">↻ Fyll i hela passet som förslaget</button>
+      <div class="muted small" style="margin-top:6px">Förslagen kommer från passet före eller efter. Ändra det som inte stämmer.</div></div>
+    ${d.ex.map(ex => {
+      const sets = (w && w.sets[ex.id]) || [], bw = !!EX[ex.id].bw;
+      let rows = "";
+      for (let i = 0; i < ex.sets; i++) {
+        const st = sets[i] || {}, h = liveHint(d, ex, i);
+        const inp = (f, v, ph, label) => `<input type="number" inputmode="${f === "kg" ? "decimal" : "numeric"}" step="${f === "kg" ? 0.25 : 1}" min="0" max="${setMax(ex.id, f)}"
+          value="${v ?? ""}" placeholder="${ph ?? ""}" data-set="${ex.id}" data-i="${i}" data-f="${f}" aria-label="${label}, set ${i + 1}">`;
+        rows += `<div class="pset ${st.ok ? "done" : ""}"><span class="muted small">Set ${i + 1}</span>
+          ${inp("kg", st.kg, h.kg || "", bw ? "Extra vikt" : "Vikt")}<span class="muted small">${bw ? "+kg" : "kg"} ×</span>
+          ${inp("reps", st.reps, h.reps, isTimed(ex.id) ? "Sekunder" : "Reps")}<span class="muted small">${isTimed(ex.id) ? "s" : "reps"}</span>
+          <button class="done-btn ${st.ok ? "on" : ""}" data-ok="${ex.id}" data-i="${i}" aria-label="Set ${i + 1} klart">✓</button></div>`;
+      }
+      return `<div class="pex"><div class="row pexhead"><span class="thumb xs" aria-hidden="true">${figure(ex.id)}</span>
+        <b class="grow">${esc(EX[ex.id].name)}</b><span class="muted small">${ex.sets} × ${esc(ex.reps)}</span></div>${rows}</div>`;
+    }).join("")}
+  </section>`;
+}
+
 // ---------- Skärmen tänd ----------
 let wakeLock = null;
 async function keepAwake(on) {

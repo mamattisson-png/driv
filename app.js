@@ -1170,6 +1170,11 @@ const VIEWS = {
       ${editing ? `<div class="card"><div class="row between"><h2>${passLabel(d)}</h2><button class="small ghost" data-edit>Klar</button></div>
           <div class="muted">${TYPES[d.type].muscles}</div></div>${editList(d)}`
         : !d.ex.length ? `<div class="card muted">Passet har inga övningar än. <button class="link" data-edit>Lägg till övningar</button></div>`
+        : editDate ? `${pastLog(d, w)}
+          <div class="row between passmeta"><span class="muted small">${TYPES[d.type].muscles}</span><button class="link small" data-edit>Redigera passet</button></div>
+          ${w && w.done ? `<div class="card done-card"><b>✓ Passet är sparat för ${dateLabel(editDate)}.</b>
+                <button class="small" style="margin-top:8px" data-finish="${d.id}">Öppna passet igen</button></div>`
+            : `<button class="primary wide bigbtn" data-finish="${d.id}">✓ Spara passet för ${dateLabel(editDate)}</button>`}`
         : `${passOverview(d, w)}
           <div class="row between passmeta"><span class="muted small">${TYPES[d.type].muscles}</span><button class="link small" data-edit>Redigera passet</button></div>
           ${w && w.done
@@ -1672,7 +1677,9 @@ function plusStreak() {
 // (vid ett intervall som 8–10 det lägsta värdet)
 // Vikten från ett tidigare set idag följer med till nästa set, om inget annat skrivits där
 function liveHint(d, ex, i) {
-  const h = { ...setHint(ex, i) };
+  // I efterhand föreslås det som faktiskt gjordes närmast före (eller efter), utan höjning
+  const past = editDate && hintSet(lastSets(ex.id), i);
+  const h = past && hasData(past) ? { kg: past.kg, reps: past.reps } : { ...setHint(ex, i) };
   const w = workoutOn(logDate(), d.id), sets = (w && w.sets[ex.id]) || [];
   for (let j = i - 1; j >= 0; j--) if (sets[j] && sets[j].kg !== undefined && sets[j].kg !== "") { h.kg = sets[j].kg; break; }
   return h;
@@ -1751,7 +1758,7 @@ document.addEventListener("click", ev => {
   else if (ds.ok) {
     const d = currentPassDay(), s = setAt(d, ds.ok, +ds.i);
     s.ok = !s.ok;
-    if (s.ok) { fillFromHint(d, ds.ok, +ds.i); checkRecord(ds.ok, s); startRest(ds.ok); }
+    if (s.ok) { fillFromHint(d, ds.ok, +ds.i); checkRecord(ds.ok, s); if (!editDate) startRest(ds.ok); }
     syncDone(d);
     if (s.ok) focusAfterSet(d);
   }
@@ -1765,8 +1772,16 @@ document.addEventListener("click", ev => {
     if (val) checkRecord(ex.id, topSet(workoutOn(logDate(), d.id).sets[ex.id] || []) || {});
     syncDone(d);
   }
+  else if (ds.fillall) {
+    // Hela passet i efterhand: varje tomt fält får förslaget och alla set bockas av
+    const d = dayById(ds.fillall);
+    for (const ex of d.ex) for (let i = 0; i < ex.sets; i++) { fillFromHint(d, ex.id, i); const st = setAt(d, ex.id, i); if (hasData(st)) st.ok = true; }
+    syncDone(d);
+  }
   else if (ds.finish) {
     const w = workoutFor(dayById(ds.finish));
+    // I efterhand räknas set med ifyllda värden som gjorda när passet sparas
+    if (editDate && !w.done) for (const arr of Object.values(w.sets)) for (const st of arr) if (st && hasData(st)) st.ok = true;
     w.done = !w.done;
     shareWorkout(dayById(ds.finish), logDate(), w.done);
     // Ett sparat pass visar veckan; i efterhand går man tillbaka till dagen i Historik

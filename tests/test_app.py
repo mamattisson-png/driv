@@ -6,6 +6,8 @@ KONTO = '.card:has(h2:text-is("Konto"))'
 
 def open_ex(page, ex_id):
     """Öppnar en övning i passet i fokusläget, från listan i Träna eller från en annan övning."""
+    if page.locator(".pastlog").count():
+        return   # i efterhand syns alla övningar och set direkt
     i = page.evaluate(f"currentPassDay().ex.findIndex(x => x.id === '{ex_id}')")
     page.click(f'[data-focusgo="{i}"]' if page.locator(".focus").count() else f'[data-focusex="{i}"]')
 
@@ -253,6 +255,23 @@ def test_upplagg_och_ovningar_andras_fran_hem(page):
     assert page.locator(".daypass .exnames li").count() == n - 1
 
 
+def test_logga_hela_passet_i_efterhand(page):
+    start(page)
+    d = page.evaluate("S.plan.days[0].id")
+    # Passet efter dagen man loggar har vikter som blir förslag
+    seed(page, f"S.log[TODAY] = {{workouts:[{{dayId:'{d}',done:true,sets:{{bankpress:[{{kg:80,reps:8,ok:true}}]}}}}],dailies:{{}},food:[]}}")
+    page.evaluate(f"editDate = shift(TODAY, -3); tab = 'pass'; chosenDay = '{d}'; render()")
+    assert page.locator("[data-focusstart]").count() == 0 and page.locator(".pastlog").count() == 1
+    assert page.get_attribute('[data-set=bankpress][data-f=kg][data-i="0"]', "placeholder") == "80"
+    page.click("[data-fillall]")
+    w = page.evaluate("workoutsOn(shift(TODAY, -3))[0]")
+    assert w["sets"]["bankpress"][0] == {"kg": 80, "reps": 8, "ok": True} and w["done"] is True
+    # Ett eget värde skrivs direkt i vyn
+    page.fill('[data-set=bankpress][data-f=kg][data-i="1"]', "85")
+    page.press('[data-set=bankpress][data-f=kg][data-i="1"]', "Tab")
+    assert page.evaluate("workoutsOn(shift(TODAY, -3))[0].sets.bankpress[1].kg") == 85
+
+
 def test_dailys_under_passet(page):
     start(page)
     seed(page, "S.daily = [{id:'plankan',sets:3,reps:'45 sek'},{id:'lop',sets:1,reps:''}]")
@@ -312,10 +331,9 @@ def test_forslag_i_efterhand_tar_narmaste_gangen(page):
     page.click("[data-hpass='']")
     page.click(f'[data-pick="{page.evaluate("S.plan.days[0].id")}"]')
     open_ex(page, "militarpress")
-    assert "Första gången" not in page.inner_text(".focus")
     assert page.get_attribute('[data-set=militarpress][data-f=kg][data-i="0"]', "placeholder") == "40"
-    open_ex(page, "bankpress")
-    assert page.get_attribute('[data-set=bankpress][data-f=kg][data-i="0"]', "placeholder") == "72.5"
+    # Förslagen är det som faktiskt lyftes närmast före (eller efter), inte en höjning
+    assert page.get_attribute('[data-set=bankpress][data-f=kg][data-i="0"]', "placeholder") == "70"
 
 def test_vilotimer(page):
     start(page, "window.__vib = []; navigator.vibrate = p => { window.__vib.push(p); return true; };")
