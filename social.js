@@ -56,12 +56,12 @@ function friendsHome() {
   const icon = `<span class="kcheck" aria-hidden="true">👋</span>`;
   const later = `<button class="small ghost" data-friendslater>Inte nu</button>`;
   // Utan konto: en kort uppmaning längst ned
-  if (account.step !== "in") return `<section class="card kmeal friends"><div class="khead">${icon}<span class="grow">Träna med vänner</span></div>
+  if (account.step !== "in") return `<section class="card kmeal friends"><div class="khead">${icon}<span class="grow">Träna med vänner</span><span></span></div>
     <div class="kbody"><div>Se varandras pass och peppa varandra med 👏. Bara de du själv bjuder in, och aldrig vikter eller mat.</div>
     <div class="row wrap" style="margin-top:12px"><button data-gokonto>Skapa konto och bjud in</button>${later}</div></div></section>`;
   if (!social.loaded || social.error) return "";
   const invite = social.profile ? `<button data-sharecode>📤 Bjud in en vän</button>` : `<button data-gofriends>📤 Bjud in en vän</button>`;
-  if (!social.friends.length) return `<section class="card kmeal friends"><div class="khead">${icon}<span class="grow">Träna med vänner</span></div>
+  if (!social.friends.length) return `<section class="card kmeal friends"><div class="khead">${icon}<span class="grow">Träna med vänner</span><span></span></div>
     <div class="kbody"><div>Bjud in en vän så ser ni varandras pass och kan peppa varandra. Det är lättare att hålla i träningen tillsammans.</div>
     <div class="row wrap" style="margin-top:12px">${invite}${later}</div></div></section>`;
   const feed = social.feed.slice(0, 4);
