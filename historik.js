@@ -6,6 +6,7 @@
 
 let histMonth = null;     // "YYYY-MM" som visas, null = den här månaden
 let histDay = null;       // öppen dag i kalendern
+let histView = "kalender";   // "kalender" eller "utveckling"
 
 const MONTHS = ["januari", "februari", "mars", "april", "maj", "juni", "juli", "augusti", "september", "oktober", "november", "december"];
 const WD_LONG = ["måndag", "tisdag", "onsdag", "torsdag", "fredag", "lördag", "söndag"];
@@ -98,18 +99,77 @@ function weekSection() {
       : `<div class="muted">Inga loggade set de här två veckorna.</div>`}</div>`;
 }
 
+// ---------- Utveckling ----------
+// Allt sedan start: personbästa per övning med ökningen från första gången, pass per vecka och vikt.
+const shortDate = d => `${+d.slice(8)} ${MONTHS[+d.slice(5, 7) - 1].slice(0, 3)}`;
+function progressData() {
+  const dates = Object.keys(S.log).sort(), ex = {};
+  let passes = 0, first = null;
+  for (const d of dates) {
+    const ws = workoutsOn(d);
+    if (ws.some(w => w.done)) { passes += ws.filter(w => w.done).length; first = first || d; }
+    for (const id of new Set(exIdsOn(d))) {
+      if (!EX[id]) continue;
+      const top = topSet(setsOn(d, id));
+      if (!top) continue;
+      const e = ex[id] || (ex[id] = { id, first: top, firstDate: d, best: top, bestDate: d, last: d, times: 0 });
+      e.times++; e.last = d;
+      if (betterSet(top, e.best)) { e.best = top; e.bestDate = d; }
+    }
+  }
+  return { passes, first, ex: Object.values(ex).sort((a, b) => b.last.localeCompare(a.last)) };
+}
+// Ökningen från första gången: kg om övningen körs med vikt, annars reps eller sekunder
+function gain(e) {
+  const a = e.first, b = e.best;
+  if (+b.kg || +a.kg) { const d = (+b.kg || 0) - (+a.kg || 0); return d ? deltaBadge(d, "kg") : ""; }
+  const d = (+b.reps || 0) - (+a.reps || 0);
+  return d ? deltaBadge(d, repUnit(e.id)) : "";
+}
+function weekBars() {
+  const weeks = [];
+  for (let k = 11; k >= 0; k--) { const ws = shift(weekStart(TODAY), -7 * k); weeks.push({ ws, n: weekSummary(ws).passes }); }
+  const max = Math.max(S.plan.count, ...weeks.map(w => w.n)), W = 320, H = 120, bw = W / 12;
+  return `<svg class="chart wbars" viewBox="0 0 ${W} ${H + 18}" role="img" aria-label="Pass per vecka de senaste tolv veckorna">
+    <line class="grid" x1="0" x2="${W}" y1="${(H - S.plan.count / max * (H - 8)).toFixed(1)}" y2="${(H - S.plan.count / max * (H - 8)).toFixed(1)}"/>
+    ${weeks.map((w, i) => { const h = w.n / max * (H - 8);
+      return `<rect class="wbar ${w.n >= S.plan.count ? "full" : ""}" x="${(i * bw + 4).toFixed(1)}" y="${(H - h).toFixed(1)}" width="${(bw - 8).toFixed(1)}" height="${h.toFixed(1)}" rx="3"/>
+        ${i % 2 ? `<text class="axis" x="${(i * bw + bw / 2).toFixed(1)}" y="${H + 14}" text-anchor="middle">v.${weekNo(w.ws)}</text>` : ""}`; }).join("")}
+  </svg><div class="muted small">Linjen är ditt mål, ${S.plan.count} pass i veckan.</div>`;
+}
+function progressView() {
+  const p = progressData(), recent = [0, 1, 2, 3].reduce((a, k) => a + weekSummary(shift(weekStart(TODAY), -7 * k)).passes, 0);
+  if (!p.ex.length && !p.passes) return `<div class="card"><h2>Här växer din utveckling fram</h2>
+    <div class="muted">När du sparat några pass visas dina personbästa, hur mycket du ökat och hur ofta du tränar.</div></div>`;
+  const w = Object.keys(weights()).sort(), wFirst = w.length ? weights()[w[0]] : null, wLast = w.length ? weights()[w[w.length - 1]] : null;
+  const rows = p.ex.map(e => `<button class="krow" data-chart="${e.id}"><span class="thumb xs" aria-hidden="true">${figure(e.id)}</span>
+      <span class="grow"><b>${esc(EX[e.id].name)}</b><span class="muted small">${e.times > 1 ? `Första gången ${fmtSet(e.first, e.id)} · ${shortDate(e.firstDate)}` : `Loggad en gång · ${shortDate(e.firstDate)}`}</span></span>
+      <span class="pbcol"><b>${fmtSet(e.best, e.id)}</b>${e.times > 1 ? gain(e) : ""}</span></button>`).join("");
+  return `<div class="card"><div class="kstats">
+      <div class="kstat"><div class="klabel">Pass totalt</div><div class="kbig">${p.passes}</div><div class="muted small">${p.first ? `sedan ${shortDate(p.first)}` : "inga sparade än"}</div></div>
+      <div class="kstat"><div class="klabel">Senaste 4 veckor</div><div class="kbig">${recent}</div><div class="muted small">${fmtNum(recent / 4)} pass i veckan</div></div></div></div>
+    <section class="card kmeal"><div class="khead"><span class="grow">Pass per vecka</span><span>12 veckor</span></div><div class="kbody">${weekBars()}</div></section>
+    ${rows ? `<section class="card kmeal exlist"><div class="khead"><span class="grow">Personbästa</span><span>${p.ex.length} övningar</span></div>${rows}
+      <div class="muted small kfoot">Tryck på en övning för att se grafen vecka för vecka.</div></section>` : ""}
+    ${!S.hideWeight && w.length ? `<section class="card kmeal"><div class="khead"><span class="grow">Kroppsvikt</span><span>${fmtNum(wLast)} kg</span></div>
+      <div class="kbody">${w.length > 1 ? `<div style="margin-bottom:8px">${weightBadge(wLast - wFirst)} <span class="muted small">sedan ${shortDate(w[0])}</span></div>` : ""}${weightChart()}</div></section>` : ""}`;
+}
+
 function historikView() {
   // Medan en dag är öppen gäller bockar och vikt den dagen
   editDate = histDay && histDay !== TODAY ? histDay : null;
-  return `<h1>Historik</h1>${calendar()}${weekSection()}${histDay ? daySheet() : ""}`;
+  const seg = `<div class="seg two" role="tablist">${[["kalender", "Kalender"], ["utveckling", "Utveckling"]].map(([k, n]) =>
+    `<button data-hview="${k}" class="${histView === k ? "on" : ""}" role="tab" aria-selected="${histView === k}">${n}</button>`).join("")}</div>`;
+  return `<h1>Historik</h1>${seg}${histView === "utveckling" ? progressView() : `${calendar()}${weekSection()}`}${histDay ? daySheet() : ""}`;
 }
 
 document.addEventListener("click", ev => {
-  const t = ev.target.closest("[data-histday],[data-hclose],[data-hmonth],[data-hpass],[data-hfood]");
+  const t = ev.target.closest("[data-histday],[data-hclose],[data-hmonth],[data-hpass],[data-hfood],[data-hview]");
   if (!t || t.disabled) return;
   if (t.classList.contains("overlay") && ev.target !== t) return;   // klick inne i fönstret
   const ds = t.dataset;
-  if (ds.histday) histDay = ds.histday;
+  if (ds.hview) histView = ds.hview;
+  else if (ds.histday) histDay = ds.histday;
   else if (ds.hclose !== undefined) { histDay = null; editDate = null; }
   else if (ds.hmonth) {
     const [y, mo] = (histMonth || TODAY.slice(0, 7)).split("-").map(Number), dt = new Date(y, mo - 1 + +ds.hmonth, 1);

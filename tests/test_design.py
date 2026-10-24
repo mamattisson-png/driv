@@ -82,6 +82,9 @@ def views(page):
     page.click(".sheet [data-hclose].wide")
     page.click("[data-letter]")
     yield "Veckobrev", ".sheet"
+    page.evaluate("modal = null; histView = 'utveckling'; render()")
+    yield "Utveckling", "#app"
+    page.evaluate("histView = 'kalender'")
     go(page, "profil")
     yield "Profil", "#app"
     page.evaluate("document.querySelector('[data-psec=kalori]').click()")

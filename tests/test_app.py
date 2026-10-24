@@ -272,6 +272,20 @@ def test_logga_hela_passet_i_efterhand(page):
     assert page.evaluate("workoutsOn(shift(TODAY, -3))[0].sets.bankpress[1].kg") == 85
 
 
+def test_utveckling_visar_personbasta_och_okning(page):
+    start(page)
+    d = page.evaluate("S.plan.days[0].id")
+    seed(page, f"""S.log[shift(TODAY, -30)] = {{workouts:[{{dayId:'{d}',done:true,sets:{{bankpress:[{{kg:60,reps:8,ok:true}}]}}}}],dailies:{{}},food:[]}};
+      S.log[shift(TODAY, -2)] = {{workouts:[{{dayId:'{d}',done:true,sets:{{bankpress:[{{kg:72.5,reps:6,ok:true}},{{kg:70,reps:8,ok:true}}]}}}}],dailies:{{}},food:[]}}""")
+    go(page, "historik")
+    page.click('[data-hview="utveckling"]')
+    row = page.locator('.krow[data-chart="bankpress"]')
+    assert "72,5 kg × 6" in row.inner_text() and "+12,5 kg" in row.inner_text() and "60 kg × 8" in row.inner_text()
+    assert "2" in page.inner_text(".kstat >> nth=0")
+    row.click()
+    assert page.locator(".sheet .chart").count() == 1
+
+
 def test_dailys_under_passet(page):
     start(page)
     seed(page, "S.daily = [{id:'plankan',sets:3,reps:'45 sek'},{id:'lop',sets:1,reps:''}]")
