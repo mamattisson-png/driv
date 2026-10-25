@@ -762,7 +762,7 @@ function weightChart() {
 // ---------- Rendering ----------
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 // Fyra flikar; Profil nås via kugghjulet uppe till höger
-const TABS = [["idag", "🏠", "Hem"], ["pass", "🏋️", "Träna"], ["kost", "🍽️", "Kost"], ["historik", "📅", "Historik"]];
+const TABS = [["idag", "hem", "Hem"], ["pass", "trana", "Träna"], ["kost", "kost", "Kost"], ["historik", "historik", "Historik"]];
 let tab = S.setupDone ? "idag" : "upplagg";
 let chosenDay = null;
 let editing = false;
@@ -779,14 +779,14 @@ function render() {
   const nav = document.getElementById("nav");
   nav.classList.toggle("hidden", tab === "upplagg");
   nav.innerHTML = TABS.map(([id, ic, lbl]) =>
-    `<button data-tab="${id}" class="${tab === id ? "on" : ""}"><span>${ic}</span>${lbl}</button>`).join("");
+    `<button data-tab="${id}" class="${tab === id ? "on" : ""}" ${tab === id ? 'aria-current="page"' : ""}>${icon(ic, 22)}${lbl}</button>`).join("");
   const banner = editDate && (tab === "kost" || (tab === "pass" && focus && !editing))
     ? `<div class="editbar">📅 Du ändrar <b>${dateLabel(editDate)}</b><button class="small" data-editdone>Klar</button></div>` : "";
   // Kugghjulet behövs inte i upplägget eller i fokusläget, där det skulle ligga över texten
   // Första starten: Logga in i hörnet för den som redan har ett konto
   const corner = tab === "upplagg" && !S.setupDone && sbEnabled && account.step !== "in" && !welcomeLogin
     ? `<button class="corner-login small" data-welcomelogin="login">Logga in</button>` : "";
-  const gear = tab === "upplagg" || (tab === "pass" && focus && !editing) ? corner : `<button class="gear ${tab === "profil" ? "on" : ""}" data-tab="profil" aria-label="Profil och inställningar">⚙️</button>`;
+  const gear = tab === "upplagg" || (tab === "pass" && focus && !editing) ? corner : `<button class="gear ${tab === "profil" ? "on" : ""}" data-tab="profil" aria-label="Profil och inställningar">${icon("profil", 20)}</button>`;
   document.getElementById("app").innerHTML = gear + banner + VIEWS[tab]() + (modal ? renderModal() : "") + (actSheet ? actSheetView() : "");
   if (modal && modal.pick) filterPicker();
   afterFocusRender();

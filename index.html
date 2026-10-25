@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#0b0b0b">
+<meta name="theme-color" content="#0d0e10">
 <meta name="description" content="Driv – träning, mat och vanor, enkelt och på ett ställe.">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/favicon-v2.png" type="image/png">
@@ -17,49 +17,63 @@
 </script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <style>
+  /* Färger. Mörkt läge först: nästan svart botten, kort i lite ljusare grått och en orange accent.
+     Text och knappar har egna toner så att kontrasten når 4,5:1 (WCAG AA); --accent används för staplar, prickar och ramar. */
   :root {
-    --bg: #f5f6f8; --card: #ffffff; --text: #15181d; --muted: #5c6470;
-    --line: #e2e5ea; --mhead: #334155; --accent: #ef5b00; --accent-soft: #ffe7d6;
+    --bg: #f5f4f1; --card: #ffffff; --card-2: #efede9; --text: #141518; --muted: #5d6168;
+    --line: #e3e0da; --line-strong: #c9c5be; --mhead: #efede9; --accent: #f26414; --accent-soft: #fde6d6;
     --ok: #1f9d55; --ok-soft: #dcf3e5; --bad: #d23b3b; --bad-soft: #fbe3e3;
     --push: #c94800; --pull: #2f6fdb; --legs: #8a4fd6; --upper: #c2410c; --lower: #0e7c86; --full: #4d7c0f;
     --equip: #9aa1ab;
-    /* Text och knappar har egna, mörkare toner så att kontrasten når 4,5:1 (WCAG AA).
-       --accent och --ok används för staplar, prickar och ramar. */
-    --accent-strong: #c94800; --accent-text: #b93d00; --ok-text: #157a40; --bad-text: #b42323; --on-color: #ffffff; --ok-strong: #157a40;
+    --accent-strong: #c24a00; --accent-text: #b03f00; --ok-text: #157a40; --bad-text: #b42323; --on-color: #ffffff; --ok-strong: #157a40;
+    --on-accent: #ffffff;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
-      --bg: #0f1215; --card: #181c21; --text: #eef1f4; --muted: #929ba6;
-      --line: #2a3038; --mhead: #2e3a4b; --accent: #ff7a1a; --accent-soft: #3a2312;
-      --ok: #3ccf7a; --ok-soft: #173325; --bad: #ff6b6b; --bad-soft: #3a1d1d;
-      --push: #ff7a1a; --pull: #5e95ff; --legs: #b17cff; --upper: #f59e0b; --lower: #2dd4bf; --full: #84cc16;
-      --equip: #5d6670;
-      --accent-strong: #ff7a1a; --accent-text: #ff7a1a; --ok-text: #3ccf7a; --bad-text: #ff6b6b; --on-color: #111418; --ok-strong: #3ccf7a;
+      --bg: #0d0e10; --card: #16181b; --card-2: #1f2226; --text: #f4f2ef; --muted: #9ea3aa;
+      --line: #2a2d32; --line-strong: #3a3e44; --mhead: #1f2226; --accent: #ff6b1a; --accent-soft: #3a2312;
+      --ok: #6fd99a; --ok-soft: #173325; --bad: #ff9a9a; --bad-soft: #3a1d1d;
+      --push: #ff6b1a; --pull: #5e95ff; --legs: #b17cff; --upper: #f59e0b; --lower: #2dd4bf; --full: #84cc16;
+      --equip: #6b7178;
+      --accent-strong: #ff6b1a; --accent-text: #ff8a47; --ok-text: #6fd99a; --bad-text: #ff9a9a; --on-color: #0d0e10; --ok-strong: #6fd99a;
+      --on-accent: #0d0e10;
       color-scheme: dark;
     }
   }
   :root[data-theme="light"] { color-scheme: light; }
   :root[data-theme="dark"] {
-    --bg: #0f1215; --card: #181c21; --text: #eef1f4; --muted: #929ba6;
-    --line: #2a3038; --mhead: #2e3a4b; --accent: #ff7a1a; --accent-soft: #3a2312;
-    --ok: #3ccf7a; --ok-soft: #173325; --bad: #ff6b6b; --bad-soft: #3a1d1d;
-    --push: #ff7a1a; --pull: #5e95ff; --legs: #b17cff; --upper: #f59e0b; --lower: #2dd4bf; --full: #84cc16;
-    --equip: #5d6670;
-    --accent-strong: #ff7a1a; --accent-text: #ff7a1a; --ok-text: #3ccf7a; --bad-text: #ff6b6b; --on-color: #111418; --ok-strong: #3ccf7a;
+    --bg: #0d0e10; --card: #16181b; --card-2: #1f2226; --text: #f4f2ef; --muted: #9ea3aa;
+    --line: #2a2d32; --line-strong: #3a3e44; --mhead: #1f2226; --accent: #ff6b1a; --accent-soft: #3a2312;
+    --ok: #6fd99a; --ok-soft: #173325; --bad: #ff9a9a; --bad-soft: #3a1d1d;
+    --push: #ff6b1a; --pull: #5e95ff; --legs: #b17cff; --upper: #f59e0b; --lower: #2dd4bf; --full: #84cc16;
+    --equip: #6b7178;
+    --accent-strong: #ff6b1a; --accent-text: #ff8a47; --ok-text: #6fd99a; --bad-text: #ff9a9a; --on-color: #0d0e10; --ok-strong: #6fd99a;
+    --on-accent: #0d0e10;
     color-scheme: dark;
   }
+  /* Lexend för text, Unbounded för rubriker och stora tal. Ligger i appen så att den fungerar offline. */
+  @font-face { font-family: "Lexend"; font-weight: 300; font-display: block; src: url(fonts/lexend-300.woff2) format("woff2"); }
+  @font-face { font-family: "Lexend"; font-weight: 400; font-display: swap; src: url(fonts/lexend-400.woff2) format("woff2"); }
+  @font-face { font-family: "Lexend"; font-weight: 500; font-display: swap; src: url(fonts/lexend-500.woff2) format("woff2"); }
+  @font-face { font-family: "Lexend"; font-weight: 600 900; font-display: swap; src: url(fonts/lexend-600.woff2) format("woff2"); }
+  @font-face { font-family: "Unbounded"; font-weight: 300; font-display: block; src: url(fonts/unbounded-300.woff2) format("woff2"); }
+  @font-face { font-family: "Unbounded"; font-weight: 400 900; font-display: swap; src: url(fonts/unbounded-600.woff2) format("woff2"); }
   * { box-sizing: border-box; }
+  /* Menyn flyter 20 px över botten och är 68 px hög; innehållet slutar ovanför den */
   body { margin: 0; background: var(--bg); color: var(--text);
-    font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-    padding-bottom: calc(76px + env(safe-area-inset-bottom)); }
+    font: 400 16px/1.45 "Lexend", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    padding-bottom: calc(116px + env(safe-area-inset-bottom)); }
   main { max-width: 640px; margin: 0 auto; padding-block: 16px;
     padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
-  h1 { font-size: 22px; margin: 4px 0 16px; }
+  h1 { font: 600 24px/1.2 "Unbounded", sans-serif; margin: 6px 0 18px; min-height: 32px; }
   h1 .muted { font-weight: 500; }
-  h2 { font-size: 17px; margin: 0 0 10px; }
+  h2 { font-size: 16px; font-weight: 600; margin: 0 0 10px; }
+  h3 { font-weight: 600; }
+  b, strong { font-weight: 600; }
+  .ic { display: block; flex: none; }
   ol { padding-left: 20px; margin: 10px 0 0; }
   li { margin-bottom: 6px; }
-  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px; margin-bottom: 14px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 20px; padding: 16px; margin-bottom: 14px; }
   .card.warn { background: var(--accent-soft); border-color: transparent; font-size: 14px; }
   .muted { color: var(--muted); font-size: 14px; }
   .small { font-size: 13px; }
@@ -69,17 +83,18 @@
   .between { justify-content: space-between; }
   .wrap { flex-wrap: wrap; }
   button { font: inherit; border: 1px solid var(--line); background: var(--card); color: var(--text);
-    border-radius: 10px; padding: 8px 12px; cursor: pointer; }
+    border-radius: 14px; padding: 8px 14px; min-height: 44px; cursor: pointer; }
   button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   @media (prefers-reduced-motion: reduce) { .bar > div { transition: none; } }
   button:disabled { opacity: .4; cursor: default; }
   button.primary { background: var(--accent-strong); border-color: var(--accent-strong); color: var(--on-color); font-weight: 600; }
-  button.small { padding: 4px 9px; font-size: 14px; }
+  button.small { padding: 4px 12px; font-size: 14px; }
   button.ghost { border-color: transparent; background: transparent; color: var(--muted); }
   button.link { border: 0; background: none; padding: 0; color: var(--accent-text); text-decoration: underline; min-height: 0; display: inline; }
   button.wide { width: 100%; margin-bottom: 10px; padding: 12px; }
+  button.primary.wide, .bigbtn { min-height: 56px; border-radius: 18px; font-size: 17px; }
   input, select { font: inherit; color: var(--text); background: var(--bg); border: 1px solid var(--line);
-    border-radius: 8px; padding: 7px 9px; width: 100%; min-width: 0; }
+    border-radius: 12px; padding: 9px 12px; min-height: 44px; width: 100%; min-width: 0; }
   input::placeholder { color: var(--muted); opacity: .55; }
   /* Webbläsarens pilar i sifferfält tar plats och behövs inte; på mobilen syns de inte ändå */
   input[type=number] { -moz-appearance: textfield; appearance: textfield; }
@@ -108,8 +123,6 @@
   .seg { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
   .brand { display: flex; gap: 14px; align-items: center; margin: 4px 0 18px; }
   .brand img { width: 56px; height: 56px; border-radius: 14px; }
-  @font-face { font-family: "Unbounded"; font-weight: 300; font-display: block; src: url(fonts/unbounded-300.woff2) format("woff2"); }
-  @font-face { font-family: "Lexend"; font-weight: 300; font-display: block; src: url(fonts/lexend-300.woff2) format("woff2"); }
   .brand .ordbild { margin: 0; display: inline-flex; flex-direction: column; gap: 6px; line-height: 1; }
   /* DRIV och slogan lika långa: bokstavsluften är uppmätt för de här typsnitten */
   .brand .wordmark { font: 300 26px "Unbounded", sans-serif; letter-spacing: .4466em; margin-right: -.4466em; }
@@ -183,12 +196,14 @@
   .chips button.on { background: var(--text); color: var(--bg); border-color: var(--text); }
   .food { display: flex; gap: 8px; align-items: center; padding: 6px 0; border-top: 1px solid var(--line); }
   .food:first-of-type { border-top: 0; }
-  nav { position: fixed; left: 0; right: 0; bottom: 0; background: var(--card); border-top: 1px solid var(--line);
-    display: grid; grid-template-columns: repeat(4, minmax(0, 150px)); justify-content: center; padding-bottom: env(safe-area-inset-bottom, 0px);
-    padding-left: env(safe-area-inset-left, 0px); padding-right: env(safe-area-inset-right, 0px); z-index: 5; }
-  nav button { border: 0; border-radius: 0; background: transparent; padding: 10px 2px 12px; font-size: 13px; color: var(--muted); }
-  nav button.on { color: var(--accent-text); font-weight: 700; }
-  nav button span { display: block; font-size: 20px; line-height: 1.1; }
+  nav { position: fixed; left: max(12px, env(safe-area-inset-left, 0px)); right: max(12px, env(safe-area-inset-right, 0px));
+    bottom: calc(20px + env(safe-area-inset-bottom, 0px)); max-width: 616px; margin: 0 auto; height: 68px; padding: 6px;
+    background: var(--card-2); border: 1px solid var(--line); border-radius: 24px; box-shadow: 0 10px 30px rgba(0, 0, 0, .25);
+    display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); z-index: 5; }
+  nav.hidden { display: none; }
+  nav button { border: 0; border-radius: 18px; background: transparent; padding: 0; min-height: 0; font-size: 12px; color: var(--muted);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; }
+  nav button.on { background: var(--text); color: var(--bg); font-weight: 600; }
   table { width: 100%; border-collapse: collapse; font-size: 14px; }
   td, th { text-align: left; padding: 6px 4px; border-top: 1px solid var(--line); vertical-align: middle; }
   th { color: var(--muted); font-weight: 600; border-top: 0; }
@@ -209,9 +224,10 @@
   .stat-sm { font-size: 22px; }
   /* Kugghjul, ändra en tidigare dag */
   #app { position: relative; }
-  .gear { position: absolute; top: 14px; right: 0; border: 0; background: none; font-size: 22px; padding: 6px; opacity: .75; }
-  .gear.on { opacity: 1; }
-  #app > h1 { padding-right: 40px; }
+  .gear { position: absolute; top: 2px; right: 0; width: 44px; height: 44px; padding: 0; border-radius: 22px; z-index: 2;
+    border: 1px solid var(--line); background: var(--card); color: var(--text); display: grid; place-items: center; }
+  .gear.on { border-color: var(--text); }
+  #app > h1 { padding-right: 52px; }
   .editbar { display: flex; align-items: center; gap: 10px; background: var(--accent-soft); border-radius: 12px; padding: 10px 12px; margin: 0 44px 12px 0; }
   .editbar b { flex: 1; }
   /* Historik */
@@ -261,8 +277,8 @@
   .kleft { margin-top: 12px; }
   .ksection { margin: 22px 4px 10px; font-size: 19px; }
   .kmeal { padding: 0; overflow: hidden; margin-bottom: 14px; }
-  .khead { display: flex; align-items: center; gap: 10px; background: var(--mhead); color: #fff; padding: 13px 16px;
-    font-weight: 700; font-size: 15px; letter-spacing: .06em; text-transform: uppercase; }
+  .khead { display: flex; align-items: center; gap: 10px; background: var(--mhead); color: var(--text); padding: 13px 16px;
+    font-weight: 600; font-size: 15px; letter-spacing: .06em; text-transform: uppercase; }
   .khead span:last-child { letter-spacing: 0; text-transform: none; font-size: 16px; font-variant-numeric: tabular-nums; }
   .kicon { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; flex: none; }
   .kmeal .krow { padding: 14px 16px; }
@@ -332,7 +348,6 @@
   .exlist .krow.ss + .krow.ss:not(.ss-first) { border-top-style: dashed; }
   .sstag { color: var(--accent-text); font-weight: 600; }
   .sspill { display: inline-block; margin-top: 6px; padding: 3px 10px; border-radius: 99px; background: var(--accent-soft); color: var(--accent-text); font-size: 13px; font-weight: 600; }
-  .friends .khead { background: #2f6fdb; }
   .friends .kcheck { border: 0; font-size: 18px; }
   .friends .feed-row:first-child { padding-top: 0; }
   .pushopts { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); }
@@ -393,7 +408,7 @@
   .chev { color: var(--muted); font-size: 20px; transition: transform .15s; }
   .prow.open .chev { transform: rotate(90deg); }
   .prow-body { padding: 0 0 16px; }
-  .prow { scroll-margin: 12px 0 calc(90px + env(safe-area-inset-bottom, 0px)); }
+  .prow { scroll-margin: 12px 0 calc(124px + env(safe-area-inset-bottom, 0px)); }
   .prow-body .card { border: 0; padding: 0; margin: 0; background: none; box-shadow: none; }
   .prow-body .card > h2:first-child { display: none; }
   .backlink { margin: 0 0 4px -10px; }
@@ -466,7 +481,7 @@
   .fnav { gap: 8px; margin-bottom: 14px; }
   .fnav button { min-height: 52px; }
   .fnav button.grow { flex: 1; }
-  .rest { position: fixed; left: 0; right: 0; bottom: calc(64px + env(safe-area-inset-bottom, 0px)); z-index: 15;
+  .rest { position: fixed; left: 0; right: 0; bottom: calc(96px + env(safe-area-inset-bottom, 0px)); z-index: 15;
     background: var(--card); border-top: 1px solid var(--line); box-shadow: 0 -6px 18px rgba(0, 0, 0, .12);
     padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
   .rest-bar { height: 4px; background: var(--line); margin: 0 -16px; }
@@ -496,7 +511,7 @@
   .plus-row b.up { color: var(--ok); } .plus-row b.down { color: var(--bad); }
   .linkbtn { border: 0; background: none; padding: 0; color: var(--text); text-decoration: underline; text-decoration-color: var(--line);
     text-underline-offset: 3px; text-align: left; font-size: 14px; }
-  .toast { position: fixed; left: 50%; bottom: calc(86px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%);
+  .toast { position: fixed; left: 50%; bottom: calc(104px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%);
     max-width: calc(100% - 32px); background: var(--text); color: var(--bg); padding: 10px 16px; border-radius: 12px;
     font-weight: 600; z-index: 20; box-shadow: 0 6px 20px rgba(0, 0, 0, .25); transition: opacity .4s; }
   .toast.out { opacity: 0; }
@@ -537,6 +552,7 @@
 <nav id="nav"></nav>
 <script src="ovningar.js"></script>
 <script src="figur.js"></script>
+<script src="ikoner.js"></script>
 <script src="mat.js"></script>
 <script src="config.js"></script>
 <script src="konto.js"></script>

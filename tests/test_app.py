@@ -264,7 +264,7 @@ def test_utseende_kan_valjas(page):
     assert page.evaluate("document.documentElement.dataset.theme") == "dark"
     page.reload()
     assert page.evaluate("document.documentElement.dataset.theme") == "dark"
-    assert page.evaluate("getComputedStyle(document.body).backgroundColor") == "rgb(15, 18, 21)"
+    assert page.evaluate("getComputedStyle(document.body).backgroundColor") == "rgb(13, 14, 16)"
     prof(page, "utseende")
     page.click('[data-theme-set="auto"]')
     assert page.evaluate("document.documentElement.dataset.theme") is None
