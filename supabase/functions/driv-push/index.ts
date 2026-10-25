@@ -46,8 +46,15 @@ async function send(sub: Sub, msg: { title: string; body: string }) {
   }
 }
 
+// Mellanslag, radbrytningar och citattecken runt hemligheten räknas inte (vanligt vid inklistring)
+const clean = (v: string | null) => (v ?? "").trim().replace(/^["']+|["']+$/g, "").trim();
+
 Deno.serve(async req => {
-  if (!env("CRON_SECRET") || req.headers.get("x-driv-cron") !== env("CRON_SECRET")) return new Response("Nej", { status: 401 });
+  const want = clean(env("CRON_SECRET")), got = clean(req.headers.get("x-driv-cron"));
+  // Felet säger vad som saknas eller skiljer, men aldrig själva hemligheten
+  if (!want) return new Response("Nej: CRON_SECRET saknas bland funktionens Secrets", { status: 401 });
+  if (!got) return new Response("Nej: anropet saknar headern x-driv-cron", { status: 401 });
+  if (got !== want) return new Response(`Nej: fel hemlighet (${got.length} tecken skickades, ${want.length} väntades)`, { status: 401 });
   const { data: subs } = await db.from("driv_push").select("*");
   let daily = 0, kudos = 0;
   for (const sub of (subs ?? []) as Sub[]) {
