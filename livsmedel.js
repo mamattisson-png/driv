@@ -1,7 +1,8 @@
 "use strict";
 // Livsmedelsverkets livsmedelsdatabas, version 2026: namn, kcal och protein (g) per 100 g.
 // Källa: Livsmedelsverket, livsmedelsverket.se/livsmedelsdatabasen. Licens: CC BY 4.0.
-const LMV = [
+// Laddas efter appen (async) och läggs då till bland livsmedlen, så att första starten går fortare.
+addLMV([
 ["Abborre filé panerad stekt", 195, 22.3],
 ["Abborre kokt m. salt", 140, 32.3],
 ["Abborre rå", 86, 19.8],
@@ -2608,4 +2609,4 @@ const LMV = [
 ["Öring Sverige rå", 115, 22.0],
 ["Örtagårdssås m. gräddfil", 283, 2.5],
 ["Örtte drickf.", 1, 0]
-];
+]);

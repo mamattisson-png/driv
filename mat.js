@@ -22,17 +22,20 @@ const FOODS = [
   { n: ["matlagningsgrädde"], kcal: 150, p: 3, dl: 100, msk: 15 },
   { n: ["crème fraiche", "creme fraiche"], kcal: 330, p: 2.3, dl: 100, msk: 15 },
   { n: ["gräddfil"], kcal: 135, p: 2.7, dl: 100, msk: 15 },
-  { n: ["ägg"], kcal: 140, p: 12.5, st: 55 },
+  { n: ["ägg", "frukostägg"], kcal: 140, p: 12.5, st: 55 },
 
   // Spannmål och bröd
   { n: ["havregryn"], kcal: 370, p: 13, dl: 35 },
   { n: ["gröt", "havregrynsgröt"], kcal: 70, p: 2.5, dl: 100, portion: 250 },
-  { n: ["müsli", "musli", "granola"], kcal: 400, p: 9, dl: 45 },
+  { n: ["müsli", "musli"], kcal: 380, p: 9, dl: 45 },
+  { n: ["granola"], kcal: 460, p: 9, dl: 40 },
   { n: ["cornflakes", "flingor"], kcal: 380, p: 7, dl: 12 },
   { n: ["knäckebröd", "knäcke"], kcal: 350, p: 10, st: 12, skiva: 12 },
   { n: ["fralla", "frallor", "småfranska"], kcal: 270, p: 9, st: 60 },
   { n: ["rostbröd", "toast"], kcal: 260, p: 8, skiva: 25, st: 25 },
-  { n: ["bröd", "limpa", "brödskiva", "smörgås", "macka"], kcal: 250, p: 8, skiva: 35, st: 35 },
+  { n: ["bröd", "limpa", "brödskiva"], kcal: 250, p: 8, skiva: 35, st: 35 },
+  // En smörgås med smör och pålägg (ost eller skinka), inte bara brödet
+  { n: ["smörgås", "macka", "ostsmörgås", "ostmacka"], kcal: 250, p: 11, st: 60 },
   { n: ["tortilla", "tortillabröd", "wrap"], kcal: 300, p: 8, st: 40 },
   { n: ["pannkaka", "pannkakor"], kcal: 190, p: 7, st: 60 },
   { n: ["okokt pasta", "pasta okokt", "lasagneplattor", "lasagneplatta"], kcal: 360, p: 12, dl: 45, portion: 80 },
@@ -88,7 +91,8 @@ const FOODS = [
   { n: ["paprika"], kcal: 30, p: 1, st: 150 },
   { n: ["morot", "morötter"], kcal: 40, p: 0.9, st: 70 },
   { n: ["broccoli"], kcal: 34, p: 3, dl: 35, portion: 100 },
-  { n: ["sallad", "spenat"], kcal: 18, p: 1.8, dl: 15, portion: 50 },
+  { n: ["sallad", "isbergssallad", "rucola"], kcal: 18, p: 1.8, dl: 15, portion: 50 },
+  { n: ["spenat", "babyspenat"], kcal: 23, p: 2.9, dl: 15, portion: 50 },
   { n: ["lök", "gul lök"], kcal: 40, p: 1, st: 100 },
   { n: ["majs"], kcal: 90, p: 3, dl: 65, burk: 150 },
   { n: ["ärtor", "gröna ärtor"], kcal: 80, p: 5, dl: 65 },
@@ -195,7 +199,8 @@ const FOODS = [
   { n: ["bearnaisesås", "bearnaise", "hollandaise"], kcal: 600, p: 1, msk: 15, dl: 100 },
   { n: ["vitlökssås", "kebabsås", "dressing"], kcal: 350, p: 1.5, msk: 15, dl: 100 },
   { n: ["brunsås", "gräddsås", "sås"], kcal: 100, p: 2, dl: 100, msk: 15 },
-  { n: ["salsa", "tacosås", "tomatsås", "krossade tomater"], kcal: 35, p: 1.3, msk: 15, dl: 100 },
+  { n: ["salsa", "tacosås", "tomatsås"], kcal: 35, p: 1.3, msk: 15, dl: 100 },
+  { n: ["krossade tomater", "passerade tomater", "tomatpuré krossad"], kcal: 24, p: 1.2, dl: 100, burk: 400 },
   { n: ["sojasås", "soja"], kcal: 55, p: 8, msk: 15, tsk: 5 },
   { n: ["sweet chili", "chilisås", "bbq-sås", "bbqsås"], kcal: 200, p: 0.5, msk: 15 },
   { n: ["senap", "remoulad", "remouladsås"], kcal: 250, p: 2, msk: 15, tsk: 5 },
@@ -289,11 +294,13 @@ const FOODS = [
   { n: ["ketchup"], kcal: 100, p: 1, msk: 15 },
   { n: ["majonnäs", "majonäs"], kcal: 700, p: 1, msk: 15, tsk: 5 },
   { n: ["pesto"], kcal: 450, p: 5, msk: 15 },
-  { n: ["läsk", "cola"], kcal: 42, p: 0, dl: 100, burk: 330, glas: 200 },
+  { n: ["läsk", "cola"], kcal: 42, p: 0, dl: 100, burk: 330, glas: 200, st: 330 },
+  { n: ["cola zero", "pepsi max", "coca-cola zero", "light läsk", "sockerfri läsk", "zero"], kcal: 0.4, p: 0, dl: 100, burk: 330, glas: 200, st: 330 },
   { n: ["apelsinjuice", "juice"], kcal: 45, p: 0.5, dl: 100, glas: 200 },
   { n: ["öl"], kcal: 43, p: 0.4, dl: 100, burk: 330, st: 330, glas: 400 },
   { n: ["vin", "rödvin", "vitt vin"], kcal: 80, p: 0, dl: 100, glas: 150 },
-  { n: ["latte", "cappuccino"], kcal: 50, p: 3.3, st: 250, kopp: 250 },
+  { n: ["latte", "caffe latte", "lattemacchiato"], kcal: 50, p: 3.3, st: 250, kopp: 250 },
+  { n: ["cappuccino"], kcal: 45, p: 3, st: 180, kopp: 180 },
   { n: ["kaffe", "te"], kcal: 1, p: 0.1, kopp: 150, st: 150 },
 ];
 
@@ -411,14 +418,15 @@ function baseFood(name, list) {
   }
   return best;
 }
-if (typeof LMV !== "undefined") {
+function addLMV(list) {
   const own = FOODS.slice(0, CURATED);
-  for (const [label, kcal, p] of LMV) {
+  for (const [label, kcal, p] of list) {
     const n = label.toLowerCase();
     const base = baseFood(n, own), units = {};
     if (base) for (const k of UNIT_KEYS) if (base[k]) units[k] = base[k];
     FOODS.push({ ...units, n: [n], kcal, p, lmv: true, label });
   }
+  SEARCH = null;   // sökindexet byggs om med de nya livsmedlen
 }
 
 // ---------- Sökning och felstavning ----------

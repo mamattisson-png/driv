@@ -385,6 +385,15 @@ def test_aktivitet_loggas_och_raknas_som_pass(page):
     assert page.evaluate("S.log[TODAY].acts.length") == 1
 
 
+def test_vanliga_livsmedel_tolkas_ratt(page):
+    open_app(page)
+    assert page.evaluate("FOODS.length > CURATED + 1000")   # Livsmedelsverkets lista har laddats efter appen
+    got = page.evaluate("""() => ['100 g krossade tomater', '1 cappuccino', '1 cola zero', '1 läsk', '100 g spenat',
+      '1 smörgås', '1 dl granola', '2 frukostägg', '250 g lasagneplattor'].map(t => { const i = parseFood(t).items[0]; return [i.name, i.kcal]; })""")
+    assert got == [["Krossade tomater", 24], ["Cappuccino", 81], ["Cola zero", 1], ["Läsk", 139], ["Spenat", 23],
+                   ["Smörgås", 150], ["Granola", 184], ["Ägg", 154], ["Okokt pasta", 900]]
+
+
 def test_dailys_under_passet(page):
     start(page)
     seed(page, "S.daily = [{id:'plankan',sets:3,reps:'45 sek'},{id:'lop',sets:1,reps:''}]")

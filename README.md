@@ -37,12 +37,16 @@ Näringsvärden kommer delvis från [Livsmedelsverkets livsmedelsdatabas](https:
 | Fil | Innehåll |
 |---|---|
 | `index.html` | Sidan och stilarna |
-| `app.js` | Appen: upplägg, pass, dailys, kost, veckovy och lagring |
+| `app.js` | Appen: upplägg, pass, dailys, Hem, Profil, synk och händelser |
+| `fokus.js`, `kost.js`, `historik.js` | Fokusläget och passlistan, Kost med recept, Historik och Utveckling |
+| `aktivitet.js`, `social.js`, `notiser.js` | Aktiviteter (padel, vandring …), vänner och notiser |
+| `konto.js`, `vila.js`, `skanner.js` | Konto via Supabase och Tyck till, vilotimern, streckkodsskannern |
 | `ovningar.js` | Övningsbiblioteket med instruktioner och poser |
 | `figur.js` | Ritar de animerade övningsbilderna som SVG |
 | `mat.js` | Egna livsmedel med portionsstorlekar, tolkning av fritext, förslag och felstavning |
-| `livsmedel.js` | Livsmedelsverkets livsmedelsdatabas (namn, kcal och protein per 100 g) |
-| `config.js` | Supabase-projektets adress och publika nyckel |
+| `livsmedel.js` | Livsmedelsverkets livsmedelsdatabas (namn, kcal och protein per 100 g); laddas efter appen |
+| `config.js` | Supabase-projektets adress, publika nyckel och publika nyckel för notiser |
+| `supabase/` | SQL för tabeller och funktioner, och Edge Function `driv-push` som skickar notiser |
 | `supabase/schema.sql` | Tabell och åtkomstregler i Supabase |
 | `manifest.webmanifest`, `sw.js`, `icons/` | Installation på hemskärmen och offlinestöd |
 
