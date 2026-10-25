@@ -394,6 +394,23 @@ def test_vanliga_livsmedel_tolkas_ratt(page):
                    ["Smörgås", 150], ["Granola", 184], ["Ägg", 154], ["Okokt pasta", 900]]
 
 
+def test_stod_driv_med_swish(page):
+    page.context.route("**/config.js", lambda r: r.fulfill(body='window.DRIV_CONFIG = { swishNumber: "070-123 45 67" };', content_type="application/javascript"))
+    start(page)
+    prof(page, "stod")
+    href = page.get_attribute('#p-stod a.btn >> nth=1', "href")
+    import json, urllib.parse
+    data = json.loads(urllib.parse.unquote(href.split("data=")[1]))
+    assert data["payee"]["value"] == "0701234567" and data["amount"]["value"] == 50
+    assert "070 123 45 67" in page.inner_text("#p-stod")
+
+
+def test_stod_driv_doljs_utan_nummer(page):
+    start(page)
+    go(page, "profil")
+    assert page.locator("#p-stod").count() == 0
+
+
 def test_dailys_under_passet(page):
     start(page)
     seed(page, "S.daily = [{id:'plankan',sets:3,reps:'45 sek'},{id:'lop',sets:1,reps:''}]")

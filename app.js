@@ -1046,6 +1046,7 @@ const VIEWS = {
           <div class="grid2" style="margin-top:10px">
             <label class="field">Basövningar (sek)<input type="number" inputmode="numeric" id="restcompound" value="${rs.compound}"></label>
             <label class="field">Isolering och mage (sek)<input type="number" inputmode="numeric" id="restiso" value="${rs.iso}"></label></div>`)}
+        ${swishNr() ? profRow("stod", "☕", "Stöd Driv", "Swisha valfritt belopp", supportBody()) : ""}
         ${sbEnabled ? profRow("tyck", "💬", "Tyck till", "Vad saknas, vad är krångligt?", feedbackCard()) : ""}
         ${profRow("konto", "👤", sbEnabled ? "Konto och data" : "Data", account.step === "in" ? esc(account.email) : sbEnabled ? "Inte inloggad" : "Sparas i webbläsaren",
           `${accountCard()}${data}`)}
@@ -1062,6 +1063,19 @@ function setTheme(t) {
 }
 
 let setupFrom = null;
+// ---------- Stöd Driv (Swish) ----------
+// Numret ligger i config.js. På mobilen öppnar knappen Swish med numret, beloppet och ett meddelande
+// ifyllda; på datorn visas numret.
+const swishNr = () => String((window.DRIV_CONFIG || {}).swishNumber || "").replace(/\D/g, "");
+const swishUrl = amount => "swish://payment?data=" + encodeURIComponent(JSON.stringify({
+  version: 1, payee: { value: swishNr() }, amount: { value: amount, editable: true }, message: { value: "Stöd till Driv", editable: true },
+}));
+const swishShown = () => swishNr().replace(/^(\d{3})(\d{3})(\d{2})(\d{2})$/, "$1 $2 $3 $4").replace(/^(\d{3})(\d{3})(\d{4})$/, "$1-$2 $3");
+function supportBody() {
+  return `<div>Driv är gratis och utan reklam. Gillar du appen får du gärna bjuda på en kaffe, det hjälper till att hålla den igång.</div>
+    <div class="row wrap" style="margin-top:12px">${[25, 50, 100].map(a => `<a class="btn" href="${swishUrl(a)}">Swisha ${a} kr</a>`).join("")}</div>
+    <div class="muted small" style="margin-top:8px">På datorn: swisha till <b>${swishShown()}</b> och skriv "Driv" som meddelande.</div>`;
+}
 // Hem: en rad med dagens kalorier, protein och veckans pass. Tryck för att komma till Kost.
 function homeSummary(e, m, wp) {
   return `<button class="card homesum" data-go="kost">
