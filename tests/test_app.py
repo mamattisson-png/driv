@@ -148,7 +148,6 @@ def test_vikt_jamfors_med_forra_veckan(page):
     page.press('[data-set=bankpress][data-i="0"][data-f=reps]', "Tab")
     page.click('[data-ok=bankpress][data-i="0"]')
     go(page, "historik")
-    page.click("[data-weekex]")
     row = page.locator(".exrow", has_text="Bänkpress").inner_text()
     assert "82,5 kg × 8" in row and "+2,5 kg" in row
 
@@ -168,7 +167,6 @@ def test_kroppsvikt_ovningar_raknas_i_reps_och_sekunder(page):
         page.fill(sel, val)
         page.press(sel, "Tab")
     go(page, "historik")
-    page.click("[data-weekex]")
     assert "+3 reps" in page.locator(".exrow", has_text="Armhävningar").inner_text()
     assert "+15 s" in page.locator(".exrow", has_text="Plankan").inner_text()
 
@@ -1131,7 +1129,7 @@ def test_historik_andra_en_tidigare_dag(page):
     start(page)
     seed(page, "S.log['2026-10-20'] = {workouts:[{dayId:S.plan.days[0].id,done:true,sets:{bankpress:[{kg:80,reps:8,ok:true}]}}],dailies:{},food:[]}")
     go(page, "historik")
-    assert page.locator('[data-histday="2026-10-20"] .cdot').count() == 1
+    assert page.locator('[data-histday="2026-10-20"].pass').count() == 1 and page.locator(".cday.pass").count() == 1
     assert page.locator('[data-histday="2026-10-23"]').is_disabled()
     # Igår: dailys och vikt direkt i fönstret
     page.click('[data-histday="2026-10-21"]')

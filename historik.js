@@ -7,7 +7,8 @@
 let histMonth = null;     // "YYYY-MM" som visas, null = den här månaden
 let histDay = null;       // öppen dag i kalendern
 let histView = "kalender";
-let weekExOpen = false;      // övningarna i veckokortet är utfällda   // "kalender" eller "utveckling"
+let weekExOpen = false;      // alla övningar i veckokortet visas
+let histChart = null;        // övningen i utvecklingsgrafen under Kalender
 
 const MONTHS = ["januari", "februari", "mars", "april", "maj", "juni", "juli", "augusti", "september", "oktober", "november", "december"];
 const WD_LONG = ["måndag", "tisdag", "onsdag", "torsdag", "fredag", "lördag", "söndag"];
@@ -26,19 +27,18 @@ function calendar() {
   for (let i = 0; i < lead; i++) cells += `<span></span>`;
   for (let n = 1; n <= count; n++) {
     const d = `${month}-${String(n).padStart(2, "0")}`;
-    const passes = workoutsOn(d).filter(w => w.done || Object.keys(w.sets).length).map(w => dayById(w.dayId)).filter(Boolean);
-    const dots = passes.map(p => `<i class="cdot" style="background:var(--${TYPES[p.type].color || p.type})"></i>`).join("") +
-      actsOn(d).map(() => `<i class="cdot act"></i>`).join("");
-    const dl = allDailiesDone(d) ? `<i class="ccheck">✓</i>` : "";
-    cells += `<button class="cday ${d === TODAY ? "today" : ""} ${hasLog(d) ? "has" : ""}" data-histday="${d}" ${d > TODAY ? "disabled" : ""}
-      aria-label="${dateLabel(d)}${passes.length ? `, ${passes.length} pass` : ""}"><span>${n}</span><span class="cmarks">${dots}${dl}</span></button>`;
+    const passes = workoutsOn(d).filter(w => w.done || Object.keys(w.sets).length).length, acts = actsOn(d).length;
+    const all = allDailiesDone(d);
+    // Passdag (pass eller annan träning) fylls i accent, alla dailys är en liten prick, idag har ram
+    cells += `<button class="cday ${passes || acts ? "pass" : ""} ${d === TODAY ? "today" : ""} ${hasLog(d) ? "has" : ""}" data-histday="${d}" ${d > TODAY ? "disabled" : ""}
+      aria-label="${dateLabel(d)}${passes ? `, ${passes} pass` : ""}${acts ? `, ${acts} ${acts === 1 ? "aktivitet" : "aktiviteter"}` : ""}${all ? ", alla dailys" : ""}"><span>${n}</span><i class="cdaily ${all ? "on" : ""}"></i></button>`;
   }
   const atNow = month >= TODAY.slice(0, 7);
-  return `<div class="card"><div class="row between"><button class="small" data-hmonth="-1" aria-label="Förra månaden">‹</button>
+  return `<section class="card calcard" aria-label="Kalender"><div class="row between"><button class="roundbtn ghost" data-hmonth="-1" aria-label="Förra månaden">${icon("left", 20)}</button>
       <h2 style="margin:0">${MONTHS[mo - 1].replace(/^./, c => c.toUpperCase())} ${y}</h2>
-      <button class="small" data-hmonth="1" ${atNow ? "disabled" : ""} aria-label="Nästa månad">›</button></div>
-    <div class="cal">${WD.map(w => `<b>${w.slice(0, 2)}</b>`).join("")}${cells}</div>
-    <div class="legend muted small"><span><i class="cdot" style="background:var(--push)"></i>Pass</span><span><i class="cdot act"></i>Aktivitet</span>${S.daily.length ? `<span><i class="ccheck">✓</i>Alla dailys</span>` : ""}<span>Tryck på en dag för att ändra den</span></div></div>`;
+      <button class="roundbtn ghost" data-hmonth="1" ${atNow ? "disabled" : ""} aria-label="Nästa månad">${icon("right", 20)}</button></div>
+    <div class="cal">${WD.map(w => `<b aria-hidden="true">${w[0]}</b>`).join("")}${cells}</div>
+    <div class="legend muted small"><span><i class="lg-pass"></i>Pass</span>${S.daily.length ? `<span><i class="lg-daily"></i>Alla dailys</span>` : ""}<span><i class="lg-today"></i>Idag</span></div></section>`;
 }
 
 function daySheet() {
@@ -51,7 +51,7 @@ function daySheet() {
   }).join("");
   const meals = MEALS.map(([n], i) => [n, food.filter(f => f.meal === i).reduce((a, f) => a + (+f.kcal || 0), 0)]).filter(([, k]) => k);
   return `<div class="overlay" data-hclose><div class="sheet">
-    <div class="row between"><h2>${dateLabel(d).replace(/^./, c => c.toUpperCase())}</h2><button class="small ghost" data-hclose aria-label="Stäng">✕</button></div>
+    <div class="row between"><h2>${dateLabel(d).replace(/^./, c => c.toUpperCase())}</h2><button class="small ghost iconbtn" data-hclose aria-label="Stäng">${icon("close", 18)}</button></div>
     <h3 class="sheet-sub">Träning</h3>
     ${passes || `<div class="muted">Inget pass loggat.</div>`}
     ${actsOn(d).map((a, i) => `<button class="hrow linkrow" data-actedit="${i}" data-actdate="${d}"><span class="grow"><b>${esc(a.name)}</b>
@@ -69,37 +69,61 @@ function daySheet() {
   </div></div>`;
 }
 
-// Veckan jämförd med veckan innan (det som tidigare var fliken Vecka)
+// Veckan jämförd med veckan innan: fyra rutor, bästa set och en graf
 function weekSection() {
   const ws = shift(weekStart(TODAY), weekOffset * 7), prevWs = shift(ws, -7);
   const cur = weekSummary(ws), prev = weekSummary(prevWs);
   const ids = [];
   for (const d of S.plan.days) for (const e of d.ex) if (!ids.includes(e.id)) ids.push(e.id);
-  const rows = ids.map(id => {
-    const c = exWeek(id, ws), p = exWeek(id, prevWs);
-    if (!c && !p) return "";
-    const vol = c && p && p.vol ? Math.round((c.vol - p.vol) / p.vol * 100) : null;
-    return `<div class="exrow">${thumb(id, "xs")}<div class="grow"><button class="linkbtn" data-chart="${id}">${esc(EX[id].name)}</button>
-        <div class="muted small">${fmtSet(c, id)}${p ? ` · förra ${fmtSet(p, id)}` : ""}</div></div>
-      <div class="exdelta">${exDelta(c, p, id)}${vol !== null && vol !== 0 ? deltaBadge(vol, "% vol") : ""}</div></div>`;
-  }).join("");
-  const m = macros();
-  const stat = (label, c, p, unit = "") => `<div><div class="stat">${fmtNum(c)}${unit}</div><div class="muted">${label}</div>${c || p ? deltaBadge(Math.round((c - p) * 10) / 10, unit.trim() || "st") : ""}</div>`;
-  return `<div class="card"><div class="row between"><button class="small" data-week="-1" aria-label="Förra veckan">‹</button>
-      <h2 style="margin:0">Vecka ${weekNo(ws)} <span class="muted">${+ws.slice(8)}/${+ws.slice(5, 7)} – ${+shift(ws, 6).slice(8)}/${+shift(ws, 6).slice(5, 7)}</span></h2>
-      <button class="small" data-week="1" ${weekOffset >= 0 ? "disabled" : ""} aria-label="Nästa vecka">›</button></div>
-      <div class="muted" style="margin:8px 0">Jämfört med vecka ${weekNo(prevWs)}</div>
-      <div class="grid2">
-        ${stat(`pass av ${S.plan.count}`, cur.passes, prev.passes)}
-        ${stat("dagar alla dailys klara", cur.dailies, prev.dailies)}
-        ${stat("löpning", cur.km, prev.km, " km")}
-        <div><div class="stat">${cur.kcal || "–"}</div><div class="muted">kcal/dag i snitt (mål ${m.kcal})</div></div>
-      </div>
-      ${!S.hideWeight && weekAvgWeight(ws) != null ? `<div class="hwrow">Vikt, snitt: <b>${fmtNum(weekAvgWeight(ws))} kg</b> ${weekAvgWeight(prevWs) != null ? weightBadge(weekAvgWeight(ws) - weekAvgWeight(prevWs)) : ""}</div>` : ""}
-      ${rows ? `<button class="hexbtn" data-weekex aria-expanded="${weekExOpen}"><span class="grow">Övningar den här veckan</span><span class="chev">${weekExOpen ? "▾" : "›"}</span></button>
-        ${weekExOpen ? `<div class="muted small" style="margin:4px 0">Bästa set jämfört med förra veckan.</div>${rows}` : ""}` : ""}
-      <button class="wide" style="margin-top:12px" data-letter="${ws}">📬 Sammanfattning av veckan</button></div>
-    <button class="link small hmore" data-hview="utveckling">Personbästa, grafer och vikt över tid finns under Utveckling ›</button>`;
+  for (const d of weekDates(ws)) for (const id of exIdsOn(d)) if (EX[id] && !ids.includes(id)) ids.push(id);
+  const rows = ids.map(id => ({ id, c: exWeek(id, ws), p: exWeek(id, prevWs) })).filter(r => r.c).map(({ id, c, p }) =>
+    `<button class="exrow" data-chart="${id}"><span class="grow">${esc(EX[id].name)}</span><span class="muted">${fmtSet(c, id)}</span>
+      <span class="exdelta">${p ? exDelta(c, p, id) || `<span class="delta same">±0</span>` : `<span class="delta same">ny</span>`}</span></button>`);
+  // Skillnaden mot förra veckan: plus är bra för pass och dailys, för kalorier och vikt bara en uppgift
+  const diff = (c, p, good, unit = "") => {
+    const d = Math.round((c - p) * 10) / 10;
+    if (!d) return `<span class="muted small">Samma som förra</span>`;
+    const cls = good == null ? "muted" : (d > 0) === good ? "oktext" : "badtext";
+    return `<span class="small ${cls}">${d > 0 ? "+" : "−"}${fmtNum(Math.abs(d))}${unit} mot förra</span>`;
+  };
+  const tile = (label, v, unit, sub) => `<div class="wtile"><span class="klabel">${label}</span><span class="wnum">${v} <span class="muted small">${unit}</span></span>${sub}</div>`;
+  const wNow = weekAvgWeight(ws), wPrev = weekAvgWeight(prevWs);
+  const tiles = [
+    tile("Pass", cur.passes, `av ${S.plan.count}`, diff(cur.passes, prev.passes, true)),
+    S.daily.length ? tile("Dailys", cur.dailies, "av 7 dagar", diff(cur.dailies, prev.dailies, true)) : "",
+    tile("Kalorier", cur.kcal ? tnum(cur.kcal) : "–", "snitt", cur.kcal && prev.kcal ? diff(cur.kcal, prev.kcal, null) : `<span class="muted small">mål ${tnum(macros().kcal)}</span>`),
+    S.hideWeight ? "" : tile("Vikt", wNow != null ? fmtNum(wNow) : "–", "kg", wNow != null && wPrev != null ? diff(wNow, wPrev, null, " kg") : `<span class="muted small">${wNow != null ? "Första vägningen" : "Ingen vägning"}</span>`),
+    cur.km || prev.km ? tile("Löpning", fmtNum(cur.km), "km", diff(cur.km, prev.km, true, " km")) : "",
+  ].filter(Boolean);
+  const shown = weekExOpen ? rows : rows.slice(0, 4);
+  return `<section class="weekcmp" aria-label="Veckan jämfört med veckan innan">
+    <div class="row between"><div class="col"><h2>Vecka ${weekNo(ws)} · ${+ws.slice(8)}–${+shift(ws, 6).slice(8)} ${MONTHS[+shift(ws, 6).slice(5, 7) - 1].slice(0, 3)}</h2>
+      <span class="muted small">Jämfört med veckan innan</span></div>
+      <div class="row" style="gap:0"><button class="roundbtn ghost" data-week="-1" aria-label="Förra veckan">${icon("left", 20)}</button>
+        <button class="roundbtn ghost" data-week="1" ${weekOffset >= 0 ? "disabled" : ""} aria-label="Nästa vecka">${icon("right", 20)}</button></div></div>
+    <div class="wtiles">${tiles.join("")}</div>
+    ${rows.length ? `<div class="card bestsets"><div class="row between klabel"><span>Bästa set</span><span>mot förra</span></div>${shown.join("")}
+      ${rows.length > 4 ? `<button class="ghost wide" data-weekex aria-expanded="${weekExOpen}">${weekExOpen ? "Visa färre" : `Visa alla ${rows.length} övningar`}${icon(weekExOpen ? "up" : "down", 16)}</button>` : ""}</div>` : ""}
+    ${devCard()}
+    <button class="ghost wide" data-letter="${ws}">${icon("mail", 18)}Sammanfattning av veckan</button>
+  </section>`;
+}
+// En övnings utveckling vecka för vecka; Byt går till nästa övning med minst två veckor
+function devCard() {
+  const ids = progressData().ex.map(e => e.id).filter(id => weeklySeries(id).filter(x => x.best).length > 1);
+  if (!ids.length) return "";
+  const id = ids.includes(histChart) ? histChart : ids[0], series = weeklySeries(id), pts = series.map((x, i) => ({ i, b: x.best })).filter(x => x.b);
+  const useKg = pts.some(x => +x.b.kg), val = b => useKg ? +b.kg : +b.reps, unit = useKg ? "kg" : repUnit(id);
+  let lo = Math.min(...pts.map(x => val(x.b))), hi = Math.max(...pts.map(x => val(x.b)));
+  if (lo === hi) { lo -= 1; hi += 1; }
+  const X = i => 6 + i * 308 / (series.length - 1), Y = v => 104 - (v - lo) / (hi - lo) * 78;
+  const line = pts.map(p => `${X(p.i).toFixed(1)},${Y(val(p.b)).toFixed(1)}`).join(" "), last = pts[pts.length - 1], best = pts.reduce((a, p) => val(p.b) > val(a.b) ? p : a);
+  return `<section class="card devcard" aria-label="Utveckling"><div class="row between"><h2>Utveckling · ${esc(EX[id].name)}</h2>
+      ${ids.length > 1 ? `<button class="ghost small" data-hchart="${ids[(ids.indexOf(id) + 1) % ids.length]}">Byt</button>` : ""}</div>
+    <button class="devchart" data-chart="${id}" aria-label="Visa grafen för ${esc(EX[id].name)}"><svg viewBox="0 0 320 120" preserveAspectRatio="none" role="img" aria-label="Bästa set i ${esc(EX[id].name)} från ${fmtNum(val(pts[0].b))} till ${fmtNum(val(last.b))} ${unit}">
+      <line x1="0" y1="30" x2="320" y2="30"/><line x1="0" y1="70" x2="320" y2="70"/><line x1="0" y1="110" x2="320" y2="110"/>
+      <polyline points="${line}"/><circle cx="${X(last.i).toFixed(1)}" cy="${Y(val(last.b)).toFixed(1)}" r="5"/></svg></button>
+    <div class="row between small"><span class="muted">${series.length - pts[0].i} veckor sedan · ${fmtNum(val(pts[0].b))} ${unit}</span><span>PB ${fmtNum(val(best.b))} ${unit}</span></div></section>`;
 }
 
 // ---------- Utveckling ----------
@@ -149,7 +173,7 @@ function actSummary() {
   const rows = Object.entries(by).sort((a, b) => b[1].n - a[1].n);
   if (!rows.length) return "";
   return `<section class="card kmeal"><div class="khead"><span class="grow">Aktiviteter</span><span>12 veckor</span></div>
-    ${rows.map(([n, e]) => `<div class="krow"><span class="hricon" aria-hidden="true">${actIcon(n)}</span><span class="grow"><b>${esc(n)}</b>
+    ${rows.map(([n, e]) => `<div class="krow"><span class="hricon">${actIcon(n)}</span><span class="grow"><b>${esc(n)}</b>
       <span class="muted small">${e.n} ${e.n === 1 ? "gång" : "gånger"} · ${fmtNum(e.min / 60)} timmar</span></span></div>`).join("")}</section>`;
 }
 function progressView() {
@@ -174,17 +198,18 @@ function progressView() {
 function historikView() {
   // Medan en dag är öppen gäller bockar och vikt den dagen
   editDate = histDay && histDay !== TODAY ? histDay : null;
-  const seg = `<div class="seg two" role="tablist">${[["kalender", "Kalender"], ["utveckling", "Utveckling"]].map(([k, n]) =>
-    `<button data-hview="${k}" class="${histView === k ? "on" : ""}" role="tab" aria-selected="${histView === k}">${n}</button>`).join("")}</div>`;
+  const seg = `<div class="daypick hseg" role="tablist" style="grid-template-columns:1fr 1fr">${[["kalender", "Kalender"], ["utveckling", "Utveckling"]].map(([k, n]) =>
+    `<button data-hview="${k}" class="${histView === k ? "on" : ""}" role="tab" aria-selected="${histView === k}"><b>${n}</b></button>`).join("")}</div>`;
   return `<h1>Historik</h1>${seg}${histView === "utveckling" ? progressView() : `${calendar()}${weekSection()}`}${histDay ? daySheet() : ""}`;
 }
 
 document.addEventListener("click", ev => {
-  const t = ev.target.closest("[data-histday],[data-hclose],[data-hmonth],[data-hpass],[data-hfood],[data-hview],[data-weekex]");
+  const t = ev.target.closest("[data-histday],[data-hclose],[data-hmonth],[data-hpass],[data-hfood],[data-hview],[data-weekex],[data-hchart]");
   if (!t || t.disabled) return;
   if (t.classList.contains("overlay") && ev.target !== t) return;   // klick inne i fönstret
   const ds = t.dataset;
   if (ds.weekex !== undefined) weekExOpen = !weekExOpen;
+  else if (ds.hchart) histChart = ds.hchart;
   else if (ds.hview) histView = ds.hview;
   else if (ds.histday) histDay = ds.histday;
   else if (ds.hclose !== undefined) { histDay = null; editDate = null; }
