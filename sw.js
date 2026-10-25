@@ -2,9 +2,9 @@
 // Alla filer sparas när en ny version installeras och används sedan därifrån.
 // CACHE innehåller en kontrollsumma av filerna: kör tools/sw-version.py efter ändringar
 // (testerna larmar om den inte stämmer). En ny summa gör att webbläsaren installerar om.
-const CACHE = "driv-3f183b1f";
+const CACHE = "driv-a01468a2";
 const FILES = ["index.html", "app.js", "figur.js", "fokus.js", "kost.js", "historik.js", "social.js", "notiser.js", "aktivitet.js", "vila.js", "skanner.js", "ovningar.js", "livsmedel.js", "mat.js", "config.js", "konto.js",
-  "manifest.webmanifest", "icons/favicon.png", "icons/apple-touch-icon.png", "icons/icon-192.png", "icons/icon-512.png", "icons/icon-maskable-512.png"];
+  "manifest.webmanifest", "icons/favicon-v2.png", "icons/apple-touch-icon-v2.png", "icons/icon-192-v2.png", "icons/icon-512-v2.png", "icons/icon-maskable-512-v2.png"];
 
 self.addEventListener("install", e => {
   // cache: "reload" hoppar över webbläsarens vanliga cache så att alla filer kommer från samma version
@@ -33,7 +33,7 @@ self.addEventListener("push", e => {
   let msg = {};
   try { msg = e.data ? e.data.json() : {}; } catch (err) { msg = { body: e.data && e.data.text() }; }
   e.waitUntil(self.registration.showNotification(msg.title || "Driv", {
-    body: msg.body || "", icon: "icons/icon-192.png", badge: "icons/favicon.png", data: { url: msg.url || "./" },
+    body: msg.body || "", icon: "icons/icon-192-v2.png", badge: "icons/favicon-v2.png", data: { url: msg.url || "./" },
   }));
 });
 self.addEventListener("notificationclick", e => {
