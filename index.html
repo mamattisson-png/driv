@@ -372,15 +372,15 @@
   .mealpick { margin: 4px 0 12px; }
   .kshort { margin: 6px 0 4px; }
   .kshort .klink:first-child { border-top: 0; }
-  .ringwrap { position: relative; width: 96px; height: 96px; flex: none; }
-  .ring { width: 96px; height: 96px; display: block; }
-  .ring-bg, .ring-fg { fill: none; stroke-width: 7; }
+  .ringwrap { position: relative; width: 132px; height: 132px; flex: none; }
+  .ring { width: 132px; height: 132px; display: block; }
+  .ring-bg, .ring-fg { fill: none; stroke-width: 12; }
   .ring-bg { stroke: var(--line); }
   .ring-fg { stroke: var(--accent); stroke-linecap: round; }
   .ring-fg.over { stroke: var(--bad); }
-  .ringnum { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.1; }
-  .ringnum b { font-size: 20px; font-variant-numeric: tabular-nums; }
-  .ringnum .muted { font-size: 11px; }
+  .ringnum { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.2; }
+  .ringnum b { font: 600 22px "Unbounded", sans-serif; font-variant-numeric: tabular-nums; }
+  .ringnum .muted { font-size: 12px; }
   .mcard { padding: 12px; }
   .mhead { margin-bottom: 8px; }
   .mhead h2 { margin: 0; display: flex; align-items: center; gap: 8px; }
@@ -542,6 +542,30 @@
   .plan-day summary { cursor: pointer; padding: 4px 0; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
   .plan-day summary .muted { margin-left: auto; }
   .subex .small { flex: none; }
+  /* ---------- Kost ---------- */
+  .dayring { border-radius: 24px; padding: 20px; }
+  .dayring h2 { margin: 0 0 12px; }
+  .ringrow { display: flex; align-items: center; gap: 20px; }
+  .ringinfo { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 14px; }
+  .ringinfo .bar { height: 6px; margin: 6px 0 0; }
+  .dayring > .link { margin-top: 12px; }
+  @media (max-width: 359px) { .ringrow { gap: 14px; } .ringwrap, .ring { width: 112px; height: 112px; } }
+  .kquick { display: flex; gap: 8px; margin-bottom: 14px; }
+  .kask { flex: 1; min-width: 0; height: 52px; border-radius: 16px; text-align: left; padding: 0 16px; font-size: 15px; color: var(--muted);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .kscan { width: 52px; height: 52px; flex: none; padding: 0; border: 0; border-radius: 16px; background: var(--accent-strong); color: var(--on-accent); display: grid; place-items: center; }
+  .kmeal .khead { background: none; padding: 14px 16px 10px; text-transform: none; letter-spacing: 0; }
+  .kmeal .khead h2 { margin: 0; font-size: 16px; }
+  .kmeal .khead span:last-child { font-size: 13px; color: var(--muted); }
+  .kmeal .krow { padding: 10px 16px; border-top: 1px solid var(--line); }
+  .kmeal .krow b { font-size: 14px; font-weight: 400; }
+  .kmeal .kkcal { font-size: 14px; }
+  .kmore { margin: 0 6px 6px; }
+  .mealempty { display: flex; align-items: center; justify-content: space-between; border: 1.5px dashed var(--line); border-radius: 20px;
+    padding: 4px 6px 4px 16px; margin-bottom: 14px; }
+  .mealempty h2 { margin: 0; color: var(--muted); }
+  .mealempty .ghost { color: var(--text); }
+  .kday { margin: -4px 0 14px; }
   /* ---------- Träna ---------- */
   ol.exlist { list-style: none; margin: 0 0 18px; padding: 0; display: flex; flex-direction: column; gap: 8px; }
   ol.exlist li { margin: 0; }

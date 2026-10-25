@@ -334,12 +334,16 @@ const mealIcon = meal => meal < 0 ? "" : `<svg class="kicon" viewBox="0 0 24 24"
 const foodTitle = f => { const a = amountText(f); return isEst(f) ? itemName(f) : `${esc(f.name)}${a ? (a.startsWith("×") ? ` ${a}` : ` · ${a}`) : ""}`; };
 function mealCard(meal, L) {
   const items = L.food.map((f, i) => ({ f, i })).filter(x => (x.f.meal ?? -1) === meal);
-  if (!items.length) return "";
-  const name = meal < 0 ? "Övrigt" : MEALS[meal][0], sum = sumKcal(items.map(x => x.f));
-  return `<section class="card kmeal">
-    <div class="khead">${mealIcon(meal)}<span class="grow">${name}</span><span>${tnum(sum)} kcal</span></div>
+  const name = meal < 0 ? "Övrigt" : MEALS[meal][0];
+  // En tom måltid är en streckad rad att lägga till i
+  if (!items.length) return meal < 0 ? "" : `<section class="mealempty" aria-label="${name}"><h2>${name}</h2>
+    <button class="ghost" data-addto="${meal}" data-focusname>+ Lägg till</button></section>`;
+  const sum = sumKcal(items.map(x => x.f)), prot = items.reduce((a, x) => a + (+x.f.protein || 0), 0);
+  return `<section class="card kmeal" aria-label="${name}">
+    <div class="khead"><h2 class="grow">${name}</h2><span>${tnum(sum)} kcal · ${fmtNum(Math.round(prot))} g</span></div>
     ${items.map(({ f, i }) => `<button class="krow ${isEst(f) ? "est" : ""}" data-fooditem="${i}">
-      <span class="grow"><b>${foodTitle(f)}</b><span class="muted small">${isEst(f) ? "ungefärligt" : `${fmtNum(+f.protein || 0)} g protein`}</span></span><span class="kkcal">${tnum(f.kcal)} kcal</span></button>`).join("")}
+      <span class="grow"><b>${foodTitle(f)}</b>${isEst(f) ? `<span class="muted small">ungefärligt</span>` : ""}</span><span class="kkcal">${tnum(f.kcal)}</span></button>`).join("")}
+    ${meal >= 0 ? `<button class="ghost small kmore" data-addto="${meal}" data-focusname>+ Lägg till</button>` : ""}
   </section>`;
 }
 
@@ -361,10 +365,18 @@ const kstat = (label, v, goal, unit, cls) => `<div class="kstat"><div class="kla
     <div class="bar ${cls}"><div style="width:${goal ? Math.min(100, Math.round(v / goal * 100)) : 0}%"></div></div></div>`;
 const kstats = (e, m) => `<div class="kstats">${kstat("Kalorier", e.kcal, m.kcal, "kcal", e.kcal > m.kcal * 1.05 ? "over" : "")}${kstat("Protein", e.protein, m.protein, "g", e.protein >= m.protein ? "ok" : "prot")}</div>`;
 function dayRing(e, m) {
-  return `<div class="card dayring"><h2>${editDate ? dateLabel(editDate).replace(/^./, c => c.toUpperCase()) : "Dagens intag"}</h2>
-    ${kstats(e, m)}
-    <div class="muted small kleft">${e.kcal <= m.kcal ? `${tnum(m.kcal - e.kcal)} kcal kvar` : `${tnum(e.kcal - m.kcal)} kcal över målet`}</div>
-    ${S.profileSet === false ? `<button class="link small" data-tab="profil" data-popen="kalori">Målet bygger på standardvärden – ställ in ditt</button>` : ""}</div>`;
+  const left = m.kcal - e.kcal, r = 56, c = 2 * Math.PI * r, pct = m.kcal ? Math.min(1, e.kcal / m.kcal) : 0;
+  return `<section class="card dayring" aria-label="${editDate ? dateLabel(editDate) : "Dagens intag"}">
+    ${editDate ? `<h2>${dateLabel(editDate).replace(/^./, c => c.toUpperCase())}</h2>` : ""}
+    <div class="ringrow"><div class="ringwrap"><svg class="ring" viewBox="0 0 132 132" role="img" aria-label="${tnum(e.kcal)} av ${tnum(m.kcal)} kcal">
+        <circle class="ring-bg" cx="66" cy="66" r="${r}"/><circle class="ring-fg ${left < -m.kcal * 0.05 ? "over" : ""}" cx="66" cy="66" r="${r}"
+          stroke-dasharray="${(pct * c).toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 66 66)"/></svg>
+        <div class="ringnum"><b>${tnum(Math.abs(left))}</b><span class="muted">${left >= 0 ? "kcal kvar" : "kcal över"}</span></div></div>
+      <div class="ringinfo">
+        <div class="row between small"><span class="muted">Ätit</span><span>${tnum(e.kcal)} / ${tnum(m.kcal)}</span></div>
+        <div><div class="row between small"><span class="muted">Protein</span><span>${tnum(e.protein)} / ${tnum(m.protein)} g</span></div>${bar(e.protein, m.protein, true, "prot")}</div>
+      </div></div>
+    ${S.profileSet === false ? `<button class="link small" data-tab="profil" data-popen="kalori">Målet bygger på standardvärden – ställ in ditt</button>` : ""}</section>`;
 }
 
 function addSheet(m) {
@@ -384,7 +396,7 @@ function addSheet(m) {
     <div class="row"><div class="fwrap grow"><input id="fname" placeholder="Sök eller skriv, t.ex. 2 ägg och 1 banan" autocomplete="off"
       role="combobox" aria-autocomplete="list" aria-controls="fsugg">
       <div id="fsugg" class="sugg" role="listbox" hidden></div></div>
-      ${CAN_SCAN ? `<button data-scan aria-label="Skanna streckkod">📷</button>` : ""}</div>
+      ${CAN_SCAN ? `<button class="iconbtn" data-scan aria-label="Skanna streckkod">${icon("barcode", 22)}</button>` : ""}</div>
     <div id="fpreview" class="muted fpreview"></div>
     <div class="manual" ${manualKcal ? "" : "hidden"}><div class="row">
       <label class="field grow">kcal<input id="fkcal" type="number" inputmode="numeric"></label>
@@ -430,11 +442,10 @@ function kostView() {
   m.kcal += burnedOn(logDate());
   return `<h1>Kost</h1>
     ${dayRing(e, m)}
-    <h2 class="ksection">Måltider</h2>
-    ${L.food.length ? "" : `<div class="card kempty"><div class="muted">Inget loggat ${editDate ? "den här dagen" : "idag"} än.</div>
-      ${yesterdayFood() ? `<button class="klink kday" data-repeatday>↻ Samma mat som igår<span class="muted"> · hela dagen, ${tnum(sumKcal(yesterdayFood()))} kcal</span></button>` : ""}</div>`}
+    <div class="kquick"><button class="kask" data-addto="${mealByClock()}" data-focusname>Vad åt du? <span>t.ex. 2 dl mjölk och 1 banan</span></button>
+      ${CAN_SCAN ? `<button class="kscan" data-scan aria-label="Skanna streckkod">${icon("barcode", 22)}</button>` : ""}</div>
+    ${!L.food.length && yesterdayFood() ? `<button class="klink kday" data-repeatday>Samma mat som igår<span class="muted"> · hela dagen, ${tnum(sumKcal(yesterdayFood()))} kcal</span></button>` : ""}
     ${MEALS.map((_, i) => mealCard(i, L)).join("")}${mealCard(-1, L)}
-    <button class="primary wide kaddbtn" data-addto="${mealByClock()}">+ Lägg till mat</button>
     <div class="muted small credit">Näringsvärden: Livsmedelsverkets livsmedelsdatabas (CC BY 4.0) och egna uppskattningar.</div>
     ${recipeEdit ? recipeSheet() : recipeList ? recipesSheet() : foodSheet ? addSheet(m) : foodItem != null ? itemSheet() : ""}`;
 }
@@ -494,4 +505,5 @@ document.addEventListener("click", ev => {
   }
   save();
   render();
+  if (ds.focusname !== undefined && $("fname")) $("fname").focus();
 });

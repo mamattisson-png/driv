@@ -646,7 +646,7 @@ def test_kost_maltider_forslag_mangd_och_upprepa(page):
     page.set_viewport_size({"width": 390, "height": 844})
     page.click('.sheet-foot [data-fsclose]')
     assert page.locator(".sheet").count() == 0
-    assert "Ägg · 3 st\n21 g protein\n231 kcal" in page.inner_text("#app")
+    assert "Ägg · 3 st\n231" in page.inner_text("#app")
     # Tryck på en loggad sak: favorit med sin mängd, ta bort
     i = page.evaluate("day().food.findIndex(f => f.meal === 1 && f.name === 'Ägg')")
     page.click(f'[data-fooditem="{i}"]')
@@ -726,7 +726,7 @@ def test_gammal_mat_far_mangd_och_protein_ar_gront_over_malet(page):
     assert L[2]["name"] == "ägg" and L[2]["kcal"] == 100 and L[2].get("plain") is True   # egna kcal skrivs aldrig över
     assert page.evaluate("S.favs.map(f => f.name)") == ["ägg"]
     go(page, "kost")
-    assert page.evaluate("document.querySelectorAll('.dayring .bar')[1].classList.contains('ok')") is True
+    assert page.evaluate("document.querySelector('.dayring .bar.prot').classList.contains('ok')") is True
 
 
 def test_mangd_styr_kalorierna(page):
@@ -777,7 +777,7 @@ def test_streckkod_fran_open_food_facts(page):
     start(page, "window.BarcodeDetector = class { async detect() { return window.__code ? [{ rawValue: window.__code }] : []; } };")
     go(page, "kost")
     add_to(page, 0)
-    page.click("[data-scan]")
+    page.click(".sheet [data-scan]")
     page.wait_for_function("scanner.stream !== null")
     page.evaluate("window.__code = '7310000000001'")
     page.wait_for_selector(".scan-product")
@@ -785,7 +785,7 @@ def test_streckkod_fran_open_food_facts(page):
     assert "92 kcal" in page.inner_text("#scancalc")
     page.click("[data-scanlog]")
     assert page.evaluate("day().food[0].kcal") == 92
-    page.click("[data-scan]")
+    page.click(".sheet [data-scan]")
     page.fill("#scancode", "0000000000017")
     page.click("[data-scanlookup]")
     page.wait_for_function("document.querySelector('#scanstatus').textContent.includes('finns inte')")
