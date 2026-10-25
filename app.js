@@ -762,7 +762,6 @@ function weightChart() {
 // ---------- Rendering ----------
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 // Fyra flikar; Profil nås via kugghjulet uppe till höger
-let HOME_LOGO = true;   // förslag: loggan överst på Hem
 const TABS = [["idag", "🏠", "Hem"], ["pass", "🏋️", "Träna"], ["kost", "🍽️", "Kost"], ["historik", "📅", "Historik"]];
 let tab = S.setupDone ? "idag" : "upplagg";
 let chosenDay = null;
@@ -945,7 +944,7 @@ const VIEWS = {
         <button class="wide" style="margin-top:12px" data-focusstart="${nx.day.id}">Kör ett pass ändå</button></div></section>`;
     }
     // Hem har dagens datum som rubrik
-    return `${HOME_LOGO ? `<div class="homebrand"><img src="icons/icon-192-v2.png" alt=""><span class="wordmark">DRIV</span></div>` : ""}
+    return `<div class="homebrand"><img src="icons/icon-192-v2.png" alt=""><span class="wordmark">DRIV</span></div>
       <h1>${new Date().toLocaleDateString("sv-SE", { weekday: "long", day: "numeric", month: "long" }).replace(/^./, c => c.toUpperCase())}</h1>
       ${(() => {
         const lw = letterWeekToShow();
