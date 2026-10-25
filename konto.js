@@ -105,7 +105,7 @@ async function signOut() {
 const feedback = { msg: "", busy: false, sent: false };
 function feedbackCard() {
   if (!sbEnabled) return "";
-  if (feedback.sent) return `<div class="card"><h2>Tyck till</h2><div>Tack! Din synpunkt är skickad. 🙌</div>
+  if (feedback.sent) return `<div class="card"><h2>Tyck till</h2><div>Tack! Din synpunkt är skickad.</div>
     <button class="small" style="margin-top:10px" data-fbagain>Skicka en till</button></div>`;
   return `<div class="card"><h2>Tyck till</h2>
     <div class="muted" style="margin-bottom:8px">Vad är krångligt, vad saknas, vad gillar du? Allt hjälper Driv att bli bättre.</div>
@@ -198,7 +198,7 @@ function accountBody(mode) {
         : "Spara dina loggar i molnet, på alla dina enheter. Bara e-post och en kod – inget lösenord."}</div>
       <div class="row" style="margin-top:8px"><input id="acctemail" type="email" autocomplete="email" placeholder="din@epost.se" value="${esc(a.email)}">
         <button class="primary small" data-sendcode ${a.busy ? "disabled" : ""}>Skicka kod</button></div>
-      <div class="muted small" style="margin-top:6px">🔒 Din e-post används bara för att logga in – aldrig för reklam eller utskick.</div>`;
+      <div class="muted small" style="margin-top:6px">Din e-post används bara för att logga in – aldrig för reklam eller utskick.</div>`;
   }
   return `${body}${a.msg ? `<div class="muted small" style="margin-top:8px">${esc(a.msg)}</div>` : ""}`;
 }

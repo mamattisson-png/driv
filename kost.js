@@ -218,7 +218,7 @@ function perPortion(r) {
 function recipesSheet() {
   const list = recipes();
   return `<div class="overlay" data-rclose><div class="sheet">
-    <div class="row between"><h2>Dina recept</h2><button class="small ghost" data-rclose aria-label="Stäng">✕</button></div>
+    <div class="row between"><h2>Dina recept</h2><button class="small ghost" data-rclose aria-label="Stäng">${icon("close", 18)}</button></div>
     <div class="muted small" style="margin-bottom:8px">Bygg en rätt av ingredienser en gång, logga sedan en portion med ett tryck.</div>
     ${list.length ? list.map((r, i) => { const p = perPortion(r);
       return `<div class="krow"><span class="grow"><b>${esc(r.name)}</b><span class="muted small">${r.portions} portioner · ${p.kcal} kcal och ${fmtNum(p.protein)} g protein per portion</span></span>
@@ -230,7 +230,7 @@ function recipesSheet() {
 function recipeSheet() {
   const r = recipeEdit, t = recipeTotal(r), p = perPortion(r);
   return `<div class="overlay" data-rcancel><div class="sheet">
-    <div class="row between"><h2>${r.idx == null ? "Nytt recept" : "Ändra recept"}</h2><button class="small ghost" data-rcancel aria-label="Stäng">✕</button></div>
+    <div class="row between"><h2>${r.idx == null ? "Nytt recept" : "Ändra recept"}</h2><button class="small ghost" data-rcancel aria-label="Stäng">${icon("close", 18)}</button></div>
     <label class="field">Namn<input id="rname" value="${esc(r.name)}" placeholder="t.ex. Lasagne" autocomplete="off"></label>
     <div class="row qtyrow" style="margin-top:10px"><span class="grow">Portioner</span>
       <button class="step" data-rport="-1" ${r.portions <= 1 ? "disabled" : ""} aria-label="Färre portioner">−</button><b class="qcount">${r.portions}</b>
@@ -239,7 +239,7 @@ function recipeSheet() {
     <div class="row"><input id="ring" class="grow" placeholder="t.ex. 500 g nötfärs, 2 dl grädde" autocomplete="off"><button data-ringadd>Lägg till</button></div>
     ${r.msg ? `<div class="muted small warntext" style="margin-top:6px">${esc(r.msg)}</div>` : ""}
     ${r.items.map((i, k) => `<div class="krow"><span class="grow"><b>${esc(cap(i.text))}</b><span class="muted small">räknat som ${esc(i.name.toLowerCase())} · ${fmtNum(+i.protein || 0)} g protein</span></span>
-      <span class="kkcal">${tnum(i.kcal)} kcal</span><button class="small ghost" data-rdel="${k}" aria-label="Ta bort ${esc(i.name)}">✕</button></div>`).join("")}
+      <span class="kkcal">${tnum(i.kcal)} kcal</span><button class="small ghost" data-rdel="${k}" aria-label="Ta bort ${esc(i.name)}">${icon("close", 18)}</button></div>`).join("")}
     ${r.items.length ? `<div class="rtotal"><div class="row between"><span>Hela receptet</span><b>${tnum(t.kcal)} kcal</b></div>
       <div class="row between"><span>En portion (av ${r.portions})</span><b>${tnum(p.kcal)} kcal · ${fmtNum(p.protein)} g protein</b></div></div>` : ""}
     <div class="sheet-foot row between">${r.idx != null ? `<button class="ghost" data-rremove>Ta bort</button>` : `<span></span>`}
@@ -385,13 +385,13 @@ function addSheet(m) {
   const double = items.length > 1;
   const last = items.length ? null : lastSlot(meal), saved = items.length ? [] : savedFor(meal).slice(0, 3);   // en uppskattning bredvid riktig mat kan räknas dubbelt
   const now = items.map(({ f, i }) => `<div class="nrow krow ${isEst(f) ? "est" : ""}"><span class="grow"><b>${itemName(f)}</b><span class="muted small">${f.kcal} kcal${isEst(f) && double ? ` · <span class="warntext">kan räknas dubbelt</span>` : ""}</span></span>
-    ${isEst(f) ? `<button class="small qminus" data-mdel="${i}" aria-label="Ta bort uppskattningen">✕</button>`
+    ${isEst(f) ? `<button class="small qminus" data-mdel="${i}" aria-label="Ta bort uppskattningen">${icon("close", 18)}</button>`
       : `<button class="small qminus" data-mstep="-1" data-mi="${i}" aria-label="Mindre ${esc(f.name)}">−</button><b class="qcount">${amountText(f) || "1"}</b>
          <button class="small qminus" data-mstep="1" data-mi="${i}" aria-label="Mer ${esc(f.name)}">+</button>`}</div>`).join("");
-  const quick = shown.map((f, i) => `<button class="qadd" data-quick="${i}" aria-label="Lägg till ${esc(f.name)}">
-      <span class="qplus" aria-hidden="true">${f.kind === "fav" ? "★" : f.kind === "meal" ? "🍽" : f.kind === "recipe" ? "🍲" : "+"}</span><b>${esc(f.name)}</b><span class="muted">${f.kcal} kcal${f.kind === "recipe" ? "/portion" : ""}</span></button>`).join("");
+  const quick = shown.map((f, i) => `<button class="qadd ${f.kind === "meal" ? "meal" : f.kind === "recipe" ? "recipe" : ""}" data-quick="${i}" aria-label="Lägg till ${esc(f.name)}">
+      <span class="qplus" aria-hidden="true">${f.kind === "fav" ? "★" : "+"}</span><b>${esc(f.name)}</b><span class="muted">${f.kcal} kcal${f.kind === "recipe" ? "/portion" : ""}</span></button>`).join("");
   return `<div class="overlay" data-fsclose><div class="sheet">
-    <div class="row between"><h2>Lägg till mat</h2><button class="small ghost" data-fsclose aria-label="Stäng">✕</button></div>
+    <div class="row between"><h2>Lägg till mat</h2><button class="small ghost" data-fsclose aria-label="Stäng">${icon("close", 18)}</button></div>
     <div class="chips mealpick" role="tablist">${MEALS.map(([n], i) => `<button data-sheetmeal="${i}" class="${i === meal ? "on" : ""}" role="tab" aria-selected="${i === meal}">${n}</button>`).join("")}</div>
     <div class="row"><div class="fwrap grow"><input id="fname" placeholder="Sök eller skriv, t.ex. 2 ägg och 1 banan" autocomplete="off"
       role="combobox" aria-autocomplete="list" aria-controls="fsugg">
@@ -404,11 +404,11 @@ function addSheet(m) {
     <div class="addrow" ${manualKcal ? "" : "hidden"}><button class="primary wide" data-addfood>Lägg till</button>
       <button class="link small" data-manualkcal style="margin-top:6px">${manualKcal ? "Dölj egna kcal" : "Ange kcal själv"}</button></div>
     ${!items.length && (last || saved.length) ? `<div class="kshort">
-      ${saved.map(({ m: sm, idx }) => `<button class="klink" data-usemeal="${idx}" data-meal="${meal}">🍽 ${esc(sm.name)}<span class="muted"> · ${sm.kcal} kcal</span></button>`).join("")}
+      ${saved.map(({ m: sm, idx }) => `<button class="klink" data-usemeal="${idx}" data-meal="${meal}">${esc(sm.name)}<span class="muted"> · ${sm.kcal} kcal</span></button>`).join("")}
       ${last ? `<button class="klink" data-repeat="${meal}">↻ Samma som ${whenText(last.date)}<span class="muted"> · ${esc(last.items.map(f => isEst(f) ? "uppskattning" : f.name).join(", "))}</span></button>` : ""}</div>` : ""}
     ${items.length ? `<div class="row between sheet-sub"><span>I ${mealName}en nu</span>
       ${items.filter(x => !isEst(x.f)).length > 1 ? `<button class="link small" data-savegroup="${meal}">Spara som måltid</button>` : ""}</div>${now}` : ""}
-    <div class="row between sheet-sub"><span>${q.length ? "Förslag" : ""}</span><button class="link small" data-rlist>🍲 Dina recept${recipes().length ? ` (${recipes().length})` : ""}</button></div>
+    <div class="row between sheet-sub"><span>${q.length ? "Förslag" : ""}</span><button class="link small" data-rlist>Dina recept${recipes().length ? ` (${recipes().length})` : ""}</button></div>
     ${q.length ? `<div class="qgrid">${quick}</div>
       ${q.length > 8 ? `<button class="small ghost" data-quickmore>${quickMore ? "Visa färre" : `Visa fler (${q.length - 8})`}</button>` : ""}` : ""}
     ${!items.length ? `<h3 class="sheet-sub">Bara ungefär</h3><div class="row qkcal">
@@ -424,7 +424,7 @@ function itemSheet() {
   if (!f) { foodItem = null; return ""; }
   const q = f.qty || 1, u = perUnit(f);
   return `<div class="overlay" data-itemclose><div class="sheet">
-    <div class="row between"><h2>${itemName(f)}</h2><button class="small ghost" data-itemclose aria-label="Stäng">✕</button></div>
+    <div class="row between"><h2>${itemName(f)}</h2><button class="small ghost" data-itemclose aria-label="Stäng">${icon("close", 18)}</button></div>
     ${f.amt ? `<div class="row qtyrow"><span class="grow">Mängd</span>${amtInputs(f.amt, "data-iamt")}</div>`
       : `<div class="row qtyrow"><span class="grow">Antal</span>
       <button class="step" data-qty="-1" ${q <= 0.5 ? "disabled" : ""} aria-label="Färre">−</button><b class="qcount">${fmtNum(q)}</b>

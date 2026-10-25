@@ -514,7 +514,7 @@ function reminderCard() {
   return `<div class="card"><h2>Påminnelse</h2>
     <div class="row"><label class="field grow">Påminn mig varje dag kl.
       <input type="time" id="remtime" value="${esc(r.time)}"></label>
-      <button class="small" data-remcal style="align-self:flex-end">📅 Lägg till i kalendern</button></div>
+      <button class="small" data-remcal style="align-self:flex-end">Lägg till i kalendern</button></div>
     <div class="muted small" style="margin-top:6px">Kalendern påminner dig även när appen är stängd.</div>
     ${canNotify ? (perm === "granted"
       ? `<label class="row" style="margin-top:10px"><input type="checkbox" data-remnotify ${r.notify ? "checked" : ""}>
@@ -788,7 +788,7 @@ function render() {
   nav.innerHTML = TABS.map(([id, ic, lbl]) =>
     `<button data-tab="${id}" class="${tab === id ? "on" : ""}" ${tab === id ? 'aria-current="page"' : ""}>${icon(ic, 22)}${lbl}</button>`).join("");
   const banner = editDate && (tab === "kost" || (tab === "pass" && focus && !editing))
-    ? `<div class="editbar">📅 Du ändrar <b>${dateLabel(editDate)}</b><button class="small" data-editdone>Klar</button></div>` : "";
+    ? `<div class="editbar">Du ändrar <b>${dateLabel(editDate)}</b><button class="small" data-editdone>Klar</button></div>` : "";
   // Kugghjulet behövs inte i upplägget eller i fokusläget, där det skulle ligga över texten
   // Första starten: Logga in i hörnet för den som redan har ett konto
   const corner = tab === "upplagg" && !S.setupDone && sbEnabled && account.step !== "in" && !welcomeLogin
@@ -870,7 +870,7 @@ const VIEWS = {
         ${cloud.status === "cloud" ? "Kontot har inget sparat upplägg än. Välj ett nedan och tryck Kom igång, så sparas det på kontot." : cloud.status === "error" ? "Kunde inte hämta från kontot. Ladda om sidan." : "Hämtar från kontot…"}</div>`
       : !S.setupDone && sbEnabled ? (welcomeLogin
         ? `<div class="card"><div class="row between"><h2>${welcomeLogin === "login" ? "Logga in" : "Skapa konto"}</h2>
-              <button class="small ghost" data-welcomelogin="" aria-label="Stäng">✕</button></div>${accountBody(welcomeLogin)}</div>`
+              <button class="small ghost" data-welcomelogin="" aria-label="Stäng">${icon("close", 18)}</button></div>${accountBody(welcomeLogin)}</div>`
         : "") : ""}
       <div class="card"><div class="row between"><h2>1. Vilket upplägg?</h2>
           <button class="small" data-progtoggle aria-expanded="${progOpen}">${progOpen ? "Fäll ihop" : `Visa alla ${Object.keys(PROGRAMS).length}`}</button></div>
@@ -977,7 +977,7 @@ const VIEWS = {
     const done = d.ex.filter(x => exDone(w, x)).length, logged = w && Object.values(w.sets).some(a => a.some(hasData));
     const Day = editDate ? dateLabel(editDate).replace(/^./, c => c.toUpperCase()) : "";
     return `${editDate ? `<button class="small ghost backlink" data-editdone>‹ Tillbaka till Historik</button>
-        <h1>Logga i efterhand</h1><div class="pastsub">📅 ${Day} · vecka ${weekNo(editDate)}</div>
+        <h1>Logga i efterhand</h1><div class="pastsub">${Day} · vecka ${weekNo(editDate)}</div>
         <div class="muted small pastnote">Ett pass du redan har gjort. Inget startas, fyll bara i vad du lyfte.</div>`
       : `<h1>Träna</h1>`}
       ${dayPicker(d && d.id)}
@@ -1204,9 +1204,9 @@ function exRows(target, list, withOrder) {
       ${withOrder ? `<div class="col"><button class="small ghost" data-mv="-1" data-t="${target}" data-idx="${i}" ${i ? "" : "disabled"} aria-label="Flytta upp">↑</button>
         <button class="small ghost" data-mv="1" data-t="${target}" data-idx="${i}" ${i < list.length - 1 ? "" : "disabled"} aria-label="Flytta ned">↓</button></div>` : ""}
       <button class="small" data-swap="${target}" data-idx="${i}">Byt</button>
-      <button class="small ghost" data-xdel="${target}" data-idx="${i}" aria-label="Ta bort">✕</button></div>
+      <button class="small ghost" data-xdel="${target}" data-idx="${i}" aria-label="Ta bort">${icon("close", 18)}</button></div>
       ${withOrder && target !== "daily" && i < list.length - 1 ? `<button class="sslink ${e.ss ? "on" : ""}" data-ss="${target}" data-idx="${i}" aria-pressed="${!!e.ss}">${e.ss
-        ? `🔗 Superset med ${esc(EX[list[i + 1].id].name)} <span class="muted">· tryck för att dela</span>` : "＋ Superset med nästa"}</button>` : ""}`).join("") +
+        ? `Superset med ${esc(EX[list[i + 1].id].name)} <span class="muted">· tryck för att dela</span>` : "＋ Superset med nästa"}</button>` : ""}`).join("") +
     `<button class="small" style="margin-top:8px" data-openpick="${target}">+ Lägg till ${target === "daily" ? "daily" : "övning"}</button>`;
 }
 
@@ -1276,7 +1276,7 @@ function weekLetter(ws) {
   const plus = weekPlus(ws), recs = weekRecords(ws), tried = plus.plus + plus.same + plus.minus;
   const wNow = weekAvgWeight(ws), wPrev = weekAvgWeight(prevWs);
   const goalPasses = S.plan.count;
-  const headline = cur.passes >= goalPasses ? "Alla pass klara – starkt jobbat! 💪"
+  const headline = cur.passes >= goalPasses ? "Alla pass klara – starkt jobbat!"
     : cur.passes ? `${cur.passes} av ${goalPasses} pass. Varje pass räknas.` : "Ingen träning loggad den här veckan. Ny chans nu!";
   // Fyra siffror i rutnät, sedan personbästa som en lista
   const stat = (label, value, extra = "") => `<div class="lstat"><div class="klabel">${label}</div><div class="lbig">${value}</div>${extra}</div>`;
@@ -1291,11 +1291,11 @@ function weekLetter(ws) {
     <div class="muted small">Vecka ${weekNo(ws)} · ${+ws.slice(8)}/${+ws.slice(5, 7)} – ${+shift(ws, 6).slice(8)}/${+shift(ws, 6).slice(5, 7)}</div>
     <h3>${headline}</h3>
     <div class="lstats">${stats}</div>
-    ${tried ? `<div class="lline">📈 <b>${plus.plus} av ${tried}</b> övningar gick framåt mot förra veckan</div>` : ""}
-    ${recs.length ? `<h4 class="sheet-sub">🏆 Nya personbästa</h4>
+    ${tried ? `<div class="lline"><b>${plus.plus} av ${tried}</b> övningar gick framåt mot förra veckan</div>` : ""}
+    ${recs.length ? `<h4 class="sheet-sub">Nya personbästa</h4>
       ${recs.slice(0, 5).map(r => `<div class="lpb"><span class="grow">${esc(EX[r.id].name)}</span><b>${fmtSet(r.best, r.id)}</b></div>`).join("")}
       ${recs.length > 5 ? `<div class="muted small">och ${recs.length - 5} till</div>` : ""}` : ""}
-    ${plusStreak() > 1 ? `<div class="letter-foot">🔥 ${plusStreak()} plusveckor i rad. Håll i!</div>` : ""}
+    ${plusStreak() > 1 ? `<div class="letter-foot">${plusStreak()} plusveckor i rad. Håll i!</div>` : ""}
   </div>`;
 }
 // På söndagar visas den här veckan, på måndagar förra veckan, tills man stänger brevet
@@ -1308,16 +1308,16 @@ function letterWeekToShow() {
 
 function renderModal() {
   if (modal.letter) {
-    return `<div class="overlay" data-close><div class="sheet"><div class="row between"><h2>Din vecka</h2><button class="small ghost" data-close>✕</button></div>
+    return `<div class="overlay" data-close><div class="sheet"><div class="row between"><h2>Din vecka</h2><button class="small ghost" data-close>${icon("close", 18)}</button></div>
       ${weekLetter(modal.letter)}</div></div>`;
   }
   if (modal.chart) {
-    return `<div class="overlay" data-close><div class="sheet"><div class="row between"><h2>${esc(EX[modal.chart].name)}</h2><button class="small ghost" data-close>✕</button></div>
+    return `<div class="overlay" data-close><div class="sheet"><div class="row between"><h2>${esc(EX[modal.chart].name)}</h2><button class="small ghost" data-close>${icon("close", 18)}</button></div>
       <div class="muted">Bästa set per vecka, senaste 12 veckorna</div>${chartModal(modal.chart)}</div></div>`;
   }
   if (modal.info) {
     const e = EX[modal.info];
-    return `<div class="overlay" data-close><div class="sheet"><div class="row between"><h2>${esc(e.name)}</h2><button class="small ghost" data-close>✕</button></div>
+    return `<div class="overlay" data-close><div class="sheet"><div class="row between"><h2>${esc(e.name)}</h2><button class="small ghost" data-close>${icon("close", 18)}</button></div>
       ${figure(modal.info, "big", true)}<div class="muted">${esc(e.muscles)}</div>
       ${gearOf(modal.info) ? `<div class="gearbox"><b>${GEAR[gearOf(modal.info)][0]}</b><div>${GEAR[gearOf(modal.info)][1]}</div></div>` : ""}
       <ol>${e.cues.map(c => `<li>${esc(c)}</li>`).join("")}</ol></div></div>`;
@@ -1333,7 +1333,7 @@ function renderModal() {
   const chips = [...Object.keys(CATS), "bw", ...(forDaily ? ["cardio"] : []), "all"];
   const chipName = c => CATS[c] || { bw: "Kroppsvikt", cardio: "Kondition", all: "Alla" }[c];
   return `<div class="overlay" data-close><div class="sheet"><div class="row between">
-      <h2>${replacing ? `Byt ut ${esc(EX[replacing.id].name)}` : "Välj övning"}</h2><button class="small ghost" data-close>✕</button></div>
+      <h2>${replacing ? `Byt ut ${esc(EX[replacing.id].name)}` : "Välj övning"}</h2><button class="small ghost" data-close>${icon("close", 18)}</button></div>
     <input id="exsearch" type="search" placeholder="Sök övning eller muskel, t.ex. bröst" value="${esc(modal.q || "")}" autocomplete="off" style="margin-bottom:10px">
     <div class="chips" style="margin-bottom:10px">${chips.map(c => `<button data-cat="${c}" class="${c === cat ? "on" : ""}">${chipName(c)}</button>`).join("")}</div>
     <div class="pickgrid">${ids.map(id => `<div class="pick ${have.includes(id) ? "have" : ""}" data-cat="${EX[id].cat}" data-bw="${EX[id].bw ? 1 : ""}" data-q="${esc(norm(EX[id].name + " " + EX[id].muscles + " " + (CATS[EX[id].cat] || "") + " " + (gearOf(id) ? GEAR[gearOf(id)][0] : "")))}">
@@ -1421,8 +1421,8 @@ function checkRecord(exId, s) {
   if (!hasData(s) || toasted.has(exId)) return;
   const ws = weekStart(logDate()), prevWeek = exWeek(exId, shift(ws, -7)), ever = bestBefore(exId, ws);
   const set = fmtSet({ kg: +s.kg || 0, reps: +s.reps || 0 }, exId);
-  if (ever && betterSet(s, ever)) toast(`🏆 Nytt PB i ${EX[exId].name}: ${set}`);
-  else if (prevWeek && betterSet(s, prevWeek)) toast(`📈 Bättre än förra veckan i ${EX[exId].name}: ${set}`);
+  if (ever && betterSet(s, ever)) toast(`Nytt PB i ${EX[exId].name}: ${set}`);
+  else if (prevWeek && betterSet(s, prevWeek)) toast(`Bättre än förra veckan i ${EX[exId].name}: ${set}`);
   else return;
   toasted.add(exId);
 }

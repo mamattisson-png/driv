@@ -55,11 +55,11 @@ function friendsHome() {
   if (S.friendsUntil && S.friendsUntil > TODAY && !(social.friends && social.friends.length)) return "";
   // Utan konto: en kort uppmaning längst ned
   if (account.step !== "in") return `<div class="card homerow friendsrow"><span class="grow"><b>Träna med vänner</b><span class="muted small">Se varandras pass och peppa varandra</span></span>
-    <button class="small" data-gokonto>Kom igång</button><button class="small ghost" data-friendslater aria-label="Inte nu">✕</button></div>`;
+    <button class="small" data-gokonto>Kom igång</button><button class="small ghost" data-friendslater aria-label="Inte nu">${icon("close", 18)}</button></div>`;
   if (!social.loaded || social.error) return "";
-  const invite = social.profile ? `<button data-sharecode>📤 Bjud in en vän</button>` : `<button data-gofriends>📤 Bjud in en vän</button>`;
+  const invite = social.profile ? `<button data-sharecode>Bjud in en vän</button>` : `<button data-gofriends>Bjud in en vän</button>`;
   if (!social.friends.length) return `<div class="card homerow friendsrow"><span class="grow"><b>Träna med vänner</b><span class="muted small">Se varandras pass och peppa varandra</span></span>
-    ${invite.replace("📤 Bjud in en vän", "Bjud in")}<button class="small ghost" data-friendslater aria-label="Inte nu">✕</button></div>`;
+    ${invite.replace("Bjud in en vän", "Bjud in")}<button class="small ghost" data-friendslater aria-label="Inte nu">${icon("close", 18)}</button></div>`;
   // Senaste passet från en vän; resten finns under Vänner
   const f = social.feed.find(a => !a.mine);
   return `<div class="card homerow friendsrow">${f ? `<span class="grow"><b>${esc(f.name)} körde ${esc(f.pass)}</b><span class="muted small">${feedWhen(f.day)} · <button class="link small" data-gofriends>alla vänner</button></span></span>
@@ -71,8 +71,8 @@ function friendsHome() {
 function friendsAfterPass() {
   if (!sbEnabled) return "";
   if (account.step === "in" && social.profile && social.profile.sharing && social.friends.length)
-    return `<div class="muted small" style="margin-top:6px">👋 ${social.friends.length === 1 ? esc(social.friends[0].name) + " ser" : "Dina vänner ser"} passet och kan peppa dig.</div>`;
-  return `<button class="link small" style="margin-top:6px" data-${account.step === "in" ? (social.profile ? "sharecode" : "gofriends") : "gokonto"}>👋 Bjud in en vän att träna med</button>`;
+    return `<div class="muted small" style="margin-top:6px">${social.friends.length === 1 ? esc(social.friends[0].name) + " ser" : "Dina vänner ser"} passet och kan peppa dig.</div>`;
+  return `<button class="link small" style="margin-top:6px" data-${account.step === "in" ? (social.profile ? "sharecode" : "gofriends") : "gokonto"}>Bjud in en vän att träna med</button>`;
 }
 
 // Under Profil
@@ -84,7 +84,7 @@ function friendsCard() {
   if (!social.loaded) return `${head}<div class="muted">Hämtar…</div></div>`;
   if (social.error) return `${head}<div class="muted">Vänner går inte att nå just nu. Försök igen om en stund.</div></div>`;
   const msg = social.msg ? `<div class="muted small" style="margin-top:8px">${esc(social.msg)}</div>` : "";
-  const privacy = `<div class="muted small" style="margin-top:10px">🔒 Vänner ser bara att du kört ett pass och vilket – aldrig vikter, mat eller kroppsvikt.</div>`;
+  const privacy = `<div class="muted small" style="margin-top:10px">Vänner ser bara att du kört ett pass och vilket – aldrig vikter, mat eller kroppsvikt.</div>`;
   if (!social.profile) return `${head}<div class="muted">Välj namnet dina vänner ser.</div>
     <div class="row" style="margin-top:8px"><input id="sname" maxlength="40" placeholder="Ditt namn" autocomplete="given-name">
       <button class="primary small" data-profsave ${social.busy ? "disabled" : ""}>Spara</button></div>${msg}${privacy}</div>`;
@@ -95,7 +95,7 @@ function friendsCard() {
     <div class="row" style="margin-top:12px"><input id="vcode" maxlength="6" placeholder="Väns kod" autocapitalize="characters" value="${esc(social.pendingCode)}">
       <button class="primary small" data-addfriend ${social.busy ? "disabled" : ""}>Lägg till</button></div>${msg}
     ${social.friends.length ? `<div style="margin-top:10px">${social.friends.map(f => `<div class="hrow"><span class="grow">${esc(f.name)}</span>
-      <button class="small ghost" data-unfriend="${f.id}" aria-label="Ta bort ${esc(f.name)} som vän">✕</button></div>`).join("")}</div>`
+      <button class="small ghost" data-unfriend="${f.id}" aria-label="Ta bort ${esc(f.name)} som vän">${icon("close", 18)}</button></div>`).join("")}</div>`
       : `<div class="muted small" style="margin-top:8px">Inga vänner än. Dela din kod, eller skriv in en väns.</div>`}
     <label class="row" style="margin-top:12px"><input type="checkbox" data-sharing ${p.sharing ? "checked" : ""}><span>Visa mina pass för vänner</span></label>
     <div class="row" style="margin-top:8px"><span class="muted small grow">Ditt namn: ${esc(p.name)}</span><button class="small ghost" data-renameprof>Byt namn</button></div>
@@ -141,7 +141,7 @@ document.addEventListener("click", ev => {
       const name = await socialRpc("driv_add_friend", { p_code: code });
       social.pendingCode = "";
       history.replaceState(null, "", location.pathname);
-      toast(`${name} är nu din vän 👋`);
+      toast(`${name} är nu din vän`);
     });
   }
   else if (ds.unfriend) socialAction(() => socialRpc("driv_remove_friend", { p_friend: ds.unfriend }));

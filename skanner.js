@@ -10,7 +10,7 @@ function openScanner() {
   const el = document.createElement("div");
   el.className = "overlay scan-overlay";
   el.innerHTML = `<div class="sheet scan-sheet" role="dialog" aria-label="Skanna streckkod">
-    <div class="row between"><h2>Skanna streckkod</h2><button class="small ghost" data-scanclose aria-label="Stäng">✕</button></div>
+    <div class="row between"><h2>Skanna streckkod</h2><button class="small ghost" data-scanclose aria-label="Stäng">${icon("close", 18)}</button></div>
     <div class="scan-view"><video playsinline muted></video><div class="scan-frame"></div></div>
     <div class="muted" id="scanstatus">Startar kameran…</div>
     <div class="row" style="margin-top:10px"><input id="scancode" inputmode="numeric" placeholder="Eller skriv streckkoden" autocomplete="off">

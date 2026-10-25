@@ -57,7 +57,7 @@ function actSheetView() {
   const s = actSheet, info = actInfo(s.name), showKm = s.custom || (info && info.km);
   const kcal = s.name ? actKcal(s) : 0;
   return `<div class="overlay" data-actclose><div class="sheet">
-    <div class="row between"><h2>${s.idx != null ? "Ändra aktivitet" : "Logga aktivitet"}</h2><button class="small ghost" data-actclose aria-label="Stäng">✕</button></div>
+    <div class="row between"><h2>${s.idx != null ? "Ändra aktivitet" : "Logga aktivitet"}</h2><button class="small ghost" data-actclose aria-label="Stäng">${icon("close", 18)}</button></div>
     ${s.date !== TODAY ? `<div class="muted small" style="margin-top:-6px">${dateLabel(s.date).replace(/^./, c => c.toUpperCase())}</div>` : ""}
     <div class="chips actchips">${favActs(12).map(n => `<button data-actpick="${esc(n)}" class="${!s.custom && s.name === n ? "on" : ""}">${esc(n)}</button>`).join("")}
       <button data-actpick="" class="${s.custom ? "on" : ""}">＋ Annan</button></div>

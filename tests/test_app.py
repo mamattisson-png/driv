@@ -658,11 +658,11 @@ def test_kost_maltider_forslag_mangd_och_upprepa(page):
     page.click('[data-savegroup="0"]')
     page.click('.sheet-foot [data-fsclose]')
     add_to(page, 3)
-    assert page.locator('.qadd:has-text("🍽")').count() == 0
+    assert page.locator('.qadd.meal').count() == 0
     page.click('.sheet-foot [data-fsclose]')
     page.evaluate("day().food = day().food.filter(f => f.meal !== 0); save(); render()")
     add_to(page, 0)
-    page.click('.qadd:has-text("🍽")')
+    page.click('.qadd.meal')
     assert amounts(0) == [["Gröt", 300, ""], ["Ägg", 154, "2 st"]]
     page.click('.sheet-foot [data-fsclose]')
 
