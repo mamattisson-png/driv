@@ -73,19 +73,23 @@ def test_eget_upplagg_med_egna_namn_och_ovningar(page):
 def test_hem_visar_dagens_ovningar(page):
     start(page)
     seed(page, "S.log[shift(TODAY,-7)] = {workouts:[{dayId:S.plan.days[0].id,done:true,sets:{bankpress:[{kg:80,reps:8,ok:true}]}}],dailies:{},food:[]}")
-    page.click(f'[data-pick="{page.evaluate("S.plan.days[0].id")}"]')
     assert page.inner_text("#nav [data-tab=idag]").endswith("Hem")
-    rows = page.locator(".daypass .exnames li")
-    assert rows.count() == page.evaluate("S.plan.days[0].ex.length")
-    assert "Bänkpress" in rows.first.inner_text() and "4 × 6–8 · 82,5 kg × 6" in rows.first.inner_text()
+    # Övningarna står som en kort rad; passet väljs under Träna
+    assert page.locator("#app [data-pick]").count() == 0
+    line = page.inner_text(".daypass .exline")
+    for name in page.evaluate("currentPassDay().ex.map(x => EX[x.id].name)"):
+        assert name in line
     assert page.locator(".plus-card").count() == 0
+    page.click(".daypass [data-tab=pass]")
+    assert page.evaluate("tab") == "pass" and page.locator("[data-pick]").count() == 3
+    go(page, "idag")
     page.click(".daypass [data-focusstart]")
     assert page.locator(".focus").count() == 1
 
 def test_kort_start_och_paminnelse_om_kalorimal(page):
     open_app(page)
-    # Första gången: bara upplägg, antal och dagar; resten är valfritt
-    assert page.locator("[data-prof]").count() == 0 and page.locator("[data-openpick^=draft]").count() == 0
+    # Första gången: upplägg, antal, dagar och mål; övningar och dailys är valfria
+    assert page.locator(".goalstep [data-prof]").count() == 5 and page.locator("[data-openpick^=draft]").count() == 0
     page.click("[data-savesetup]")
     go(page, "kost")
     assert "standardvärden" in page.inner_text(".dayring")
@@ -94,6 +98,30 @@ def test_kort_start_och_paminnelse_om_kalorimal(page):
     page.press("[data-prof=weight]", "Tab")
     go(page, "kost")
     assert "standardvärden" not in page.inner_text(".dayring")
+
+def test_mal_i_starten_ger_eget_kalorimal(page):
+    open_app(page)
+    standard = page.evaluate("kcalGoal()")
+    page.click('[data-goalpick="cut"]')
+    page.fill(".goalstep [data-prof=weight]", "70")
+    page.press(".goalstep [data-prof=weight]", "Tab")
+    assert page.evaluate("S.profile.goal") == "cut" and page.evaluate("kcalGoal()") < standard
+    assert "140 g protein" in page.inner_text(".goalres")
+    page.click("[data-savesetup]")
+    go(page, "kost")
+    assert "standardvärden" not in page.inner_text(".dayring")
+
+def test_guide_for_hemskarmen_pa_iphone(page):
+    page.add_init_script("Object.defineProperty(navigator, 'userAgent', {get: () => 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) Safari/604.1'})")
+    start(page)
+    assert page.locator(".nudge").count() == 0
+    seed(page, "S.log[shift(TODAY,-1)] = {workouts:[],dailies:{},food:[{name:'Ägg',kcal:150,protein:12}]}")
+    assert "Lägg till på hemskärmen" in page.inner_text(".nudge")
+    page.click("[data-installlater]")
+    assert page.locator(".nudge").count() == 0
+    go(page, "profil")
+    page.click("[data-psec=konto]")
+    assert "Lägg till på hemskärmen" in page.inner_text("#p-konto")
 
 def test_fasta_dagar_kraver_ratt_antal(page):
     open_app(page)
@@ -184,6 +212,7 @@ WAKELOCK_MOCK = """window.__wake = []; Object.defineProperty(navigator, 'wakeLoc
 def test_fokuslage_en_ovning_i_taget(page):
     start(page, WAKELOCK_MOCK)
     seed(page, "S.log[shift(TODAY,-7)] = {workouts:[{dayId:S.plan.days[0].id,done:true,sets:{bankpress:[{kg:80,reps:8,ok:true},{kg:80,reps:7,ok:true}]}}],dailies:{},food:[]}")
+    go(page, "pass")
     page.click(f'[data-pick="{page.evaluate("S.plan.days[0].id")}"]')
     page.click("[data-focusstart]")
     assert page.evaluate("tab") == "pass" and page.locator(".focus").count() == 1
@@ -243,18 +272,19 @@ def test_utseende_kan_valjas(page):
 
 def test_upplagg_och_ovningar_andras_fran_hem(page):
     start(page)
-    go(page, "idag")
-    page.click('.homepasses [data-tab="upplagg"]')
-    assert page.evaluate("tab") == "upplagg" and "Hem" in page.inner_text(".backlink")
+    go(page, "profil")
+    page.click('.plist [data-tab="upplagg"]')
+    assert page.evaluate("tab") == "upplagg" and "Profil" in page.inner_text(".backlink")
     page.click(".backlink")
-    assert page.evaluate("tab") == "idag"
+    assert page.evaluate("tab") == "profil"
+    go(page, "idag")
     # Övningarna i dagens pass ändras direkt i kortet
     n = page.evaluate("currentPassDay ? S.plan.days.find(x => x.id === document.querySelector('.daypass [data-focusstart]').dataset.focusstart).ex.length : 0")
     page.click(".daypass [data-edit]")
     page.click(".daypass [data-xdel] >> nth=0")
     assert page.locator(".daypass [data-xdel]").count() == n - 1
     page.click(".daypass [data-edit]")
-    assert page.locator(".daypass .exnames li").count() == n - 1
+    assert page.locator(".daypass .exline span").count() == n - 1
 
 
 def test_logga_hela_passet_i_efterhand(page):
@@ -397,6 +427,7 @@ def test_vanliga_livsmedel_tolkas_ratt(page):
 def test_dailys_under_passet(page):
     start(page)
     seed(page, "S.daily = [{id:'plankan',sets:3,reps:'45 sek'},{id:'lop',sets:1,reps:''}]")
+    go(page, "pass")
     page.click(f'[data-pick="{page.evaluate("S.plan.days[0].id")}"]')
     page.click("[data-focusstart]")
     assert "Dailys 0/2" in page.inner_text("[data-fdopen]")
@@ -412,6 +443,7 @@ def test_dailys_under_passet(page):
 
 def test_vikten_foljer_med_och_orimliga_tal_begransas(page):
     start(page)
+    go(page, "pass")
     page.click(f'[data-pick="{page.evaluate("S.plan.days[0].id")}"]')
     page.click("[data-focusstart]")
     page.click('[data-focusgo="1"]')   # Lutande hantelpress, första gången
@@ -513,8 +545,7 @@ def test_kroppsvikt_en_gang_i_veckan_och_kalorimal(page):
     import datetime
     page.clock.install(time=datetime.datetime(2026, 10, 22, 8, 0))   # torsdag
     open_app(page)
-    page.click("[data-setupmore]")
-    page.select_option("[data-prof=goal]", "cut")
+    page.click('[data-goalpick="cut"]')
     page.click("[data-savesetup]")
     seed(page, "S.weights['2026-10-15'] = 82; S.weights['2026-10-16'] = 81.8")
     # Ingen vägning den här veckan: rutan ber om en

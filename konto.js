@@ -131,15 +131,44 @@ async function sendFeedback() {
   feedback.busy = false; render();
 }
 
+// ---------- Datan ska inte försvinna ----------
+// Be webbläsaren att inte rensa Drivs lagring när det blir ont om plats
+if (navigator.storage && navigator.storage.persist) navigator.storage.persisted().then(p => p || navigator.storage.persist()).catch(() => {});
+
+// Android och dator: webbläsarens egen installationsruta sparas och visas när man trycker Installera
+let installEvt = null;
+window.addEventListener("beforeinstallprompt", e => { e.preventDefault(); installEvt = e; if (typeof render === "function" && S.setupDone) render(); });
+window.addEventListener("appinstalled", () => { installEvt = null; render(); });
+const loggedDays = () => Object.values(S.log).filter(L => L.food.length || L.workouts.length || Object.keys(L.dailies).length).length;
+const canInstall = () => !standalone() && (installEvt || isIOS());
+const IOS_STEPS = "Tryck på Dela-knappen (fyrkanten med pilen) i Safari och välj <b>Lägg till på hemskärmen</b>.";
+
 // Utan konto finns allt bara i webbläsaren. Efter några dagars loggning föreslås ett konto.
 function accountNudge() {
   if (!sbEnabled || account.step === "in" || (S.nudgeUntil && S.nudgeUntil > TODAY)) return "";
-  const days = Object.values(S.log).filter(L => L.food.length || L.workouts.length || Object.keys(L.dailies).length).length;
-  if (days < 3) return "";
+  if (loggedDays() < 3) return "";
   return `<div class="card nudge"><h2>💾 Spara dina loggar</h2>
-    <div class="muted">Just nu finns allt bara på den här enheten. Med ett konto sparas det i molnet – bara e-post, klart på en minut.</div>
+    <div class="muted">Just nu finns allt bara på den här enheten. Med ett konto sparas det i molnet – bara e-post, klart på en minut.
+      ${isIOS() && !standalone() ? "<b>På iPhone kan Safari rensa sparad data om Driv inte öppnas på en vecka.</b>" : ""}</div>
     <div class="row wrap" style="margin-top:10px"><button class="primary small" data-gokonto>Skapa konto</button>
       <button class="small" data-gokonto>Logga in</button><button class="ghost small" data-nudgelater>Inte nu</button></div></div>`;
+}
+
+// Lägg Driv på hemskärmen: då öppnas den som en app, notiser fungerar på iPhone och datan rensas inte.
+// Visas när man börjat logga och kontokortet inte redan syns.
+function installNudge() {
+  if (!canInstall() || (S.installUntil && S.installUntil > TODAY) || loggedDays() < 1 || accountNudge()) return "";
+  return `<div class="card nudge"><h2>📲 Lägg Driv på hemskärmen</h2>
+    <div class="muted">Då öppnas Driv som en vanlig app${isIOS() ? ", notiser fungerar och iPhone rensar inte dina loggar" : ""}.
+      ${installEvt ? "" : IOS_STEPS}</div>
+    <div class="row wrap" style="margin-top:10px">${installEvt ? `<button class="primary small" data-install>Installera</button>` : ""}
+      <button class="ghost small" data-installlater>${installEvt ? "Inte nu" : "Okej"}</button></div></div>`;
+}
+// Raden under Konto och data i Profil
+function installHelp() {
+  if (!canInstall()) return "";
+  return `<div class="muted small" style="margin-top:10px">📲 ${installEvt ? `Installera Driv som app så öppnas den snabbare. <button class="link small" data-install>Installera</button>`
+    : `Lägg Driv på hemskärmen så öppnas den som en app och iPhone rensar inte datan: ${IOS_STEPS}`}</div>`;
 }
 
 // Visas på startsidan så att den som redan har konto slipper göra om upplägget
