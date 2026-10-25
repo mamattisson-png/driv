@@ -108,8 +108,12 @@
   .seg { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
   .brand { display: flex; gap: 14px; align-items: center; margin: 4px 0 18px; }
   .brand img { width: 56px; height: 56px; border-radius: 14px; }
-  .brand b { font-size: 26px; letter-spacing: -.01em; display: block; }
-  .brand .wordmark { font-weight: 900; letter-spacing: .22em; font-size: 28px; font-stretch: expanded; }
+  .brand .ordbild { margin: 0; line-height: 0; }
+  .brand .ordbild img { width: min(196px, calc(100vw - 184px)); height: auto; border-radius: 0; }
+  .ord-d { display: none; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .ord-l { display: none; } :root:not([data-theme="light"]) .ord-d { display: inline; } }
+  :root[data-theme="dark"] .ord-l { display: none; }
+  :root[data-theme="dark"] .ord-d { display: inline; }
   .proglist { display: grid; gap: 8px; }
   .proglist button { text-align: left; padding: 10px 12px; display: grid; gap: 2px; }
   .proglist button.on { border-color: var(--accent); outline: 2px solid var(--accent); }
