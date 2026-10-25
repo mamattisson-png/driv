@@ -216,3 +216,8 @@ async function saveFile(filename, data, type) {
   a.click();
 }
 const exportData = () => saveFile(`driv-${TODAY}.json`, JSON.stringify(S, null, 2), "application/json");
+
+// Det man skriver i e-postfältet ligger kvar om vyn ritas om under tiden (t.ex. när notisläget hämtats)
+document.addEventListener("input", ev => {
+  if (ev.target.id === "acctemail" && account.step !== "in") account.email = ev.target.value;
+});

@@ -401,16 +401,18 @@
   .addfood.empty { border: 1px dashed var(--line); text-align: center; }
   .dayagain { margin: 0 0 12px; padding: 12px 16px; }
   .again { display: block; width: 100%; text-align: left; margin-top: 6px; font-size: 14px; }
-  .plist { padding: 4px 16px; }
+  .plist { padding: 0; overflow: hidden; border-radius: 20px; margin: 0; }
   .card.plist > * + * { border-top: 1px solid var(--line); }
-  .prow-head { display: flex; align-items: center; gap: 12px; width: 100%; background: none; border: 0; border-radius: 0;
-    padding: 14px 0; text-align: left; color: var(--text); font: inherit; }
-  .prow-head .grow { display: flex; flex-direction: column; min-width: 0; }
+  .prow-line { display: flex; align-items: center; gap: 10px; padding-right: 14px; }
+  .prow-head { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; min-height: 64px; background: none; border: 0; border-radius: 0;
+    padding: 10px 0 10px 14px; text-align: left; color: var(--text); font: inherit; }
+  .prow-head .grow { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .prow-head b { font-size: 15px; font-weight: 500; }
   .prow-head .muted { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .pic { font-size: 20px; width: 28px; text-align: center; }
-  .chev { color: var(--muted); font-size: 20px; transition: transform .15s; }
+  .pic { width: 36px; height: 36px; flex: none; border-radius: 11px; background: var(--card-2); display: grid; place-items: center; }
+  .chev { color: var(--muted); transition: transform .15s; display: grid; place-items: center; }
   .prow.open .chev { transform: rotate(90deg); }
-  .prow-body { padding: 0 0 16px; }
+  .prow-body { padding: 0 14px 16px; }
   .prow { scroll-margin: 12px 0 calc(124px + env(safe-area-inset-bottom, 0px)); }
   .prow-body .card { border: 0; padding: 0; margin: 0; background: none; box-shadow: none; }
   .prow-body .card > h2:first-child { display: none; }
@@ -548,6 +550,31 @@
   .plan-day summary { cursor: pointer; padding: 4px 0; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
   .plan-day summary .muted { margin-left: auto; }
   .subex .small { flex: none; }
+  /* ---------- Profil ---------- */
+  .phead { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+  .phead h1 { margin: 0; min-height: 0; }
+  .pcard { border-radius: 24px; padding: 18px; display: flex; flex-direction: column; gap: 16px; }
+  .pcard .row { gap: 14px; }
+  .pcard .col { gap: 2px; }
+  .pcard b { font-size: 17px; }
+  .avatar { width: 56px; height: 56px; flex: none; border-radius: 28px; background: var(--accent-strong); color: var(--on-accent);
+    display: grid; place-items: center; font: 600 22px "Unbounded", sans-serif; }
+  .pstats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .pstats > div { border-radius: 14px; background: var(--card-2); padding: 10px 12px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .pstats b { font: 600 18px/1.2 "Unbounded", sans-serif; }
+  .pstats span { font-size: 12px; color: var(--muted); }
+  .pgroup { display: flex; flex-direction: column; gap: 8px; margin-top: 18px; }
+  .pgroup > .klabel { margin: 0 4px; font-weight: 500; }
+  .switch { appearance: none; -webkit-appearance: none; width: 52px; height: 32px; min-height: 0; flex: none; margin: 0; padding: 0; border: 0;
+    border-radius: 16px; background: var(--line-strong); position: relative; cursor: pointer; }
+  .switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 26px; height: 26px; border-radius: 13px; background: var(--text); transition: transform .15s; }
+  .switch:checked { background: var(--accent-strong); }
+  .switch:checked::after { transform: translateX(20px); background: var(--on-accent); }
+  .tseg { display: flex; gap: 2px; padding: 3px; border-radius: 12px; background: var(--card-2); flex: none; }
+  .tseg button { min-height: 36px; padding: 0 10px; border: 0; border-radius: 9px; background: none; font-size: 13px; color: var(--muted); }
+  .tseg button.on { background: var(--text); color: var(--bg); font-weight: 600; }
+  @media (max-width: 359px) { #p-utseende .pic { display: none; } }
+  .plogout { margin-top: 18px; display: flex; align-items: center; justify-content: center; gap: 8px; color: var(--bad-text); }
   /* ---------- Historik ---------- */
   .hseg { margin-bottom: 16px; }
   .calcard { border-radius: 24px; padding: 14px 14px 16px; }

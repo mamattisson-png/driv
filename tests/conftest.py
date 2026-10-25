@@ -76,4 +76,5 @@ def start(page, init_script=None):
 
 
 def go(page, tab):
-    page.evaluate(f"document.querySelector('[data-tab={tab}]').click()")
+    # Står man redan i vyn finns ingen knapp till den (Profil saknar profilknapp)
+    page.evaluate(f"tab === '{tab}' && !focus && !editDate || document.querySelector('[data-tab={tab}]').click()")

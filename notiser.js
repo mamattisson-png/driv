@@ -64,12 +64,12 @@ function pushBody() {
   if (account.step !== "in") return `<div class="muted">Notiser kräver ett konto, eftersom de skickas från servern.</div>
     <button class="small" style="margin-top:8px" data-gokonto>Skapa konto eller logga in</button>`;
   const p = pushPrefs();
-  return `<label class="row"><input type="checkbox" data-pushtoggle ${push.on ? "checked" : ""} ${push.busy ? "disabled" : ""}><span>Notiser på den här enheten</span></label>
-    ${push.on ? `<div class="pushopts">
+  // Själva strömbrytaren ligger i raden i Profil
+  return `${push.on ? `<div class="pushopts">
       <label class="row"><input type="checkbox" data-pushopt="remind" ${p.remind ? "checked" : ""}><span>Påminn mig om pass och dailys</span></label>
       ${p.remind ? `<label class="field" style="margin:6px 0 0 30px">Klockan<input type="time" id="pushtime" value="${esc(p.time)}"></label>` : ""}
       <label class="row" style="margin-top:8px"><input type="checkbox" data-pushopt="kudos" ${p.kudos ? "checked" : ""}><span>När en vän peppar mitt pass</span></label>
-      <div class="muted small" style="margin-top:6px">Påminnelsen kommer bara när något återstår: ett pass som står på tur, eller dailys som inte är gjorda.</div></div>` : ""}
+      <div class="muted small" style="margin-top:6px">Påminnelsen kommer bara när något återstår: ett pass som står på tur, eller dailys som inte är gjorda.</div></div>` : `<div class="muted small">Slå på för påminnelser om pass och dailys, och när en vän peppar dig.</div>`}
     ${push.msg ? `<div class="muted small warntext" style="margin-top:6px">${esc(push.msg)}</div>` : ""}`;
 }
 
