@@ -74,6 +74,6 @@ create extension if not exists pg_net;
 select cron.schedule('driv-push', '*/10 * * * *', $cron$
   select net.http_post(
     url := 'https://zepugwoostphckstyrqf.supabase.co/functions/v1/driv-push',
-    headers := '{"Content-Type": "application/json", "x-driv-cron": "BYT-MIG"}'::jsonb,
+    headers := jsonb_build_object('Content-Type', 'application/json', 'x-driv-cron', 'BYT-MIG'),
     body := '{}'::jsonb);
 $cron$);
