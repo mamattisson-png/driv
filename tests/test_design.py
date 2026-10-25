@@ -64,6 +64,9 @@ def views(page):
     page.click('[data-ok=bankpress][data-i="0"]')
     yield "Fokusläge", "body"
     page.click("[data-restskip]")
+    page.evaluate("openAct(TODAY, null, 'Padel'); render()")
+    yield "Logga aktivitet", ".sheet"
+    page.evaluate("actSheet = null; render()")
     go(page, "kost")
     yield "Kost", "#app"
     page.click("[data-addto]")

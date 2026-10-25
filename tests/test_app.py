@@ -351,6 +351,40 @@ def test_hem_har_en_rad_med_dagens_siffror(page):
     assert page.evaluate("tab") == "kost"
 
 
+def test_aktivitet_loggas_och_raknas_som_pass(page):
+    start(page)
+    go(page, "pass")
+    assert page.locator("text=Kommande").count() == 0
+    page.click('.actcard [data-actnew="Padel"]')
+    page.click('[data-actmin="15"]')   # 75 min
+    page.click('[data-actint="3"]')
+    page.click("[data-actsave]")
+    assert page.evaluate("S.log[TODAY].acts") == [{"name": "Padel", "min": 75, "int": 3}]
+    assert page.evaluate("weekSummary(weekStart(TODAY)).passes") == 1
+    # En egen aktivitet med sträcka, på Hem
+    go(page, "idag")
+    page.click('.homeacts [data-actnew=""]')
+    page.fill("#actname", "Kanotpaddling")
+    page.click('[data-actmin="-15"]')
+    page.click('[data-actmin="-15"]')
+    page.click('[data-actmin="-15"]')   # 15 min: räknas inte som pass
+    page.click("[data-actsave]")
+    assert page.evaluate("S.log[TODAY].acts.length") == 2 and page.evaluate("weekSummary(weekStart(TODAY)).passes") == 1
+    assert "Kanotpaddling · 15 min" in page.inner_text(".homeacts")
+    # Förbrända kcal läggs bara till när man valt det
+    goal = page.evaluate("macros().kcal")
+    prof(page, "aktiviteter")
+    page.click("[data-actkcal]")
+    go(page, "kost")
+    assert page.evaluate("macros().kcal + burnedOn(TODAY)") > goal
+    assert f"{goal + page.evaluate('burnedOn(TODAY)'):,}".replace(",", "\xa0") in page.inner_text(".dayring")
+    # Ändra och ta bort
+    go(page, "idag")
+    page.click('.homeacts [data-actedit="1"]')
+    page.click("[data-actdel]")
+    assert page.evaluate("S.log[TODAY].acts.length") == 1
+
+
 def test_dailys_under_passet(page):
     start(page)
     seed(page, "S.daily = [{id:'plankan',sets:3,reps:'45 sek'},{id:'lop',sets:1,reps:''}]")

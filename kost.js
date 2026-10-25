@@ -427,6 +427,7 @@ function itemSheet() {
 
 function kostView() {
   const m = macros(), e = eaten(), L = day();
+  m.kcal += burnedOn(logDate());
   return `<h1>Kost</h1>
     ${dayRing(e, m)}
     <h2 class="ksection">Måltider</h2>

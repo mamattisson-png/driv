@@ -17,7 +17,7 @@ function dateLabel(d) {
   if (d === shift(TODAY, -1)) return "igår";
   return `${WD_LONG[weekdayOf(d)]} ${+d.slice(8)} ${MONTHS[+d.slice(5, 7) - 1]}`;
 }
-const hasLog = d => { const L = S.log[d]; return !!L && (L.food.length > 0 || L.workouts.length > 0 || Object.keys(L.dailies).length > 0); };
+const hasLog = d => { const L = S.log[d]; return !!L && (L.food.length > 0 || L.workouts.length > 0 || Object.keys(L.dailies).length > 0 || actsOn(d).length > 0); };
 
 function calendar() {
   const month = histMonth || TODAY.slice(0, 7), [y, mo] = month.split("-").map(Number);
@@ -27,7 +27,8 @@ function calendar() {
   for (let n = 1; n <= count; n++) {
     const d = `${month}-${String(n).padStart(2, "0")}`;
     const passes = workoutsOn(d).filter(w => w.done || Object.keys(w.sets).length).map(w => dayById(w.dayId)).filter(Boolean);
-    const dots = passes.map(p => `<i class="cdot" style="background:var(--${TYPES[p.type].color || p.type})"></i>`).join("");
+    const dots = passes.map(p => `<i class="cdot" style="background:var(--${TYPES[p.type].color || p.type})"></i>`).join("") +
+      actsOn(d).map(() => `<i class="cdot act"></i>`).join("");
     const dl = allDailiesDone(d) ? `<i class="ccheck">✓</i>` : "";
     cells += `<button class="cday ${d === TODAY ? "today" : ""} ${hasLog(d) ? "has" : ""}" data-histday="${d}" ${d > TODAY ? "disabled" : ""}
       aria-label="${dateLabel(d)}${passes.length ? `, ${passes.length} pass` : ""}"><span>${n}</span><span class="cmarks">${dots}${dl}</span></button>`;
@@ -37,7 +38,7 @@ function calendar() {
       <h2 style="margin:0">${MONTHS[mo - 1].replace(/^./, c => c.toUpperCase())} ${y}</h2>
       <button class="small" data-hmonth="1" ${atNow ? "disabled" : ""} aria-label="Nästa månad">›</button></div>
     <div class="cal">${WD.map(w => `<b>${w.slice(0, 2)}</b>`).join("")}${cells}</div>
-    <div class="legend muted small"><span><i class="cdot" style="background:var(--push)"></i>Pass</span>${S.daily.length ? `<span><i class="ccheck">✓</i>Alla dailys</span>` : ""}<span>Tryck på en dag för att ändra den</span></div></div>`;
+    <div class="legend muted small"><span><i class="cdot" style="background:var(--push)"></i>Pass</span><span><i class="cdot act"></i>Aktivitet</span>${S.daily.length ? `<span><i class="ccheck">✓</i>Alla dailys</span>` : ""}<span>Tryck på en dag för att ändra den</span></div></div>`;
 }
 
 function daySheet() {
@@ -53,7 +54,10 @@ function daySheet() {
     <div class="row between"><h2>${dateLabel(d).replace(/^./, c => c.toUpperCase())}</h2><button class="small ghost" data-hclose aria-label="Stäng">✕</button></div>
     <h3 class="sheet-sub">Träning</h3>
     ${passes || `<div class="muted">Inget pass loggat.</div>`}
-    <button class="small" style="margin-top:8px" data-hpass="">+ Logga ett pass${d === TODAY ? "" : " i efterhand"}</button>
+    ${actsOn(d).map((a, i) => `<button class="hrow linkrow" data-actedit="${i}" data-actdate="${d}"><span class="grow"><b>${actIcon(a.name)} ${esc(a.name)}</b>
+      <div class="muted small">${actLine(a)}</div></span><span class="chev">›</span></button>`).join("")}
+    <div class="row wrap" style="margin-top:8px"><button class="small" data-hpass="">+ Logga ett pass${d === TODAY ? "" : " i efterhand"}</button>
+      <button class="small" data-actnew="" data-actdate="${d}">+ Aktivitet</button></div>
     <h3 class="sheet-sub">Mat</h3>
     <div>${e.kcal ? `<b>${e.kcal}</b> / ${m.kcal} kcal · ${e.protein} g protein` : `<span class="muted">Ingen mat loggad.</span>`}</div>
     ${meals.length ? `<div class="muted small">${meals.map(([n, k]) => `${n} ${k}`).join(" · ")}</div>` : ""}
@@ -136,6 +140,18 @@ function weekBars() {
         ${i % 2 ? `<text class="axis" x="${(i * bw + bw / 2).toFixed(1)}" y="${H + 14}" text-anchor="middle">v.${weekNo(w.ws)}</text>` : ""}`; }).join("")}
   </svg><div class="muted small">Linjen är ditt mål, ${S.plan.count} pass i veckan.</div>`;
 }
+function actSummary() {
+  const from = shift(weekStart(TODAY), -77), by = {};
+  for (const [d, L] of Object.entries(S.log)) if (d >= from) for (const a of L.acts || []) {
+    const e = by[a.name] || (by[a.name] = { n: 0, min: 0 });
+    e.n++; e.min += +a.min || 0;
+  }
+  const rows = Object.entries(by).sort((a, b) => b[1].n - a[1].n);
+  if (!rows.length) return "";
+  return `<section class="card kmeal"><div class="khead"><span class="grow">Aktiviteter</span><span>12 veckor</span></div>
+    ${rows.map(([n, e]) => `<div class="krow"><span class="hricon" aria-hidden="true">${actIcon(n)}</span><span class="grow"><b>${esc(n)}</b>
+      <span class="muted small">${e.n} ${e.n === 1 ? "gång" : "gånger"} · ${fmtNum(e.min / 60)} timmar</span></span></div>`).join("")}</section>`;
+}
 function progressView() {
   const p = progressData(), recent = [0, 1, 2, 3].reduce((a, k) => a + weekSummary(shift(weekStart(TODAY), -7 * k)).passes, 0);
   if (!p.ex.length && !p.passes) return `<div class="card"><h2>Här växer din utveckling fram</h2>
@@ -150,6 +166,7 @@ function progressView() {
     <section class="card kmeal"><div class="khead"><span class="grow">Pass per vecka</span><span>12 veckor</span></div><div class="kbody">${weekBars()}</div></section>
     ${rows ? `<section class="card kmeal exlist"><div class="khead"><span class="grow">Personbästa</span><span>${p.ex.length} övningar</span></div>${rows}
       <div class="muted small kfoot">Tryck på en övning för att se grafen vecka för vecka.</div></section>` : ""}
+    ${actSummary()}
     ${!S.hideWeight && w.length ? `<section class="card kmeal"><div class="khead"><span class="grow">Kroppsvikt</span><span>${fmtNum(wLast)} kg</span></div>
       <div class="kbody">${w.length > 1 ? `<div style="margin-bottom:8px">${weightBadge(wLast - wFirst)} <span class="muted small">sedan ${shortDate(w[0])}</span></div>` : ""}${weightChart()}</div></section>` : ""}`;
 }
