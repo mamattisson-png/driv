@@ -178,11 +178,12 @@ def test_dagens_mal_fylls_i_och_pers_firas(page):
     seed(page, "S.log[shift(TODAY,-7)] = {workout:{dayId:S.plan.days[0].id,done:true,sets:{bankpress:[{kg:80,reps:8,ok:true}],dips:[{reps:10,ok:true}]}},dailies:{},food:[]}")
     go(page, "pass")
     page.click("[data-pick]")
-    # Listan visar varje övning på en rad med förslag utifrån förra gången
-    assert "förslag 82,5 kg × 6" in page.locator(".exlist .krow", has_text="Bänkpress").inner_text()
-    assert "förslag 11 reps" in page.locator(".exlist .krow", has_text="Dips").inner_text()
+    # Listan visar förra gången; förslaget för idag står i fokusläget
+    assert "förra: 80 kg × 8" in page.locator(".exlist .exrow2", has_text="Bänkpress").inner_text()
+    assert "förra: 10" in page.locator(".exlist .exrow2", has_text="Dips").inner_text()
     open_ex(page, "bankpress")
     assert "Bänkpress" in page.inner_text(".focus h2")
+    assert "Förra gången 80 kg × 8. Prova 82,5 kg × 6." in page.inner_text(".ftip")
     page.click('[data-ok=bankpress][data-i="0"]')
     assert page.evaluate("JSON.stringify(day().workouts[0].sets.bankpress[0])") == '{"ok":true,"reps":6,"kg":82.5}'
     assert "Nytt PB" in page.inner_text(".toast")
@@ -195,14 +196,14 @@ def test_spara_pass_och_oppna_igen(page):
     for i in range(4):
         page.click(f'[data-ok=bankpress][data-i="{i}"]')
     to_list(page)
-    assert "✓" in page.inner_text('.exlist .krow:has-text("Bänkpress") .setcount')
+    assert page.locator('.exlist .exrow2:has-text("Bänkpress") .setcount.ok').count() == 1
     assert "1 av 6 klara" in page.inner_text("button[data-finish]")
     page.click("button[data-finish]")
     go(page, "pass")
     page.click("[data-pick]")
     assert "passet är sparat" in page.inner_text(".done-card")
     page.click(".done-card [data-finish]")
-    assert page.inner_text("button[data-finish]").startswith("✓ Spara passet")
+    assert page.inner_text("button[data-finish]").startswith("Spara passet")
 
 
 WAKELOCK_MOCK = """window.__wake = []; Object.defineProperty(navigator, 'wakeLock', { value: { request: async () => {
@@ -362,7 +363,7 @@ def test_superset_vaxlar_och_vilar_efter_varvet(page):
     page.click('[data-ss][data-idx="0"]')   # bänkpress + lutande hantelpress
     assert page.evaluate("S.plan.days[0].ex[0].ss") is True
     page.click("[data-edit]")
-    assert "Superset 1/2" in page.inner_text('.exlist .krow >> nth=0')
+    assert "A1" in page.inner_text('.exlist .exrow2 >> nth=0') and "A2" in page.inner_text('.exlist .exrow2 >> nth=1')
     page.click("[data-focusstart]")
     page.click('[data-ok=bankpress][data-i="0"]')
     # Direkt till nästa övning i varvet, utan vila
@@ -430,7 +431,7 @@ def test_dailys_under_passet(page):
     go(page, "pass")
     page.click(f'[data-pick="{page.evaluate("S.plan.days[0].id")}"]')
     page.click("[data-focusstart]")
-    assert "Dailys 0/2" in page.inner_text("[data-fdopen]")
+    assert "Dailys · 0 av 2 klara" in page.inner_text("[data-fdopen]")
     page.click("[data-fdopen]")
     assert page.locator(".overlay [data-dedit]").count() == 0
     page.click('.overlay [data-dcheck="plankan"]')
@@ -438,7 +439,7 @@ def test_dailys_under_passet(page):
     assert page.locator(".overlay").count() == 1   # fönstret står kvar tills man stänger
     page.click(".overlay button.wide[data-fdclose]")
     assert page.locator(".overlay").count() == 0 and page.locator(".focus").count() == 1
-    assert "Dailys 1/2" in page.inner_text("[data-fdopen]")
+    assert "Dailys · 1 av 2 klara" in page.inner_text("[data-fdopen]")
 
 
 def test_vikten_foljer_med_och_orimliga_tal_begransas(page):
@@ -454,9 +455,11 @@ def test_vikten_foljer_med_och_orimliga_tal_begransas(page):
     assert "Högst 500 kg" in page.inner_text(".toast")
     kg(0).fill("24")
     kg(0).press("Enter")
-    assert kg(1).get_attribute("placeholder") == "24" and kg(2).get_attribute("placeholder") == "24"
     page.click('[data-ok=lutande_hantelpress][data-i="0"]')
+    # Nästa set visar samma vikt som förslag
+    assert kg(1).get_attribute("placeholder") == "24"
     page.click('[data-ok=lutande_hantelpress][data-i="1"]')
+    assert kg(2).get_attribute("placeholder") == "24"
     assert page.evaluate("workoutsOn(TODAY)[0].sets.lutande_hantelpress[1].kg") == 24
     # Stegen utgår också från vikten i setet före
     page.click('[data-step=kg][data-i="2"][data-dir="1"]')

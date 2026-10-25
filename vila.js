@@ -37,7 +37,10 @@ function startRest(exId) {
 
 function tickRest() {
   const left = Math.max(0, Math.ceil((rest.end - Date.now()) / 1000));
-  rest.el.querySelector(".rest-time").textContent = `${Math.floor(left / 60)}:${String(left % 60).padStart(2, "0")}`;
+  const txt = `${Math.floor(left / 60)}:${String(left % 60).padStart(2, "0")}`;
+  rest.el.querySelector(".rest-time").textContent = txt;
+  // Fokusläget visar tiden bredvid Klart set
+  for (const el of document.querySelectorAll(".frest-time")) { el.textContent = txt; el.parentNode.classList.add("on"); }
   rest.el.querySelector(".rest-label").textContent = left ? `vila efter ${rest.name}` : "dags för nästa set!";
   rest.el.querySelector(".rest-bar div").style.width = `${rest.total ? (1 - left / rest.total) * 100 : 100}%`;
   if (left) return;

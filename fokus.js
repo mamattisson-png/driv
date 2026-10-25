@@ -36,6 +36,7 @@ function focusAfterSet(d, idx = focus && focus.idx, i = 0) {
     }
   } else if (exDone(w, d.ex[focus.idx]) && focus.idx < d.ex.length - 1) focus.idx++;
   focus.scroll = focus.idx !== from ? "top" : "active";
+  focus.sel = null;
 }
 // Anropas efter varje ritning: nästa set (eller nästa övning) hamnar i bild
 function afterFocusRender() {
@@ -58,13 +59,17 @@ function stepSet(d, exId, i, f, dir) {
   s[f] = clampSet(exId, f, f === "kg" ? Math.round(next * 4) / 4 : Math.round(next));
 }
 
-function stepper(exId, i, f, val, hint, label, unit) {
-  const btn = (dir, txt) => `<button class="step" data-step="${f}" data-ex="${exId}" data-i="${i}" data-dir="${dir}" aria-label="${txt} ${label}, set ${i + 1}">${dir > 0 ? "+" : "−"}</button>`;
-  return `<div class="stepper">${btn(-1, "Minska")}
-    <input type="number" inputmode="${f === "kg" ? "decimal" : "numeric"}" step="${f === "kg" ? 0.25 : 1}" min="0" max="${setMax(exId, f)}" value="${val ?? ""}"
-      placeholder="${hint ?? ""}" data-set="${exId}" data-i="${i}" data-f="${f}" aria-label="${label}, set ${i + 1}">
-    ${btn(1, "Öka")}<div class="unit">${unit}</div></div>`;
+// Stora − och + runt talet; talet går också att trycka på och skriva
+function bigStepper(exId, i, f, val, hint, label, unit) {
+  const btn = (dir, txt) => `<button class="bstep" data-step="${f}" data-ex="${exId}" data-i="${i}" data-dir="${dir}" aria-label="${txt} ${label.toLowerCase()}, set ${i + 1}">${icon(dir > 0 ? "plus" : "minus", 28)}</button>`;
+  return `<section class="bigstep" aria-label="${label}"><span class="klabel">${label}</span>
+    <div class="bigrow">${btn(-1, "Minska")}
+      <label class="bignum"><input type="number" inputmode="${f === "kg" ? "decimal" : "numeric"}" step="${f === "kg" ? 0.25 : 1}" min="0" max="${setMax(exId, f)}"
+        value="${val ?? ""}" placeholder="${hint ?? ""}" data-set="${exId}" data-i="${i}" data-f="${f}" aria-label="${label}, set ${i + 1}">${unit ? `<span>${unit}</span>` : ""}</label>
+      ${btn(1, "Öka")}</div></section>`;
 }
+
+const restText = sec => `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, "0")}`;
 
 function focusView() {
   const d = dayById(focus.dayId);
@@ -72,68 +77,86 @@ function focusView() {
   focus.idx = Math.min(focus.idx, d.ex.length - 1);
   const ex = d.ex[focus.idx], w = workoutOn(logDate(), d.id);
   const sets = (w && w.sets[ex.id]) || [], prev = lastSets(ex.id), target = todayTarget(ex);
-  const bw = !!EX[ex.id].bw, repLabel = isTimed(ex.id) ? "sek" : "reps";
+  const bw = !!EX[ex.id].bw, timed = isTimed(ex.id);
   let active = -1;
   for (let i = 0; i < ex.sets; i++) if (!(sets[i] && sets[i].ok)) { active = i; break; }
-  let rows = "";
-  for (let i = 0; i < ex.sets; i++) {
-    const s = sets[i] || {}, h = liveHint(d, ex, i), p = prev ? hintSet(prev, i) : null;
-    const kg = stepper(ex.id, i, "kg", s.kg, h.kg || "", bw ? "Extra vikt" : "Vikt", GEAR[gearOf(ex.id)][2]);
-    const reps = stepper(ex.id, i, "reps", s.reps, h.reps, isTimed(ex.id) ? "Sekunder" : "Reps", repLabel);
+  // Det valda setet ändras med de stora knapparna: nästa ej klara, eller det man tryckt på i listan
+  const sel = focus.sel != null && focus.sel < ex.sets ? focus.sel : active;
+  const s = sel >= 0 ? sets[sel] || {} : {}, h = sel >= 0 ? liveHint(d, ex, sel) : {};
+  const fields = sel < 0 ? "" : (() => {
+    // Första gången finns inget förslag: 0 kg och nedre delen av repsintervallet som utgångsläge
+    const kg = bigStepper(ex.id, sel, "kg", s.kg, h.kg || 0, bw ? "Extra vikt" : "Vikt", "kg");
+    const reps = bigStepper(ex.id, sel, "reps", s.reps, h.reps || repRange(ex.reps).lo || "", timed ? "Sekunder" : "Reps", timed ? "s" : "");
+    return bw ? reps + kg : kg + reps;
+  })();
+  const setRows = Array.from({ length: ex.sets }, (_, i) => {
+    const st = sets[i] || {}, p = prev ? hintSet(prev, i) : null;
     const last = p && hasData(p) ? fmtSet({ kg: +p.kg || 0, reps: +p.reps || 0 }, ex.id) : "";
-    rows += `<div class="fset ${s.ok ? "done" : ""} ${i === active ? "active" : ""}">
-      <div class="fset-head"><b>Set ${i + 1}</b>${last ? `<span class="muted small">förra: ${last}</span>` : ""}</div>
-      <div class="fset-fields">${bw ? reps + kg : kg + reps}</div>
-      <button class="done-btn big ${s.ok ? "on" : ""}" data-ok="${ex.id}" data-i="${i}" aria-label="Set ${i + 1} klart">✓</button></div>`;
-  }
-  const next = d.ex[focus.idx + 1], allDone = active < 0;
-  const finish = w && w.done
-    ? `<button class="primary grow" data-focusexit>✓ Passet är sparat</button>`
-    : `<button class="primary grow" data-finish="${d.id}" data-focusend>✓ Spara passet</button>`;
+    const val = st.ok && hasData(st) ? fmtSet({ kg: +st.kg || 0, reps: +st.reps || 0 }, ex.id) : last ? `förra: ${last}` : "";
+    return `<li class="fset ${st.ok ? "done" : ""} ${i === sel ? "active" : ""}">
+      <button class="fcheck ${st.ok ? "on" : ""}" data-ok="${ex.id}" data-i="${i}" aria-pressed="${!!st.ok}" aria-label="Set ${i + 1} klart">${icon("check", 14)}</button>
+      <button class="fsel" data-fsel="${i}" aria-label="Välj set ${i + 1}"><span>Set ${i + 1}</span><span class="${st.ok ? "" : "muted"}">${val}</span></button></li>`;
+  }).join("");
+  const g = ssGroup(d, focus.idx), next = d.ex[focus.idx + 1];
+  const ss = g ? `<div class="sstabs" role="tablist" aria-label="Superset">${d.ex.slice(g[0], g[1] + 1).map((x, k) =>
+      `<button role="tab" aria-selected="${g[0] + k === focus.idx}" class="${g[0] + k === focus.idx ? "on" : ""}" data-focusgo="${g[0] + k}"><b>${String.fromCharCode(65 + ssIndex(d, g[0]))}${k + 1}</b> ${esc(EX[x.id].name)}</button>`).join("")}</div>
+      <button class="sslink2" data-ss="${d.id}" data-idx="${focus.idx === g[1] ? focus.idx - 1 : focus.idx}">Sluta köra som superset</button>`
+    : next ? `<button class="ssmake" data-ss="${d.id}" data-idx="${focus.idx}" aria-label="Gör superset med ${esc(EX[next.id].name)}">${icon("plus", 14)}Gör superset</button>` : "";
+  const prevTop = prev && topSet(prev);
+  const tip = target ? `${prevTop ? `Förra gången ${fmtSet({ kg: +prevTop.kg || 0, reps: +prevTop.reps || 0 }, ex.id)}. ` : ""}Prova <b>${fmtTarget(target, ex.id)}</b>.`
+    : `Första gången: välj en vikt du klarar ${esc(ex.reps)} ${timed ? "sekunder" : "gånger"}.`;
+  const allDone = active < 0;
+  const resting = rest.el && rest.end > Date.now();
+  const restBox = restSettings().on ? `<div class="frest ${resting ? "on" : ""}" aria-label="Vilotimer">${icon("timer", 18)}<span class="frest-time">${restText(resting ? Math.ceil((rest.end - Date.now()) / 1000) : restFor(ex.id))}</span></div>` : "";
+  const main = allDone
+    ? next ? `<button class="primary grow" data-focusgo="${focus.idx + 1}">Nästa: ${esc(EX[next.id].name)}</button>`
+      : w && w.done ? `<button class="primary grow" data-focusexit>Passet är sparat</button>`
+      : `<button class="primary grow" data-finish="${d.id}" data-focusend>Spara passet</button>`
+    : sets[sel] && sets[sel].ok ? `<button class="primary grow" data-fsel="${active}">Till set ${active + 1}</button>`
+    : `<button class="primary grow" data-ok="${ex.id}" data-i="${sel}">Klart set ${sel + 1}</button>`;
+  const dDone = S.daily.filter(e => dailyDone(logDate(), e.id)).length;
   return `<div class="focus">
-    <div class="row between"><button class="small ghost" data-focusexit>‹ Alla övningar</button>${dailyChip()}</div>
-    <div class="fdots">${d.ex.map((x, k) => `<button data-focusgo="${k}" class="${k === focus.idx ? "on" : ""} ${exDone(w, x) ? "done" : ""}" aria-label="${esc(EX[x.id].name)}"></button>`).join("")}</div>
-    <div class="card kmeal fcard"><div class="khead">${tag(d.type)}<span class="grow">${passBand(d)}</span><span>Övning ${focus.idx + 1} av ${d.ex.length}</span></div>
-      <div class="kbody">
-      <div class="row"><button class="thumb" data-info="${ex.id}" aria-label="Visa ${esc(EX[ex.id].name)}">${figure(ex.id, "", true)}</button>
-        <div class="grow"><h2 style="margin:2px 0">${esc(EX[ex.id].name)}</h2>
-          <div class="muted">${ex.sets} × ${esc(ex.reps)} · ${GEAR[gearOf(ex.id)][0]}</div>
-          ${ssGroup(d, focus.idx) ? `<div class="sspill">🔗 ${ssLabel(d, focus.idx)} · växla efter varje set</div>` : ""}
-          ${target ? `<div class="goal">Förslag idag: <b>${fmtTarget(target, ex.id)}</b></div>`
-            : `<div class="muted">Första gången: välj en vikt du klarar ${esc(ex.reps)}.</div>`}</div></div>
-      ${rows}
-      <div class="row" style="margin-top:10px"><button class="small" data-setcount="-1" data-ex="${ex.id}" ${ex.sets > 1 ? "" : "disabled"}>− Set</button>
-        <button class="small" data-setcount="1" data-ex="${ex.id}">+ Set</button></div>
-    </div></div>
-    <div class="row fnav"><button data-focusgo="${focus.idx - 1}" ${focus.idx ? "" : "disabled"} aria-label="Föregående övning">‹</button>
-      ${next ? `<button class="${allDone ? "primary" : ""} grow" data-focusgo="${focus.idx + 1}">Nästa: ${esc(EX[next.id].name)} ›</button>` : finish}</div>
+    <header class="fhead"><button class="roundbtn" data-focusexit aria-label="Tillbaka till passet">${icon("left", 20)}</button>
+      <div class="grow"><span class="muted small">Övning ${focus.idx + 1} av ${d.ex.length} · ${esc(TYPES[d.type] ? TYPES[d.type].label : d.name)}</span>
+        <div class="fsteps">${d.ex.map((x, k) => `<button data-focusgo="${k}" class="${k === focus.idx ? "on" : ""} ${exDone(w, x) ? "done" : ""}" aria-label="${esc(EX[x.id].name)}"></button>`).join("")}</div></div></header>
+    <div class="ftitle"><div class="grow"><h2>${esc(EX[ex.id].name)}</h2>
+      <div class="muted">${allDone ? "Alla set klara" : `Set ${sel + 1} av ${ex.sets} · mål ${esc(ex.reps)}${timed ? "" : " reps"}`}</div></div>
+      <button class="thumb dt" data-info="${ex.id}" aria-label="Visa hur ${esc(EX[ex.id].name)} görs">${figure(ex.id)}</button></div>
+    ${ss}
+    <div class="ftip">${icon("trend", 18)}<span>${tip}</span></div>
+    ${fields}
+    <ol class="fsets" aria-label="Set">${setRows}</ol>
+    <div class="row fsetcount"><button class="small ghost" data-setcount="-1" data-ex="${ex.id}" ${ex.sets > 1 ? "" : "disabled"}>− Set</button>
+      <button class="small ghost" data-setcount="1" data-ex="${ex.id}">+ Set</button>
+      ${!next && !allDone && !(w && w.done) ? `<button class="small ghost fsave" data-finish="${d.id}" data-focusend>Spara passet</button>` : ""}</div>
+    ${S.daily.length ? `<button class="ghost fdaily" data-fdopen aria-label="Dailys, ${dDone} av ${S.daily.length} klara">Dailys · ${dDone} av ${S.daily.length} klara${icon("up", 14)}</button>` : ""}
+    <div class="fbar">${restBox}${main}</div>
   </div>${focusDailies ? `<div class="overlay" data-fdclose><div class="sheet">
-    <div class="row between"><span class="muted small">Fläta in i passet</span><button class="small ghost" data-fdclose aria-label="Stäng">✕</button></div>
+    <div class="row between"><span class="muted small">Fläta in i passet</span><button class="small ghost iconbtn" data-fdclose aria-label="Stäng">${icon("close", 18)}</button></div>
     ${dailiesCard(true)}<button class="wide" data-fdclose style="margin-top:14px">Tillbaka till passet</button></div></div>` : ""}`;
 }
-
-// Dailys under passet: en liten knapp med hur många som är klara, inget mer
-function dailyChip() {
-  if (!S.daily.length) return "";
-  const date = logDate(), done = S.daily.filter(e => dailyDone(date, e.id)).length, all = done === S.daily.length;
-  return `<button class="small chip ${all ? "ok" : ""}" data-fdopen aria-label="Dailys, ${done} av ${S.daily.length} klara">${all ? "✓" : "☐"} Dailys ${done}/${S.daily.length}</button>`;
+// Bokstaven för ett superset: A för passets första, B för nästa …
+function ssIndex(d, start) {
+  let n = 0;
+  for (let i = 0; i < start; i++) { const g = ssGroup(d, i); if (g && g[0] === i) n++; }
+  return n;
 }
 
-// Passet i Träna: ett kort med mörk rubrik (som måltiderna i Kost) och en rad per övning med mål
-// och hur många set som är klara. Tryck på en rad för att öppna fokusläget på just den övningen.
+// Passet i Träna: en numrerad rad per övning med mål, förra gången och hur många set som är klara.
+// Tryck på en rad för att öppna fokusläget på just den övningen.
 function passOverview(d, w) {
-  const done = d.ex.filter(x => exDone(w, x)).length, next = w && !w.done ? d.ex.findIndex(x => !exDone(w, x)) : -1;
-  const logged = w && Object.values(w.sets).some(a => a.some(hasData));
-  return `<section class="card kmeal exlist">
-    <div class="khead">${tag(d.type)}<span class="grow">${passBand(d)}</span><span>${done} / ${d.ex.length}</span></div>
+  const next = w && !w.done ? d.ex.findIndex(x => !exDone(w, x)) : 0;
+  return `<ol class="exlist">
     ${d.ex.map((ex, i) => {
-      const sets = (w && w.sets[ex.id]) || [], n = sets.filter(x => x && x.ok).length, all = exDone(w, ex), target = todayTarget(ex);
+      const sets = (w && w.sets[ex.id]) || [], n = sets.filter(x => x && x.ok).length, all = exDone(w, ex);
+      const prev = lastSets(ex.id), top = prev && topSet(prev);
       const g = ssGroup(d, i), pos = g ? (i === g[0] ? "first" : i === g[1] ? "last" : "mid") : "";
-      return `<button class="krow ${all ? "done" : ""} ${g ? `ss ss-${pos}` : ""}" data-focusex="${i}"><span class="thumb xs" aria-hidden="true">${figure(ex.id)}</span>
-        <span class="grow"><b>${esc(EX[ex.id].name)}</b><span class="muted small">${g ? `<span class="sstag">${ssLabel(d, i)}</span> ` : ""}${ex.sets} × ${esc(ex.reps)}${target ? ` · förslag ${fmtTarget(target, ex.id)}` : ""}</span></span>
-        ${logged && i === next ? `<span class="nextpill">Nästa</span>` : ""}<span class="setcount ${all ? "ok" : ""}">${all ? "✓" : `${n}/${ex.sets}`}</span></button>`;
+      return `<li><button class="exrow2 ${all ? "done" : ""} ${g ? `ss ss-${pos}` : ""}" data-focusex="${i}">
+        <span class="exnum ${i === next && !all ? "next" : ""}">${all ? icon("check", 16) : i + 1}</span>
+        <span class="grow"><b>${esc(EX[ex.id].name)}</b><span class="muted small">${g ? `<span class="sstag">${String.fromCharCode(65 + ssIndex(d, g[0]))}${i - g[0] + 1}</span> · ` : ""}${ex.sets} × ${esc(ex.reps)}${top ? ` · förra: ${fmtSet({ kg: +top.kg || 0, reps: +top.reps || 0 }, ex.id)}` : ""}</span></span>
+        <span class="setcount ${all ? "ok" : ""}">${n}/${ex.sets}</span></button></li>`;
     }).join("")}
-  </section>`;
+  </ol>`;
 }
 
 // Ett pass i efterhand: alla övningar och set på en gång, med förra (eller nästa) gångens vikter
@@ -182,7 +205,7 @@ document.addEventListener("visibilitychange", () => {
 });
 
 document.addEventListener("click", ev => {
-  const t = ev.target.closest("[data-step],[data-focusgo],[data-focusexit],[data-focusend],[data-focusstart],[data-focusex],[data-fdopen],[data-fdclose]");
+  const t = ev.target.closest("[data-step],[data-focusgo],[data-focusexit],[data-focusend],[data-focusstart],[data-focusex],[data-fdopen],[data-fdclose],[data-fsel]");
   if (!t) return;
   if (t.classList.contains("overlay") && ev.target !== t) return;   // klick inne i fönstret
   const ds = t.dataset;
@@ -191,7 +214,8 @@ document.addEventListener("click", ev => {
   if (ds.focusstart) { tab = "pass"; editing = false; startFocus(ds.focusstart); }
   else if (ds.focusex !== undefined) { if (startFocus(currentPassDay().id)) focus.idx = +ds.focusex; }
   else if (ds.focusexit !== undefined) endFocus();
-  else if (ds.focusgo !== undefined) focus.idx = Math.max(0, +ds.focusgo);
+  else if (ds.focusgo !== undefined) { focus.idx = Math.max(0, +ds.focusgo); focus.sel = null; }
+  else if (ds.fsel !== undefined) focus.sel = +ds.fsel;
   else if (ds.step) stepSet(currentPassDay(), ds.ex, +ds.i, ds.step, +ds.dir);
   save();
   render();

@@ -779,7 +779,10 @@ let importMsg = "";
 
 function render() {
   const nav = document.getElementById("nav");
-  nav.classList.toggle("hidden", tab === "upplagg");
+  // Fokusläget tar hela skärmen; menyn kommer tillbaka när man lämnar det
+  const inFocus = tab === "pass" && !!focus && !editing;
+  nav.classList.toggle("hidden", tab === "upplagg" || inFocus);
+  document.body.classList.toggle("infocus", inFocus);
   nav.innerHTML = TABS.map(([id, ic, lbl]) =>
     `<button data-tab="${id}" class="${tab === id ? "on" : ""}" ${tab === id ? 'aria-current="page"' : ""}>${icon(ic, 22)}${lbl}</button>`).join("");
   const banner = editDate && (tab === "kost" || (tab === "pass" && focus && !editing))
@@ -841,8 +844,8 @@ function dailiesCard(inPass, banded) {
 
 // Alla pass som knappar; används på Idag och under Pass
 function dayPicker(selected) {
-  return `<div class="daypick" style="grid-template-columns:repeat(${S.plan.days.length <= 4 ? S.plan.days.length : Math.ceil(S.plan.days.length / 2)},1fr)">${S.plan.days.map((k, i) =>
-    `<button data-pick="${k.id}" class="${k.id === selected ? "on" : ""}" aria-pressed="${k.id === selected}">${tag(k.type)}<div class="muted">${isFixed() ? WD[S.plan.weekdays[i]] : `Pass ${i + 1}`}</div></button>`).join("")}</div>`;
+  return `<div class="daypick" role="tablist" aria-label="Välj pass" style="grid-template-columns:repeat(${S.plan.days.length <= 4 ? S.plan.days.length : Math.ceil(S.plan.days.length / 2)},minmax(0,1fr))">${S.plan.days.map((k, i) =>
+    `<button role="tab" data-pick="${k.id}" class="${k.id === selected ? "on" : ""}" aria-selected="${k.id === selected}" aria-pressed="${k.id === selected}"><b>${esc(TYPES[k.type] && k.type !== "custom" ? TYPES[k.type].label : k.name)}</b><span>${isFixed() ? WD[S.plan.weekdays[i]] : `Pass ${i + 1}`}</span></button>`).join("")}</div>`;
 }
 
 const VIEWS = {
@@ -976,25 +979,26 @@ const VIEWS = {
         <div class="muted small pastnote">Ett pass du redan har gjort. Inget startas, fyll bara i vad du lyfte.</div>`
       : `<h1>Träna</h1>`}
       ${dayPicker(d && d.id)}
+      ${editing || editDate ? "" : `<div class="row between passmeta"><div class="col"><span class="muted small">${esc(TYPES[d.type] && d.type !== "custom" ? TYPES[d.type].muscles : d.name)}</span>
+        <span class="passcount">${d.ex.length} ${d.ex.length === 1 ? "övning" : "övningar"}</span></div><button class="ghost" data-edit>Redigera</button></div>`}
       ${editing ? `<div class="card"><div class="row between"><h2>${passLabel(d)}</h2><button class="small ghost" data-edit>Klar</button></div>
           <div class="muted">${TYPES[d.type].muscles}</div></div>${editList(d)}`
         : !d.ex.length ? `<div class="card muted">Passet har inga övningar än. <button class="link" data-edit>Lägg till övningar</button></div>`
         : editDate ? `${pastLog(d, w)}
           <div class="row between passmeta"><span class="muted small">${TYPES[d.type].muscles}</span><button class="link small" data-edit>Redigera passet</button></div>
-          ${w && w.done ? `<div class="card done-card"><b>✓ Passet är sparat för ${dateLabel(editDate)}.</b>
+          ${w && w.done ? `<div class="card done-card"><b>Passet är sparat för ${dateLabel(editDate)}.</b>
                 <button class="small" style="margin-top:8px" data-finish="${d.id}">Öppna passet igen</button></div>`
-            : `<button class="primary wide bigbtn" data-finish="${d.id}">✓ Spara och gå tillbaka till Historik</button>
+            : `<button class="primary wide bigbtn" data-finish="${d.id}">Spara och gå tillbaka till Historik</button>
                <div class="muted small finish-note">Passet sparas på ${dateLabel(editDate)}.</div>`}`
         : `${passOverview(d, w)}
-          <div class="row between passmeta"><span class="muted small">${TYPES[d.type].muscles}</span><button class="link small" data-edit>Redigera passet</button></div>
           ${w && w.done
-            ? `<div class="card done-card"><b>✓ Bra jobbat, passet är sparat!</b>
+            ? `<div class="card done-card"><b>Bra jobbat, passet är sparat!</b>
                 <div class="muted small">Det räknas in i veckans pass och jämförelsen med förra veckan.</div>${friendsAfterPass()}
                 <button class="small" style="margin-top:8px" data-finish="${d.id}">Öppna passet igen</button></div>`
             : logged
-            ? `<button class="primary wide bigbtn" data-finish="${d.id}">✓ Spara passet · ${done} av ${d.ex.length} klara</button>
+            ? `<button class="primary wide bigbtn" data-finish="${d.id}">Spara passet · ${done} av ${d.ex.length} klara</button>
                <div class="muted small finish-note">Fortsätt genom att trycka på en övning. Passet räknas även om du inte hunnit alla.</div>`
-            : `<button class="primary wide bigbtn" data-focusstart="${d.id}">▶ Starta passet</button>
+            : `<button class="primary wide bigbtn" data-focusstart="${d.id}">${icon("play", 18)}Starta passet</button>
                <div class="muted small finish-note">En övning i taget. Allt du loggar sparas direkt.</div>`}`}
       ${editing ? "" : actsCard(logDate(), editDate ? "Annan träning den här dagen" : "Annan träning")}`;
   },
