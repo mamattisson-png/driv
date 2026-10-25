@@ -945,8 +945,11 @@ const VIEWS = {
     return `<h1>${new Date().toLocaleDateString("sv-SE", { weekday: "long", day: "numeric", month: "long" }).replace(/^./, c => c.toUpperCase())} <span class="muted">v.${weekNo(TODAY)}</span></h1>
       ${(() => {
         const lw = letterWeekToShow();
-        return lw ? `<div class="card letter-card"><div class="row between"><h2>📬 Din vecka</h2>
-          <button class="small ghost" data-letterclose="${lw}" aria-label="Stäng sammanfattningen">✕</button></div>${weekLetter(lw)}</div>` : "";
+        if (!lw) return "";
+        const c = weekSummary(lw), recs = weekRecords(lw).length;
+        return `<div class="card homerow letter-card"><span class="hricon" aria-hidden="true">📬</span>
+          <span class="grow"><b>Din vecka ${weekNo(lw)}</b><span class="muted small">${c.passes} av ${S.plan.count} pass${recs ? ` · ${recs} ${recs === 1 ? "nytt personbästa" : "nya personbästa"}` : ""}</span></span>
+          <button class="small" data-letter="${lw}">Visa</button><button class="small ghost" data-letterclose="${lw}" aria-label="Stäng sammanfattningen">✕</button></div>`;
       })()}
       <div class="row between homepasses"><span class="klabel">Ditt upplägg · <span class="nocaps">${PROGRAMS[S.plan.program || "ppl"].name}</span></span>
         <button class="link small" data-tab="upplagg">Ändra upplägg</button></div>
@@ -1238,22 +1241,28 @@ function weekRecords(ws) {
 }
 function weekLetter(ws) {
   const prevWs = shift(ws, -7), cur = weekSummary(ws), prev = weekSummary(prevWs);
-  const plus = weekPlus(ws), recs = weekRecords(ws);
+  const plus = weekPlus(ws), recs = weekRecords(ws), tried = plus.plus + plus.same + plus.minus;
   const wNow = weekAvgWeight(ws), wPrev = weekAvgWeight(prevWs);
   const goalPasses = S.plan.count;
   const headline = cur.passes >= goalPasses ? "Alla pass klara – starkt jobbat! 💪"
     : cur.passes ? `${cur.passes} av ${goalPasses} pass. Varje pass räknas.` : "Ingen träning loggad den här veckan. Ny chans nu!";
-  const line = (icon, label, value, extra = "") => `<div class="letter-row"><span>${icon}</span><span class="grow">${label}</span><b>${value}</b>${extra}</div>`;
+  // Fyra siffror i rutnät, sedan personbästa som en lista
+  const stat = (label, value, extra = "") => `<div class="lstat"><div class="klabel">${label}</div><div class="lbig">${value}</div>${extra}</div>`;
+  const stats = [
+    stat("Pass", `${cur.passes} av ${goalPasses}`, prev.passes || cur.passes ? deltaBadge(cur.passes - prev.passes, "mot förra") : ""),
+    S.daily.length ? stat("Alla dailys", `${cur.dailies} av 7 dagar`) : "",
+    !S.hideWeight && wNow != null ? stat("Vikt, snitt", `${fmtNum(wNow)} kg`, wPrev != null ? weightBadge(wNow - wPrev) : "") : "",
+    cur.kcal ? stat("Kalorier per dag", tnum(cur.kcal), `<span class="muted small">mål ${tnum(macros().kcal)}</span>`) : "",
+    cur.km || prev.km ? stat("Löpning", `${fmtNum(cur.km)} km`) : "",
+  ].filter(Boolean).slice(0, 4).join("");
   return `<div class="letter">
-    <div class="muted small">Vecka ${weekNo(ws)} · ${ws.slice(8)}/${+ws.slice(5, 7)} – ${shift(ws, 6).slice(8)}/${+shift(ws, 6).slice(5, 7)}</div>
+    <div class="muted small">Vecka ${weekNo(ws)} · ${+ws.slice(8)}/${+ws.slice(5, 7)} – ${+shift(ws, 6).slice(8)}/${+shift(ws, 6).slice(5, 7)}</div>
     <h3>${headline}</h3>
-    ${line("🏋️", "Pass", `${cur.passes} av ${goalPasses}`, prev.passes || cur.passes ? deltaBadge(cur.passes - prev.passes, "st") : "")}
-    ${plus.plus + plus.same + plus.minus ? line("📈", "Övningar som gått framåt", `${plus.plus} av ${plus.plus + plus.same + plus.minus}`) : ""}
-    ${recs.length ? line("🏆", "Nya PB", recs.map(r => `${esc(EX[r.id].name)} ${fmtSet(r.best, r.id)}`).join(", ")) : ""}
-    ${S.daily.length ? line("✅", "Dagar med alla dailys", `${cur.dailies} av 7`) : ""}
-    ${cur.km || prev.km ? line("🏃", "Löpning", `${fmtNum(cur.km)} km`, deltaBadge(Math.round((cur.km - prev.km) * 10) / 10, "km")) : ""}
-    ${!S.hideWeight && wNow != null ? line("⚖️", "Vikt, snitt", `${fmtNum(wNow)} kg`, wPrev != null ? weightBadge(wNow - wPrev) : "") : ""}
-    ${cur.kcal ? line("🍽️", "Kalorier per dag", `${cur.kcal}`, `<span class="muted small">mål ${macros().kcal}</span>`) : ""}
+    <div class="lstats">${stats}</div>
+    ${tried ? `<div class="lline">📈 <b>${plus.plus} av ${tried}</b> övningar gick framåt mot förra veckan</div>` : ""}
+    ${recs.length ? `<h4 class="sheet-sub">🏆 Nya personbästa</h4>
+      ${recs.slice(0, 5).map(r => `<div class="lpb"><span class="grow">${esc(EX[r.id].name)}</span><b>${fmtSet(r.best, r.id)}</b></div>`).join("")}
+      ${recs.length > 5 ? `<div class="muted small">och ${recs.length - 5} till</div>` : ""}` : ""}
     ${plusStreak() > 1 ? `<div class="letter-foot">🔥 ${plusStreak()} plusveckor i rad. Håll i!</div>` : ""}
   </div>`;
 }

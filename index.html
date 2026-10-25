@@ -189,10 +189,15 @@
   .hidden { display: none; }
   .goal { margin: 2px 0; }
   .letter h3 { font-size: 18px; margin: 4px 0 10px; text-wrap: balance; }
-  .letter-row { display: flex; gap: 10px; align-items: baseline; padding: 7px 0; border-top: 1px solid var(--line); }
-  .letter-row b { text-align: right; font-variant-numeric: tabular-nums; }
+  .lstats { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 16px; padding: 12px 0; border-top: 1px solid var(--line); }
+  .lstat .delta { margin-top: 4px; display: inline-block; }
+  .lbig { font-size: 20px; font-weight: 800; margin-top: 2px; font-variant-numeric: tabular-nums; }
+  .lline { padding: 10px 0; border-top: 1px solid var(--line); }
+  .lpb { display: flex; gap: 10px; padding: 7px 0; border-top: 1px solid var(--line); }
+  .lpb b { white-space: nowrap; font-variant-numeric: tabular-nums; }
   .letter-foot { margin-top: 10px; font-weight: 600; }
   .letter-card { border-color: var(--accent); }
+  .letter-card .grow { min-width: 0; }
   .nudge { border-color: var(--accent); }
   .corner-login { position: absolute; top: 18px; right: 0; }
   .stat-sm { font-size: 22px; }
