@@ -108,10 +108,9 @@
   .bar > div { height: 100%; background: var(--accent); border-radius: 99px; transition: width .2s; }
   .bar.ok > div { background: var(--ok); }
   .bar.over > div { background: var(--bad); }
-  .tag { display: inline-block; font-size: 12px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
-    padding: 2px 8px; border-radius: 99px; color: var(--on-color); }
-  .tag.push { background: var(--push); } .tag.pull { background: var(--pull); } .tag.legs { background: var(--legs); }
-  .tag.upper { background: var(--upper); } .tag.lower { background: var(--lower); } .tag.full { background: var(--full); }
+  /* Passets etikett: en accent för alla pass */
+  .tag { display: inline-block; font-size: 11px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase;
+    padding: 4px 10px; border-radius: 99px; color: var(--on-accent); background: var(--accent-strong); line-height: 1.2; }
   .pill { font-size: 13px; padding: 2px 8px; border-radius: 99px; background: var(--ok-soft); color: var(--ok-text); font-weight: 600; }
   .delta { display: inline-block; font-size: 13px; font-weight: 700; padding: 1px 7px; border-radius: 99px; white-space: nowrap; }
   .delta.up { background: var(--ok-soft); color: var(--ok-text); }
@@ -127,7 +126,7 @@
   /* DRIV och slogan lika långa: bokstavsluften är uppmätt för de här typsnitten */
   .brand .wordmark { font: 300 26px "Unbounded", sans-serif; letter-spacing: .4466em; margin-right: -.4466em; }
   .brand .slogan { font: 300 13px "Lexend", sans-serif; white-space: nowrap; }
-  .brand .slogan em { font-style: normal; color: var(--accent); }
+  .brand .slogan em { font-style: normal; color: var(--accent-text); }
   .proglist { display: grid; gap: 8px; }
   .proglist button { text-align: left; padding: 10px 12px; display: grid; gap: 2px; }
   .proglist button.on { border-color: var(--accent); outline: 2px solid var(--accent); }
@@ -152,8 +151,10 @@
   .sets.bw { grid-template-columns: 24px 1fr 84px 40px; }
   .sets .n { color: var(--muted); font-size: 14px; text-align: center; }
   .done-btn { width: 40px; height: 38px; padding: 0; font-weight: 700; color: var(--muted); }
-  .done-btn.big { width: 44px; height: 44px; border-radius: 99px; flex: none; }
-  .done-btn.on { background: var(--ok-strong); border-color: var(--ok-strong); color: var(--on-color); }
+  .done-btn.big { width: 44px; height: 44px; border-radius: 99px; flex: none; display: grid; place-items: center;
+    background: none; border: 1.5px solid var(--line-strong); color: var(--muted); }
+  .dailies .done-btn:not(.on) .ic { visibility: hidden; }
+  .done-btn.on { background: var(--accent-strong); border-color: var(--accent-strong); color: var(--on-accent); }
   .subex { display: flex; gap: 10px; align-items: center; padding: 6px 0; border-top: 1px solid var(--line); }
   .daily { padding: 10px 0; border-top: 1px solid var(--line); }
   .daily:first-of-type { border-top: 0; padding-top: 0; }
@@ -273,7 +274,8 @@
   .klabel { color: var(--muted); font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
   .kbig { font-size: 30px; font-weight: 800; line-height: 1.2; margin-top: 4px; font-variant-numeric: tabular-nums; }
   .kstat .bar { height: 8px; margin-top: 8px; }
-  .bar.prot > div { background: #8b5cf6; }
+  .bar.prot > div { background: var(--text); }
+  .bar.prot.ok > div { background: var(--ok); }
   .kleft { margin-top: 12px; }
   .ksection { margin: 22px 4px 10px; font-size: 19px; }
   .kmeal { padding: 0; overflow: hidden; margin-bottom: 14px; }
@@ -308,13 +310,7 @@
   .kcheck { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; border: 1.6px solid currentColor; font-size: 12px; }
   .dailies .daily:first-child { padding-top: 0; }
   .fcard .kbody { padding-top: 16px; }
-  .daypass .exline { line-height: 1.5; color: var(--muted); }
-  .daypass .exline span { color: var(--text); white-space: nowrap; }
-  .daypass .exline span.done { color: var(--muted); }
   .goalres { margin-top: 12px; padding: 10px 12px; border-radius: 10px; background: var(--accent-soft); }
-  .homebrand { display: flex; align-items: center; gap: 8px; margin: 2px 0 6px; }
-  .homebrand img { width: 28px; height: 28px; border-radius: 7px; }
-  .homebrand .wordmark { font: 300 15px "Unbounded", sans-serif; letter-spacing: .35em; }
   .daypass .subex { padding: 8px 0; }
   .pastsub { font-weight: 600; margin: -6px 2px 4px; }
   .pastnote { margin: 0 2px 14px; }
@@ -354,17 +350,14 @@
   .homerow { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; color: var(--text); font: inherit; padding: 14px 16px; }
   button.homerow { border: 1px solid var(--line); }
   .homerow .grow { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
-  .hricon { font-size: 22px; width: 30px; text-align: center; flex: none; }
+  .hricon { width: 30px; flex: none; display: grid; place-items: center; color: var(--muted); }
   .hrbars { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 4px; }
   .hrbar .bar { height: 6px; margin: 4px 0 0; }
-  .friendsrow { box-shadow: inset 4px 0 0 #2f6fdb; }
   .dchips { display: flex; flex-wrap: wrap; gap: 8px; }
   .dchip { border-radius: 99px; padding: 8px 14px; font: inherit; font-size: 15px; background: var(--bg); border: 1px solid var(--line); color: var(--text); }
   .dchip.on { background: var(--ok-soft); border-color: var(--ok); color: var(--ok-text); font-weight: 600; }
   .drun { display: flex; align-items: center; gap: 8px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); }
   .drun .done-btn { width: 40px; height: 40px; }
-  .homesum { display: flex; justify-content: space-between; gap: 8px; width: 100%; padding: 12px 16px; font: inherit; color: var(--text); border: 1px solid var(--line); font-size: 14px; flex-wrap: wrap; }
-  .homesum b { font-size: 17px; }
   .cdot.act { background: var(--ok); border-radius: 2px; transform: rotate(45deg); }
   .actchips { flex-wrap: wrap; }
   .actcard .krow { padding: 10px 0; border-top: 1px solid var(--line); }
@@ -545,6 +538,62 @@
   .plan-day summary { cursor: pointer; padding: 4px 0; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
   .plan-day summary .muted { margin-left: auto; }
   .subex .small { flex: none; }
+  /* ---------- Hem ---------- */
+  .homehead { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 56px; margin: 0 0 16px; }
+  .homehead .brand { margin: 0; }
+  .homehead .brand img { width: 52px; height: 52px; }
+  .homehead .ordbild { gap: 7px; }
+  .homehead .gear { position: static; flex: none; }
+  .weekstrip { margin-bottom: 16px; }
+  .weekstrip h1 { font: 400 13px/1.4 "Lexend", sans-serif; margin: 0; min-height: 0; padding: 0; color: var(--muted); }
+  .caps { text-transform: uppercase; letter-spacing: .08em; }
+  b.strong { color: var(--text); }
+  .wdays { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; margin-top: 10px; }
+  .wday { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 8px 0; border-radius: 12px;
+    background: var(--card); font-size: 11px; color: var(--muted); }
+  .wday i { width: 8px; height: 8px; border-radius: 4px; background: var(--line); box-sizing: border-box; }
+  .wday i.on { background: var(--accent); }
+  .wday i.ring { background: none; border: 2px solid var(--accent); }
+  .wday.today { background: var(--text); color: var(--bg); font-weight: 600; }
+  .daypass { border-radius: 24px; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+  .daypass > * { margin: 0; }
+  .passtop { display: flex; align-items: center; gap: 8px; }
+  .passok { margin-left: auto; display: inline-flex; align-items: center; gap: 4px; color: var(--ok-text); font-size: 13px; font-weight: 600; }
+  .passname { font: 600 34px/1.05 "Unbounded", sans-serif; margin: 0 0 6px; overflow-wrap: anywhere; hyphens: auto; }
+  .passname.sm { font-size: 20px; margin: 0; }
+  @media (max-width: 359px) { .passname { font-size: 28px; } }
+  .daypass .bigbtn { margin: 0; display: flex; align-items: center; justify-content: center; gap: 10px; }
+  .passlinks { margin: -10px -6px -8px; }
+  .passlinks .ghost { padding: 0 6px; font-size: 14px; }
+  .homeacts { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: -4px 0 14px; }
+  .dchip { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; }
+  .dchip.on { background: var(--card); border-color: var(--line); color: var(--text); font-weight: 500; }
+  .dchip.on .ic { color: var(--accent-text); }
+  .homesum { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }
+  .hstat { display: flex; flex-direction: column; align-items: stretch; gap: 10px; text-align: left; border-radius: 20px; padding: 16px;
+    background: var(--card); border: 1px solid var(--line); color: var(--text); }
+  .hnum { font: 600 24px/1.1 "Unbounded", sans-serif; font-variant-numeric: tabular-nums; }
+  .hstat .bar { height: 6px; margin: 0; }
+  .dailies { border-radius: 24px; padding: 8px 16px 12px; }
+  .dhead { display: flex; justify-content: space-between; align-items: center; min-height: 48px; gap: 8px; }
+  .dhead h2 { margin: 0; }
+  .dhead .ghost { display: inline-flex; align-items: center; gap: 6px; padding: 0 0 0 12px; font-size: 13px; }
+  .dailies .daily { gap: 12px; padding: 10px 0; }
+  .dailies .daily:first-child { padding-top: 10px; }
+  .thumb.dt { width: 52px; height: 52px; border-radius: 14px; background: var(--card-2); border: 0; }
+  .daily .grow { display: flex; flex-direction: column; gap: 2px; }
+  .daily .grow b { font-weight: 500; font-size: 15px; overflow: hidden; text-overflow: ellipsis; }
+  .daily.ok .thumb { opacity: .55; }
+  .daily.ok b { color: var(--muted); text-decoration: line-through; }
+  .streak { font-size: 12px; white-space: nowrap; }
+  @media (max-width: 359px) { .streak { display: none; } }
+  .wrow { display: flex; align-items: center; gap: 10px; }
+  .wrow .grow { display: flex; flex-direction: column; gap: 2px; }
+  .wrow b { font-weight: 500; font-size: 15px; }
+  .wrow #wkg { width: 72px; flex: none; text-align: center; }
+  .wrow .small { flex: none; }
+  .friendsrow { background: var(--card-2); border-color: transparent; }
+  .letter-card .iconbtn { padding: 0; width: 44px; }
 </style>
 </head>
 <body>

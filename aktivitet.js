@@ -7,27 +7,27 @@
 
 // MET-värden för lugnt, medel och hårt (Compendium of Physical Activities, avrundade)
 const ACTIVITIES = [
-  { name: "Padel", icon: "🎾", met: [5, 6, 8] },
-  { name: "Tennis", icon: "🎾", met: [5, 7, 8] },
-  { name: "Vandring", icon: "🥾", met: [4, 6, 7.5], km: true },
-  { name: "Kanot", icon: "🛶", met: [3, 5, 7], km: true },
-  { name: "Frisbeegolf", icon: "🥏", met: [3, 3.5, 4], km: true },
-  { name: "Cykling", icon: "🚴", met: [4, 7, 10], km: true },
-  { name: "Löpning", icon: "🏃", met: [7, 9.5, 11.5], km: true },
-  { name: "Promenad", icon: "🚶", met: [3, 3.5, 4.5], km: true },
-  { name: "Simning", icon: "🏊", met: [5, 7, 9.5], km: true },
-  { name: "Fotboll", icon: "⚽", met: [6, 7, 10] },
-  { name: "Innebandy", icon: "🏑", met: [6, 8, 10] },
-  { name: "Golf", icon: "⛳", met: [3.5, 4.3, 5], km: true },
-  { name: "Skidor", icon: "⛷️", met: [5, 7, 9], km: true },
-  { name: "Klättring", icon: "🧗", met: [5, 7, 8] },
-  { name: "Yoga", icon: "🧘", met: [2.5, 3, 4] },
-  { name: "Dans", icon: "💃", met: [4, 5.5, 7] },
-  { name: "Kampsport", icon: "🥊", met: [6, 8, 10] },
+  { name: "Löpning", met: [7, 9.5, 11.5], km: true },
+  { name: "Padel", met: [5, 6, 8] },
+  { name: "Tennis", met: [5, 7, 8] },
+  { name: "Vandring", met: [4, 6, 7.5], km: true },
+  { name: "Kanot", met: [3, 5, 7], km: true },
+  { name: "Frisbeegolf", met: [3, 3.5, 4], km: true },
+  { name: "Cykling", met: [4, 7, 10], km: true },
+  { name: "Promenad", met: [3, 3.5, 4.5], km: true },
+  { name: "Simning", met: [5, 7, 9.5], km: true },
+  { name: "Fotboll", met: [6, 7, 10] },
+  { name: "Innebandy", met: [6, 8, 10] },
+  { name: "Golf", met: [3.5, 4.3, 5], km: true },
+  { name: "Skidor", met: [5, 7, 9], km: true },
+  { name: "Klättring", met: [5, 7, 8] },
+  { name: "Yoga", met: [2.5, 3, 4] },
+  { name: "Dans", met: [4, 5.5, 7] },
+  { name: "Kampsport", met: [6, 8, 10] },
 ];
 const INTENSITY = ["Lugnt", "Medel", "Hårt"];
 const actInfo = name => ACTIVITIES.find(a => a.name.toLowerCase() === String(name).trim().toLowerCase());
-const actIcon = name => (actInfo(name) || { icon: "🏅" }).icon;
+const actIcon = () => icon("aktivitet", 20);
 const actsOn = date => (S.log[date] && S.log[date].acts) || [];
 const actCounts = a => S.actCount !== false && +a.min >= 45;
 // Ungefär förbrända kcal: MET × kroppsvikt × timmar (okänd aktivitet räknas som medelhård, MET 5)
@@ -59,7 +59,7 @@ function actSheetView() {
   return `<div class="overlay" data-actclose><div class="sheet">
     <div class="row between"><h2>${s.idx != null ? "Ändra aktivitet" : "Logga aktivitet"}</h2><button class="small ghost" data-actclose aria-label="Stäng">✕</button></div>
     ${s.date !== TODAY ? `<div class="muted small" style="margin-top:-6px">${dateLabel(s.date).replace(/^./, c => c.toUpperCase())}</div>` : ""}
-    <div class="chips actchips">${favActs(12).map(n => `<button data-actpick="${esc(n)}" class="${!s.custom && s.name === n ? "on" : ""}">${actIcon(n)} ${esc(n)}</button>`).join("")}
+    <div class="chips actchips">${favActs(12).map(n => `<button data-actpick="${esc(n)}" class="${!s.custom && s.name === n ? "on" : ""}">${esc(n)}</button>`).join("")}
       <button data-actpick="" class="${s.custom ? "on" : ""}">＋ Annan</button></div>
     ${s.custom ? `<label class="field" style="margin-top:10px">Vad gjorde du?<input id="actname" value="${esc(s.name)}" placeholder="t.ex. Bouldering" maxlength="30" autocomplete="off"></label>` : ""}
     <div class="row qtyrow" style="margin-top:14px"><span class="grow">Tid</span>
@@ -80,14 +80,14 @@ function actsCard(date, title = "Annan träning") {
   return `<section class="card actcard"><div class="row between"><h2>${title}</h2>${list.length ? `<span class="muted small">${list.length} idag</span>` : ""}</div>
     ${list.map((a, i) => `<button class="krow" data-actedit="${i}" data-actdate="${date}"><span class="hricon" aria-hidden="true">${actIcon(a.name)}</span>
       <span class="grow"><b>${esc(a.name)}</b><span class="muted small">${actLine(a)}${actCounts(a) ? " · räknas som pass" : ""}</span></span><span class="chev" aria-hidden="true">›</span></button>`).join("")}
-    <div class="chips actchips" style="margin-top:${list.length ? 10 : 2}px">${favActs(4).map(n => `<button data-actnew="${esc(n)}" data-actdate="${date}">${actIcon(n)} ${esc(n)}</button>`).join("")}
+    <div class="chips actchips" style="margin-top:${list.length ? 10 : 2}px">${favActs(4).map(n => `<button data-actnew="${esc(n)}" data-actdate="${date}">${esc(n)}</button>`).join("")}
       <button data-actnew="" data-actdate="${date}">＋ Annan</button></div></section>`;
 }
 
 // På Hem: dagens aktiviteter som små knappar och en länk för att logga en till
 function homeActs() {
-  return `<div class="homeacts">${actsOn(TODAY).map((a, i) => `<button class="dchip on" data-actedit="${i}" data-actdate="${TODAY}">${actIcon(a.name)} ${esc(a.name)} · ${+a.min} min</button>`).join("")}
-    <button class="link small" data-actnew="" data-actdate="${TODAY}">＋ Logga annan aktivitet</button></div>`;
+  return `<div class="homeacts">${actsOn(TODAY).map((a, i) => `<button class="dchip on" data-actedit="${i}" data-actdate="${TODAY}">${icon("check", 16)}${esc(a.name)} · ${+a.min} min</button>`).join("")}
+    <button class="ghost small" data-actnew="" data-actdate="${TODAY}">+ Logga annan aktivitet</button></div>`;
 }
 
 // Vänner ser aktiviteten precis som ett pass: "Padel · 90 min"
@@ -126,7 +126,7 @@ document.addEventListener("click", ev => {
     const L = day(s.date), list = L.acts || (L.acts = []);
     if (s.idx != null) list[s.idx] = a; else list.push(a);
     shareAct(a, s.date, true);
-    toast(`${actIcon(a.name)} ${a.name} sparad`);
+    toast(`${a.name} sparad`);
     actSheet = null;
   }
   else if (ds.actdel !== undefined) {

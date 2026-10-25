@@ -54,7 +54,7 @@ function daySheet() {
     <div class="row between"><h2>${dateLabel(d).replace(/^./, c => c.toUpperCase())}</h2><button class="small ghost" data-hclose aria-label="Stäng">✕</button></div>
     <h3 class="sheet-sub">Träning</h3>
     ${passes || `<div class="muted">Inget pass loggat.</div>`}
-    ${actsOn(d).map((a, i) => `<button class="hrow linkrow" data-actedit="${i}" data-actdate="${d}"><span class="grow"><b>${actIcon(a.name)} ${esc(a.name)}</b>
+    ${actsOn(d).map((a, i) => `<button class="hrow linkrow" data-actedit="${i}" data-actdate="${d}"><span class="grow"><b>${esc(a.name)}</b>
       <div class="muted small">${actLine(a)}</div></span><span class="chev">›</span></button>`).join("")}
     <div class="row wrap" style="margin-top:8px"><button class="small" data-hpass="">+ Logga ett pass${d === TODAY ? "" : " i efterhand"}</button>
       <button class="small" data-actnew="" data-actdate="${d}">+ Aktivitet</button></div>

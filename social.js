@@ -40,33 +40,30 @@ const feedWhen = day => day === TODAY ? "idag" : day === shift(TODAY, -1) ? "ig�
 function feedRow(a) {
   const what = `${esc(a.pass)}${a.exercises ? ` · ${a.exercises} övningar` : ""}`;
   return `<div class="feed-row"><div class="grow"><b>${a.mine ? "Du" : esc(a.name)}</b> körde ${what}<div class="muted small">${feedWhen(a.day)}</div></div>
-    ${a.mine ? (a.kudos ? `<span class="kudos-count">👏 ${a.kudos}</span>` : "")
-      : `<button class="kudos ${a.kudoed ? "on" : ""}" data-kudos="${a.id}" aria-pressed="${a.kudoed}" aria-label="Peppa ${esc(a.name)}">👏${a.kudos ? ` ${a.kudos}` : ""}</button>`}</div>`;
+    ${a.mine ? (a.kudos ? `<span class="kudos-count">${icon("pepp", 16)} ${a.kudos}</span>` : "")
+      : `<button class="kudos ${a.kudoed ? "on" : ""}" data-kudos="${a.id}" aria-pressed="${a.kudoed}" aria-label="Peppa ${esc(a.name)}">${icon("pepp", 18)}${a.kudos ? ` ${a.kudos}` : ""}</button>`}</div>`;
 }
 
 // På Hem: en vänkod från en länk, och vännernas senaste pass
 function friendsHome() {
   if (!sbEnabled) return "";
   if (social.pendingCode && !(social.profile && social.profile.code === social.pendingCode)) {
-    return `<div class="card nudge"><h2>👋 Vänförfrågan</h2>
+    return `<div class="card nudge"><h2>Vänförfrågan</h2>
       <div class="muted">Någon har delat sin vänkod <b>${esc(social.pendingCode)}</b> med dig. Som vänner ser ni varandras pass och kan peppa varandra.</div>
       <div class="row wrap" style="margin-top:10px"><button class="primary small" data-gofriends>Lägg till vän</button><button class="ghost small" data-dropcode>Inte nu</button></div></div>`;
   }
   if (S.friendsUntil && S.friendsUntil > TODAY && !(social.friends && social.friends.length)) return "";
   // Utan konto: en kort uppmaning längst ned
-  if (account.step !== "in") return `<div class="card homerow friendsrow"><span class="hricon" aria-hidden="true">👋</span>
-    <span class="grow"><b>Träna med vänner</b><span class="muted small">Se varandras pass och peppa varandra</span></span>
+  if (account.step !== "in") return `<div class="card homerow friendsrow"><span class="grow"><b>Träna med vänner</b><span class="muted small">Se varandras pass och peppa varandra</span></span>
     <button class="small" data-gokonto>Kom igång</button><button class="small ghost" data-friendslater aria-label="Inte nu">✕</button></div>`;
   if (!social.loaded || social.error) return "";
   const invite = social.profile ? `<button data-sharecode>📤 Bjud in en vän</button>` : `<button data-gofriends>📤 Bjud in en vän</button>`;
-  if (!social.friends.length) return `<div class="card homerow friendsrow"><span class="hricon" aria-hidden="true">👋</span>
-    <span class="grow"><b>Träna med vänner</b><span class="muted small">Se varandras pass och peppa varandra</span></span>
+  if (!social.friends.length) return `<div class="card homerow friendsrow"><span class="grow"><b>Träna med vänner</b><span class="muted small">Se varandras pass och peppa varandra</span></span>
     ${invite.replace("📤 Bjud in en vän", "Bjud in")}<button class="small ghost" data-friendslater aria-label="Inte nu">✕</button></div>`;
   // Senaste passet från en vän; resten finns under Vänner
   const f = social.feed.find(a => !a.mine);
-  return `<div class="card homerow friendsrow"><span class="hricon" aria-hidden="true">👋</span>
-    ${f ? `<span class="grow"><b>${esc(f.name)} körde ${esc(f.pass)}</b><span class="muted small">${feedWhen(f.day)} · <button class="link small" data-gofriends>alla vänner</button></span></span>
-      <button class="kudos ${f.kudoed ? "on" : ""}" data-kudos="${f.id}" aria-pressed="${f.kudoed}" aria-label="Peppa ${esc(f.name)}">👏${f.kudos ? ` ${f.kudos}` : ""}</button>`
+  return `<div class="card homerow friendsrow">${f ? `<span class="grow"><b>${esc(f.name)} körde ${esc(f.pass)}</b><span class="muted small">${feedWhen(f.day)} · <button class="link small" data-gofriends>alla vänner</button></span></span>
+      <button class="kudos ${f.kudoed ? "on" : ""}" data-kudos="${f.id}" aria-pressed="${f.kudoed}" aria-label="Peppa ${esc(f.name)}">${icon("pepp", 18)}${f.kudos ? ` ${f.kudos}` : ""}</button>`
       : `<span class="grow"><b>Vänner</b><span class="muted small">Inga pass från vänner de senaste dagarna</span></span><button class="small ghost" data-gofriends>Visa</button>`}</div>`;
 }
 

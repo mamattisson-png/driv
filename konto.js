@@ -147,7 +147,7 @@ const IOS_STEPS = "Tryck på Dela-knappen (fyrkanten med pilen) i Safari och vä
 function accountNudge() {
   if (!sbEnabled || account.step === "in" || (S.nudgeUntil && S.nudgeUntil > TODAY)) return "";
   if (loggedDays() < 3) return "";
-  return `<div class="card nudge"><h2>💾 Spara dina loggar</h2>
+  return `<div class="card nudge"><h2>Spara dina loggar</h2>
     <div class="muted">Just nu finns allt bara på den här enheten. Med ett konto sparas det i molnet – bara e-post, klart på en minut.
       ${isIOS() && !standalone() ? "<b>På iPhone kan Safari rensa sparad data om Driv inte öppnas på en vecka.</b>" : ""}</div>
     <div class="row wrap" style="margin-top:10px"><button class="primary small" data-gokonto>Skapa konto</button>
@@ -158,7 +158,7 @@ function accountNudge() {
 // Visas när man börjat logga och kontokortet inte redan syns.
 function installNudge() {
   if (!canInstall() || (S.installUntil && S.installUntil > TODAY) || loggedDays() < 1 || accountNudge()) return "";
-  return `<div class="card nudge"><h2>📲 Lägg Driv på hemskärmen</h2>
+  return `<div class="card nudge"><h2>Lägg Driv på hemskärmen</h2>
     <div class="muted">Då öppnas Driv som en vanlig app${isIOS() ? ", notiser fungerar och iPhone rensar inte dina loggar" : ""}.
       ${installEvt ? "" : IOS_STEPS}</div>
     <div class="row wrap" style="margin-top:10px">${installEvt ? `<button class="primary small" data-install>Installera</button>` : ""}
@@ -167,7 +167,7 @@ function installNudge() {
 // Raden under Konto och data i Profil
 function installHelp() {
   if (!canInstall()) return "";
-  return `<div class="muted small" style="margin-top:10px">📲 ${installEvt ? `Installera Driv som app så öppnas den snabbare. <button class="link small" data-install>Installera</button>`
+  return `<div class="muted small" style="margin-top:10px">${installEvt ? `Installera Driv som app så öppnas den snabbare. <button class="link small" data-install>Installera</button>`
     : `Lägg Driv på hemskärmen så öppnas den som en app och iPhone rensar inte datan: ${IOS_STEPS}`}</div>`;
 }
 

@@ -70,16 +70,16 @@ def test_eget_upplagg_med_egna_namn_och_ovningar(page):
     assert "Bröst & triceps" in page.inner_text(".daypass")
 
 
-def test_hem_visar_dagens_ovningar(page):
+def test_hem_visar_dagens_pass(page):
     start(page)
     seed(page, "S.log[shift(TODAY,-7)] = {workouts:[{dayId:S.plan.days[0].id,done:true,sets:{bankpress:[{kg:80,reps:8,ok:true}]}}],dailies:{},food:[]}")
     assert page.inner_text("#nav [data-tab=idag]").endswith("Hem")
-    # Övningarna står som en kort rad; passet väljs under Träna
+    # Musklerna som rubrik och passets storlek; övningarna visas först när passet startas
+    d = page.evaluate("({n: currentPassDay().ex.length, sets: currentPassDay().ex.reduce((a, x) => a + x.sets, 0), title: passTitle(currentPassDay())})")
+    card = page.inner_text(".daypass")
+    assert d["title"] in card and f'{d["n"]} övningar · {d["sets"]} set' in card
     assert page.locator("#app [data-pick]").count() == 0
-    line = page.inner_text(".daypass .exline")
-    for name in page.evaluate("currentPassDay().ex.map(x => EX[x.id].name)"):
-        assert name in line
-    assert page.locator(".plus-card").count() == 0
+    assert page.locator(".weekstrip .wday").count() == 7
     page.click(".daypass [data-tab=pass]")
     assert page.evaluate("tab") == "pass" and page.locator("[data-pick]").count() == 3
     go(page, "idag")
@@ -284,7 +284,7 @@ def test_upplagg_och_ovningar_andras_fran_hem(page):
     page.click(".daypass [data-xdel] >> nth=0")
     assert page.locator(".daypass [data-xdel]").count() == n - 1
     page.click(".daypass [data-edit]")
-    assert page.locator(".daypass .exline span").count() == n - 1
+    assert page.evaluate("currentPassDay().ex.length") == n - 1
 
 
 def test_logga_hela_passet_i_efterhand(page):
@@ -377,7 +377,7 @@ def test_hem_har_en_rad_med_dagens_siffror(page):
     seed(page, "logFood({name: 'Gröt', kcal: 300, protein: 10}, 0)")
     go(page, "idag")
     assert "300" in page.inner_text(".homesum") and "10" in page.inner_text(".homesum")
-    page.click(".homesum")
+    page.click(".homesum [data-go=kost] >> nth=0")
     assert page.evaluate("tab") == "kost"
 
 
@@ -1200,7 +1200,7 @@ def test_vanner_kod_flode_och_peppning(page):
     assert "Bo körde Push" in page.inner_text(".friendsrow") and "igår" in page.inner_text(".friendsrow")
     page.click("[data-kudos='1']")
     page.wait_for_function("window.__social.kudos.length === 1")
-    assert "👏 1" in page.inner_text("[data-kudos='1']")
+    assert page.inner_text("[data-kudos='1']").strip() == "1" and page.get_attribute("[data-kudos='1']", "aria-pressed") == "true"
     # Ett sparat pass delas med antal övningar, inget annat
     go(page, "pass")
     open_ex(page, "bankpress")
