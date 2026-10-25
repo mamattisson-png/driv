@@ -858,7 +858,7 @@ const VIEWS = {
     const picked = draft.weekdays.length, ok = !fixed || picked === n;
     const sorted = draft.weekdays.slice().sort((a, b) => a - b);
     const p = S.profile;
-    return `${S.setupDone ? "" : `<div class="brand"><img src="icons/icon-192-v2.png" alt=""><h1 class="ordbild"><img class="ord-l" src="icons/ordbild-light.webp" alt="DRIV – Ditt mål. Ditt driv." width="560" height="160"><img class="ord-d" src="icons/ordbild-dark.webp" alt="" width="560" height="160"></h1></div>`}
+    return `${S.setupDone ? "" : `<div class="brand"><img src="icons/icon-192-v2.png" alt=""><h1 class="ordbild"><b class="wordmark">DRIV</b><span class="slogan">Ditt mål. <em>Ditt driv.</em></span></h1></div>`}
       ${S.setupDone ? `<button class="small ghost backlink" data-cancelsetup>‹ ${setupFrom === "idag" ? "Hem" : "Profil"}</button>` : ""}
       <h1>${S.setupDone ? "Ditt upplägg" : "Välj ditt upplägg"}</h1>
       ${!S.setupDone && account.step === "in" ? `<div class="muted" style="margin:-4px 0 12px">Inloggad som <b>${esc(account.email)}</b>.

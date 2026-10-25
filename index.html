@@ -108,12 +108,13 @@
   .seg { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
   .brand { display: flex; gap: 14px; align-items: center; margin: 4px 0 18px; }
   .brand img { width: 56px; height: 56px; border-radius: 14px; }
-  .brand .ordbild { margin: 0; line-height: 0; }
-  .brand .ordbild img { width: min(196px, calc(100vw - 184px)); height: auto; border-radius: 0; }
-  .ord-d { display: none; }
-  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .ord-l { display: none; } :root:not([data-theme="light"]) .ord-d { display: inline; } }
-  :root[data-theme="dark"] .ord-l { display: none; }
-  :root[data-theme="dark"] .ord-d { display: inline; }
+  @font-face { font-family: "Unbounded"; font-weight: 300; font-display: block; src: url(fonts/unbounded-300.woff2) format("woff2"); }
+  @font-face { font-family: "Lexend"; font-weight: 300; font-display: block; src: url(fonts/lexend-300.woff2) format("woff2"); }
+  .brand .ordbild { margin: 0; display: inline-flex; flex-direction: column; gap: 6px; line-height: 1; }
+  /* DRIV och slogan lika långa: bokstavsluften är uppmätt för de här typsnitten */
+  .brand .wordmark { font: 300 26px "Unbounded", sans-serif; letter-spacing: .4466em; margin-right: -.4466em; }
+  .brand .slogan { font: 300 13px "Lexend", sans-serif; white-space: nowrap; }
+  .brand .slogan em { font-style: normal; color: var(--accent); }
   .proglist { display: grid; gap: 8px; }
   .proglist button { text-align: left; padding: 10px 12px; display: grid; gap: 2px; }
   .proglist button.on { border-color: var(--accent); outline: 2px solid var(--accent); }
