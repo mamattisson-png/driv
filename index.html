@@ -498,7 +498,33 @@
   .qtyrow .qcount { font-size: 20px; min-width: 36px; }
   .nowrap { white-space: nowrap; }
   .qkcal input { flex: 1; }
-  .drow { display: flex; gap: 8px; align-items: center; padding: 8px 0; border-top: 1px solid var(--line); color: var(--text); }
+  .drow { display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center; padding: 10px 0; border-top: 1px solid var(--line); color: var(--text); }
+  .drow > .grow { min-width: 0; flex: 1 1 120px; }
+  .drow b { font-weight: 500; }
+  /* Matbladet: måltid, fält med skanning bredvid, tre små val, tolkade rader och en knapp längst ned */
+  .foodsheet .mealseg { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 10px 0 12px; }
+  .foodsheet .mealseg button { padding: 0 2px; font-size: 13px; }
+  .frow { display: flex; gap: 8px; }
+  .frow input { flex: 1; min-width: 0; height: 52px; border-radius: 16px; font-size: 15px; }
+  .fscan { width: 52px; height: 52px; flex: none; padding: 0; border-radius: 16px; display: grid; place-items: center; }
+  .foodtabs { margin: 10px 0 4px; }
+  .foodtabs button { min-height: 36px; font-size: 13px; }
+  .foodtabs button.on { background: var(--text); color: var(--bg); border-color: var(--text); }
+  .foodsheet .manual { margin: 8px 0 4px; }
+  .fstep { display: flex; align-items: center; flex: none; border-radius: 14px; background: var(--bg); border: 1px solid var(--line); }
+  .fstep button { width: 40px; height: 44px; padding: 0; border: 0; background: none; color: var(--text); font-size: 18px; min-height: 0; }
+  .fstep button:disabled { opacity: .35; }
+  .fstep .famt { width: auto; min-width: 48px; padding: 0 4px; font-size: 15px; font-weight: 600; white-space: nowrap; text-align: center; }
+  .fstep b.famt { display: inline-block; }
+  .famtedit { display: flex; gap: 8px; width: 100%; justify-content: flex-end; }
+  .famtedit[hidden] { display: none; }
+  .fask { display: flex; flex-direction: column; gap: 8px; padding: 10px 0; border-top: 1px solid var(--line); }
+  .fask-q { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+  .fdot { width: 8px; height: 8px; border-radius: 4px; background: var(--accent); flex: none; }
+  .fask-opts { display: flex; flex-wrap: wrap; gap: 6px; }
+  .fask-opts button { min-height: 40px; padding: 0 12px; border-radius: 12px; font-size: 13px; background: var(--card-2); text-align: left; }
+  .fask-ai { margin-top: 8px; }
+  .fidle[hidden] { display: none; }
   .drow:first-child { border-top: 0; }
   .amtstep { display: flex; align-items: center; gap: 4px; flex: none; }
   .amt-n { width: 56px; flex: none; text-align: center; font-size: 17px; font-weight: 600; padding: 7px 2px; }

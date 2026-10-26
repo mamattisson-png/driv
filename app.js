@@ -1568,7 +1568,6 @@ document.addEventListener("click", ev => {
     if (r) r.textContent = pt.dataset.label;
     return;
   }
-  if (suggCache && !ev.target.closest(".fwrap")) hideSuggestions();
   const t = ev.target.closest("button, input[type=checkbox], .overlay");
   if (!t || t.disabled) return;
   if (t.classList.contains("overlay") && ev.target !== t) return;   // klick inne i rutan
@@ -1596,7 +1595,6 @@ document.addEventListener("click", ev => {
   if (ds.swap) { modal = { pick: ds.swap, replace: +ds.idx }; render(); filterPicker(); return; }
   if (ds.swapwhen) { modal.today = ds.swapwhen === "true"; render(); filterPicker(); return; }
   if (ds.askai !== undefined) { askClaude(); return; }
-  if (ds.sugg !== undefined) { pickSuggestion(+ds.sugg); return; }
   if (ds.tab) {
     tab = ds.tab; editing = false; dailyEditing = false; draft = null; editDate = null; histDay = null;
     if (tab !== "pass") chosenDay = null;
@@ -1708,27 +1706,6 @@ document.addEventListener("click", ev => {
     return;
   }
   else if (ds.remnotify !== undefined) S.reminder = Object.assign({ time: "20:00" }, S.reminder, { notify: t.checked });
-  else if (ds.addfood !== undefined || ds.savemeal !== undefined) {
-    const name = document.getElementById("fname").value.trim();
-    const kcal = Math.round(+document.getElementById("fkcal").value || 0);
-    const protein = Math.round(+document.getElementById("fprot").value || 0);
-    if (!name && !kcal) return;
-    // Okänd rätt utan egna värden: låt Claude uppskatta och logga sedan
-    if (ds.addfood !== undefined && name && cloud.sample && !$("fkcal").dataset.manual
-      && !(S.learned || {})[norm(name)] && parseFood(name).unknown.length) {
-      askClaude(true);
-      return;
-    }
-    const item = { name: name || "Mat", kcal, protein };
-    if (ds.savemeal !== undefined) { S.meals.push(item); toast("Sparad bland snabbvalen"); }
-    else logFood(item);
-  }
-  else if (ds.qmeal) {
-    const [slot, share] = MEALS[+ds.qmeal], m = macros();
-    const kcal = Math.round(+document.getElementById("qm-" + ds.qmeal).value || Math.round(m.kcal * share / 10) * 10);
-    // Protein uppskattas med samma andel som i dagens mål
-    logFood({ name: "Uppskattning", kcal, protein: Math.round(kcal * m.protein / m.kcal), est: true }, +ds.qmeal);
-  }
   else if (ds.delmeal) S.meals.splice(+ds.delmeal, 1);
   else if (ds.delfood) day().food.splice(+ds.delfood, 1);
   else if (ds.xdel) exList(ds.xdel).splice(+ds.idx, 1);
@@ -1849,70 +1826,6 @@ document.addEventListener("change", ev => {
 
 // Matloggen räknas ut medan man skriver; egna värden i kcal/protein skrivs inte över
 const $ = id => document.getElementById(id);
-// Förslag för den del man skriver just nu (efter senaste komma, "och" eller +)
-let suggCache = null;
-function hideSuggestions() {
-  const box = $("fsugg");
-  if (box) box.hidden = true;
-  suggCache = null;
-}
-function showSuggestions() {
-  const text = $("fname").value, box = $("fsugg");
-  const m = text.match(/^([\s\S]*(?:,(?!\d)|\s+och\s+|\+|;|\n)\s*)?([\s\S]*)$/);
-  const head = m[1] || "", { prefix, rest } = splitAmount(m[2]);
-  const list = rest.trim().length >= 2 ? suggestFoods(rest, 6) : [];
-  if (!list.length) return hideSuggestions();
-  suggCache = { head, prefix, list };
-  box.innerHTML = `<div class="sugg-head muted small"><span>Förslag</span><span>kcal · protein per 100 g</span></div>` +
-    list.map((x, i) => `<button role="option" data-sugg="${i}"><span>${esc(x.label)}${x.fuzzy ? ` <span class="small muted">menade du?</span>` : ""}</span>
-    <span class="muted small">${x.food.kcal} · ${fmtNum(x.food.p)} g</span></button>`).join("");
-  box.hidden = false;
-}
-// Byter ut delen man skriver mot det valda namnet och behåller mängden
-function pickSuggestion(i) {
-  const { head, prefix, list } = suggCache, x = list[i], f = x.food;
-  const amount = prefix.trim() ? prefix : f.portion || f.st ? "" : f.dl ? "1 dl " : "100 g ";
-  const input = $("fname");
-  input.value = head + amount + x.name;
-  hideSuggestions();
-  foodPreview(false);
-  input.focus();
-  input.setSelectionRange(input.value.length, input.value.length);
-}
-
-function foodPreview(suggest = true) {
-  const text = $("fname").value, out = $("fpreview");
-  if (suggest) showSuggestions();
-  const addrow = document.querySelector(".addrow");
-  if (addrow) addrow.hidden = !text.trim() && !manualKcal;
-  if (!text.trim()) { out.innerHTML = ""; return; }
-  const known = (S.learned || {})[norm(text.trim())];
-  if (known) {
-    for (const [id, v] of [["fkcal", known.kcal], ["fprot", known.protein]]) if (!$(id).dataset.manual) $(id).value = v;
-    out.innerHTML = `${esc(text)} <span class="fg">≈ ${known.kcal} kcal · ${known.protein} g protein</span> <span class="small">(sparad uträkning)</span>`;
-    return;
-  }
-  const r = parseFood(text);
-  // Delen man skriver på visas som förslag, inte som "känns inte igen"
-  if (suggCache && r.items.length && !r.items[r.items.length - 1].known) {
-    r.unknown = r.unknown.slice(0, -1);
-    r.items = r.items.slice(0, -1);
-  }
-  for (const [id, v] of [["fkcal", r.kcal], ["fprot", r.protein]]) if (!$(id).dataset.manual) $(id).value = v || "";
-  const lines = r.items.map(i => i.known
-    ? `${esc(i.text)}${i.corrected ? ` <span class="small">→ ${esc(i.corrected)}</span>` : ""} <span class="fg">≈ ${i.kcal} kcal · ${fmtNum(i.protein)} g protein</span> <span class="small">(${i.grams} g)</span>`
-    : `${esc(i.text)} <span class="unk">känns inte igen</span>`);
-  let tip = "";
-  if (r.unknown.length) tip = cloud.sample
-    ? `<div style="margin-top:6px"><button class="small" data-askai>Räkna ut med Claude</button> eller tryck Logga direkt</div>`
-    : `<div>Skriv mängd och livsmedel, t.ex. "150 g kyckling", eller fyll i kcal själv.</div>`;
-  // Med fönstret för en måltid öppet blir varje tolkad rad en mängd som går att ändra
-  out.innerHTML = (foodSheet ? draftRows(r.items) : lines.join("<br>")) + tip;
-  const manual = document.querySelector(".manual");
-  // Fälten för egna kcal visas bara när något inte känns igen, eller när man bett om dem
-  if (manual) manual.hidden = !(manualKcal || r.unknown.length);
-}
-
 async function askClaude(logAfter = false) {
   const text = $("fname").value.trim(), out = $("fpreview");
   if (!text || !cloud.sample) return;
@@ -1923,18 +1836,16 @@ async function askClaude(logAfter = false) {
       `Anta vanliga svenska portionsstorlekar där mängd saknas. Svara bara med JSON: ` +
       `{"kcal": heltal, "protein": heltal i gram, "tolkning": "kort beskrivning på svenska av mängderna du antog"}`,
       { modelTier: "quick" });
-    $("fkcal").value = Math.round(+r.kcal || 0);
-    $("fprot").value = Math.round(+r.protein || 0);
-    $("fkcal").dataset.manual = $("fprot").dataset.manual = "1";
-    out.innerHTML = `Claude: ${esc(r.tolkning || text)} <span class="fg">≈ ${Math.round(+r.kcal || 0)} kcal · ${Math.round(+r.protein || 0)} g protein</span>`;
+    out.innerHTML = `<div class="drow"><div class="grow"><b>${esc(text)}</b><div class="muted small">Claude: ${esc(r.tolkning || text)} · ${Math.round(+r.kcal || 0)} kcal · ${Math.round(+r.protein || 0)} g protein</div></div></div>`;
     S.learned = S.learned || {};
     S.learned[norm(text)] = { kcal: Math.round(+r.kcal || 0), protein: Math.round(+r.protein || 0) };
     save();
     if (logAfter) {
       logFood({ name: text, kcal: +r.kcal || 0, protein: +r.protein || 0 });
+      foodSheet = null;
       save();
       render();
-    }
+    } else updateFoodBtn();
   } catch (e) {
     out.textContent = e && e.code === "not_granted"
       ? "Claude får inte användas här. Fyll i kcal själv."
@@ -1946,7 +1857,7 @@ document.addEventListener("input", ev => {
   const t = ev.target;
   if (t.id === "exsearch") { modal.q = t.value; filterPicker(); }
   else if (t.id === "fname") foodPreview();
-  else if (t.id === "fkcal" || t.id === "fprot") t.dataset.manual = t.value ? "1" : "";
+  else if (t.id === "fkcal") updateFoodBtn();
 });
 
 restoreOldSwaps();

@@ -79,7 +79,7 @@ def views(page):
     page.evaluate("recipeEdit = null; S.recipes = [{ name: 'Lasagne', portions: 4, items: [{ name: 'Nötfärs', text: '500 g', kcal: 1100, protein: 95 }] }]; recipeList = true; render()")
     yield "Dina recept", ".sheet"
     page.evaluate("recipeList = false; render()")
-    page.click(".sheet-foot [data-fsclose]")
+    page.click("#faddbtn")
     page.click('[data-fooditem="0"]')
     yield "Ändra mat", ".sheet"
     page.click(".sheet [data-itemclose].primary")
