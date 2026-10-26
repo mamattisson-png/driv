@@ -1065,7 +1065,9 @@ const VIEWS = {
       ${group("Appen", `${profRow("utseende", "utseende", "Utseende", "", null, themeSeg)}
         ${profRow("konto", "data", sbEnabled ? "Konto och data" : "Data", account.step === "in" ? esc(account.email) : sbEnabled ? "Inloggning, exportera, importera" : "Exportera, importera",
           `${accountCard()}${data}`)}
-        ${sbEnabled ? profRow("tyck", "chat", "Tyck till", "Vad saknas, vad är krångligt?", feedbackCard()) : ""}`)}
+        ${sbEnabled ? profRow("tyck", "chat", "Tyck till", "Vad saknas, vad är krångligt?", feedbackCard()) : ""}
+        ${isDevAccount() ? `<div class="prow"><div class="prow-line"><button class="prow-head" data-opentest><span class="pic">${icon("test", 20)}</span><span class="grow"><b>Testläge</b>
+          <span class="muted small">Egen data som inte rör ditt konto</span></span><span class="chev">${icon("right", 18)}</span></button></div></div>` : ""}`)}
       ${account.step === "in" ? `<button class="wide plogout" data-signout>${icon("logout", 18)}Logga ut</button>` : ""}`;
   },
 };
@@ -1102,6 +1104,9 @@ const passTitle = d => d.type === "custom" || !TYPES[d.type] ? d.name : TYPES[d.
 
 // Profilen är en lista där en rad i taget kan fällas ut
 let profOpen = null;
+// Testläget nås från profilen för utvecklarens konto. Bara en hash av e-posten står i koden.
+const fnvHash = str => { let h = 0x811c9dc5; for (const b of new TextEncoder().encode(str)) h = Math.imul((h ^ b) >>> 0, 0x01000193) >>> 0; return h.toString(16).padStart(8, "0"); };
+const isDevAccount = () => account.step === "in" && fnvHash(String(account.email || "").trim().toLowerCase()) === "b24ae646";
 // Namnet i profilen: det vännerna ser, annars det sparade, annars början på e-posten
 const profName = () => (social.profile && social.profile.name) || S.name || (account.step === "in" ? account.email.split("@")[0] : "Du");
 // body null: raden fälls inte ut (valet ligger direkt i raden). extra: en kontroll till höger, t.ex. en strömbrytare.
@@ -1550,6 +1555,11 @@ document.addEventListener("click", ev => {
   if (t.classList.contains("overlay") && ev.target !== t) return;   // klick inne i rutan
   const ds = t.dataset, prevTab = tab;
   if (ds.close !== undefined) { modal = null; render(); return; }
+  if (ds.opentest !== undefined) {
+    try { localStorage.setItem("driv-dev", "1"); } catch (e) { /* blockerad lagring */ }
+    location.href = `${location.pathname}?test`;
+    return;
+  }
   if (ds.editprof !== undefined) { modal = { prof: true }; render(); return; }
   if (ds.pnamesave !== undefined) {
     const name = ($("pname").value || "").trim();

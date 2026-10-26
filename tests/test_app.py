@@ -1460,3 +1460,12 @@ def test_andra_profil_oppnar_en_ruta(page):
     assert page.locator(".profsheet").count() == 0
     assert "Testnamn" in page.text_content(".pcard")
     assert page.evaluate("S.name") == "Testnamn"
+
+
+def test_testlage_fran_utvecklarens_konto(page):
+    start(page)
+    assert page.evaluate("isDevAccount()") is False
+    page.evaluate("account.step = 'in'; account.email = 'nagon@annan.se'")
+    assert page.evaluate("isDevAccount()") is False
+    page.evaluate("account.email = ' Ma.Mattisson@gmail.com '")
+    assert page.evaluate("isDevAccount()") is True
