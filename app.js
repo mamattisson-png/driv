@@ -1300,7 +1300,7 @@ function muscleFigure(parts, status, side) {
   const st = Object.fromEntries(status.map(s => [s.key, s.state]));
   const inFig = new Set(parts.map(([k]) => k)), shown = status.map(s => s.key).filter(k => inFig.has(k));
   const label = `${side}: ${shown.length ? shown.map(k => `${MUSCLE_GROUPS[k].toLowerCase()} ${STATE_WORD[st[k]]}`).join(", ") : "inga muskler i passet"}`;
-  return `<figure class="mfig"><svg viewBox="0 0 100 200" role="img" aria-label="${label}">
+  return `<figure class="mfig"><svg width="60" height="120" viewBox="0 0 100 200" role="img" aria-label="${label}">
     <g class="m-head"><circle cx="50" cy="14" r="9"/><rect x="46" y="23" width="8" height="7" rx="2"/></g>
     ${parts.map(([k, shapes]) => `<g class="m-${st[k] || "off"}">${shapes}</g>`).join("")}</svg><figcaption>${side === "Framsida" ? "Fram" : "Bak"}</figcaption></figure>`;
 }

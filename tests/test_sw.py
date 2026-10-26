@@ -24,3 +24,18 @@ def test_appen_startar_utan_nat(browser, base_url):
     assert pg.locator("[data-savesetup]").count() == 1
     assert pg.evaluate("typeof FOODS !== 'undefined' && typeof EX !== 'undefined'")
     ctx.close()
+
+
+def test_installationen_hamtar_varje_fil_med_versionen(browser, base_url):
+    # Utan versionen kan GitHub Pages cdn svara med en äldre index.html än app.js, och appen sparar en blandning
+    ctx = browser.new_context(service_workers="allow")
+    ctx.add_init_script("window.__swTest = true")
+    seen = []
+    ctx.on("request", lambda r: seen.append(r.url))
+    pg = ctx.new_page()
+    pg.goto(base_url)
+    pg.evaluate("navigator.serviceWorker.ready")
+    v = swv.current()
+    for f in swv.files():
+        assert any(u.endswith(f"/{f}?v={v}") for u in seen), f
+    ctx.close()
