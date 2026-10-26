@@ -870,7 +870,7 @@ const VIEWS = {
     const sorted = draft.weekdays.slice().sort((a, b) => a - b);
     const p = S.profile;
     return `${S.setupDone ? "" : `<div class="brand"><img src="icons/icon-192-v2.png" alt=""><h1 class="ordbild"><b class="wordmark">DRIV</b><span class="slogan">Ditt mål. <em>Ditt driv.</em></span></h1></div>`}
-      ${S.setupDone ? `<button class="small ghost backlink" data-cancelsetup>‹ ${setupFrom === "idag" ? "Hem" : "Profil"}</button>` : ""}
+      ${S.setupDone ? `<button class="small ghost backlink" data-cancelsetup>‹ ${{ idag: "Hem", pass: "Träna" }[setupFrom] || "Profil"}</button>` : ""}
       <h1>${S.setupDone ? "Ditt upplägg" : "Välj ditt upplägg"}</h1>
       ${!S.setupDone && account.step === "in" ? `<div class="muted" style="margin:-4px 0 12px">Inloggad som <b>${esc(account.email)}</b>.
         ${cloud.status === "cloud" ? "Kontot har inget sparat upplägg än. Välj ett nedan och tryck Kom igång, så sparas det på kontot." : cloud.status === "error" ? "Kunde inte hämta från kontot. Ladda om sidan." : "Hämtar från kontot…"}</div>`
@@ -904,8 +904,9 @@ const VIEWS = {
         <div class="muted small" style="margin:10px 0 6px">Fyll i dig själv, så räknas ett kalorimål fram som passar just dig.</div>
         ${profileFields(p, true)}
         <div class="goalres">Ditt mål: <b>${tnum(kcalGoal())} kcal</b> och <b>${macros().protein} g protein</b> per dag</div></div>`}
-      ${!S.setupDone && !setupMore ? `<button class="wide" data-setupmore>Anpassa övningar och dailys <span class="muted">(valfritt)</span></button>
-        <div class="muted small" style="margin:-4px 0 12px">Allt är förifyllt och kan ändras när som helst under Profil.</div>` : `
+      ${S.setupDone ? `<div class="card muted small setupnote">Upplägget styr vilka pass du kör och när. Övningarna i ett pass ändrar du under <b>Träna</b>, dailys på <b>Hem</b> och kalorimålet i <b>Profil</b>.</div>`
+        : !setupMore ? `<button class="wide" data-setupmore>Anpassa övningar och dailys <span class="muted">(valfritt)</span></button>
+        <div class="muted small" style="margin:-4px 0 12px">Allt är förifyllt. Övningarna ändrar du sedan under Träna och dailys på Hem.</div>` : `
       <div class="card"><h2>${S.setupDone ? 4 : 5}. Övningar</h2>
         <div class="muted" style="margin-bottom:8px">${draft.program === "eget" ? "Lägg till övningar i varje pass." : "Förifyllt. Byt, ta bort eller lägg till."} Tryck på en bild för att se hur övningen görs.</div>
         ${draft.days.map((d, i) => `<details class="plan-day" open><summary>${fixed && ok ? `<b>${WD[sorted[i]]}</b> · ` : ""}<b>Pass ${i + 1}</b> ${tag(d.type)}
@@ -943,14 +944,12 @@ const VIEWS = {
       passCard = `<section class="card daypass" aria-label="Dagens pass">
         <div class="passtop">${tag(d.type)}<span class="muted small">Dagens pass · Pass ${S.plan.days.indexOf(d) + 1} av ${S.plan.days.length}</span>
           ${w && w.done ? `<span class="passok">${icon("check", 14)}Klart</span>` : ""}</div>
-        ${editing ? `<h2 class="passname sm">${esc(passTitle(d))}</h2>${muscleCard(d.id, d.type, d.ex)}${exRows(d.id, d.ex, true)}
-          <button class="primary wide bigbtn" style="margin-top:14px" data-edit>Klar</button></section>` : `
         <div><h2 class="passname">${esc(passTitle(d))}</h2><div class="muted">${d.ex.length ? meta : "Passet har inga övningar än."}</div></div>
         ${others.length ? `<div class="muted small">Idag har du även loggat ${others.map(o => esc(o.name)).join(", ")}.</div>` : ""}
         <button class="primary wide bigbtn" data-focusstart="${d.id}">${w && w.done ? "Öppna passet" : `${icon("play", 18)}${w ? "Fortsätt passet" : "Starta passet"}`}</button>
         <div class="row between passlinks">${S.plan.days.length > 1 ? `<button class="ghost" data-tab="pass">Byt pass</button>` : "<span></span>"}
           <button class="ghost" data-actnew="" data-actdate="${TODAY}">+ Annan aktivitet</button>
-          <button class="ghost" data-edit>Ändra övningar</button></div></section>`}`;
+          <button class="ghost" data-editpass="${d.id}">Ändra övningar</button></div></section>`;
     } else {
       const nx = nextScheduled(TODAY);
       passCard = `<section class="card daypass" aria-label="Dagens pass"><div class="passtop"><span class="muted small">Vilodag</span></div>
@@ -989,14 +988,16 @@ const VIEWS = {
         <h1>Logga i efterhand</h1><div class="pastsub">${Day} · vecka ${weekNo(editDate)}</div>
         <div class="muted small pastnote">Ett pass du redan har gjort. Inget startas, fyll bara i vad du lyfte.</div>`
       : `<h1>Träna</h1>`}
+      ${editing || editDate ? "" : planLine()}
       ${dayPicker(d && d.id)}
       ${editing || editDate ? "" : `<div class="row between passmeta"><div class="col"><span class="muted small">${esc(TYPES[d.type] && d.type !== "custom" ? TYPES[d.type].muscles : d.name)}</span>
-        <span class="passcount">${d.ex.length} ${d.ex.length === 1 ? "övning" : "övningar"}</span></div><button class="ghost" data-edit>Redigera</button></div>`}
+        <span class="passcount">${d.ex.length} ${d.ex.length === 1 ? "övning" : "övningar"}</span></div><button class="ghost" data-edit>Ändra övningar</button></div>`}
       ${editing ? `<div class="card"><div class="row between"><h2>${passLabel(d)}</h2><button class="small ghost" data-edit>Klar</button></div>
-          <div class="muted">${TYPES[d.type].muscles}</div></div>${editList(d)}`
+          <div class="muted">${TYPES[d.type].muscles}</div></div>${editList(d)}
+          <button class="primary wide bigbtn" data-edit>Klar</button>`
         : !d.ex.length ? `<div class="card muted">Passet har inga övningar än. <button class="link" data-edit>Lägg till övningar</button></div>`
         : editDate ? `${pastLog(d, w)}
-          <div class="row between passmeta"><span class="muted small">${TYPES[d.type].muscles}</span><button class="link small" data-edit>Redigera passet</button></div>
+          <div class="row between passmeta"><span class="muted small">${TYPES[d.type].muscles}</span><button class="link small" data-edit>Ändra övningar</button></div>
           ${w && w.done ? `<div class="card done-card"><b>Passet är sparat för ${dateLabel(editDate)}.</b>
                 <button class="small" style="margin-top:8px" data-finish="${d.id}">Öppna passet igen</button></div>`
             : `<button class="primary wide bigbtn" data-finish="${d.id}">Spara och gå tillbaka till Historik</button>
@@ -1231,7 +1232,15 @@ function exRows(target, list, withOrder) {
 }
 
 function editList(d) {
-  return `${muscleCard(d.id, d.type, d.ex)}<div class="card">${exRows(d.id, d.ex, true)}</div>`;
+  const name = d.type === "custom" ? `<label class="field" style="margin-bottom:10px">Namn på passet
+    <input value="${esc(d.name)}" data-passname="${d.id}" placeholder="T.ex. Bröst & triceps"></label>` : "";
+  return `${muscleCard(d.id, d.type, d.ex)}<div class="card">${name}${exRows(d.id, d.ex, true)}</div>`;
+}
+// Överst i Träna: vilket upplägg man kör, och vägen dit det ändras
+function planLine() {
+  const when = isFixed() ? S.plan.weekdays.map(i => WD[i]).join(", ") : `${S.plan.count} pass i veckan`;
+  return `<button class="planline" data-tab="upplagg"><span class="grow"><span class="muted small">Upplägg</span>
+    <b>${esc(PROGRAMS[S.plan.program || "ppl"].name)} · ${when}</b></span><span class="planedit">Ändra${icon("right", 16)}</span></button>`;
 }
 
 // ---------- Muskelkartan ----------
@@ -1667,13 +1676,15 @@ function syncDone(d) {
 }
 
 function saveSetup() {
+  const back = S.setupDone ? setupFrom : null;
   const weekdays = draft.weekdays.slice().sort((a, b) => a - b);
   S.plan = { program: draft.program, count: draft.count, mode: draft.mode, weekdays, days: draft.days };
   // Har man hoppat över kalorimålet påminner Kost om att ställa in det
   if (!S.setupDone && S.profileSet !== true) S.profileSet = false;
   S.setupDone = true;
   draft = null;
-  tab = "idag";
+  // Ändrat upplägg: tillbaka dit man kom ifrån (Träna, Profil eller Hem)
+  tab = back && back !== "upplagg" ? back : "idag";
 }
 
 // ---------- Händelser ----------
@@ -1729,6 +1740,8 @@ document.addEventListener("click", ev => {
   else if (ds.go) { tab = ds.go; if (ds.day) chosenDay = ds.day; }
   else if (ds.pick) { chosenDay = ds.pick; }
   else if (ds.edit !== undefined) editing = !editing;
+  // Övningarna ändras bara i Träna; från Hem kommer man dit med passet öppet för ändring
+  else if (ds.editpass) { tab = "pass"; chosenDay = ds.editpass; editing = true; editDate = null; window.scrollTo(0, 0); }
   else if (ds.ok) {
     const d = currentPassDay(), s = setAt(d, ds.ok, +ds.i);
     s.ok = !s.ok;
@@ -1921,6 +1934,10 @@ document.addEventListener("change", ev => {
   if (ds.run) { const L = day(); L.dailies[ds.run] = Object.assign({}, L.dailies[ds.run], { [ds.f]: +t.value || 0 }); }
   else if (ds.weighday !== undefined) S.weighDay = +t.value;
   else if (ds.prof) { S.profile[ds.prof] = ds.prof === "sex" || ds.prof === "goal" ? t.value : +t.value; S.profileSet = true; }
+  else if (ds.passname) {
+    const d = dayById(ds.passname);
+    if (d) { d.name = t.value.trim() || d.name; d.named = true; }
+  }
   else if (ds.dayname) {
     const d = draft.days[+ds.dayname];
     d.name = t.value.trim() || d.name;

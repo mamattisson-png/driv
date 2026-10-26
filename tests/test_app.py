@@ -275,21 +275,44 @@ def test_utseende_kan_valjas(page):
     assert page.evaluate("document.documentElement.dataset.theme") is None
 
 
-def test_upplagg_och_ovningar_andras_fran_hem(page):
+def test_upplagg_och_ovningar_andras_pa_ett_stalle(page):
     start(page)
     go(page, "profil")
     page.click('.plist [data-tab="upplagg"]')
     assert page.evaluate("tab") == "upplagg" and "Profil" in page.inner_text(".backlink")
+    # Efter starten är upplägget bara program, antal pass och dagar
+    assert page.locator("[data-openpick^=draft], [data-prof], [data-dedit]").count() == 0
+    assert "Träna" in page.inner_text(".setupnote")
     page.click(".backlink")
     assert page.evaluate("tab") == "profil"
+    # Från Träna: upplägget överst, och sparat upplägg går tillbaka till Träna
+    go(page, "pass")
+    page.click(".planline")
+    assert page.evaluate("tab") == "upplagg" and "Träna" in page.inner_text(".backlink")
+    page.click("[data-savesetup]")
+    assert page.evaluate("tab") == "pass"
+    # Ändra övningar på Hem öppnar passet i Träna, där övningarna ändras
     go(page, "idag")
-    # Övningarna i dagens pass ändras direkt i kortet
-    n = page.evaluate("currentPassDay ? S.plan.days.find(x => x.id === document.querySelector('.daypass [data-focusstart]').dataset.focusstart).ex.length : 0")
-    page.click(".daypass [data-edit]")
-    page.click(".daypass [data-xdel] >> nth=0")
-    assert page.locator(".daypass [data-xdel]").count() == n - 1
-    page.click(".daypass [data-edit]")
-    assert page.evaluate("currentPassDay().ex.length") == n - 1
+    d = page.get_attribute(".daypass [data-editpass]", "data-editpass")
+    n = page.evaluate(f"dayById('{d}').ex.length")
+    page.click(".daypass [data-editpass]")
+    assert page.evaluate("tab") == "pass" and page.evaluate("editing") and page.evaluate("currentPassDay().id") == d
+    page.click("[data-xdel] >> nth=0")
+    assert page.locator("[data-xdel]").count() == n - 1
+    page.click("button.primary[data-edit]")
+    assert not page.evaluate("editing") and page.evaluate(f"dayById('{d}').ex.length") == n - 1
+
+
+def test_eget_pass_kan_doptas_i_trana(page):
+    open_app(page)
+    page.click("button.on[data-progtoggle]")
+    page.click('[data-prog="eget"]')
+    page.click("[data-savesetup]")
+    go(page, "pass")
+    page.click("[data-edit]")
+    page.fill("[data-passname]", "Rygg & armar")
+    page.press("[data-passname]", "Tab")
+    assert page.evaluate("S.plan.days[0].name") == "Rygg & armar"
 
 
 def test_logga_hela_passet_i_efterhand(page):
