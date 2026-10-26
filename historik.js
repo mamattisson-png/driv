@@ -116,7 +116,9 @@ function devCard() {
   const useKg = pts.some(x => +x.b.kg), val = b => useKg ? +b.kg : +b.reps, unit = useKg ? "kg" : repUnit(id);
   let lo = Math.min(...pts.map(x => val(x.b))), hi = Math.max(...pts.map(x => val(x.b)));
   if (lo === hi) { lo -= 1; hi += 1; }
-  const X = i => 6 + i * 308 / (series.length - 1), Y = v => 104 - (v - lo) / (hi - lo) * 78;
+  // Grafen börjar vid första veckan med data
+  const i0 = pts[0].i, span = Math.max(1, pts[pts.length - 1].i - i0);
+  const X = i => 6 + (i - i0) * 308 / span, Y = v => 104 - (v - lo) / (hi - lo) * 78;
   const line = pts.map(p => `${X(p.i).toFixed(1)},${Y(val(p.b)).toFixed(1)}`).join(" "), last = pts[pts.length - 1], best = pts.reduce((a, p) => val(p.b) > val(a.b) ? p : a);
   return `<section class="card devcard" aria-label="Utveckling"><div class="row between"><h2>Utveckling · ${esc(EX[id].name)}</h2>
       ${ids.length > 1 ? `<button class="ghost small" data-hchart="${ids[(ids.indexOf(id) + 1) % ids.length]}">Byt</button>` : ""}</div>
