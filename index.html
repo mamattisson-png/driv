@@ -14,6 +14,14 @@
 <script>
   // Utseende väljs i Profil och gäller den här enheten; sätts före första ritningen så att inget blinkar
   try { const t = localStorage.getItem("driv-theme"); if (t === "light" || t === "dark") document.documentElement.dataset.theme = t; } catch (e) {}
+  // Testläge (adressen slutar på ?test): egen data i webbläsaren som aldrig kopplas till kontot.
+  // Eget manifest så att en ikon på hemskärmen öppnar testläget.
+  window.DRIV_TEST = new URLSearchParams(location.search).has("test");
+  if (window.DRIV_TEST) {
+    document.querySelector('link[rel="manifest"]').href = "manifest-test.webmanifest";
+    document.querySelector('meta[name="apple-mobile-web-app-title"]').content = "Driv test";
+    document.title = "Driv test";
+  }
 </script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <style>
@@ -551,6 +559,13 @@
   .plan-day summary { cursor: pointer; padding: 4px 0; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
   .plan-day summary .muted { margin-left: auto; }
   .subex .small { flex: none; }
+  /* Testläge */
+  .testbar { position: sticky; top: 0; z-index: 8; display: flex; align-items: center; flex-wrap: wrap; gap: 4px 10px;
+    padding: calc(6px + env(safe-area-inset-top, 0px)) 16px 6px; background: var(--accent-strong); color: var(--on-accent); font-size: 13px; }
+  .testbar b { font-weight: 600; }
+  .testbar .grow { opacity: .85; }
+  .testbar button { min-height: 36px; padding: 0 10px; font-size: 13px; border-radius: 10px; border-color: transparent;
+    background: rgba(0, 0, 0, .18); color: var(--on-accent); }
   /* ---------- Profil ---------- */
   .phead { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
   .phead h1 { margin: 0; min-height: 0; }

@@ -1,0 +1,30 @@
+{
+  "name": "Driv test",
+  "short_name": "Driv test",
+  "description": "Träning, mat och vanor – enkelt, på ett ställe.",
+  "lang": "sv",
+  "start_url": "./?test",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0d0e10",
+  "theme_color": "#0d0e10",
+  "icons": [
+    {
+      "src": "icons/icon-192-v2.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icon-512-v2.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icon-maskable-512-v2.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "id": "./?test"
+}

@@ -144,8 +144,9 @@ const ACTIVITY = [
 const GOALS = { cut: ["Gå ner (−400 kcal)", -400], keep: ["Behålla", 0], bulk: ["Bygga (+250 kcal)", 250] };
 
 // ---------- Lagring ----------
-const KEY = "ppl-traning-v2";
-const KEY_V1 = "ppl-traning-v1";
+// Testläget har egen data under andra nycklar, så att den riktiga loggen aldrig rörs
+const KEY = window.DRIV_TEST ? "driv-test" : "ppl-traning-v2";
+const KEY_V1 = window.DRIV_TEST ? "driv-test-v1" : "ppl-traning-v1";
 
 function exEntry(spec) {
   const [id, sr] = spec.split("@");
@@ -1021,7 +1022,8 @@ const VIEWS = {
         <div class="row wrap"><button data-export>Exportera</button><button data-import>Importera</button>
         <button class="${confirmReset ? "primary" : "ghost"}" data-reset>${confirmReset ? "Tryck igen för att radera allt" : "Nollställ allt"}</button></div>
         ${importMsg ? `<div class="muted" style="margin-top:8px">${esc(importMsg)}</div>` : ""}
-        <input type="file" id="importfile" accept="application/json" class="hidden">${installHelp()}`;
+        <input type="file" id="importfile" accept="application/json" class="hidden">${installHelp()}
+        ${window.DRIV_TEST ? "" : `<div class="muted small" style="margin-top:10px">Vill du prova något utan att röra din data? <a href="?test" class="linkbtn">Öppna testläget</a></div>`}`;
     const friends = !sbEnabled ? "" : account.step !== "in" ? "Kräver ett konto"
       : social.profile ? `${social.friends.length ? `${social.friends.length} ${social.friends.length === 1 ? "vän" : "vänner"}` : "Inga vänner än"} · kod ${esc(social.profile.code)}` : "Välj ditt namn";
     const name = (social.profile && social.profile.name) || (account.step === "in" ? account.email.split("@")[0] : "Du");
@@ -1891,3 +1893,41 @@ setInterval(() => {
   const typing = document.activeElement && /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName);
   if (document.visibilityState === "visible" && !typing && refreshToday()) render();
 }, 60000);
+
+// ---------- Testläge ----------
+// Ett band överst med exempeldata, börja om och lämna. Allt gäller bara testdatan.
+function seedDemo() {
+  if (!S.setupDone) { VIEWS.upplagg(); saveSetup(); }
+  const D = S.plan.days;
+  for (let k = 1; k <= 20; k++) {
+    if (S.log[shift(TODAY, -k)]) continue;
+    const d = D[k % D.length], trained = k % 2 === 1;
+    S.log[shift(TODAY, -k)] = {
+      workouts: trained ? [{ dayId: d.id, done: true, sets: Object.fromEntries(d.ex.slice(0, 3).map((x, i) =>
+        [x.id, [{ kg: EX[x.id].bw ? 0 : 40 + 10 * i + Math.round((20 - k) / 3) * 2.5, reps: 8, ok: true }]])) }] : [],
+      dailies: Object.fromEntries(S.daily.filter(e => !isRun(e.id)).map((e, i) => [e.id, (k + i) % 4 !== 0])),
+      food: [{ name: "Havregrynsgröt", kcal: 330, protein: 12, meal: 0 }, { name: "Kyckling och ris", kcal: 650, protein: 45, meal: 1 },
+        { name: "Kvarg", kcal: 180, protein: 30, meal: 2 }, { name: "Lax och potatis", kcal: 700, protein: 40, meal: 3 }],
+      acts: k % 6 === 0 ? [{ name: "Padel", min: 60, int: 2 }] : [],
+    };
+  }
+  for (const k of [21, 14, 7]) weights()[shift(TODAY, -k)] = 82 - (21 - k) / 14;
+  S.profile.weight = latestWeight().kg;
+  save(); render();
+  toast("Exempeldata tillagd");
+}
+if (window.DRIV_TEST) {
+  document.body.insertAdjacentHTML("afterbegin", `<div class="testbar" role="status"><b>Testläge</b>
+    <span class="grow">Egen data, sparas inte på kontot</span>
+    <button data-testseed>Exempeldata</button><button data-testreset>Börja om</button><button data-testexit>Lämna</button></div>`);
+  document.addEventListener("click", ev => {
+    const t = ev.target.closest && ev.target.closest("[data-testseed],[data-testreset],[data-testexit]");
+    if (!t) return;
+    if (t.dataset.testseed !== undefined) seedDemo();
+    else if (t.dataset.testreset !== undefined) {
+      try { localStorage.removeItem(KEY); } catch (e) { /* blockerad lagring */ }
+      location.reload();
+    }
+    else location.href = location.pathname;
+  });
+}

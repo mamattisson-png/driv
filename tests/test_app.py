@@ -1339,3 +1339,27 @@ def test_tyck_till_skickar_synpunkt(page):
     page.wait_for_function("feedback.sent")
     assert page.evaluate("window.__fb") == {"message": "Vilotimern är toppen", "email": "jag@exempel.se", "page": "profil"}
     assert "Tack" in page.inner_text('.card:has(h2:text-is("Tyck till"))')
+
+
+def test_testlage_har_egen_data(page):
+    page.context.route("**/config.js", lambda r: r.fulfill(body=SB_CONFIG, content_type="application/javascript"))
+    start(page)
+    seed(page, "S.log[TODAY] = {workouts:[],dailies:{},food:[{name:'Riktig mat',kcal:500,protein:20}]}")
+    real = page.evaluate("localStorage.getItem('ppl-traning-v2')")
+    # Testläget börjar från noll, utan konto, och sparar under en egen nyckel
+    page.goto(page.base_url + "?test")
+    assert page.locator(".testbar").count() == 1 and page.evaluate("sbEnabled") is False
+    assert page.evaluate("S.setupDone") is False
+    assert page.get_attribute('link[rel="manifest"]', "href") == "manifest-test.webmanifest"
+    page.click("[data-testseed]")
+    assert page.evaluate("Object.keys(S.log).length") >= 20 and page.evaluate("S.setupDone") is True
+    assert page.evaluate("localStorage.getItem('ppl-traning-v2')") == real
+    assert page.evaluate("JSON.parse(localStorage.getItem('driv-test')).setupDone") is True
+    # Börja om tömmer bara testdatan
+    page.click("[data-testreset]")
+    page.wait_for_function("document.readyState === 'complete' && S.setupDone === false")
+    assert page.evaluate("localStorage.getItem('driv-test')") is None
+    assert page.evaluate("localStorage.getItem('ppl-traning-v2')") == real
+    page.click("[data-testexit]")
+    page.wait_for_function("!new URLSearchParams(location.search).has('test') && document.readyState === 'complete'")
+    assert page.locator(".testbar").count() == 0 and page.evaluate("day().food[0].name") == "Riktig mat"

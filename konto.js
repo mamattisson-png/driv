@@ -4,7 +4,8 @@
 // Inloggning med kod eller länk via e-post. Varje användare ser bara sina egna rader (RLS).
 const SUPABASE_JS = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js";
 const sbConf = window.DRIV_CONFIG || {};
-const sbEnabled = !window.claude && !!(sbConf.supabaseUrl && sbConf.supabaseAnonKey);
+// I testläget används aldrig kontot: ingen inloggning, synk, vänner eller notiser
+const sbEnabled = !window.claude && !window.DRIV_TEST && !!(sbConf.supabaseUrl && sbConf.supabaseAnonKey);
 const account = { sb: null, email: "", step: "email", msg: "", busy: false };
 
 async function supabaseClient() {
