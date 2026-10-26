@@ -827,7 +827,8 @@
   .roundbtn.accentbtn { background: var(--accent-strong); border-color: var(--accent-strong); color: var(--on-accent); }
   .invitecard { display: flex; flex-direction: column; gap: 10px; padding: 20px; border-radius: 24px; }
   .invitecard h2 { margin: 4px 0 0; font-size: 18px; }
-  .invitecard .bigbtn { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 4px; }
+  .invitecard .bigbtn { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 4px 0 0; }
+  .invitecard .ghost.wide { margin: -4px 0 -8px; }
   .av.addav { background: var(--card-2); color: var(--muted); border: 2px dashed var(--line-strong); box-sizing: border-box; }
   .invitecard .avs .av + .av { margin-left: -12px; }
   /* Pass klart: hela skärmen, utan meny */
@@ -869,7 +870,8 @@
   .daypass .bigbtn { margin: 0; display: flex; align-items: center; justify-content: center; gap: 10px; }
   .passlinks { margin: -10px -6px -8px; }
   .passlinks { gap: 4px; }
-  .passlinks .ghost { padding: 0 6px; font-size: 14px; flex: 0 1 auto; min-width: 0; line-height: 1.2; }
+  .passlinks .ghost { padding: 0 4px; font-size: 13px; flex: 0 1 auto; min-width: 0; line-height: 1.2; white-space: nowrap; }
+  @media (max-width: 359px) { .passlinks .ghost { white-space: normal; } }
   .passlinks .ghost:nth-child(2) { text-align: center; }
   .passlinks .ghost:last-child { text-align: right; }
   .homeacts { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: -4px 0 14px; }
@@ -899,7 +901,6 @@
   .wrow b { font-weight: 500; font-size: 15px; }
   .wrow #wkg { width: 72px; flex: none; text-align: center; }
   .wrow .small { flex: none; }
-  .friendsrow { background: var(--card-2); border-color: transparent; }
   .letter-card .iconbtn { padding: 0; width: 44px; }
 </style>
 </head>
