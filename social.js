@@ -44,35 +44,89 @@ function feedRow(a) {
       : `<button class="kudos ${a.kudoed ? "on" : ""}" data-kudos="${a.id}" aria-pressed="${a.kudoed}" aria-label="Peppa ${esc(a.name)}">${icon("pepp", 18)}${a.kudos ? ` ${a.kudos}` : ""}</button>`}</div>`;
 }
 
-// På Hem: en vänkod från en länk, och vännernas senaste pass
-function friendsHome() {
-  if (!sbEnabled) return "";
-  if (social.pendingCode && !(social.profile && social.profile.code === social.pendingCode)) {
-    return `<div class="card nudge"><h2>Vänförfrågan</h2>
-      <div class="muted">Någon har delat sin vänkod <b>${esc(social.pendingCode)}</b> med dig. Som vänner ser ni varandras pass och kan peppa varandra.</div>
-      <div class="row wrap" style="margin-top:10px"><button class="primary small" data-gofriends>Lägg till vän</button><button class="ghost small" data-dropcode>Inte nu</button></div></div>`;
+// Profilbild: första bokstaven på en färg som räknas fram ur namnet, så att den är stabil
+function nameHue(name) { let h = 0; for (const c of String(name)) h = (h * 31 + c.codePointAt(0)) % 360; return h; }
+const avatar = (name, cls = "") => `<span class="av ${cls}" style="--h:${nameHue(name)}" aria-hidden="true">${esc(String(name).slice(0, 1).toUpperCase())}</span>`;
+function avatars(names, max = 3) {
+  if (!names.length) return "";
+  return `<span class="avs" aria-hidden="true">${names.slice(0, max).map(n => avatar(n, "sm")).join("")}${names.length > max ? `<span class="av sm more">+${names.length - max}</span>` : ""}</span>`;
+}
+// "för 2 tim sedan" för pass idag, annars dagen
+function feedAgo(a) {
+  if (a.day === TODAY && a.created) {
+    const min = Math.round((Date.now() - new Date(a.created).getTime()) / 60000);
+    if (min >= 0 && min < 60) return min < 2 ? "nyss" : `för ${min} min sedan`;
+    if (min >= 60 && min < 24 * 60) return `för ${Math.round(min / 60)} tim sedan`;
   }
-  if (S.friendsUntil && S.friendsUntil > TODAY && !(social.friends && social.friends.length)) return "";
-  // Utan konto: en kort uppmaning längst ned
-  if (account.step !== "in") return `<div class="card homerow friendsrow"><span class="grow"><b>Träna med vänner</b><span class="muted small">Se varandras pass och peppa varandra</span></span>
-    <button class="small" data-gokonto>Kom igång</button><button class="small ghost" data-friendslater aria-label="Inte nu">${icon("close", 18)}</button></div>`;
-  if (!social.loaded || social.error) return "";
-  const invite = social.profile ? `<button data-sharecode>Bjud in en vän</button>` : `<button data-gofriends>Bjud in en vän</button>`;
-  if (!social.friends.length) return `<div class="card homerow friendsrow"><span class="grow"><b>Träna med vänner</b><span class="muted small">Se varandras pass och peppa varandra</span></span>
-    ${invite.replace("Bjud in en vän", "Bjud in")}<button class="small ghost" data-friendslater aria-label="Inte nu">${icon("close", 18)}</button></div>`;
-  // Senaste passet från en vän; resten finns under Vänner
-  const f = social.feed.find(a => !a.mine);
-  return `<div class="card homerow friendsrow">${f ? `<span class="grow"><b>${esc(f.name)} körde ${esc(f.pass)}</b><span class="muted small">${feedWhen(f.day)} · <button class="link small" data-gofriends>alla vänner</button></span></span>
-      <button class="kudos ${f.kudoed ? "on" : ""}" data-kudos="${f.id}" aria-pressed="${f.kudoed}" aria-label="Peppa ${esc(f.name)}">${icon("pepp", 18)}${f.kudos ? ` ${f.kudos}` : ""}</button>`
-      : `<span class="grow"><b>Vänner</b><span class="muted small">Inga pass från vänner de senaste dagarna</span></span><button class="small ghost" data-gofriends>Visa</button>`}</div>`;
+  return feedWhen(a.day);
+}
+// En väns pass med Peppa, eller "Peppat" när man redan peppat
+function feedEvent(a) {
+  return `<div class="fevent">${avatar(a.name)}<div class="grow"><span><b>${esc(a.name)}</b> körde ${esc(a.pass)}</span><span class="muted small">${feedAgo(a)}</span></div>
+    ${a.kudoed ? `<span class="peppat">Peppat</span>` : `<button class="peppa" data-kudos="${a.id}" aria-pressed="false" aria-label="Peppa ${esc(a.name)}">Peppa</button>`}</div>`;
+}
+// Peppningar på ens eget pass. Vem som peppat delas inte, bara hur många.
+function myKudosEvent(a) {
+  return `<div class="fevent">${avatar(social.profile ? social.profile.name : "Du")}<div class="grow"><span><b>${a.kudos} ${a.kudos === 1 ? "vän" : "vänner"}</b> peppade ditt ${esc(a.pass)}-pass</span>
+    <span class="muted small">${feedWhen(a.day)}</span></div><span class="peppat">${icon("pepp", 16)}</span></div>`;
 }
 
-// Kort rad efter ett sparat pass: vännerna ser det, eller en inbjudan
-function friendsAfterPass() {
-  if (!sbEnabled) return "";
-  if (account.step === "in" && social.profile && social.profile.sharing && social.friends.length)
-    return `<div class="muted small" style="margin-top:6px">${social.friends.length === 1 ? esc(social.friends[0].name) + " ser" : "Dina vänner ser"} passet och kan peppa dig.</div>`;
-  return `<button class="link small" style="margin-top:6px" data-${account.step === "in" ? (social.profile ? "sharecode" : "gofriends") : "gokonto"}>Bjud in en vän att träna med</button>`;
+// På Hem: en vänkod från en länk
+function friendsNudge() {
+  if (!sbEnabled || !social.pendingCode || (social.profile && social.profile.code === social.pendingCode)) return "";
+  return `<div class="card nudge"><h2>Vänförfrågan</h2>
+    <div class="muted">Någon har delat sin vänkod <b>${esc(social.pendingCode)}</b> med dig. Som vänner ser ni varandras pass och kan peppa varandra.</div>
+    <div class="row wrap" style="margin-top:10px"><button class="primary small" data-gofriends>Lägg till vän</button><button class="ghost small" data-dropcode>Inte nu</button></div></div>`;
+}
+// På Hem, under passkortet, när man har vänner: vilka som tränat idag och högst två händelser.
+// Utan vänner visas ingenting; inbjudan kommer efter passet och under Profil.
+function friendsHome() {
+  if (!sbEnabled || account.step !== "in" || !social.loaded || social.error || !social.friends.length) return "";
+  const others = social.feed.filter(a => !a.mine);
+  const today = [...new Set(others.filter(a => a.day === TODAY).map(a => a.name))];
+  const open = others.find(a => !a.kudoed), mine = social.feed.find(a => a.mine && a.kudos > 0);
+  const events = [open && feedEvent(open), mine && myKudosEvent(mine)].filter(Boolean);
+  if (events.length < 2) { const done = others.find(a => a.kudoed); if (done) events.push(feedEvent(done)); }
+  return `<section class="card friendsbox friendsrow" aria-label="Vänner">
+    <button class="fbhead" data-tab="vanner">${avatars(today)}<span class="grow">${today.length
+      ? `<b>${today.length} ${today.length === 1 ? "vän" : "vänner"}</b> <span class="muted">har tränat idag</span>` : `<b>Vänner</b>`}</span>
+      <span class="muted small fball">Alla${icon("right", 14)}</span></button>
+    ${events.slice(0, 2).join("") || `<div class="fevent muted small">Inga pass från vänner de senaste dagarna.</div>`}</section>`;
+}
+
+// Vänsidan: dagens pass med Peppa (och Peppa alla), äldre dagar hopfällda, sist ens kod och vänner
+let friendsDayOpen = null;
+function friendsView() {
+  const head = `<header class="phead"><button class="roundbtn" data-tab="${vannerBack}" aria-label="Tillbaka">${icon("left", 20)}</button><h1 class="grow">Vänner</h1>
+    ${social.profile ? `<button class="roundbtn accentbtn" data-sharecode aria-label="Bjud in en vän">${icon("plus", 20)}</button>` : ""}</header>`;
+  if (!sbEnabled || account.step !== "in" || !social.profile || social.error) return head + friendsCard();
+  const others = social.feed.filter(a => !a.mine), today = others.filter(a => a.day === TODAY);
+  const days = [];
+  for (let i = 1; i <= 7; i++) { const d = shift(TODAY, -i), list = others.filter(a => a.day === d); if (list.length) days.push([d, list]); }
+  const dayName = d => d === shift(TODAY, -1) ? "Igår" : `${WD_LONG[weekdayOf(d)].replace(/^./, c => c.toUpperCase())} ${+d.slice(8)}/${+d.slice(5, 7)}`;
+  const names = list => { const n = [...new Set(list.map(a => a.name))]; return n.length <= 2 ? n.join(" och ") : `${n.slice(0, 2).join(", ")} och ${n.length - 2} till`; };
+  return `${head}
+    <section class="fsec" aria-label="Idag"><div class="row between fsec-h"><h2 class="klabel">Idag · ${today.length} pass</h2>
+      ${today.some(a => !a.kudoed) ? `<button class="small" data-kudosall>Peppa alla</button>` : ""}</div>
+      <div class="card flist">${today.length ? today.map(feedEvent).join("") : `<div class="fevent muted small">Inga pass från vänner idag än.</div>`}</div></section>
+    ${days.map(([d, list]) => `<section class="fsec" aria-label="${dayName(d)}"><h2 class="klabel fsec-h">${dayName(d)} · ${list.length} pass</h2>
+      ${friendsDayOpen === d ? `<div class="card flist">${list.map(feedEvent).join("")}</div>`
+        : `<button class="card fday" data-fday="${d}" aria-expanded="false">${avatars([...new Set(list.map(a => a.name))], 2)}<span class="grow">${esc(names(list))}</span>${icon("down", 16)}</button>`}</section>`).join("")}
+    ${friendsCard()}`;
+}
+
+// Inbjudan efter ett pass, för den som inte har några vänner. "Inte nu" gömmer den i två veckor.
+function inviteCard() {
+  if (!sbEnabled || (social.friends && social.friends.length) || (S.inviteUntil && S.inviteUntil > TODAY)) return "";
+  return inviteMarkup();
+}
+function inviteMarkup() {
+  const send = account.step === "in" && social.profile ? "data-sharecode" : "data-gofriends";
+  return `<section class="card invitecard" aria-label="Bjud in en vän"><span class="avs" aria-hidden="true">${avatar(social.profile ? social.profile.name : profName())}<span class="av addav">${icon("plus", 16)}</span></span>
+    <h2>Vill en kompis se när du tränar?</h2>
+    <div class="muted">Ni ser när den andra kört ett pass och kan peppa varandra. Vikter, mat och kroppsvikt delas aldrig.</div>
+    <button class="primary wide bigbtn" ${send}>${icon("share", 18)}Skicka inbjudan</button>
+    <button class="ghost wide" data-invitelater>Inte nu</button></section>`;
 }
 
 // Under Profil
@@ -111,7 +165,7 @@ async function socialAction(fn, okMsg) {
 }
 
 document.addEventListener("click", ev => {
-  const t = ev.target.closest("[data-kudos],[data-gofriends],[data-friendslater],[data-dropcode],[data-profsave],[data-addfriend],[data-unfriend],[data-sharecode],[data-renameprof]");
+  const t = ev.target.closest("[data-kudos],[data-kudosall],[data-fday],[data-invitelater],[data-gofriends],[data-dropcode],[data-profsave],[data-addfriend],[data-unfriend],[data-sharecode],[data-renameprof]");
   if (!t || t.disabled) return;
   const ds = t.dataset;
   if (ds.kudos) {
@@ -120,10 +174,20 @@ document.addEventListener("click", ev => {
     if (a) { a.kudoed = !a.kudoed; a.kudos += a.kudoed ? 1 : -1; render(); }
     socialRpc("driv_kudos", { p_activity: +ds.kudos }).catch(() => loadSocial());
   }
-  else if (ds.gofriends !== undefined) {
-    openProfRow("vanner");
+  else if (ds.kudosall !== undefined) {
+    const list = social.feed.filter(a => !a.mine && a.day === TODAY && !a.kudoed);
+    list.forEach(a => { a.kudoed = true; a.kudos++; });
+    render();
+    Promise.all(list.map(a => socialRpc("driv_kudos", { p_activity: a.id }))).catch(() => loadSocial());
   }
-  else if (ds.friendslater !== undefined) { S.friendsUntil = shift(TODAY, 21); save(); render(); }
+  else if (ds.fday) { friendsDayOpen = friendsDayOpen === ds.fday ? null : ds.fday; render(); }
+  else if (ds.invitelater !== undefined) { S.inviteUntil = shift(TODAY, 14); save(); render(); }
+  else if (ds.gofriends !== undefined) {
+    // Till vänsidan; utan konto eller profil börjar den med att skapa en
+    passDone = null; if (tab !== "vanner") vannerBack = tab; tab = "vanner"; render(); window.scrollTo(0, 0);
+    const c = document.getElementById("vanner");
+    if (social.pendingCode && c && c.scrollIntoView) c.scrollIntoView({ block: "start" });
+  }
   else if (ds.dropcode !== undefined) { social.pendingCode = ""; history.replaceState(null, "", location.pathname); render(); }
   else if (ds.profsave !== undefined) {
     const name = ($("sname").value || "").trim();

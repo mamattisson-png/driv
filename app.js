@@ -770,6 +770,8 @@ const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;",
 const TABS = [["idag", "hem", "Hem"], ["pass", "trana", "Träna"], ["kost", "kost", "Kost"], ["historik", "historik", "Historik"]];
 let tab = S.setupDone ? "idag" : "upplagg";
 let profBack = "idag";   // fliken man kom från, dit tillbaka-pilen i Profil går
+let vannerBack = "idag"; // dit tillbaka-pilen på vänsidan går
+let passDone = null;     // { dayId, date } medan skärmen för ett avslutat pass visas
 let chosenDay = null;
 let editing = false;
 let dailyEditing = false;
@@ -786,7 +788,7 @@ function render() {
   const nav = document.getElementById("nav");
   // Fokusläget tar hela skärmen; menyn kommer tillbaka när man lämnar det
   const inFocus = tab === "pass" && !!focus && !editing;
-  nav.classList.toggle("hidden", tab === "upplagg" || inFocus);
+  nav.classList.toggle("hidden", tab === "upplagg" || inFocus || !!passDone);
   document.body.classList.toggle("infocus", inFocus);
   nav.innerHTML = TABS.map(([id, ic, lbl]) =>
     `<button data-tab="${id}" class="${tab === id ? "on" : ""}" ${tab === id ? 'aria-current="page"' : ""}>${icon(ic, 22)}${lbl}</button>`).join("");
@@ -796,8 +798,9 @@ function render() {
   // Första starten: Logga in i hörnet för den som redan har ett konto
   const corner = tab === "upplagg" && !S.setupDone && sbEnabled && account.step !== "in" && !welcomeLogin
     ? `<button class="corner-login small" data-welcomelogin="login">Logga in</button>` : "";
-  const gear = tab === "upplagg" || tab === "idag" || tab === "profil" || (tab === "pass" && focus && !editing) ? corner : `<button class="gear ${tab === "profil" ? "on" : ""}" data-tab="profil" aria-label="Profil och inställningar">${icon("profil", 20)}</button>`;
-  document.getElementById("app").innerHTML = gear + banner + VIEWS[tab]() + (modal ? renderModal() : "") + (actSheet ? actSheetView() : "");
+  const gear = passDone || tab === "upplagg" || tab === "idag" || tab === "profil" || tab === "vanner" || (tab === "pass" && focus && !editing) ? corner : `<button class="gear ${tab === "profil" ? "on" : ""}" data-tab="profil" aria-label="Profil och inställningar">${icon("profil", 20)}</button>`;
+  document.getElementById("app").innerHTML = passDone ? passDoneView()
+    : gear + banner + VIEWS[tab]() + (modal ? renderModal() : "") + (actSheet ? actSheetView() : "");
   if (modal && modal.pick) filterPicker();
   afterFocusRender();
   updateBadge();
@@ -966,13 +969,13 @@ const VIEWS = {
       ${weekStrip(weekPasses)}
       ${letter}
       ${accountNudge()}${installNudge()}
-      ${social.pendingCode ? friendsHome() : ""}
+      ${friendsNudge()}
       ${passCard}
+      ${friendsHome()}
       ${homeActs()}
       ${homeSummary(e, m)}
       ${dailiesCard(false, true)}
-      ${S.hideWeight ? "" : weighCardDue()}
-      ${social.pendingCode ? "" : friendsHome()}`;
+      ${S.hideWeight ? "" : weighCardDue()}`;
   },
 
   pass() {
@@ -1000,7 +1003,7 @@ const VIEWS = {
         : `${passOverview(d, w)}
           ${w && w.done
             ? `<div class="card done-card"><b>Bra jobbat, passet är sparat!</b>
-                <div class="muted small">Det räknas in i veckans pass och jämförelsen med förra veckan.</div>${friendsAfterPass()}
+                <div class="muted small">Det räknas in i veckans pass och jämförelsen med förra veckan.</div>
                 <button class="small" style="margin-top:8px" data-finish="${d.id}">Öppna passet igen</button></div>`
             : logged
             ? `<button class="primary wide bigbtn" data-finish="${d.id}">Spara passet · ${done} av ${d.ex.length} klara</button>
@@ -1013,6 +1016,8 @@ const VIEWS = {
   kost: () => kostView(),
 
   historik: () => historikView(),
+
+  vanner() { return friendsView(); },
 
   profil() {
     checkPush();
@@ -1063,7 +1068,8 @@ const VIEWS = {
           <label class="row"><input type="checkbox" data-showweight ${S.hideWeight ? "" : "checked"}><span>Visa vikt på Hem och i Historik</span></label>
           <label class="field" style="margin-top:8px">Vägningsdag<select data-weighday>${WD.map((w, i) => `<option value="${i}" ${weighDay() === i ? "selected" : ""}>${WD_LONG[i].replace(/^./, c => c.toUpperCase())}</option>`).join("")}</select></label>
           <div class="muted small" style="margin-top:4px">Döljer du vikten används vikten i Kalorimål, och sparade vägningar finns kvar.</div>`)}`)}
-      ${group(sbEnabled ? "Vänner och notiser" : "Notiser", `${sbEnabled ? profRow("vanner", "vanner", "Vänner", friends, friendsCard()) : ""}
+      ${group(sbEnabled ? "Vänner och notiser" : "Notiser", `${sbEnabled ? `<div class="prow" id="p-vanner"><div class="prow-line"><button class="prow-head" data-tab="vanner"><span class="pic">${icon("vanner", 20)}</span><span class="grow"><b>Vänner</b>
+          <span class="muted small">${friends}</span></span><span class="chev">${icon("right", 18)}</span></button></div></div>` : ""}
         ${profRow("notiser", "bell", "Notiser", pushSummary(), pushBody(), pushSwitch)}
         ${S.daily.length ? profRow("paminnelse", "kalender", "Påminnelse i kalendern", r ? `För dina dailys · kl. ${esc(r.time)}` : "För dina dailys · ingen vald", reminderCard()) : ""}`)}
       ${group("Appen", `${profRow("utseende", "utseende", "Utseende", "", null, themeSeg)}
@@ -1317,6 +1323,26 @@ function letterWeekToShow() {
   if (!ws || S.letterSeen === ws) return null;
   const sum = weekSummary(ws);
   return sum.passes || sum.dailies || sum.kcal || Object.keys(S.log).some(d => d >= ws && d < shift(ws, 7)) ? ws : null;
+}
+
+// Skärmen när ett pass är klart: set, nya personbästa och, utan vänner, en inbjudan
+function passDoneView() {
+  const d = dayById(passDone.dayId), date = passDone.date;
+  if (!d) { passDone = null; return VIEWS[tab](); }
+  const w = workoutOn(date, d.id);
+  const sets = w ? Object.values(w.sets).reduce((n, arr) => n + arr.filter(s => s && s.ok).length, 0) : 0;
+  const prs = d.ex.map(x => { const t = topSet(setsOn(date, x.id)), b = bestBefore(x.id, date); return t && b && betterSet(t, b) ? { id: x.id, t } : null; }).filter(Boolean);
+  const passes = weekSummary(weekStart(date)).passes, label = TYPES[d.type] ? TYPES[d.type].label : d.name;
+  return `<div class="passdone">
+    <header class="pdhead"><button class="roundbtn" data-passdoneclose aria-label="Stäng">${icon("close", 18)}</button></header>
+    <div class="pdtop"><span class="pdcheck" aria-hidden="true">${icon("check", 34)}</span><h1>Bra jobbat!</h1>
+      <span class="muted">${esc(label)} klart · ${passes} av ${S.plan.count} pass den här veckan</span></div>
+    <section class="pdstats" aria-label="Passet"><div><b>${sets}</b><span class="muted small">set</span></div>
+      <div><b>${prs.length}</b><span class="muted small">${prs.length === 1 ? "nytt PB" : "nya PB"}</span></div></section>
+    ${prs.length ? `<div class="pdpb">${icon("trend", 18)}<span>Nytt PB i ${esc(EX[prs[0].id].name.toLowerCase())}: <b>${fmtSet({ kg: +prs[0].t.kg || 0, reps: +prs[0].t.reps || 0 }, prs[0].id)}</b></span></div>` : ""}
+    <div class="pdspace"></div>
+    ${inviteCard()}
+    <button class="wide" data-passdoneclose>Till Hem</button></div>`;
 }
 
 function renderModal() {
@@ -1595,7 +1621,10 @@ document.addEventListener("click", ev => {
   if (ds.swap) { modal = { pick: ds.swap, replace: +ds.idx }; render(); filterPicker(); return; }
   if (ds.swapwhen) { modal.today = ds.swapwhen === "true"; render(); filterPicker(); return; }
   if (ds.askai !== undefined) { askClaude(); return; }
+  if (ds.passdoneclose !== undefined) { passDone = null; tab = "idag"; render(); window.scrollTo(0, 0); return; }
   if (ds.tab) {
+    if (ds.tab === "vanner" && tab !== "vanner") vannerBack = tab;
+    passDone = null;
     tab = ds.tab; editing = false; dailyEditing = false; draft = null; editDate = null; histDay = null;
     if (tab !== "pass") chosenDay = null;
     if (ds.popen) profOpen = ds.popen;
@@ -1638,8 +1667,9 @@ document.addEventListener("click", ev => {
     w.done = !w.done;
     if (w.done) restoreSwaps(dayById(ds.finish), w);
     shareWorkout(dayById(ds.finish), logDate(), w.done);
-    // Ett sparat pass visar veckan; i efterhand går man tillbaka till dagen i Historik
-    if (w.done) { histDay = editDate; editDate = null; tab = "historik"; }
+    // Ett sparat pass visar skärmen Pass klart; i efterhand går man tillbaka till dagen i Historik
+    if (w.done && editDate) { histDay = editDate; editDate = null; tab = "historik"; }
+    else if (w.done) { passDone = { dayId: ds.finish, date: logDate() }; tab = "idag"; }
   }
   else if (ds.setcount) {
     const d = currentPassDay(), ex = d.ex.find(x => x.id === ds.ex);

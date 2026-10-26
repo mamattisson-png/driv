@@ -25,8 +25,11 @@ def add_to(page, meal):
 
 
 def prof(page, sec):
-    """Öppnar Profil och fäller ut en rad (om den inte redan är utfälld)."""
+    """Öppnar Profil och fäller ut en rad (om den inte redan är utfälld). Vänner har en egen sida."""
     go(page, "profil")
+    if sec == "vanner":
+        page.click('#p-vanner [data-tab="vanner"]')
+        return
     if page.locator(f"#p-{sec}.open").count() == 0:
         page.click(f'[data-psec="{sec}"]')
 
@@ -232,7 +235,10 @@ def test_fokuslage_en_ovning_i_taget(page):
     # Till sista övningen och spara passet
     page.click(f'[data-focusgo="{page.evaluate("S.plan.days[0].ex.length - 1")}"]')
     page.click("[data-focusend]")
-    assert page.evaluate("focus") is None and page.evaluate("tab") == "historik"
+    assert page.evaluate("focus") is None and page.evaluate("tab") == "idag"
+    assert "Bra jobbat!" in page.inner_text(".passdone") and page.locator("#nav.hidden").count() == 1
+    page.click(".passdone .wide[data-passdoneclose]")
+    assert page.locator(".passdone").count() == 0
     assert page.evaluate("workoutsOn(TODAY)[0].done") is True
     assert page.evaluate("window.__wake") == ["på", "av"]
 
@@ -1207,7 +1213,12 @@ def test_vanner_kod_flode_och_peppning(page):
     assert "Bo körde Push" in page.inner_text(".friendsrow") and "igår" in page.inner_text(".friendsrow")
     page.click("[data-kudos='1']")
     page.wait_for_function("window.__social.kudos.length === 1")
-    assert page.inner_text("[data-kudos='1']").strip() == "1" and page.get_attribute("[data-kudos='1']", "aria-pressed") == "true"
+    assert "Peppat" in page.inner_text(".friendsrow") and page.locator("[data-kudos='1']").count() == 0
+    # Vänsidan: igår hopfällt, fälls ut med ett tryck
+    page.click(".friendsrow .fbhead")
+    assert page.evaluate("tab") == "vanner" and "Igår · 1 pass" in page.text_content("#app")
+    page.click('[data-fday="2026-10-21"]')
+    assert "Bo körde Push" in page.inner_text(".flist >> nth=1")
     # Ett sparat pass delas med antal övningar, inget annat
     go(page, "pass")
     open_ex(page, "bankpress")
@@ -1217,6 +1228,9 @@ def test_vanner_kod_flode_och_peppning(page):
     page.wait_for_function("window.__social.activity.some(x => x.user_id === 'u1')")
     mine = page.evaluate("window.__social.activity.find(x => x.user_id === 'u1')")
     assert {k: mine[k] for k in ("day", "pass", "exercises")} == {"day": "2026-10-22", "pass": "Push", "exercises": 1}
+    # Pass klart: med en vän visas ingen inbjudan
+    assert "Bra jobbat!" in page.inner_text(".passdone") and page.locator(".invitecard").count() == 0
+    page.click(".passdone .wide[data-passdoneclose]")
     # Slutar man dela sparas inga fler pass
     prof(page, "vanner")
     page.click("[data-sharing]")
@@ -1299,7 +1313,7 @@ def test_vanlank_visar_forfragan(page):
     page.click("[data-savesetup]")
     assert "BO1234" in page.inner_text(".nudge")
     page.click("[data-gofriends]")
-    assert page.evaluate("tab") == "profil"
+    assert page.evaluate("tab") == "vanner" and "Kräver ett konto" in page.inner_text("#vanner")
     page.evaluate("document.querySelector('[data-tab=idag]').click()")
     page.click("[data-dropcode]")
     assert page.locator(".nudge").count() == 0
@@ -1559,3 +1573,41 @@ def test_gamla_byten_laggs_tillbaka(page):
       S.log['2020-01-01'] = { workouts: [{ dayId: d.id, sets: {}, done: false, swap: [{ id: 'goblet', orig }] }], dailies: {}, food: [] };
       window.__orig = orig.id; restoreOldSwaps(); }""")
     assert page.evaluate("S.plan.days[0].ex[0].id === window.__orig && !S.log['2020-01-01'].workouts[0].swap") is True
+
+
+def test_profilbildens_farg_ar_stabil(page):
+    start(page)
+    assert page.evaluate("nameHue('Anna') === nameHue('Anna') && nameHue('Anna') !== nameHue('Bo')") is True
+    assert page.evaluate("avatar('anna')").count(">A<") == 1
+
+
+def test_pass_klart_visar_set_och_nytt_pb(page):
+    start(page)
+    seed(page, "S.log[shift(TODAY,-7)] = {workouts:[{dayId:S.plan.days[0].id,done:true,sets:{bankpress:[{kg:80,reps:8,ok:true}]}}],dailies:{},food:[]}")
+    go(page, "pass")
+    page.click(f'[data-pick="{page.evaluate("S.plan.days[0].id")}"]')
+    page.evaluate("const w = workoutFor(S.plan.days[0]); w.sets.bankpress = [{kg: 82.5, reps: 8, ok: true}, {kg: 80, reps: 8, ok: true}]; save(); render()")
+    page.click("button[data-finish]")
+    text = page.inner_text(".passdone")
+    assert "Bra jobbat!" in text and "1 av 3 pass den här veckan" in text
+    assert "2\nset" in text and "1\nnytt PB" in text and "Nytt PB i bänkpress: 82,5 kg × 8" in text
+
+
+def test_inbjudan_efter_passet_utan_vanner(page):
+    page.context.route("**/config.js", lambda r: r.fulfill(body=SB_CONFIG, content_type="application/javascript"))
+    start(page, SUPABASE_MOCK + SOCIAL_SEED)
+    login(page)
+    page.evaluate("social.profile = { name: 'Anna', code: 'ANNA01', sharing: true }; social.friends = []; social.loaded = true")
+    # Utan vänner finns ingen vänruta på Hem
+    go(page, "idag")
+    assert page.locator(".friendsrow").count() == 0
+    go(page, "pass")
+    page.click(f'[data-pick="{page.evaluate("S.plan.days[0].id")}"]')
+    page.evaluate("const w = workoutFor(S.plan.days[0]); w.sets.bankpress = [{kg: 80, reps: 8, ok: true}]; save(); render()")
+    page.click("button[data-finish]")
+    assert "Vill en kompis se när du tränar?" in page.inner_text(".invitecard")
+    assert page.locator(".invitecard [data-sharecode]").count() == 1
+    # Inte nu: inbjudan visas inte igen på två veckor
+    page.click("[data-invitelater]")
+    assert page.evaluate("S.inviteUntil === shift(TODAY, 14)") is True
+    assert page.locator(".invitecard").count() == 0

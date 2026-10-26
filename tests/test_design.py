@@ -67,6 +67,18 @@ def views(page):
     page.evaluate("openAct(TODAY, null, 'Padel'); render()")
     yield "Logga aktivitet", ".sheet"
     page.evaluate("actSheet = null; render()")
+    # Pass klart, och vännernas rutor (vänner kräver Supabase, så de ritas direkt här)
+    page.evaluate("passDone = { dayId: S.plan.days[0].id, date: TODAY }; render()")
+    yield "Pass klart", "#app"
+    page.evaluate("""() => { passDone = null; social.profile = { name: 'Anna', code: 'ANNA01', sharing: true };
+      const now = new Date().toISOString(), feed = [{ id: 1, day: TODAY, pass: 'Pull', name: 'Bo', kudos: 0, kudoed: false, created: now },
+        { id: 2, day: TODAY, pass: 'Ben', name: 'Sara', kudos: 1, kudoed: true, created: now }];
+      document.getElementById('app').innerHTML = `<section class="card friendsbox"><button class="fbhead">${avatars(['Bo', 'Sara', 'Erik', 'Lisa'])}
+        <span class="grow"><b>2 vänner</b> <span class="muted">har tränat idag</span></span><span class="muted small fball">Alla</span></button>
+        ${feed.map(feedEvent).join('')}${myKudosEvent({ day: TODAY, pass: 'Push', kudos: 2 })}</section>
+        <button class="card fday">${avatars(['Jonas', 'Lisa'], 2)}<span class="grow">Jonas och Lisa</span></button>${inviteMarkup()}`; }""")
+    yield "Vänner", "#app"
+    page.evaluate("render()")
     go(page, "kost")
     yield "Kost", "#app"
     page.click("[data-addto]")

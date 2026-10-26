@@ -47,6 +47,8 @@
     --on-accent: #141518;
     --shadow-card: 0 1px 2px rgba(20, 21, 24, .04); --shadow-nav: 0 6px 20px rgba(20, 21, 24, .08);
     --nav-bg: #ffffff; --tile-line: #e3e0da;
+    /* Vännernas profilbilder: pastell med mörk bokstav i ljust läge, mörkare med ljus bokstav i mörkt */
+    --av-sat: 70%; --av-bg-l: 90%; --av-fg-l: 24%;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
@@ -58,6 +60,7 @@
       --accent-strong: #ff6b1a; --accent-text: #ff8a47; --ok-text: #6fd99a; --bad-text: #ff9a9a; --on-color: #0d0e10; --ok-strong: #6fd99a;
       --on-accent: #0d0e10;
       --shadow-card: none; --shadow-nav: 0 10px 30px rgba(0, 0, 0, .25); --nav-bg: #1f2226; --tile-line: transparent;
+      --av-sat: 38%; --av-bg-l: 30%; --av-fg-l: 88%;
       color-scheme: dark;
     }
   }
@@ -71,6 +74,7 @@
     --accent-strong: #ff6b1a; --accent-text: #ff8a47; --ok-text: #6fd99a; --bad-text: #ff9a9a; --on-color: #0d0e10; --ok-strong: #6fd99a;
     --on-accent: #0d0e10;
     --shadow-card: none; --shadow-nav: 0 10px 30px rgba(0, 0, 0, .25); --nav-bg: #1f2226; --tile-line: transparent;
+    --av-sat: 38%; --av-bg-l: 30%; --av-fg-l: 88%;
     color-scheme: dark;
   }
   /* Lexend för text, Unbounded för rubriker och stora tal. Ligger i appen så att den fungerar offline. */
@@ -798,6 +802,46 @@
   body.resting .frestctl { display: flex; }
   body.infocus.resting .overlay { padding-bottom: 0; }
   body.infocus.resting .sheet { max-height: 88vh; }
+
+  /* ---------- Vänner ---------- */
+  .av { width: 40px; height: 40px; flex: none; border-radius: 50%; display: inline-grid; place-items: center; font-weight: 600; font-size: 15px;
+    background: hsl(var(--h, 0) var(--av-sat) var(--av-bg-l)); color: hsl(var(--h, 0) 55% var(--av-fg-l)); }
+  .av.sm { width: 28px; height: 28px; font-size: 11px; border: 2px solid var(--card); box-sizing: content-box; }
+  .avs { display: inline-flex; flex: none; }
+  .avs .av + .av { margin-left: -10px; }
+  .av.more { background: var(--card-2); color: var(--text); font-size: 10px; }
+  .friendsbox { padding: 4px 14px; }
+  .fbhead { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 52px; padding: 0; border: 0; background: none;
+    color: var(--text); text-align: left; font-size: 14px; }
+  .fball { display: inline-flex; align-items: center; gap: 2px; }
+  .fevent { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line); min-height: 44px; }
+  .flist .fevent:first-child { border-top: 0; }
+  .fevent .grow { display: flex; flex-direction: column; gap: 1px; min-width: 0; font-size: 15px; }
+  .peppa { min-height: 44px; padding: 0 14px; border-radius: 14px; border: 0; background: var(--accent-strong); color: var(--on-accent); font-weight: 600; font-size: 14px; flex: none; }
+  .peppat { min-height: 44px; display: inline-flex; align-items: center; padding: 0 6px; font-size: 13px; color: var(--muted); flex: none; }
+  .flist { padding: 0 14px; }
+  .fsec { margin-bottom: 18px; }
+  .fsec-h { margin: 0 4px 8px; }
+  .fsec-h .klabel { margin: 0; }
+  .fday { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 60px; padding: 0 14px; text-align: left; color: var(--text); margin: 0; }
+  .roundbtn.accentbtn { background: var(--accent-strong); border-color: var(--accent-strong); color: var(--on-accent); }
+  .invitecard { display: flex; flex-direction: column; gap: 10px; padding: 20px; border-radius: 24px; }
+  .invitecard h2 { margin: 4px 0 0; font-size: 18px; }
+  .invitecard .bigbtn { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 4px; }
+  .av.addav { background: var(--card-2); color: var(--muted); border: 2px dashed var(--line-strong); box-sizing: border-box; }
+  .invitecard .avs .av + .av { margin-left: -12px; }
+  /* Pass klart: hela skärmen, utan meny */
+  .passdone { display: flex; flex-direction: column; gap: 18px; min-height: calc(100vh - 40px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+  .pdhead { display: flex; justify-content: flex-end; }
+  .pdtop { display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; }
+  .pdtop h1 { margin: 0; font: 600 28px/1.1 "Unbounded", sans-serif; }
+  .pdcheck { width: 72px; height: 72px; border-radius: 36px; display: grid; place-items: center; background: var(--accent-strong); color: var(--on-accent); }
+  .pdstats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .pdstats > div { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 12px; border-radius: 16px; background: var(--card); border: 1px solid var(--line); }
+  .pdstats b { font: 600 20px "Unbounded", sans-serif; }
+  .pdpb { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 16px; background: var(--card-2); font-size: 14px; }
+  .pdpb .ic { color: var(--accent-text); flex: none; }
+  .pdspace { flex: 1; }
   /* ---------- Hem ---------- */
   .homehead { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 56px; margin: 0 0 16px; }
   .homehead .brand { margin: 0; }
