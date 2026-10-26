@@ -19,8 +19,4 @@ jobs:
           pip install -r tests/requirements.txt
           python -m playwright install --with-deps chromium
       - name: Kör testerna
-        run: python -m pytest tests -q -rf --tb=line 2>&1 | tee pytest.log; exit ${PIPESTATUS[0]}
-        shell: bash
-      - name: Visa fel som anteckningar (tillfälligt)
-        if: failure()
-        run: grep -E "^(FAILED|ERROR|/home|E  )" pytest.log | head -40 | sed 's/^/::error::/'
+        run: python -m pytest tests -v
