@@ -1425,6 +1425,12 @@ def test_alla_ovningar_syns_och_ordningen_kan_andras(page):
     assert page.locator('[data-fmove="0"][data-dir="-1"]').is_disabled()
     page.click(".forder ~ [data-forderclose]")
     assert page.locator(".forder").count() == 0
+    # Med många övningar visas sju runt den aktuella, resten bakom +N
+    page.evaluate("for (const id of ['hantelflyes','kabelflyes','arnoldpress','framlyft','skullcrushers','kickbacks']) S.plan.days[0].ex.push({ id, sets: 3, reps: '10' }); render()")
+    assert page.locator(".fsteps [data-focusgo]").count() == 7
+    assert page.inner_text(".fsteps .fmore") == "+5"
+    page.click(".fsteps .fmore")
+    assert page.locator(".fsteps [data-focusgo]").count() == 12
 
 
 def test_strombrytaren_ser_ut_som_en_strombrytare(page):

@@ -133,8 +133,7 @@ function focusView() {
     <header class="fhead"><button class="roundbtn" data-focusexit aria-label="Tillbaka till passet">${icon("left", 20)}</button>
       <span class="muted small grow">Övning ${focus.idx + 1} av ${d.ex.length} · ${esc(TYPES[d.type] ? TYPES[d.type].label : d.name)}</span>
       ${d.ex.length > 1 ? `<button class="small ghost" data-forder>Ändra ordning</button>` : ""}</header>
-    <div class="fsteps" role="group" aria-label="Övningar i passet">${d.ex.map((x, k) => `<button data-focusgo="${k}" class="${k === focus.idx ? "on" : ""} ${exDone(w, x) ? "done" : ""}" ${k === focus.idx ? 'aria-current="step"' : ""}>
-      <span class="fn">${exDone(w, x) ? icon("check", 12) : k + 1}</span><span class="nm">${esc(EX[x.id].name)}</span></button>`).join("")}</div>
+    ${stepRow(d, w)}
     <div class="ftitle"><div class="grow"><h2>${esc(EX[ex.id].name)}</h2>
       <div class="muted">${allDone ? "Alla set klara" : `Set ${sel + 1} av ${ex.sets} · mål ${esc(ex.reps)}${timed ? "" : " reps"}`}</div></div>
       <button class="thumb dt" data-info="${ex.id}" aria-label="Visa hur ${esc(EX[ex.id].name)} görs">${figure(ex.id)}</button></div>
@@ -150,6 +149,18 @@ function focusView() {
   </div>${focusDailies ? `<div class="overlay" data-fdclose><div class="sheet">
     <div class="row between"><span class="muted small">Fläta in i passet</span><button class="small ghost iconbtn" data-fdclose aria-label="Stäng">${icon("close", 18)}</button></div>
     ${dailiesCard(true)}<button class="wide" data-fdclose style="margin-top:14px">Tillbaka till passet</button></div></div>` : ""}${focusOrder ? orderSheet(d, w) : ""}`;
+}
+// Övningarna som små knappar som radbryts. Med många övningar visas sju runt den aktuella och resten bakom "+N".
+function stepRow(d, w) {
+  const n = d.ex.length, MAX = 8, all = n <= MAX || focus.allSteps;
+  const from = all ? 0 : Math.max(0, Math.min(focus.idx - 3, n - (MAX - 1))), to = all ? n : from + MAX - 1;
+  const chip = k => { const x = d.ex[k], done = exDone(w, x);
+    return `<button data-focusgo="${k}" class="${k === focus.idx ? "on" : ""} ${done ? "done" : ""}" ${k === focus.idx ? 'aria-current="step"' : ""}>
+      <span class="fn">${done ? icon("check", 11) : k + 1}</span><span class="nm">${esc(EX[x.id].name)}</span></button>`; };
+  const chips = Array.from({ length: to - from }, (_, i) => chip(from + i)).join("");
+  const more = n <= MAX ? "" : focus.allSteps ? `<button class="fmore" data-fstepsall>Visa färre</button>`
+    : `<button class="fmore" data-fstepsall aria-label="Visa alla ${n} övningar">+${n - (to - from)}</button>`;
+  return `<div class="fsteps" role="group" aria-label="Övningar i passet">${chips}${more}</div>`;
 }
 // Passets ordning: pilar flyttar en övning ett steg upp eller ned
 function orderSheet(d, w) {
@@ -232,11 +243,12 @@ document.addEventListener("visibilitychange", () => {
 });
 
 document.addEventListener("click", ev => {
-  const t = ev.target.closest("[data-step],[data-focusgo],[data-focusexit],[data-focusend],[data-focusstart],[data-focusex],[data-fdopen],[data-fdclose],[data-fsel],[data-sspick],[data-sspair],[data-forder],[data-forderclose],[data-fmove]");
+  const t = ev.target.closest("[data-step],[data-focusgo],[data-focusexit],[data-focusend],[data-focusstart],[data-focusex],[data-fdopen],[data-fdclose],[data-fsel],[data-sspick],[data-sspair],[data-forder],[data-forderclose],[data-fmove],[data-fstepsall]");
   if (!t || t.disabled) return;
   if (t.classList.contains("overlay") && ev.target !== t) return;   // klick inne i fönstret
   const ds = t.dataset;
   if (ds.fdopen !== undefined || ds.fdclose !== undefined) { focusDailies = ds.fdopen !== undefined; dailyEditing = false; render(); return; }
+  if (ds.fstepsall !== undefined) { focus.allSteps = !focus.allSteps; render(); return; }
   if (ds.forder !== undefined || ds.forderclose !== undefined) { focusOrder = ds.forder !== undefined; render(); return; }
   if (ds.fmove !== undefined) {
     // Byter plats med grannen; ett superset som berörs bryts. Fokus stannar på samma övning.

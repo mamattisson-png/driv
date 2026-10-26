@@ -702,12 +702,14 @@
   .focus { display: flex; flex-direction: column; gap: 16px; min-height: calc(100vh - 32px); }
   .fhead { display: flex; align-items: center; gap: 12px; }
   .roundbtn { width: 44px; height: 44px; padding: 0; border-radius: 22px; flex: none; display: grid; place-items: center; }
-  .fsteps { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: -6px; }
-  .fsteps button { min-width: 0; min-height: 38px; padding: 0 10px 0 5px; border-radius: 99px; display: flex; align-items: center; gap: 8px;
-    font-size: 13px; background: var(--card); color: var(--muted); text-align: left; }
+  .fsteps { display: flex; flex-wrap: wrap; gap: 6px; margin-top: -6px; }
+  .fsteps button { min-width: 0; max-width: calc(50% - 3px); min-height: 30px; padding: 0 10px 0 4px; border-radius: 99px; display: flex; align-items: center; gap: 6px;
+    font-size: 12px; background: var(--card); color: var(--muted); text-align: left; }
+  .fsteps button.fmore { padding: 0 12px; color: var(--text); font-weight: 600; }
   .fsteps .nm { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .fsteps .fn, .forder .fn { width: 26px; height: 26px; border-radius: 13px; display: grid; place-items: center; background: var(--card-2); color: var(--text);
     font: 600 12px "Unbounded", sans-serif; flex: none; }
+  .fsteps .fn { width: 22px; height: 22px; border-radius: 11px; font-size: 11px; }
   .fsteps button.done .fn { background: var(--ok-soft); color: var(--ok-text); }
   .fsteps button.on { background: var(--text); color: var(--bg); border-color: var(--text); font-weight: 600; }
   .fsteps button.on .fn { background: var(--accent-strong); color: var(--on-accent); }
