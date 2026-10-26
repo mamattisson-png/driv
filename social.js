@@ -147,7 +147,8 @@ document.addEventListener("click", ev => {
   else if (ds.unfriend) socialAction(() => socialRpc("driv_remove_friend", { p_friend: ds.unfriend }));
   else if (ds.sharecode !== undefined) {
     const url = `${SHARE_BASE}?v=${social.profile.code}`, text = `Lägg till mig som vän i Driv: ${url}`;
-    if (navigator.share) navigator.share({ title: "Driv", text, url }).catch(() => {});
+    // Bara text med länken i: med både text och url klistrar Android in länken två gånger
+    if (navigator.share) navigator.share({ title: "Driv", text }).catch(() => {});
     else if (navigator.clipboard) navigator.clipboard.writeText(text).then(() => toast("Länken är kopierad"), () => toast(url));
     else toast(url);
   }
