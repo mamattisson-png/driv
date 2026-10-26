@@ -944,3 +944,57 @@ function areaOf(id) {
 // Utrustning i väljarens filter; kabel och maskin hör ihop
 const GEAR_FILTER = { bw: "Kroppsvikt", db: "Hantlar", bar: "Skivstång", machine: "Kabel och maskin", kb: "Kettlebell" };
 const gearGroup = id => { const g = gearOf(id); return g === "cable" ? "machine" : g || "bw"; };
+
+// Länk till en utförligare beskrivning på MuscleWiki (musclewiki.com/…). Adresserna är hämtade från sökträffar på
+// MuscleWiki. "exercises/…" är en lista med liknande stretchar där det inte finns en sida för just den övningen.
+// Kondition saknar sidor där och får ingen länk.
+const MW = {
+  bankpress: "exercise/barbell-bench-press", hantelpress: "exercise/dumbbell-bench-press",
+  lutande_hantelpress: "exercise/dumbbell-incline-bench-press", militarpress: "exercise/barbell-overhead-press",
+  sittande_axelpress: "exercise/dumbbell-seated-overhead-press", sidolyft: "exercise/dumbbell-lateral-raise",
+  dips: "exercise/parralel-bar-dips", armhavningar: "exercise/push-up", triceps_pushdown: "exercise/cable-rope-pushdown",
+  fransk_press: "exercise/barbell-skullcrusher", marklyft: "exercise/barbell-deadlift", chins: "exercise/chin-ups",
+  latsdrag: "exercise/machine-pulldown", skivstangsrodd: "exercise/barbell-bent-over-row", hantelrodd: "exercise/dumbbell-single-arm-row",
+  kabelrodd: "exercise/machine-seated-cable-row", face_pulls: "exercise/machine-face-pulls", bicepscurl: "exercise/barbell-curl",
+  hammercurl: "exercise/dumbbell-hammer-curl", knaboj: "exercise/barbell-squat", rumansk_marklyft: "exercise/barbell-romanian-deadlift",
+  benpress: "exercise/machine-leg-press", bencurl: "exercise/machine-hamstring-curl", benspark: "exercise/machine-leg-extension",
+  utfall: "exercise/dumbbell-forward-lunge", hip_thrust: "exercise/barbell-hip-thrust", vadpress: "exercise/machine-standing-calf-raises",
+  plankan: "exercise/forearm-plank", hangande_benlyft: "exercise/hanging-knee-raises", crunches: "exercise/crunches",
+  russian_twist: "exercise/bodyweight-russian-twist", benlyft_liggande: "exercise/laying-leg-raises", pullups: "exercise/pull-ups",
+  australiensisk_rodd: "exercise/inverted-row", pike_pushups: "exercise/bodyweight-pike-press", diamant_armhavningar: "exercise/diamond-push-ups",
+  l_sit: "exercise/hanging-l-sit", hollow_hold: "exercise/hollow-hold", pistol: "exercise/squat-unilateral-eccentric-box",
+  hoppknaboj: "exercise/jump-squats", bulgarisk: "exercise/bulgarian-split-squat", glute_bridge: "exercise/glute-bridge-eccentric-unilateral",
+  burpees: "exercise/burpee", lutande_bankpress: "exercise/barbell-incline-bench-press", smal_bankpress: "exercise/barbell-close-grip-bench-press",
+  hantelflyes: "exercise/dumbbell-floor-fly", brostpress_maskin: "exercise/machine-chest-press", kabelflyes: "exercise/cable-pec-fly",
+  arnoldpress: "exercise/dumbbell-arnold-press", framlyft: "exercise/dumbbell-front-raise", skullcrushers: "exercise/barbell-skullcrusher",
+  smalt_latsdrag: "exercise/narrow-pulldown", tbar_rodd: "exercise/landmine-t-bar-rows", maskinrodd: "exercise/machine-plate-loaded-row",
+  shrugs: "exercise/dumbbell-shrug", omvanda_flyes: "exercise/dumbbell-rear-delt-fly", scottcurl: "exercise/ez-bar-preacher-curl",
+  kabelcurl: "exercise/cable-bar-curl", frontboj: "exercise/barbell-front-squat-bodybuilding", goblet: "exercise/dumbbell-goblet-squat",
+  stegupp: "exercise/dumbbell-step-up", sumomarklyft: "exercise/barbell-sumo-deadlift", hantel_rumansk: "exercise/dumbbell-romanian-deadlift",
+  sittande_bencurl: "exercise/machine-seated-leg-curl", kettlebellsving: "exercise/kettlebell-swing", sidoplanka: "exercise/elbow-side-plank",
+  mountain_climbers: "exercise/mountain-climber", dead_bug: "exercise/dead-bug", cykelcrunch: "exercise/bicycle-crunch",
+  pallof: "exercise/cable-pallof-press", superman: "exercise/supermans",
+  framatfallning: "exercises/hamstrings/stretches", hoftbojare_stretch: "exercise/hip-flexor-stretch-kneeling-lunge-1",
+  framsida_lar_stretch: "exercise/quads-stretch-variation-one", vadstretch: "exercise/calves-stretch-variation-two",
+  duvan: "exercise/double-pigeon-pose", barnets_position: "exercise/child-pose-arms-extended", katt_ko: "exercises/lowerback/stretches",
+  brost_dorr: "exercise/chest-stretch-variation-four", triceps_stretch: "exercises/triceps/stretches",
+  sittande_framatfallning: "exercise/hamstring-stretch-seated-single-leg-isometric", fjarilen: "exercise/bodyweight-butterfly-stretch",
+  kobran: "exercise/cobra-stretch-2",
+  armhavningar_bank: "exercise/incline-push-up", nedlutande_bankpress: "exercise/dumbbell-decline-bench-press",
+  flyes_maskin: "exercise/machine-pec-fly", rackpull: "exercise/barbell-rack-pull", pendlayrodd: "exercise/barbell-pronated-pendlay-row",
+  raka_armar_kabel: "exercise/cable-straight-arm-pull-in", upprakt_rodd: "exercise/barbell-upright-row", push_press: "exercise/barbell-overhead-press",
+  axelpress_maskin: "exercise/machine-overhand-overhead-press", kabel_sidolyft: "exercise/cable-low-single-arm-lateral-raise",
+  hantelcurl: "exercise/dumbbell-curl", koncentrationscurl: "exercise/dumbbell-concentration-curl", kickbacks: "exercise/dumbbell-tricep-kickback",
+  bankdips: "exercise/bench-dips", bakatutfall: "exercise/dumbbell-reverse-lunge", gaende_utfall: "exercise/lunge-walking",
+  sumo_knaboj: "exercise/dumbbell-sumo-squat", hacksquat: "exercise/machine-hack-squat", sittande_vadpress: "exercise/machine-seated-calf-raises",
+  vaggsittning: "exercise/wall-sit", nordic: "exercise/nordic-hamstring-curl", magrulle: "exercise/barbell-roll-outs",
+  hangande_knalyft: "exercise/hanging-knee-raises", kabelcrunch: "exercise/cable-rope-kneeling-crunch", fallkniven: "exercise/reverse-crunch",
+  bird_dog: "exercise/bird-dog", fladdersparkar: "exercise/laying-alternating-leg-raise",
+  dodhang: "exercise/dead-hang", nedatgaende_hund: "exercise/downward-dog", varldens_basta: "exercise/runners-lunge",
+  djup_knaboj: "exercises/quads/stretches", halv_split: "exercises/hamstrings/stretches", kna_mot_brost: "exercises/lowerback/stretches",
+  liggande_hamstring: "exercises/hamstrings/stretches", figur_fyra: "exercise/glutes-stretch-variation-two",
+  sittande_vridning: "exercises/lowerback/stretches", trad_nalen: "exercises/shoulders/stretches", arm_over_brost: "exercises/shoulders/stretches",
+  latsstretch_bank: "exercises/lats/stretches", grodan: "exercise/adductor-stretch-seated-bilateral-static",
+  hander_bakom_ryggen: "exercises/chest/stretches",
+};
+const mwUrl = id => MW[id] ? `https://musclewiki.com/${MW[id]}` : null;

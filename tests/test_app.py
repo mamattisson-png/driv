@@ -1376,7 +1376,7 @@ def test_stretch_som_daily(page):
     start(page)
     page.click("[data-dedit]")
     page.click('[data-openpick="daily"]')
-    page.click('.pchips [data-area="stretch"]')
+    page.select_option("[data-areasel]", "stretch")
     shown = page.evaluate("[...document.querySelectorAll('.pick')].filter(e => !e.hidden).map(e => e.querySelector('.pname').textContent)")
     assert "Duvan" in shown and "Höftböjarstretch" in shown and len(shown) == page.evaluate("Object.values(EX).filter(e => e.cat === 'stretch').length")
     page.click('[data-add="duvan"]')
@@ -1421,20 +1421,42 @@ def test_valj_ovning_efter_kroppsdel_och_utrustning(page):
     page.click("[data-edit]")
     page.click('[data-openpick]')
     # Push-passet börjar på Bröst
-    assert page.get_attribute('.pchips [data-area].on', "data-area") == "brost"
+    assert page.eval_on_selector("[data-areasel]", "e => e.value") == "brost"
     visible = lambda: page.evaluate("[...document.querySelectorAll('.pick')].filter(e => !e.hidden).map(e => e.dataset.area + '/' + e.dataset.gear)")
     assert visible() and all(v.startswith("brost/") for v in visible())
-    page.click('.pchips [data-gear="db"]')
+    page.select_option("[data-gearsel]", "db")
     assert visible() and all(v == "brost/db" for v in visible())
-    page.click('.pchips [data-area="armar"]')
+    page.select_option("[data-areasel]", "armar")
     assert visible() and all(v == "armar/db" for v in visible())
     # Sökning gäller alla kroppsdelar
-    page.click('.pchips [data-gear="alla"]')
+    page.select_option("[data-gearsel]", "alla")
     page.fill("#exsearch", "stretch")
     assert any(v.startswith("stretch/") for v in visible())
     # Instruktionen har en väg tillbaka till listan
     page.fill("#exsearch", "")
     page.click('.pick:not([hidden]) .thumb >> nth=0')
+    # Länken till MuscleWiki öppnas i en ny flik
+    link = page.locator(".mwlink")
+    assert link.get_attribute("href").startswith("https://musclewiki.com/")
+    assert link.get_attribute("target") == "_blank"
     page.click("[data-infoback]")
     assert page.locator(".picksheet").count() == 1
     assert page.evaluate("Object.keys(EX).every(id => AREAS[areaOf(id)])") is True
+
+
+def test_alla_ovningar_utom_kondition_har_musclewiki(page):
+    start(page)
+    missing = page.evaluate("Object.keys(EX).filter(id => EX[id].cat !== 'cardio' && !mwUrl(id))")
+    assert missing == []
+
+
+def test_andra_profil_oppnar_en_ruta(page):
+    start(page)
+    page.evaluate("tab = 'profil'; render()")
+    page.click("[data-editprof]")
+    assert page.locator(".profsheet").count() == 1
+    page.fill("#pname", "Testnamn")
+    page.click("[data-pnamesave]")
+    assert page.locator(".profsheet").count() == 0
+    assert "Testnamn" in page.text_content(".pcard")
+    assert page.evaluate("S.name") == "Testnamn"

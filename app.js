@@ -1026,7 +1026,7 @@ const VIEWS = {
 `;
     const friends = !sbEnabled ? "" : account.step !== "in" ? "Kräver ett konto"
       : social.profile ? `${social.friends.length ? `${social.friends.length} ${social.friends.length === 1 ? "vän" : "vänner"}` : "Inga vänner än"} · kod ${esc(social.profile.code)}` : "Välj ditt namn";
-    const name = (social.profile && social.profile.name) || (account.step === "in" ? account.email.split("@")[0] : "Du");
+    const name = profName();
     const last = latestWeight();
     const group = (label, rows) => `<section class="pgroup" aria-label="${label}"><h2 class="klabel">${label}</h2><div class="card plist">${rows}</div></section>`;
     const pushSwitch = canPush() && account.step === "in"
@@ -1036,7 +1036,7 @@ const VIEWS = {
     return `<header class="phead"><button class="roundbtn" data-tab="${profBack}" aria-label="Tillbaka">${icon("left", 20)}</button><h1>Profil</h1></header>
       <section class="card pcard" aria-label="Du"><div class="row"><span class="avatar" aria-hidden="true">${esc(name.slice(0, 1).toUpperCase())}</span>
           <div class="grow col"><b>${esc(name)}</b><span class="muted small">${cloud.status === "cloud" ? "Sparas på ditt konto" : "Sparas på den här enheten"}</span></div>
-          <button class="small" data-psec="konto">Ändra</button></div>
+          <button class="small" data-editprof>Ändra</button></div>
         <div class="pstats"><div><b>${S.plan.count}</b><span>pass i veckan</span></div><div><b>${tnum(m.kcal)}</b><span>kcal om dagen</span></div>
           <div><b>${fmtNum(last ? last.kg : p.weight)}</b><span>kg senast</span></div></div></section>
       ${group("Träning", `<div class="prow"><div class="prow-line"><button class="prow-head" data-tab="upplagg"><span class="pic">${icon("upplagg", 20)}</span><span class="grow"><b>Upplägg</b>
@@ -1102,6 +1102,8 @@ const passTitle = d => d.type === "custom" || !TYPES[d.type] ? d.name : TYPES[d.
 
 // Profilen är en lista där en rad i taget kan fällas ut
 let profOpen = null;
+// Namnet i profilen: det vännerna ser, annars det sparade, annars början på e-posten
+const profName = () => (social.profile && social.profile.name) || S.name || (account.step === "in" ? account.email.split("@")[0] : "Du");
 // body null: raden fälls inte ut (valet ligger direkt i raden). extra: en kontroll till höger, t.ex. en strömbrytare.
 function profRow(id, ic, title, summary, body, extra = "") {
   const open = profOpen === id || body === null;
@@ -1317,13 +1319,23 @@ function renderModal() {
     return `<div class="overlay" data-close><div class="sheet"><div class="row between"><h2>${esc(EX[modal.chart].name)}</h2><button class="small ghost" data-close>${icon("close", 18)}</button></div>
       <div class="muted">Bästa set per vecka, senaste 12 veckorna</div>${chartModal(modal.chart)}</div></div>`;
   }
+  if (modal.prof) {
+    // Ändra profilen i en ruta i stället för att hoppa ned i listan
+    return `<div class="overlay" data-close><div class="sheet profsheet"><div class="row between"><h2>Din profil</h2><button class="small ghost iconbtn" data-close aria-label="Stäng">${icon("close", 18)}</button></div>
+      <div class="row"><span class="avatar" aria-hidden="true">${esc(profName().slice(0, 1).toUpperCase())}</span>
+        <label class="field grow">Namn<input id="pname" maxlength="40" autocomplete="given-name" value="${esc(profName() === "Du" ? "" : profName())}" placeholder="Ditt namn"></label></div>
+      ${sbEnabled ? `<div class="muted small" style="margin-top:6px">Namnet syns för dina vänner.</div>` : ""}
+      <button class="primary wide" style="margin-top:12px" data-pnamesave ${social.busy ? "disabled" : ""}>Spara</button>
+      ${sbEnabled ? `<h3 class="klabel" style="margin-top:20px">Konto</h3>${accountBody()}` : ""}</div></div>`;
+  }
   if (modal.info) {
     const e = EX[modal.info];
     return `<div class="overlay" data-close><div class="sheet">${modal.back ? `<button class="small ghost backlink" data-infoback>‹ Tillbaka till övningarna</button>` : ""}
       <div class="row between"><h2>${esc(e.name)}</h2><button class="small ghost iconbtn" data-close aria-label="Stäng">${icon("close", 18)}</button></div>
       ${figure(modal.info, "big", true)}<div class="muted">${esc(e.muscles)}</div>
       ${gearOf(modal.info) ? `<div class="gearbox"><b>${GEAR[gearOf(modal.info)][0]}</b><div>${GEAR[gearOf(modal.info)][1]}</div></div>` : ""}
-      <ol>${e.cues.map(c => `<li>${esc(c)}</li>`).join("")}</ol></div></div>`;
+      <ol>${e.cues.map(c => `<li>${esc(c)}</li>`).join("")}</ol>
+      ${mwUrl(modal.info) ? `<a class="mwlink" href="${mwUrl(modal.info)}" target="_blank" rel="noopener">Mer om övningen på MuscleWiki <span aria-hidden="true">↗</span></a>` : ""}</div></div>`;
   }
   const list = exList(modal.pick);
   const replacing = modal.replace != null ? list[modal.replace] : null;
@@ -1337,7 +1349,6 @@ function renderModal() {
   modal.gear = modal.gear || "alla";
   const have = list.map(e => e.id);
   const ids = Object.keys(EX).filter(id => forDaily || EX[id].cat !== "cardio");
-  const chip = (attr, k, n, on) => `<button data-${attr}="${k}" class="${on ? "on" : ""}" aria-pressed="${on}">${n}</button>`;
   const row = id => `<div class="pick ${have.includes(id) ? "have" : ""}" data-area="${areaOf(id)}" data-gear="${gearGroup(id)}"
       data-q="${esc(norm(EX[id].name + " " + EX[id].muscles + " " + AREAS[areaOf(id)] + " " + (gearOf(id) ? GEAR[gearOf(id)][0] : "")))}">
       ${thumb(id, "pt")}<div class="grow"><div class="pname">${esc(EX[id].name)}</div><div class="muted small">${esc(EX[id].muscles)}</div></div>
@@ -1346,8 +1357,11 @@ function renderModal() {
   return `<div class="overlay" data-close><div class="sheet picksheet"><div class="row between">
       <h2>${replacing ? `Byt ut ${esc(EX[replacing.id].name)}` : forDaily ? "Lägg till daily" : "Lägg till övning"}</h2><button class="small ghost iconbtn" data-close aria-label="Stäng">${icon("close", 18)}</button></div>
     <div class="psearch">${icon("search", 18)}<input id="exsearch" type="search" placeholder="Sök övning eller muskel" value="${esc(modal.q || "")}" autocomplete="off" aria-label="Sök övning"></div>
-    <div class="pchips" role="group" aria-label="Kroppsdel">${chip("area", "alla", "Alla", modal.area === "alla")}${areas.map(a => chip("area", a, AREAS[a], modal.area === a)).join("")}</div>
-    <div class="pchips small" role="group" aria-label="Utrustning">${chip("gear", "alla", "All utrustning", modal.gear === "alla")}${Object.entries(GEAR_FILTER).map(([k, n]) => chip("gear", k, n, modal.gear === k)).join("")}</div>
+    <div class="pfilters">
+      <label class="pfilter ${modal.area !== "alla" ? "on" : ""}"><span class="sr">Kroppsdel</span><select data-areasel aria-label="Kroppsdel">
+        <option value="alla">Alla kroppsdelar</option>${areas.map(a => `<option value="${a}" ${modal.area === a ? "selected" : ""}>${AREAS[a]}</option>`).join("")}</select>${icon("down", 16)}</label>
+      <label class="pfilter ${modal.gear !== "alla" ? "on" : ""}"><span class="sr">Utrustning</span><select data-gearsel aria-label="Utrustning">
+        <option value="alla">All utrustning</option>${Object.entries(GEAR_FILTER).map(([k, n]) => `<option value="${k}" ${modal.gear === k ? "selected" : ""}>${n}</option>`).join("")}</select>${icon("down", 16)}</label></div>
     <div class="picklist">${areas.map(a => {
       const group = ids.filter(id => areaOf(id) === a);
       return group.length ? `<section class="pgroup2" data-group="${a}"><h3 class="klabel">${AREAS[a]}</h3>${group.map(row).join("")}</section>` : "";
@@ -1368,11 +1382,6 @@ function filterPicker() {
   for (const g of document.querySelectorAll(".pgroup2")) g.hidden = !g.querySelector(".pick:not([hidden])");
   const none = document.getElementById("nohits");
   if (none) none.hidden = shown > 0;
-  // Den valda kroppsdelen syns i raden även om den ligger långt till höger
-  for (const r of document.querySelectorAll(".pchips")) {
-    const on = r.querySelector(".on");
-    if (on) r.scrollLeft = on.offsetLeft - (r.clientWidth - on.offsetWidth) / 2;
-  }
 }
 
 // ---------- Logg ----------
@@ -1541,21 +1550,21 @@ document.addEventListener("click", ev => {
   if (t.classList.contains("overlay") && ev.target !== t) return;   // klick inne i rutan
   const ds = t.dataset, prevTab = tab;
   if (ds.close !== undefined) { modal = null; render(); return; }
+  if (ds.editprof !== undefined) { modal = { prof: true }; render(); return; }
+  if (ds.pnamesave !== undefined) {
+    const name = ($("pname").value || "").trim();
+    if (!name) { toast("Skriv ett namn."); return; }
+    S.name = name; save(); modal = null; render(); toast("Namnet är sparat");
+    if (sbEnabled && account.step === "in" && social.loaded && !social.error)
+      socialAction(() => socialRpc("driv_profile_save", { p_name: name, p_sharing: social.profile ? social.profile.sharing : true }));
+    return;
+  }
   if (ds.info) { modal = { info: ds.info, back: modal && modal.pick ? modal : null }; render(); return; }
   if (ds.infoback !== undefined) { modal = modal.back; render(); filterPicker(); return; }
   if (ds.chart) { modal = { chart: ds.chart }; render(); return; }
   if (ds.letter) { modal = { letter: ds.letter }; render(); return; }
   if (ds.openpick) { modal = { pick: ds.openpick }; render(); return; }
   if (ds.swap) { modal = { pick: ds.swap, replace: +ds.idx }; render(); filterPicker(); return; }
-  if (ds.area || ds.gear) {
-    if (ds.area) { modal.area = ds.area; modal.q = ""; }
-    else modal.gear = ds.gear;
-    render();
-    filterPicker();
-    const s = document.querySelector(".picksheet");
-    if (s && ds.area) s.scrollTop = 0;
-    return;
-  }
   if (ds.askai !== undefined) { askClaude(); return; }
   if (ds.sugg !== undefined) { pickSuggestion(+ds.sugg); return; }
   if (ds.tab) {
@@ -1747,6 +1756,14 @@ document.addEventListener("click", ev => {
 
 document.addEventListener("change", ev => {
   const t = ev.target, ds = t.dataset;
+  // Väljarens filter: kroppsdel nollställer sökningen och börjar högst upp
+  if ((ds.areasel !== undefined || ds.gearsel !== undefined) && modal && modal.pick) {
+    if (ds.areasel !== undefined) { modal.area = t.value; modal.q = ""; } else modal.gear = t.value;
+    render(); filterPicker();
+    const s = document.querySelector(".picksheet");
+    if (s && ds.areasel !== undefined) s.scrollTop = 0;
+    return;
+  }
   if (ds.set) {
     const d = currentPassDay(), v = t.value === "" ? "" : clampSet(ds.set, ds.f, +t.value || 0);
     if (v !== "" && v !== +t.value) {
