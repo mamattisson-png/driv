@@ -145,7 +145,9 @@ function focusView() {
       <button class="small ghost" data-setcount="1" data-ex="${ex.id}">+ Set</button>
       ${!next && !allDone && !(w && w.done) ? `<button class="small ghost fsave" data-finish="${d.id}" data-focusend>Spara passet</button>` : ""}</div>
     ${S.daily.length ? `<button class="ghost fdaily" data-fdopen aria-label="Dailys, ${dDone} av ${S.daily.length} klara">Dailys · ${dDone} av ${S.daily.length} klara${icon("up", 14)}</button>` : ""}
-    <div class="fbar">${restBox}${main}</div>
+    <div class="fbar">${restBox ? `<div class="frestctl" role="group" aria-label="Vila"><button class="small" data-restadd="-15">−15</button>
+      <button class="small" data-restadd="15">+15</button><button class="small" data-restskip>Klar</button></div>` : ""}
+      <div class="fbar-row">${restBox}${main}</div></div>
   </div>${focusDailies ? `<div class="overlay" data-fdclose><div class="sheet">
     <div class="row between"><span class="muted small">Fläta in i passet</span><button class="small ghost iconbtn" data-fdclose aria-label="Stäng">${icon("close", 18)}</button></div>
     ${dailiesCard(true)}<button class="wide" data-fdclose style="margin-top:14px">Tillbaka till passet</button></div></div>` : ""}${focusOrder ? orderSheet(d, w) : ""}`;

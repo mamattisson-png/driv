@@ -496,15 +496,13 @@ def test_vilotimer(page):
     open_ex(page, "bankpress")
     page.click('[data-ok=bankpress][data-i="0"]')
     assert page.inner_text(".rest-time") == "1:30"
-    page.click('[data-restadd="15"]')
-    assert page.inner_text(".rest-time") == "1:45"
-    # Med en övning öppen ligger timern under dialogen, inte över den, även med stor text
-    page.add_style_tag(content=".rest-row { font-size: 22px; padding: 14px 0; }")
+    page.click('.frestctl [data-restadd="15"]')
+    assert page.inner_text(".frest-time") == "1:45"
+    # En dialog i fokusläget når ända ned; timern ligger i fokuslistan och inte ovanpå
     open_ex(page, "militarpress")
     page.click('[data-info=militarpress]')
     page.wait_for_timeout(100)
-    sheet, timer = page.locator(".sheet").bounding_box(), page.locator(".rest").bounding_box()
-    assert sheet["y"] + sheet["height"] <= timer["y"] + 1
+    assert page.locator(".sheet").bounding_box()["y"] + page.locator(".sheet").bounding_box()["height"] >= page.viewport_size["height"] - 1
     page.click(".sheet [data-close]")
     open_ex(page, "sidolyft")
     page.click('[data-ok=sidolyft][data-i="0"]')
@@ -512,7 +510,7 @@ def test_vilotimer(page):
     page.evaluate("rest.end = Date.now() + 500")
     page.wait_for_function("rest.el && rest.el.classList.contains('ding')")
     assert page.evaluate("window.__vib") == [[200, 100, 200]]
-    page.click("[data-restskip]")
+    page.click(".frestctl [data-restskip]")
     assert page.locator(".rest").count() == 0
 
 
@@ -1495,3 +1493,27 @@ def test_testlage_fran_utvecklarens_konto(page):
     assert page.evaluate("isDevAccount()") is False
     page.evaluate("account.email = ' Ma.Mattisson@gmail.com '")
     assert page.evaluate("isDevAccount()") is True
+
+
+def test_vilotimern_lagger_sig_inte_over_fokuslistan(page):
+    start(page)
+    go(page, "pass")
+    page.click(f'[data-pick="{page.evaluate("S.plan.days[0].id")}"]')
+    page.click("[data-focusstart]")
+    page.click(".fbar [data-ok]")
+    assert page.evaluate("document.body.classList.contains('resting')") is True
+    # Den vanliga timerlisten är dold; knapparna ligger i fokuslistan ovanför Klart set
+    assert not page.locator(".rest").is_visible()
+    ctl, row = page.locator(".frestctl").bounding_box(), page.locator(".fbar-row").bounding_box()
+    assert ctl["y"] + ctl["height"] <= row["y"]
+    page.click(".frestctl [data-restskip]")
+    assert page.evaluate("document.body.classList.contains('resting')") is False
+    assert not page.locator(".frestctl").is_visible()
+
+
+def test_sidan_bakom_en_ruta_rullar_inte(page):
+    start(page)
+    page.evaluate("modal = { info: 'bankpress' }; render()")
+    assert page.evaluate("getComputedStyle(document.documentElement).overflow") == "hidden"
+    page.click(".sheet [data-close]")
+    assert page.evaluate("getComputedStyle(document.documentElement).overflow") != "hidden"

@@ -8,7 +8,6 @@ let histMonth = null;     // "YYYY-MM" som visas, null = den här månaden
 let histDay = null;       // öppen dag i kalendern
 let histView = "kalender";
 let weekExOpen = false;      // alla övningar i veckokortet visas
-let histChart = null;        // övningen i utvecklingsgrafen under Kalender
 
 const MONTHS = ["januari", "februari", "mars", "april", "maj", "juni", "juli", "augusti", "september", "oktober", "november", "december"];
 const WD_LONG = ["måndag", "tisdag", "onsdag", "torsdag", "fredag", "lördag", "söndag"];
@@ -104,30 +103,9 @@ function weekSection() {
     <div class="wtiles">${tiles.join("")}</div>
     ${rows.length ? `<div class="card bestsets"><div class="row between klabel"><span>Bästa set</span><span>mot förra</span></div>${shown.join("")}
       ${rows.length > 4 ? `<button class="ghost wide" data-weekex aria-expanded="${weekExOpen}">${weekExOpen ? "Visa färre" : `Visa alla ${rows.length} övningar`}${icon(weekExOpen ? "up" : "down", 16)}</button>` : ""}</div>` : ""}
-    ${devCard()}
     <button class="ghost wide" data-letter="${ws}">${icon("mail", 18)}Sammanfattning av veckan</button>
   </section>`;
 }
-// En övnings utveckling vecka för vecka; Byt går till nästa övning med minst två veckor
-function devCard() {
-  const ids = progressData().ex.map(e => e.id).filter(id => weeklySeries(id).filter(x => x.best).length > 1);
-  if (!ids.length) return "";
-  const id = ids.includes(histChart) ? histChart : ids[0], series = weeklySeries(id), pts = series.map((x, i) => ({ i, b: x.best })).filter(x => x.b);
-  const useKg = pts.some(x => +x.b.kg), val = b => useKg ? +b.kg : +b.reps, unit = useKg ? "kg" : repUnit(id);
-  let lo = Math.min(...pts.map(x => val(x.b))), hi = Math.max(...pts.map(x => val(x.b)));
-  if (lo === hi) { lo -= 1; hi += 1; }
-  // Grafen börjar vid första veckan med data
-  const i0 = pts[0].i, span = Math.max(1, pts[pts.length - 1].i - i0);
-  const X = i => 6 + (i - i0) * 308 / span, Y = v => 104 - (v - lo) / (hi - lo) * 78;
-  const line = pts.map(p => `${X(p.i).toFixed(1)},${Y(val(p.b)).toFixed(1)}`).join(" "), last = pts[pts.length - 1], best = pts.reduce((a, p) => val(p.b) > val(a.b) ? p : a);
-  return `<section class="card devcard" aria-label="Utveckling"><div class="row between"><h2>Utveckling · ${esc(EX[id].name)}</h2>
-      ${ids.length > 1 ? `<button class="ghost small" data-hchart="${ids[(ids.indexOf(id) + 1) % ids.length]}">Byt</button>` : ""}</div>
-    <button class="devchart" data-chart="${id}" aria-label="Visa grafen för ${esc(EX[id].name)}"><svg viewBox="0 0 320 120" preserveAspectRatio="none" role="img" aria-label="Bästa set i ${esc(EX[id].name)} från ${fmtNum(val(pts[0].b))} till ${fmtNum(val(last.b))} ${unit}">
-      <line x1="0" y1="30" x2="320" y2="30"/><line x1="0" y1="70" x2="320" y2="70"/><line x1="0" y1="110" x2="320" y2="110"/>
-      <polyline points="${line}"/><circle cx="${X(last.i).toFixed(1)}" cy="${Y(val(last.b)).toFixed(1)}" r="5"/></svg></button>
-    <div class="row between small"><span class="muted">${series.length - pts[0].i} veckor sedan · ${fmtNum(val(pts[0].b))} ${unit}</span><span>PB ${fmtNum(val(best.b))} ${unit}</span></div></section>`;
-}
-
 // ---------- Utveckling ----------
 // Allt sedan start: personbästa per övning med ökningen från första gången, pass per vecka och vikt.
 const shortDate = d => `${+d.slice(8)} ${MONTHS[+d.slice(5, 7) - 1].slice(0, 3)}`;
@@ -206,12 +184,11 @@ function historikView() {
 }
 
 document.addEventListener("click", ev => {
-  const t = ev.target.closest("[data-histday],[data-hclose],[data-hmonth],[data-hpass],[data-hfood],[data-hview],[data-weekex],[data-hchart]");
+  const t = ev.target.closest("[data-histday],[data-hclose],[data-hmonth],[data-hpass],[data-hfood],[data-hview],[data-weekex]");
   if (!t || t.disabled) return;
   if (t.classList.contains("overlay") && ev.target !== t) return;   // klick inne i fönstret
   const ds = t.dataset;
   if (ds.weekex !== undefined) weekExOpen = !weekExOpen;
-  else if (ds.hchart) histChart = ds.hchart;
   else if (ds.hview) histView = ds.hview;
   else if (ds.histday) histDay = ds.histday;
   else if (ds.hclose !== undefined) { histDay = null; editDate = null; }
