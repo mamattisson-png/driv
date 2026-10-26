@@ -1918,7 +1918,7 @@ function seedDemo() {
 }
 if (window.DRIV_TEST) {
   document.body.insertAdjacentHTML("afterbegin", `<div class="testbar" role="status"><b>Testläge</b>
-    <span class="grow">Egen data, sparas inte på kontot</span>
+    <span class="grow"><span class="testsub">· egen data, sparas inte på kontot</span></span>
     <button data-testseed>Exempeldata</button><button data-testreset>Börja om</button><button data-testexit>Lämna</button></div>`);
   document.addEventListener("click", ev => {
     const t = ev.target.closest && ev.target.closest("[data-testseed],[data-testreset],[data-testexit]");

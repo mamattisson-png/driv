@@ -560,10 +560,11 @@
   .plan-day summary .muted { margin-left: auto; }
   .subex .small { flex: none; }
   /* Testläge */
-  .testbar { position: sticky; top: 0; z-index: 8; display: flex; align-items: center; flex-wrap: wrap; gap: 4px 10px;
+  .testbar { position: sticky; top: 0; z-index: 8; display: flex; align-items: center; gap: 8px;
     padding: calc(6px + env(safe-area-inset-top, 0px)) 16px 6px; background: var(--accent-strong); color: var(--on-accent); font-size: 13px; }
   .testbar b { font-weight: 600; }
-  .testbar .grow { opacity: .85; }
+  .testbar .grow { opacity: .85; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  @media (max-width: 479px) { .testsub { display: none; } }
   .testbar button { min-height: 36px; padding: 0 10px; font-size: 13px; border-radius: 10px; border-color: transparent;
     background: rgba(0, 0, 0, .18); color: var(--on-accent); }
   /* ---------- Profil ---------- */
