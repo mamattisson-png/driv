@@ -1611,3 +1611,56 @@ def test_inbjudan_efter_passet_utan_vanner(page):
     page.click("[data-invitelater]")
     assert page.evaluate("S.inviteUntil === shift(TODAY, 14)") is True
     assert page.locator(".invitecard").count() == 0
+
+
+# ---------- Muskelkartan ----------
+
+def test_muskelkarta_med_delvis_saknas(page):
+    start(page)
+    st = lambda ids: page.evaluate(f"muscleStatus('push', {ids}.map(id => ({{ id }}))).map(s => s.key + ':' + s.state)")
+    adv = lambda ids: page.evaluate(f"muscleAdvice('push', muscleStatus('push', {ids}.map(id => ({{ id }}))))")
+    # Lutande hantelpress: bröst som huvudmuskel, axlar som hjälp, triceps inte alls
+    assert st(["lutande_hantelpress", "kabelflyes"]) == ["brost:ok", "axlar:part", "triceps:part"]
+    assert st(["kabelflyes"]) == ["brost:ok", "axlar:miss", "triceps:miss"]
+    assert adv(["kabelflyes"]) == "Lägg till en övning för axlar och triceps."
+    assert adv(["kabelflyes", "lutande_hantelpress"]) == "Axlar och triceps tränas bara indirekt. En egen övning ger mer effekt."
+    assert adv(["sidolyft", "kabelflyes"]) == "Lägg till en övning för triceps."
+    assert adv(["kabelflyes", "framlyft", "bankpress"]) == "Triceps tränas bara indirekt. En egen övning ger mer effekt."
+    assert adv(["sidolyft", "kabelflyes", "lutande_bankpress"]) == "Triceps tränas bara indirekt. En egen övning ger mer effekt."
+    assert adv(["kabelflyes", "hantelflyes", "bankdips"]) == "Lägg till en övning för axlar."
+    assert adv(["dips", "sidolyft"]) == "Bra! Passet täcker allt Push ska träna."
+    # Röda och orange tillsammans
+    assert adv(["hantelflyes", "smal_bankpress"]) == "Lägg till en övning för axlar."
+    assert adv(["hantelflyes", "kabelflyes", "armhavningar_bank"]) == "Lägg till en övning för axlar. Triceps tränas bara indirekt."
+
+
+def test_muskelkarta_forslag_roda_forst_och_lagg_till(page):
+    start(page)
+    sugg = page.evaluate("(() => { const l = [{ id: 'hantelflyes' }, { id: 'armhavningar_bank' }]; return muscleSuggestions('push', l, muscleStatus('push', l)); })()")
+    # Axlar saknas (röd) och triceps är delvis: axelövningar först, högst tre, inget som redan finns
+    assert len(sugg) == 3 and all("axlar" in page.evaluate(f"EX['{s}'].prim") for s in sugg[:1])
+    assert "hantelflyes" not in sugg and "armhavningar_bank" not in sugg
+    # Calisthenics föreslår bara kroppsviktsövningar
+    cal = page.evaluate("(() => { const l = [{ id: 'armhavningar' }]; return muscleSuggestions('cpush', l, muscleStatus('cpush', l)); })()")
+    assert cal and all(page.evaluate(f"!!EX['{s}'].bw") for s in cal)
+    # Kortet syns när man ändrar övningar, och ett förslag läggs till med standardset
+    go(page, "pass")
+    page.click(f'[data-pick="{page.evaluate("S.plan.days[0].id")}"]')
+    page.evaluate("S.plan.days[0].ex = [{ id: 'kabelflyes', sets: 3, reps: '12' }]; editing = true; render()")
+    assert "Push tränar" in page.text_content(".mcard")
+    assert "Lägg till en övning för axlar och triceps." in page.inner_text(".mrec")
+    assert "Framsida: bröst med, axlar saknas" in page.get_attribute(".mfig svg >> nth=0", "aria-label")
+    first = page.get_attribute(".msugg [data-mcadd] >> nth=0", "data-mcadd")
+    page.click(".msugg [data-mcadd] >> nth=0")
+    assert page.evaluate("S.plan.days[0].ex.at(-1)") == {"id": first, "sets": page.evaluate(f"EX['{first}'].sets"), "reps": page.evaluate(f"EX['{first}'].reps")}
+    # Musklerna står under övningens namn
+    assert "Bröst" in page.inner_text(".subex .mline >> nth=0")
+    # Inte under själva passet
+    page.evaluate("editing = false; render()")
+    page.click("[data-focusstart]")
+    assert page.locator(".mcard").count() == 0
+
+
+def test_eget_pass_har_ingen_muskelkarta(page):
+    start(page)
+    assert page.evaluate("muscleCard('x', 'custom', [])") == ""

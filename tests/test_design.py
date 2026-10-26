@@ -59,6 +59,9 @@ def views(page):
     yield "Idag", "#app"
     go(page, "pass")
     yield "Träna", "#app"
+    page.evaluate("chosenDay = S.plan.days[0].id; window.__ex = S.plan.days[0].ex; S.plan.days[0].ex = [{ id: 'kabelflyes', sets: 3, reps: '12' }, { id: 'lutande_hantelpress', sets: 3, reps: '10' }]; editing = true; render()")
+    yield "Ändra övningar", "#app"
+    page.evaluate("S.plan.days[0].ex = window.__ex; editing = false; chosenDay = null; render()")
     page.click(f'[data-pick="{page.evaluate("S.plan.days[0].id")}"]')
     page.click("[data-focusstart]")
     page.click('[data-ok=bankpress][data-i="0"]')

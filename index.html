@@ -49,6 +49,8 @@
     --nav-bg: #ffffff; --tile-line: #e3e0da;
     /* Vännernas profilbilder: pastell med mörk bokstav i ljust läge, mörkare med ljus bokstav i mörkt */
     --av-sat: 70%; --av-bg-l: 90%; --av-fg-l: 24%;
+    /* Muskelkartan: grön med, gul-orange delvis (inte knapporange), röd saknas */
+    --m-ok: #1f9d55; --m-part: #f59e0b; --m-miss: #e5484d; --m-off: #e6e3de; --m-head: #d6d2cb; --m-part-text: #8a4b00;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
@@ -61,6 +63,7 @@
       --on-accent: #0d0e10;
       --shadow-card: none; --shadow-nav: 0 10px 30px rgba(0, 0, 0, .25); --nav-bg: #1f2226; --tile-line: transparent;
       --av-sat: 38%; --av-bg-l: 30%; --av-fg-l: 88%;
+      --m-ok: #1f9d55; --m-part: #f59e0b; --m-miss: #e5484d; --m-off: #2a2d32; --m-head: #3a3e44; --m-part-text: #fbbf24;
       color-scheme: dark;
     }
   }
@@ -75,6 +78,7 @@
     --on-accent: #0d0e10;
     --shadow-card: none; --shadow-nav: 0 10px 30px rgba(0, 0, 0, .25); --nav-bg: #1f2226; --tile-line: transparent;
     --av-sat: 38%; --av-bg-l: 30%; --av-fg-l: 88%;
+    --m-ok: #1f9d55; --m-part: #f59e0b; --m-miss: #e5484d; --m-off: #2a2d32; --m-head: #3a3e44; --m-part-text: #fbbf24;
     color-scheme: dark;
   }
   /* Lexend för text, Unbounded för rubriker och stora tal. Ligger i appen så att den fungerar offline. */
@@ -803,6 +807,39 @@
   body.infocus.resting .overlay { padding-bottom: 0; }
   body.infocus.resting .sheet { max-height: 88vh; }
 
+  /* ---------- Muskelkartan ---------- */
+  .mcard { display: flex; flex-direction: column; gap: 12px; }
+  .daypass .mcard, .plan-day .mcard { margin: 10px 0; box-shadow: none; }
+  .mtop { display: flex; gap: 12px; align-items: flex-start; }
+  .mfigs { display: flex; gap: 4px; flex: none; }
+  .mfig { margin: 0; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  .mfig svg { width: 60px; height: 120px; display: block; }
+  .mfig figcaption { font-size: 11px; color: var(--muted); }
+  .m-off { fill: var(--m-off); } .m-head { fill: var(--m-head); }
+  .m-ok { fill: var(--m-ok); } .m-part { fill: var(--m-part); } .m-miss { fill: var(--m-miss); }
+  .mlist { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+  .mlist .klabel { margin: 0 0 2px; }
+  .mrow { display: flex; align-items: center; gap: 8px; }
+  .mrow .grow { display: flex; flex-direction: column; min-width: 0; line-height: 1.25; }
+  .mrow b { font-weight: 500; font-size: 14px; }
+  .mdot { width: 20px; height: 20px; flex: none; border-radius: 10px; display: inline-grid; place-items: center; }
+  .mdot svg { width: 12px; height: 12px; fill: none; stroke-width: 3.4; stroke-linecap: round; stroke-linejoin: round; }
+  .mdot.ok { background: var(--m-ok); stroke: #ffffff; } .mdot.ok svg { stroke: #ffffff; }
+  .mdot.part { background: var(--m-part); } .mdot.part svg { stroke: #141518; }
+  .mdot.miss { background: var(--m-miss); } .mdot.miss svg { stroke: #ffffff; }
+  .mdet { font-size: 12px; color: var(--muted); }
+  .mdet.part { color: var(--m-part-text); font-weight: 500; }
+  .mdet.miss { color: var(--bad-text); font-weight: 500; }
+  .mlegend { display: flex; gap: 14px; font-size: 12px; color: var(--muted); }
+  .mlegend span { display: inline-flex; align-items: center; gap: 5px; }
+  .mlegend .mdot { width: 10px; height: 10px; }
+  .mrec { display: flex; gap: 8px; align-items: flex-start; font-size: 14px; line-height: 1.4; }
+  .mrec .ic { flex: none; color: var(--muted); margin-top: 1px; }
+  .mrec.ok { color: var(--ok-text); font-weight: 500; }
+  .msugg { display: flex; flex-wrap: wrap; gap: 6px; margin-top: -4px; }
+  .msugg button { display: inline-flex; align-items: center; gap: 4px; }
+  .mline { font-size: 12px; color: var(--muted); margin-top: 1px; }
+  .mline b { color: var(--text); font-weight: 500; }
   /* ---------- Vänner ---------- */
   .av { width: 40px; height: 40px; flex: none; border-radius: 50%; display: inline-grid; place-items: center; font-weight: 600; font-size: 15px;
     background: hsl(var(--h, 0) var(--av-sat) var(--av-bg-l)); color: hsl(var(--h, 0) 55% var(--av-fg-l)); }

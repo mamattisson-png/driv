@@ -998,3 +998,41 @@ const MW = {
   hander_bakom_ryggen: "exercises/chest/stretches",
 };
 const mwUrl = id => MW[id] ? `https://musclewiki.com/${MW[id]}` : null;
+
+// ---------- Muskelkartan ----------
+// Grupperna som gubben ritar, och huvud- och hjälpmuskler per övning ("huvud|hjälp").
+// Stretch och kondition saknar fälten och räknas inte.
+const MUSCLE_GROUPS = { brost: "Bröst", axlar: "Axlar", triceps: "Triceps", biceps: "Biceps", rygg: "Rygg", mage: "Mage",
+  framsida_lar: "Framsida lår", baksida_lar: "Baksida lår", sate: "Säte", vader: "Vader", underarmar: "Underarmar" };
+const PRIM_SEC = {
+  bankpress: "brost|axlar triceps", hantelpress: "brost|axlar triceps", lutande_hantelpress: "brost|axlar triceps",
+  militarpress: "axlar|triceps", sittande_axelpress: "axlar|triceps", sidolyft: "axlar|", dips: "triceps brost|axlar",
+  armhavningar: "brost|triceps axlar mage", triceps_pushdown: "triceps|", fransk_press: "triceps|",
+  marklyft: "baksida_lar sate rygg|framsida_lar underarmar", chins: "rygg biceps|underarmar", latsdrag: "rygg|biceps",
+  skivstangsrodd: "rygg|biceps axlar", hantelrodd: "rygg|biceps", kabelrodd: "rygg|biceps", face_pulls: "axlar|rygg",
+  bicepscurl: "biceps|underarmar", hammercurl: "biceps|underarmar",
+  knaboj: "framsida_lar|sate baksida_lar", rumansk_marklyft: "baksida_lar|sate rygg", benpress: "framsida_lar|sate",
+  bencurl: "baksida_lar|", benspark: "framsida_lar|", utfall: "framsida_lar|sate", hip_thrust: "sate|baksida_lar", vadpress: "vader|",
+  plankan: "mage|", hangande_benlyft: "mage|underarmar", crunches: "mage|", russian_twist: "mage|", benlyft_liggande: "mage|",
+  pullups: "rygg|biceps underarmar", australiensisk_rodd: "rygg|biceps", pike_pushups: "axlar|triceps",
+  diamant_armhavningar: "triceps|brost", l_sit: "mage|triceps", hollow_hold: "mage|", pistol: "framsida_lar|sate",
+  hoppknaboj: "framsida_lar|sate vader", bulgarisk: "framsida_lar|sate", glute_bridge: "sate|baksida_lar", burpees: "framsida_lar|brost mage",
+  lutande_bankpress: "brost|axlar triceps", smal_bankpress: "triceps|brost", hantelflyes: "brost|", brostpress_maskin: "brost|triceps",
+  kabelflyes: "brost|", arnoldpress: "axlar|triceps", framlyft: "axlar|", skullcrushers: "triceps|", smalt_latsdrag: "rygg|biceps",
+  tbar_rodd: "rygg|biceps", maskinrodd: "rygg|biceps", shrugs: "rygg|", omvanda_flyes: "axlar|rygg", scottcurl: "biceps|", kabelcurl: "biceps|",
+  frontboj: "framsida_lar|sate mage", goblet: "framsida_lar|sate", stegupp: "framsida_lar|sate",
+  sumomarklyft: "sate baksida_lar|framsida_lar rygg", hantel_rumansk: "baksida_lar|sate", sittande_bencurl: "baksida_lar|",
+  kettlebellsving: "sate|baksida_lar mage", sidoplanka: "mage|", mountain_climbers: "mage|", dead_bug: "mage|", cykelcrunch: "mage|",
+  pallof: "mage|", superman: "rygg|sate", armhavningar_bank: "brost|triceps", nedlutande_bankpress: "brost|triceps", flyes_maskin: "brost|",
+  rackpull: "rygg|sate underarmar", pendlayrodd: "rygg|axlar biceps", raka_armar_kabel: "rygg|", upprakt_rodd: "axlar|rygg",
+  push_press: "axlar|triceps framsida_lar", axelpress_maskin: "axlar|triceps", kabel_sidolyft: "axlar|", hantelcurl: "biceps|",
+  koncentrationscurl: "biceps|", kickbacks: "triceps|", bankdips: "triceps|brost", bakatutfall: "framsida_lar|sate",
+  gaende_utfall: "framsida_lar|sate", sumo_knaboj: "sate framsida_lar|", hacksquat: "framsida_lar|sate", sittande_vadpress: "vader|",
+  vaggsittning: "framsida_lar|", nordic: "baksida_lar|", magrulle: "mage|", hangande_knalyft: "mage|", kabelcrunch: "mage|",
+  fallkniven: "mage|", bird_dog: "mage|rygg sate", fladdersparkar: "mage|",
+};
+for (const [id, s] of Object.entries(PRIM_SEC)) {
+  const [p, q] = s.split("|");
+  EX[id].prim = p.split(" ").filter(Boolean);
+  EX[id].sec = q.split(" ").filter(Boolean);
+}

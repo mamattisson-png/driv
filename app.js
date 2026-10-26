@@ -912,6 +912,7 @@ const VIEWS = {
             <span class="muted">${d.ex.length} övningar</span></summary>
           ${d.type === "custom" ? `<label class="field" style="margin:4px 0 6px">Namn på passet
             <input value="${esc(d.name)}" data-dayname="${i}" placeholder="T.ex. Bröst & triceps"></label>` : ""}
+          ${muscleCard("draft:" + i, d.type, d.ex)}
           ${d.ex.length ? "" : `<div class="muted" style="margin:6px 0">Inga övningar än. Lägg till dem nedan.</div>`}
           ${exRows("draft:" + i, d.ex, false)}</details>`).join("")}</div>
       <div class="card"><h2>${S.setupDone ? 5 : 6}. Dailys</h2>
@@ -942,7 +943,7 @@ const VIEWS = {
       passCard = `<section class="card daypass" aria-label="Dagens pass">
         <div class="passtop">${tag(d.type)}<span class="muted small">Dagens pass · Pass ${S.plan.days.indexOf(d) + 1} av ${S.plan.days.length}</span>
           ${w && w.done ? `<span class="passok">${icon("check", 14)}Klart</span>` : ""}</div>
-        ${editing ? `<h2 class="passname sm">${esc(passTitle(d))}</h2>${exRows(d.id, d.ex, true)}
+        ${editing ? `<h2 class="passname sm">${esc(passTitle(d))}</h2>${muscleCard(d.id, d.type, d.ex)}${exRows(d.id, d.ex, true)}
           <button class="primary wide bigbtn" style="margin-top:14px" data-edit>Klar</button></section>` : `
         <div><h2 class="passname">${esc(passTitle(d))}</h2><div class="muted">${d.ex.length ? meta : "Passet har inga övningar än."}</div></div>
         ${others.length ? `<div class="muted small">Idag har du även loggat ${others.map(o => esc(o.name)).join(", ")}.</div>` : ""}
@@ -1216,7 +1217,7 @@ function targetCats(target) {
 // Rader med byt/ta bort; withOrder lägger till sortering och set × reps
 function exRows(target, list, withOrder) {
   return list.map((e, i) => `<div class="subex">${thumb(e.id, "sm")}
-      <div class="grow"><b>${esc(EX[e.id].name)}</b>${EX[e.id].cat === "cardio" ? `<div class="muted">${esc(e.reps || EX[e.id].muscles)}</div>`
+      <div class="grow"><b>${esc(EX[e.id].name)}</b>${target === "daily" ? "" : muscleLine(e.id)}${EX[e.id].cat === "cardio" ? `<div class="muted">${esc(e.reps || EX[e.id].muscles)}</div>`
         : `<div class="row" style="margin-top:4px">
         <input type="number" inputmode="numeric" min="1" style="width:52px" value="${e.sets}" data-ed="${i}" data-t="${target}" data-f="sets" aria-label="Antal set"><span class="muted">×</span>
         <input style="width:76px" value="${esc(e.reps)}" data-ed="${i}" data-t="${target}" data-f="reps" aria-label="Reps"></div>`}</div>
@@ -1230,7 +1231,100 @@ function exRows(target, list, withOrder) {
 }
 
 function editList(d) {
-  return `<div class="card">${exRows(d.id, d.ex, true)}</div>`;
+  return `${muscleCard(d.id, d.type, d.ex)}<div class="card">${exRows(d.id, d.ex, true)}</div>`;
+}
+
+// ---------- Muskelkartan ----------
+// Vilka muskelgrupper varje passtyp ska träna. Saknas typen (eget pass) visas inget kort.
+const TYPE_TARGETS = {
+  push: "brost axlar triceps", cpush: "brost axlar triceps", pull: "rygg biceps", cpull: "rygg biceps",
+  legs: "framsida_lar baksida_lar sate vader", lower: "framsida_lar baksida_lar sate vader",
+  clegs: "framsida_lar baksida_lar sate mage", upper: "brost rygg axlar biceps triceps",
+  full: "brost rygg axlar framsida_lar baksida_lar", cfull: "brost rygg axlar framsida_lar baksida_lar",
+  hfull: "brost rygg axlar framsida_lar baksida_lar", glutes: "sate baksida_lar framsida_lar",
+  chest: "brost triceps", back: "rygg biceps", shoulders: "axlar", arms: "biceps triceps underarmar",
+  str5a: "framsida_lar brost rygg", str5b: "framsida_lar axlar rygg", sq: "framsida_lar sate", bp: "brost triceps",
+  dl: "baksida_lar sate rygg", chestback: "brost rygg", shoulderarms: "axlar biceps triceps",
+};
+const targetsOf = type => (TYPE_TARGETS[type] || "").split(" ").filter(Boolean);
+// Med: någon övning har muskeln som huvudmuskel. Delvis: bara som hjälpmuskel. Saknas: ingen alls.
+function muscleStatus(type, list) {
+  return targetsOf(type).map(key => {
+    const prim = list.filter(e => EX[e.id] && (EX[e.id].prim || []).includes(key)).length;
+    const sec = list.filter(e => EX[e.id] && (EX[e.id].sec || []).includes(key)).length;
+    return { key, label: MUSCLE_GROUPS[key], state: prim ? "ok" : sec ? "part" : "miss", prim };
+  });
+}
+const joinOch = xs => xs.length < 2 ? xs.join("") : `${xs.slice(0, -1).join(", ")} och ${xs[xs.length - 1]}`;
+const capFirst = s => s.charAt(0).toUpperCase() + s.slice(1);
+function muscleAdvice(type, status) {
+  const red = status.filter(s => s.state === "miss").map(s => s.label.toLowerCase());
+  const part = status.filter(s => s.state === "part").map(s => s.label.toLowerCase());
+  if (red.length && part.length) return `Lägg till en övning för ${joinOch(red)}. ${capFirst(joinOch(part))} tränas bara indirekt.`;
+  if (red.length) return `Lägg till en övning för ${joinOch(red)}.`;
+  if (part.length) return `${capFirst(joinOch(part))} tränas bara indirekt. En egen övning ger mer effekt.`;
+  return `Bra! Passet täcker allt ${TYPES[type].label} ska träna.`;
+}
+// Högst tre övningar som inte finns i passet och har en röd eller orange muskel som huvudmuskel; röda först.
+// Övningarna ska passa passet: kroppsvikt i calisthenics, hantlar eller kroppsvikt i hantelpassen.
+function muscleSuggestions(type, list, status) {
+  const need = [...status.filter(s => s.state === "miss"), ...status.filter(s => s.state === "part")].map(s => s.key);
+  if (!need.length) return [];
+  const have = new Set(list.map(e => e.id)), cats = TYPES[type].cats;
+  const fits = id => cats.includes("bw") ? !!EX[id].bw : type === "hfull" ? ["db", "bw"].includes(gearGroup(id)) : true;
+  const rank = id => Math.min(...EX[id].prim.map(m => need.includes(m) ? need.indexOf(m) : 99));
+  return Object.keys(EX).filter(id => EX[id].prim && !have.has(id) && fits(id) && rank(id) < 99)
+    .map((id, i) => ({ id, r: rank(id), i })).sort((a, b) => a.r - b.r || a.i - b.i).slice(0, 3).map(x => x.id);
+}
+// Gubben fram och bak: bara passets målmuskler färgas, resten och huvudet är neutralt grått
+const FIG_FRONT = [
+  ["axlar", '<ellipse cx="29" cy="41" rx="8" ry="8.5"/><ellipse cx="71" cy="41" rx="8" ry="8.5"/>'],
+  ["brost", '<path d="M49 33 L37 33 Q31 35 32 44 Q34 54 43 55 Q49 55 49 50 Z"/><path d="M51 33 L63 33 Q69 35 68 44 Q66 54 57 55 Q51 55 51 50 Z"/>'],
+  ["biceps", '<ellipse cx="24" cy="61" rx="5" ry="10"/><ellipse cx="76" cy="61" rx="5" ry="10"/>'],
+  ["underarmar", '<ellipse cx="21" cy="85" rx="4.5" ry="11"/><ellipse cx="79" cy="85" rx="4.5" ry="11"/>'],
+  ["mage", '<rect x="43" y="58" width="14" height="36" rx="6"/><path d="M41 58 Q36 70 38 92 L41 92 Z"/><path d="M59 58 Q64 70 62 92 L59 92 Z"/>'],
+  ["framsida_lar", '<ellipse cx="42" cy="130" rx="8" ry="22"/><ellipse cx="58" cy="130" rx="8" ry="22"/>'],
+  ["", '<ellipse cx="42" cy="174" rx="5" ry="14"/><ellipse cx="58" cy="174" rx="5" ry="14"/>'],
+];
+const FIG_BACK = [
+  ["rygg", '<path d="M50 29 L39 36 L50 47 L61 36 Z"/><path d="M48 49 Q37 47 35 58 Q37 71 48 76 Z"/><path d="M52 49 Q63 47 65 58 Q63 71 52 76 Z"/><rect x="45" y="77" width="10" height="16" rx="4"/>'],
+  ["axlar", '<ellipse cx="29" cy="41" rx="8" ry="8.5"/><ellipse cx="71" cy="41" rx="8" ry="8.5"/>'],
+  ["triceps", '<ellipse cx="24" cy="61" rx="5" ry="10"/><ellipse cx="76" cy="61" rx="5" ry="10"/>'],
+  ["underarmar", '<ellipse cx="21" cy="85" rx="4.5" ry="11"/><ellipse cx="79" cy="85" rx="4.5" ry="11"/>'],
+  ["sate", '<ellipse cx="42" cy="104" rx="8" ry="8"/><ellipse cx="58" cy="104" rx="8" ry="8"/>'],
+  ["baksida_lar", '<ellipse cx="42" cy="136" rx="7" ry="18"/><ellipse cx="58" cy="136" rx="7" ry="18"/>'],
+  ["vader", '<ellipse cx="42" cy="174" rx="6" ry="13"/><ellipse cx="58" cy="174" rx="6" ry="13"/>'],
+];
+const STATE_WORD = { ok: "med", part: "delvis", miss: "saknas" };
+function muscleFigure(parts, status, side) {
+  const st = Object.fromEntries(status.map(s => [s.key, s.state]));
+  const inFig = new Set(parts.map(([k]) => k)), shown = status.map(s => s.key).filter(k => inFig.has(k));
+  const label = `${side}: ${shown.length ? shown.map(k => `${MUSCLE_GROUPS[k].toLowerCase()} ${STATE_WORD[st[k]]}`).join(", ") : "inga muskler i passet"}`;
+  return `<figure class="mfig"><svg viewBox="0 0 100 200" role="img" aria-label="${label}">
+    <g class="m-head"><circle cx="50" cy="14" r="9"/><rect x="46" y="23" width="8" height="7" rx="2"/></g>
+    ${parts.map(([k, shapes]) => `<g class="m-${st[k] || "off"}">${shapes}</g>`).join("")}</svg><figcaption>${side === "Framsida" ? "Fram" : "Bak"}</figcaption></figure>`;
+}
+const STATE_ICON = { ok: '<path d="M5 12.5l4.5 4.5L19 7.5"/>', part: '<path d="M6 12h12"/>', miss: '<path d="M12 6v7M12 18v.5"/>' };
+// Kortet ovanför övningslistan när man ändrar ett pass
+function muscleCard(target, type, list) {
+  if (!TYPES[type] || !targetsOf(type).length) return "";
+  const status = muscleStatus(type, list), sugg = muscleSuggestions(type, list, status), allOk = status.every(s => s.state === "ok");
+  const detail = s => s.state === "ok" ? `${s.prim} ${s.prim === 1 ? "övning" : "övningar"}` : s.state === "part" ? "Delvis, bara indirekt" : "Saknas";
+  return `<section class="card mcard" aria-label="Muskler i passet">
+    <div class="mtop"><div class="mfigs">${muscleFigure(FIG_FRONT, status, "Framsida")}${muscleFigure(FIG_BACK, status, "Baksida")}</div>
+      <div class="mlist"><div class="klabel">${esc(TYPES[type].label)} tränar</div>
+        ${status.map(s => `<div class="mrow"><span class="mdot ${s.state}" aria-hidden="true"><svg viewBox="0 0 24 24">${STATE_ICON[s.state]}</svg></span>
+          <span class="grow"><b>${s.label}</b><span class="mdet ${s.state}">${detail(s)}</span></span></div>`).join("")}</div></div>
+    <div class="mlegend" aria-hidden="true"><span><i class="mdot ok"></i>Med</span><span><i class="mdot part"></i>Delvis</span><span><i class="mdot miss"></i>Saknas</span></div>
+    <div class="mrec ${allOk ? "ok" : ""}">${icon("idea", 18)}<span>${muscleAdvice(type, status)}</span></div>
+    ${sugg.length ? `<div class="msugg">${sugg.map(id => `<button class="small" data-mcadd="${id}" data-t="${target}">${icon("plus", 14)}${esc(EX[id].name)}</button>`).join("")}</div>` : ""}
+  </section>`;
+}
+// Musklerna under övningens namn: huvudmuskeln i fet stil, hjälpmusklerna grå
+function muscleLine(id) {
+  const e = EX[id];
+  if (!e || !e.prim) return "";
+  return `<div class="mline"><b>${e.prim.map(k => MUSCLE_GROUPS[k]).join(", ")}</b>${e.sec.length ? ` · ${e.sec.map(k => MUSCLE_GROUPS[k].toLowerCase()).join(", ")}` : ""}</div>`;
 }
 
 const norm = s => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
@@ -1739,6 +1833,7 @@ document.addEventListener("click", ev => {
   else if (ds.delmeal) S.meals.splice(+ds.delmeal, 1);
   else if (ds.delfood) day().food.splice(+ds.delfood, 1);
   else if (ds.xdel) exList(ds.xdel).splice(+ds.idx, 1);
+  else if (ds.mcadd) exList(ds.t).push(exEntry(ds.mcadd));
   else if (ds.mv) {
     const list = exList(ds.t), i = +ds.idx, j = i + +ds.mv;
     [list[i], list[j]] = [list[j], list[i]];
