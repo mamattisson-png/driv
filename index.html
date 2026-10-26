@@ -222,6 +222,10 @@
     background: var(--card-2); border: 1px solid var(--line); border-radius: 24px; box-shadow: 0 10px 30px rgba(0, 0, 0, .25);
     display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); z-index: 5; }
   nav.hidden { display: none; }
+  /* Botten bakom menyn: inget innehåll syns under eller bredvid den när man scrollar */
+  body::after { content: ""; position: fixed; left: 0; right: 0; bottom: 0; height: calc(104px + env(safe-area-inset-bottom, 0px)); z-index: 4;
+    pointer-events: none; background: linear-gradient(to bottom, transparent, var(--bg) 16px); }
+  body:has(nav.hidden)::after, body.infocus::after { display: none; }
   nav button { border: 0; border-radius: 18px; background: transparent; padding: 0; min-height: 0; font-size: 12px; color: var(--muted);
     display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; }
   nav button.on { background: var(--text); color: var(--bg); font-weight: 600; }
@@ -568,6 +572,7 @@
   .plan-day summary { cursor: pointer; padding: 4px 0; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
   .plan-day summary .muted { margin-left: auto; }
   .subex .small { flex: none; }
+  .subex input { flex: none; padding: 8px 10px; }
   /* Testläge */
   .testbar { position: sticky; top: 0; z-index: 8; display: flex; align-items: center; gap: 8px;
     padding: calc(6px + env(safe-area-inset-top, 0px)) 16px 6px; background: var(--accent-strong); color: var(--on-accent); font-size: 13px; }
