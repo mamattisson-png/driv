@@ -1517,3 +1517,37 @@ def test_sidan_bakom_en_ruta_rullar_inte(page):
     assert page.evaluate("getComputedStyle(document.documentElement).overflow") == "hidden"
     page.click(".sheet [data-close]")
     assert page.evaluate("getComputedStyle(document.documentElement).overflow") != "hidden"
+
+
+def test_byt_ovning_under_passet(page):
+    start(page)
+    go(page, "pass")
+    page.click(f'[data-pick="{page.evaluate("S.plan.days[0].id")}"]')
+    page.click("[data-focusstart]")
+    first = page.evaluate("S.plan.days[0].ex[0].id")
+    # Bara i dag är förvalt; passet får tillbaka övningen när det sparas
+    page.click("[data-fswap]")
+    assert page.locator('[data-swapwhen="true"].on').count() == 1
+    page.click('.pick:not([hidden]) [data-add] >> nth=0')
+    new = page.evaluate("S.plan.days[0].ex[0].id")
+    assert new != first and page.locator(".picksheet").count() == 0
+    assert page.evaluate("focus && focus.idx") == 0
+    page.evaluate(f"restoreSwaps(S.plan.days[0], workoutFor(S.plan.days[0]))")
+    assert page.evaluate("S.plan.days[0].ex[0].id") == first
+    # Även framåt: bytet ligger kvar
+    page.evaluate("render()")
+    page.click("[data-fswap]")
+    page.click('[data-swapwhen="false"]')
+    page.click('.pick:not([hidden]) [data-add] >> nth=0')
+    kept = page.evaluate("S.plan.days[0].ex[0].id")
+    page.evaluate("restoreSwaps(S.plan.days[0], workoutFor(S.plan.days[0]))")
+    assert page.evaluate("S.plan.days[0].ex[0].id") == kept != first
+
+
+def test_gamla_byten_laggs_tillbaka(page):
+    start(page)
+    page.evaluate("""() => { const d = S.plan.days[0], orig = d.ex[0];
+      d.ex[0] = { id: 'goblet', sets: 3, reps: '10' };
+      S.log['2020-01-01'] = { workouts: [{ dayId: d.id, sets: {}, done: false, swap: [{ id: 'goblet', orig }] }], dailies: {}, food: [] };
+      window.__orig = orig.id; restoreOldSwaps(); }""")
+    assert page.evaluate("S.plan.days[0].ex[0].id === window.__orig && !S.log['2020-01-01'].workouts[0].swap") is True

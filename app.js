@@ -549,6 +549,7 @@ function refreshToday() {
   if (now === TODAY) return false;
   TODAY = now; chosenDay = null; editing = false; foodSheet = null; foodItem = null;
   if (focus) endFocus();
+  restoreOldSwaps(); save();
   return true;
 }
 
@@ -1361,6 +1362,8 @@ function renderModal() {
         : `<button class="pickadd" data-add="${id}" aria-label="${replacing ? "Välj" : "Lägg till"} ${esc(EX[id].name)}">${icon(replacing ? "right" : "plus", 20)}</button>`}</div>`;
   return `<div class="overlay" data-close><div class="sheet picksheet"><div class="row between">
       <h2>${replacing ? `Byt ut ${esc(EX[replacing.id].name)}` : forDaily ? "Lägg till daily" : "Lägg till övning"}</h2><button class="small ghost iconbtn" data-close aria-label="Stäng">${icon("close", 18)}</button></div>
+    ${modal.today != null ? `<div class="tseg pswapwhen" role="radiogroup" aria-label="Hur länge">${[[true, "Bara i dag"], [false, "Även framåt"]].map(([v, n]) =>
+      `<button role="radio" data-swapwhen="${v}" class="${modal.today === v ? "on" : ""}" aria-checked="${modal.today === v}">${n}</button>`).join("")}</div>` : ""}
     <div class="psearch">${icon("search", 18)}<input id="exsearch" type="search" placeholder="Sök övning eller muskel" value="${esc(modal.q || "")}" autocomplete="off" aria-label="Sök övning"></div>
     <div class="pfilters">
       <label class="pfilter ${modal.area !== "alla" ? "on" : ""}"><span class="sr">Kroppsdel</span><select data-areasel aria-label="Kroppsdel">
@@ -1522,6 +1525,19 @@ function fillFromHint(d, exId, i) {
 }
 
 // Passet räknas som klart när alla övningar är avbockade
+// Övningar som bytts ut bara för ett pass läggs tillbaka i passet. Setten på den nya övningen ligger kvar i loggen.
+function restoreSwaps(d, w) {
+  if (!w.swap) return;
+  if (d) for (const s of w.swap.slice().reverse()) {
+    const i = d.ex.findIndex(x => x.id === s.id);
+    if (i >= 0) { const o = Object.assign({}, s.orig); if (d.ex[i].ss) o.ss = true; else delete o.ss; d.ex[i] = o; }
+  }
+  delete w.swap;
+}
+// Byten från tidigare dagar som aldrig sparades läggs också tillbaka
+function restoreOldSwaps() {
+  for (const [date, L] of Object.entries(S.log || {})) if (date < TODAY) for (const w of L.workouts || []) if (w.swap) restoreSwaps(dayById(w.dayId), w);
+}
 function syncDone(d) {
   const w = workoutOn(logDate(), d.id);
   if (w) w.done = d.ex.length > 0 && d.ex.every(x => exDone(w, x));
@@ -1575,6 +1591,7 @@ document.addEventListener("click", ev => {
   if (ds.letter) { modal = { letter: ds.letter }; render(); return; }
   if (ds.openpick) { modal = { pick: ds.openpick }; render(); return; }
   if (ds.swap) { modal = { pick: ds.swap, replace: +ds.idx }; render(); filterPicker(); return; }
+  if (ds.swapwhen) { modal.today = ds.swapwhen === "true"; render(); filterPicker(); return; }
   if (ds.askai !== undefined) { askClaude(); return; }
   if (ds.sugg !== undefined) { pickSuggestion(+ds.sugg); return; }
   if (ds.tab) {
@@ -1618,6 +1635,7 @@ document.addEventListener("click", ev => {
     // I efterhand räknas set med ifyllda värden som gjorda när passet sparas
     if (editDate && !w.done) for (const arr of Object.values(w.sets)) for (const st of arr) if (st && hasData(st)) st.ok = true;
     w.done = !w.done;
+    if (w.done) restoreSwaps(dayById(ds.finish), w);
     shareWorkout(dayById(ds.finish), logDate(), w.done);
     // Ett sparat pass visar veckan; i efterhand går man tillbaka till dagen i Historik
     if (w.done) { histDay = editDate; editDate = null; tab = "historik"; }
@@ -1719,7 +1737,13 @@ document.addEventListener("click", ev => {
   else if (ds.ss) { const e = exList(ds.ss)[+ds.idx]; if (e.ss) delete e.ss; else e.ss = true; }
   else if (ds.add) {
     const list = exList(modal.pick);
-    if (modal.replace != null) list[modal.replace] = exEntry(ds.add);
+    if (modal.replace != null) {
+      const orig = list[modal.replace], e = exEntry(ds.add);
+      if (orig.ss) e.ss = true;
+      list[modal.replace] = e;
+      // Bara i dag: det gamla läggs tillbaka i passet när det sparas (eller nästa dag)
+      if (modal.today) { const w = workoutFor(dayById(modal.pick)); (w.swap = w.swap || []).push({ id: e.id, orig }); }
+    }
     else list.push(exEntry(ds.add));
     modal = null;
   }
@@ -1923,6 +1947,7 @@ document.addEventListener("input", ev => {
   else if (t.id === "fkcal" || t.id === "fprot") t.dataset.manual = t.value ? "1" : "";
 });
 
+restoreOldSwaps();
 render();
 connectCloud();
 connectSupabase();

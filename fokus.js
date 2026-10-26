@@ -116,6 +116,9 @@ function focusView() {
           <div class="chips">${free.map(({ x, k }) => `<button data-sspair="${k}">${esc(EX[x.id].name)}</button>`).join("") || `<span class="muted small">Alla andra övningar ingår redan i ett superset.</span>`}</div></div>`;
       })()
     : d.ex.length > 1 ? `<button class="ssmake" data-sspick>${icon("plus", 14)}Gör superset</button>` : "";
+  // Byt ut övningen, till exempel när maskinen är upptagen
+  const swapBtn = `<button class="ssmake" data-fswap="${focus.idx}">${icon("swap", 14)}Byt övning</button>`;
+  const actions = focus.ssPick ? ss : ss.startsWith('<button class="ssmake"') || !ss ? `<div class="factions">${ss}${swapBtn}</div>` : `${ss}<div class="factions">${swapBtn}</div>`;
   const prevTop = prev && topSet(prev);
   const tip = target ? `${prevTop ? `Förra gången ${fmtSet({ kg: +prevTop.kg || 0, reps: +prevTop.reps || 0 }, ex.id)}. ` : ""}Prova <b>${fmtTarget(target, ex.id)}</b>.`
     : `Första gången: välj en vikt du klarar ${esc(ex.reps)} ${timed ? "sekunder" : "gånger"}.`;
@@ -137,7 +140,7 @@ function focusView() {
     <div class="ftitle"><div class="grow"><h2>${esc(EX[ex.id].name)}</h2>
       <div class="muted">${allDone ? "Alla set klara" : `Set ${sel + 1} av ${ex.sets} · mål ${esc(ex.reps)}${timed ? "" : " reps"}`}</div></div>
       <button class="thumb dt" data-info="${ex.id}" aria-label="Visa hur ${esc(EX[ex.id].name)} görs">${figure(ex.id)}</button></div>
-    ${ss}
+    ${actions}
     <div class="ftip">${icon("trend", 18)}<span>${tip}</span></div>
     ${fields}
     <ol class="fsets" aria-label="Set">${setRows}</ol>
@@ -245,11 +248,12 @@ document.addEventListener("visibilitychange", () => {
 });
 
 document.addEventListener("click", ev => {
-  const t = ev.target.closest("[data-step],[data-focusgo],[data-focusexit],[data-focusend],[data-focusstart],[data-focusex],[data-fdopen],[data-fdclose],[data-fsel],[data-sspick],[data-sspair],[data-forder],[data-forderclose],[data-fmove],[data-fstepsall]");
+  const t = ev.target.closest("[data-step],[data-focusgo],[data-focusexit],[data-focusend],[data-focusstart],[data-focusex],[data-fdopen],[data-fdclose],[data-fsel],[data-sspick],[data-sspair],[data-forder],[data-forderclose],[data-fmove],[data-fstepsall],[data-fswap]");
   if (!t || t.disabled) return;
   if (t.classList.contains("overlay") && ev.target !== t) return;   // klick inne i fönstret
   const ds = t.dataset;
   if (ds.fdopen !== undefined || ds.fdclose !== undefined) { focusDailies = ds.fdopen !== undefined; dailyEditing = false; render(); return; }
+  if (ds.fswap !== undefined) { modal = { pick: focus.dayId, replace: +ds.fswap, today: true }; render(); filterPicker(); return; }
   if (ds.fstepsall !== undefined) { focus.allSteps = !focus.allSteps; render(); return; }
   if (ds.forder !== undefined || ds.forderclose !== undefined) { focusOrder = ds.forder !== undefined; render(); return; }
   if (ds.fmove !== undefined) {
