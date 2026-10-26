@@ -782,6 +782,136 @@ const EX = {
   },
 };
 
+// ---------- Fler övningar ----------
+// Varianter som rör sig som en befintlig övning lånar dess figur.
+const SAME = (id, extra) => Object.assign({ A: EX[id].A, B: EX[id].B, scene: EX[id].scene, view: EX[id].view }, extra);
+Object.assign(EX, {
+  // Bröst
+  armhavningar_bank: SAME("armhavningar", { name: "Armhävningar mot bänk", cat: "push", bw: true, muscles: "Bröst, triceps", sets: 3, reps: "10–15",
+    cues: ["Händerna på en bänk eller låda, kroppen rak.", "Sänk bröstet mot kanten och tryck upp.", "Lättare än vanliga armhävningar: bra att börja med."] }),
+  nedlutande_bankpress: SAME("bankpress", { name: "Nedåtlutande bänkpress", cat: "push", hold: "bar", muscles: "Nedre bröst, triceps", sets: 3, reps: "8–10",
+    cues: ["Bänken lätt nedåtlutad och fötterna fast.", "Sänk stången mot nedre delen av bröstet.", "Tryck upp i en rak linje."] }),
+  flyes_maskin: SAME("hantelflyes", { name: "Flyes i maskin", cat: "push", gear: "machine", muscles: "Bröst", sets: 3, reps: "10–12",
+    cues: ["Sitt med ryggen mot dynan och handtagen i brösthöjd.", "För ihop armarna i en båge framför bröstet.", "Släpp tillbaka kontrollerat."] }),
+  // Rygg
+  rackpull: SAME("marklyft", { name: "Rackpull", cat: "pull", hold: "bar", muscles: "Rygg, säte, grepp", sets: 3, reps: "5–8",
+    cues: ["Stången på stöd strax under knäna.", "Lyft med rak rygg tills du står upprätt.", "Bra för att träna övre delen av marklyftet."] }),
+  pendlayrodd: SAME("skivstangsrodd", { name: "Pendlayrodd", cat: "pull", hold: "bar", muscles: "Rygg, baksida axlar", sets: 3, reps: "6–8",
+    cues: ["Överkroppen vågrät och stången i golvet mellan varje rep.", "Dra stången explosivt till nedre bröstet.", "Håll ryggen rak hela tiden."] }),
+  raka_armar_kabel: { name: "Raka armar i kabel", cat: "pull", cable: [104, 4], muscles: "Rygg (lats)", sets: 3, reps: "12–15",
+    cues: ["Stå framåtlutad med raka armar och handtaget i ögonhöjd.", "Pressa ned handtaget mot låren i en båge.", "Håll armarna nästan raka."],
+    A: P(STAND, { t: 168, a: [86, 26] }), B: P(STAND, { t: 168, a: [66, 78] }) },
+  // Axlar
+  upprakt_rodd: { name: "Upprätt rodd", cat: "push", hold: "bar", muscles: "Axlar, kappmuskel", sets: 3, reps: "10–12",
+    cues: ["Håll stången med smalt grepp framför låren.", "Dra stången rakt upp till bröstet med armbågarna högt.", "Sänk kontrollerat."],
+    A: P(STAND, { a: [62, 80] }), B: P(STAND, { a: [64, 36], eb: -1 }) },
+  push_press: SAME("militarpress", { name: "Push press", cat: "push", hold: "bar", muscles: "Axlar, triceps, ben", sets: 3, reps: "5–8",
+    cues: ["Stången på framsidan av axlarna.", "Böj knäna lätt och tryck ifrån med benen.", "Använd farten för att pressa stången över huvudet."] }),
+  axelpress_maskin: SAME("sittande_axelpress", { name: "Axelpress i maskin", cat: "push", gear: "machine", hold: null, muscles: "Axlar, triceps", sets: 3, reps: "8–12",
+    cues: ["Ställ sätet så att handtagen är i axelhöjd.", "Pressa upp utan att låsa armbågarna.", "Sänk kontrollerat."] }),
+  kabel_sidolyft: SAME("sidolyft", { name: "Sidolyft i kabel", cat: "push", gear: "cable", hold: null, muscles: "Sidan av axlarna", sets: 3, reps: "12–15",
+    cues: ["Stå med sidan mot kabeln och handtaget i bortre handen.", "Lyft armen ut åt sidan till axelhöjd.", "Kabeln ger motstånd hela vägen."] }),
+  // Armar
+  hantelcurl: SAME("hammercurl", { name: "Bicepscurl med hantlar", cat: "pull", hold: "db", muscles: "Biceps", sets: 3, reps: "10–12",
+    cues: ["Handflatorna framåt och armbågarna intill kroppen.", "Curla upp och vrid lillfingret uppåt.", "Sänk långsamt."] }),
+  koncentrationscurl: SAME("scottcurl", { name: "Koncentrationscurl", cat: "pull", hold: "db", muscles: "Biceps", sets: 3, reps: "10–12",
+    cues: ["Sitt och stöd armbågen mot insidan av låret.", "Curla hanteln upp mot axeln.", "En arm i taget."] }),
+  kickbacks: { name: "Tricepskickbacks", cat: "push", hold: "db", muscles: "Triceps", sets: 3, reps: "12–15",
+    cues: ["Luta dig framåt med en hand på en bänk.", "Överarmen längs kroppen, sträck armen bakåt.", "Bara underarmen rör sig."],
+    A: { h: [46, 58], t: 112, a: [66, 74], f: [56, 95], eb: 1 }, B: { h: [46, 58], t: 112, a: [44, 62], f: [56, 95], eb: 1 } },
+  bankdips: SAME("dips", { name: "Dips mellan bänkar", cat: "push", bw: true, muscles: "Triceps, bröst", sets: 3, reps: "10–15",
+    cues: ["Händerna på en bänk bakom dig och benen framåt.", "Sänk dig tills armbågarna är i rät vinkel.", "Tryck upp med triceps."] }),
+  // Ben
+  bakatutfall: SAME("utfall", { name: "Bakåtutfall", cat: "legs", hold: "db", muscles: "Lår, säte", sets: 3, reps: "10/ben",
+    cues: ["Ta ett långt steg bakåt och sänk bakre knät mot golvet.", "Tryck tillbaka med främre benet.", "Skonsammare för knäna än framåtutfall."] }),
+  gaende_utfall: SAME("utfall", { name: "Gående utfall", cat: "legs", hold: "db", muscles: "Lår, säte", sets: 3, reps: "10/ben",
+    cues: ["Gå framåt med långa utfallssteg.", "Bakre knät nästan i golvet i varje steg.", "Håll överkroppen upprätt."] }),
+  sumo_knaboj: SAME("goblet", { name: "Sumoknäböj", cat: "legs", hold: "db", muscles: "Insida lår, säte", sets: 3, reps: "10–12",
+    cues: ["Bred fotställning med tårna utåt.", "Håll en hantel mellan benen och böj på.", "Knäna i samma riktning som tårna."] }),
+  hacksquat: SAME("knaboj", { name: "Hack squat", cat: "legs", gear: "machine", hold: null, muscles: "Framsida lår, säte", sets: 3, reps: "8–12",
+    cues: ["Ryggen mot dynan och fötterna mitt på plattan.", "Böj på tills låren är vågräta.", "Tryck upp utan att låsa knäna."] }),
+  sittande_vadpress: SAME("vadpress", { name: "Sittande vadpress", cat: "legs", gear: "machine", hold: null, muscles: "Vader", sets: 3, reps: "12–15",
+    cues: ["Sitt med dynan över knäna och framfoten på kanten.", "Pressa upp på tå och sänk hälarna långt ned.", "Lugnt tempo."] }),
+  vaggsittning: { name: "Väggsittning", cat: "legs", bw: true, muscles: "Framsida lår", sets: 3, reps: "45 s",
+    cues: ["Ryggen mot väggen och låren vågräta.", "Knäna rakt över fötterna.", "Håll positionen och andas lugnt."],
+    scene: [["line", 40, 10, 40, 95]], A: { h: [44, 72], t: 180, a: [62, 72], f: [66, 95], kb: -1 } },
+  nordic: { name: "Nordic hamstring curl", cat: "legs", bw: true, muscles: "Baksida lår", sets: 3, reps: "5–8",
+    cues: ["Stå på knä med hälarna fast under något.", "Fäll kroppen framåt så långsamt du kan med rak höft.", "Ta emot med händerna och tryck tillbaka."],
+    A: { h: [40, 74], t: 180, a: [48, 60], f: [20, 94], kb: -1 }, B: { h: [52, 80], t: 128, a: [84, 88], f: [20, 94], kb: -1 } },
+  // Mage
+  magrulle: { name: "Magrulle", cat: "core", bw: true, muscles: "Hela bålen", sets: 3, reps: "8–12",
+    cues: ["Stå på knä och håll i magrullen under axlarna.", "Rulla framåt så långt du klarar med spänd mage.", "Dra tillbaka med magen, inte armarna."],
+    A: { h: [40, 74], t: 120, a: [66, 92], f: [20, 94], kb: -1 }, B: { h: [48, 82], t: 98, a: [100, 92], f: [20, 94], kb: -1 } },
+  hangande_knalyft: { name: "Hängande knälyft", cat: "core", bw: true, muscles: "Nedre mage, höftböjare", sets: 3, reps: "10–15",
+    cues: ["Häng i en stång med raka armar.", "Dra knäna upp mot bröstet.", "Sänk kontrollerat utan att gunga."],
+    scene: [["bar", 40, -6, 88, -6]], A: HANG, B: P(HANG, { h: [60, 54], f: [70, 62], kb: 1 }) },
+  kabelcrunch: { name: "Kabelcrunch", cat: "core", cable: [64, 2], muscles: "Raka magmuskeln", sets: 3, reps: "12–15",
+    cues: ["Stå på knä framför kabeln med repet vid huvudet.", "Runda ryggen och dra armbågarna mot knäna.", "Höften står still."],
+    A: { h: [52, 70], t: 172, a: [56, 34], f: [32, 94], kb: -1, eb: -1 }, B: { h: [52, 70], t: 110, a: [74, 66], f: [32, 94], kb: -1, eb: -1 } },
+  fallkniven: { name: "Fällkniven", cat: "core", bw: true, muscles: "Hela magen", sets: 3, reps: "10–12",
+    cues: ["Ligg på rygg med armarna ovanför huvudet.", "Lyft samtidigt ben och överkropp så att händerna möter fötterna.", "Sänk långsamt."],
+    A: P(LIE_BACK, { t: 270, a: [4, 86], f: [94, 92], kb: 1 }), B: P(LIE_BACK, { t: 224, a: [72, 54], f: [76, 54], kb: 1 }) },
+  bird_dog: { name: "Bird dog", cat: "core", bw: true, muscles: "Bål, ländrygg, säte", sets: 3, reps: "10/sida",
+    cues: ["Stå på alla fyra.", "Sträck ut motsatt arm och ben tills de är i linje med kroppen.", "Håll ryggen stilla. Byt sida."],
+    A: { h: [42, 74], s: [72, 72], a: [72, 95], a2: [72, 95], f: [22, 95], f2: [22, 95], kb: -1, kb2: -1 },
+    B: { h: [42, 74], s: [72, 72], a: [72, 95], a2: [102, 66], f: [22, 95], f2: [2, 70], kb: -1, kb2: 1 } },
+  fladdersparkar: { name: "Fladdersparkar", cat: "core", bw: true, muscles: "Nedre mage", sets: 3, reps: "30 s",
+    cues: ["Ligg på rygg med benen raka och lyfta en bit.", "Sparka små snabba sparkar upp och ned.", "Ländryggen mot golvet."],
+    A: P(LIE_BACK, { t: 270, a: [30, 94], f: [92, 76], f2: [92, 88], kb: 1, kb2: 1 }), B: P(LIE_BACK, { t: 270, a: [30, 94], f: [92, 88], f2: [92, 76], kb: 1, kb2: 1 }) },
+  // Kondition
+  crosstrainer: SAME("promenad", { name: "Crosstrainer", cat: "cardio", muscles: "Kondition, hela kroppen", sets: 1, reps: "20 min",
+    cues: ["Jämnt tempo och rak hållning.", "Dra och tryck med armarna samtidigt."] }),
+  trappmaskin: SAME("stegupp", { name: "Trappmaskin", cat: "cardio", muscles: "Kondition, ben, säte", sets: 1, reps: "15 min",
+    cues: ["Stå upprätt och släpp handtagen om du kan.", "Hela foten på steget."], hold: null }),
+
+  // ---------- Fler stretchövningar ----------
+  dodhang: { name: "Dödhäng", cat: "stretch", bw: true, muscles: "Axlar, rygg, grepp", sets: 2, reps: "30 s",
+    cues: ["Häng i en stång med raka armar och avslappnade axlar.", "Låt kroppen bli tung och andas lugnt.", "Fötterna kan vila i golvet om det behövs."],
+    scene: [["bar", 40, -6, 88, -6]], A: HANG },
+  nedatgaende_hund: { name: "Nedåtgående hund", cat: "stretch", bw: true, muscles: "Baksida lår, vader, axlar", sets: 2, reps: "30 s",
+    cues: ["Händer och fötter i golvet, höften högt upp.", "Pressa hälarna mot golvet och bröstet mot låren.", "Böj knäna lite om det är för stramt."],
+    A: { h: [52, 58], s: [74, 78], a: [90, 95], f: [30, 95], kb: -1 }, B: { h: [50, 54], s: [72, 78], a: [90, 95], f: [30, 95], kb: -1 } },
+  varldens_basta: { name: "Världens bästa stretch", cat: "stretch", bw: true, muscles: "Höft, bröstrygg, baksida lår", sets: 2, reps: "5/sida",
+    cues: ["Gå ned i ett djupt utfall med ena handen i golvet.", "Vrid överkroppen och sträck andra armen mot taket.", "Följ handen med blicken. Byt sida."],
+    A: { h: [52, 74], t: 128, a: [74, 94], a2: [70, 92], f: [80, 95], f2: [14, 93], kb: -1, kb2: 1 },
+    B: { h: [52, 74], t: 140, a: [74, 94], a2: [76, 26], f: [80, 95], f2: [14, 93], kb: -1, kb2: 1 } },
+  djup_knaboj: { name: "Djup knäböj", cat: "stretch", bw: true, muscles: "Höfter, fotleder, ljumskar", sets: 2, reps: "45 s",
+    cues: ["Gå ned i en djup knäböj med hälarna i golvet.", "Händerna ihop framför bröstet, armbågarna mot knäna.", "Håll ryggen så rak som möjligt."],
+    A: { h: [50, 84], t: 160, a: [72, 64], f: [64, 95], kb: -1, eb: -1 } },
+  halv_split: { name: "Halv split", cat: "stretch", bw: true, muscles: "Baksida lår", sets: 2, reps: "30 s/sida",
+    cues: ["Bakre knät i golvet, främre benet rakt fram med hälen i golvet.", "Fäll överkroppen framåt med rak rygg.", "Byt sida."],
+    A: { h: [44, 74], t: 140, a: [72, 92], f: [92, 94], f2: [24, 94], kb: -1, kb2: 1 },
+    B: { h: [42, 76], t: 112, a: [84, 93], f: [92, 94], f2: [24, 94], kb: -1, kb2: 1 } },
+  kna_mot_brost: { name: "Knä mot bröst", cat: "stretch", bw: true, muscles: "Ländrygg, säte", sets: 2, reps: "30 s/sida",
+    cues: ["Ligg på rygg och dra ena knät mot bröstet.", "Andra benet rakt i golvet.", "Slappna av i ländryggen. Byt sida."],
+    A: P(LIE_BACK, { t: 270, a: [44, 68], f: [92, 94], f2: [40, 72], kb2: 1 }) },
+  liggande_hamstring: { name: "Liggande baksida lår", cat: "stretch", bw: true, muscles: "Baksida lår", sets: 2, reps: "30 s/sida",
+    cues: ["Ligg på rygg och lyft ena benet rakt upp.", "Håll om vaden eller använd ett band runt foten.", "Andra benet rakt i golvet. Byt sida."],
+    A: P(LIE_BACK, { t: 270, a: [46, 62], f: [92, 94], f2: [56, 50], kb2: -1 }) },
+  figur_fyra: { name: "Figur fyra", cat: "stretch", bw: true, muscles: "Säte, höft", sets: 2, reps: "30 s/sida",
+    cues: ["Ligg på rygg med fötterna i golvet.", "Lägg ena fotleden över andra knät.", "Dra det nedre benet mot dig tills det drar i sätet. Byt sida."],
+    A: P(LIE_BACK, { t: 270, a: [48, 66], f: [62, 64], f2: [58, 66], kb: 1, kb2: 1 }) },
+  sittande_vridning: { name: "Sittande vridning", cat: "stretch", bw: true, muscles: "Rygg, säte", sets: 2, reps: "30 s/sida",
+    cues: ["Sitt med raka ben och sätt ena foten utanför andra knät.", "Vrid överkroppen mot det böjda benet.", "Väx på längden för varje utandning. Byt sida."],
+    A: { h: [36, 90], t: 176, a: [18, 94], a2: [58, 80], f: [80, 94], f2: [58, 94], kb: -1, kb2: 1, eb: -1 } },
+  trad_nalen: { name: "Tråd nålen", cat: "stretch", bw: true, muscles: "Bröstrygg, axlar", sets: 2, reps: "30 s/sida",
+    cues: ["Stå på alla fyra.", "För ena armen under kroppen och lägg axeln i golvet.", "Låt huvudet vila. Byt sida."],
+    A: { h: [42, 74], s: [72, 72], a: [72, 95], f: [22, 95], kb: -1 }, B: { h: [42, 72], s: [70, 88], a: [62, 95], a2: [96, 94], f: [22, 95], kb: -1 } },
+  arm_over_brost: { name: "Arm över bröstet", cat: "stretch", bw: true, muscles: "Baksida axlar", sets: 2, reps: "30 s/sida",
+    cues: ["För ena armen rakt över bröstet.", "Dra försiktigt armen mot dig med andra handen.", "Håll axeln nere. Byt sida."],
+    A: P(STAND, { a: [86, 30], a2: [70, 34], eb2: -1 }) },
+  latsstretch_bank: { name: "Latsstretch mot bänk", cat: "stretch", bw: true, muscles: "Rygg (lats), axlar", sets: 2, reps: "30 s",
+    cues: ["Stå på knä framför en bänk med armbågarna på bänken.", "Sjunk med bröstet mot golvet.", "Håll magen lätt spänd."],
+    scene: [["rect", 86, 70, 30, 4], ["line", 90, 74, 90, 95], ["line", 112, 74, 112, 95]],
+    A: { h: [40, 74], t: 104, a: [94, 70], f: [20, 94], kb: -1 }, B: { h: [42, 74], t: 92, a: [96, 70], f: [20, 94], kb: -1 } },
+  grodan: { name: "Grodan", cat: "stretch", bw: true, muscles: "Insida lår, ljumskar", sets: 2, reps: "45 s",
+    cues: ["Stå på knä med knäna brett isär och underarmarna i golvet.", "Skjut höften bakåt tills det drar på insidan av låren.", "Andas lugnt."],
+    A: { h: [42, 72], s: [72, 84], a: [88, 95], f: [22, 94], kb: -1, eb: -1 }, B: { h: [36, 74], s: [66, 86], a: [84, 95], f: [22, 94], kb: -1, eb: -1 } },
+  hander_bakom_ryggen: { name: "Händerna bakom ryggen", cat: "stretch", bw: true, muscles: "Bröst, framsida axlar", sets: 2, reps: "30 s",
+    cues: ["Knäpp händerna bakom ryggen.", "Sträck armarna och lyft dem lätt bakåt.", "Öppna bröstet och håll huvudet rakt."],
+    A: P(STAND, { a: [44, 78] }), B: P(STAND, { a: [36, 70] }) },
+});
+
 // Utrustning och hur vikten skrivs in. Härleds från hold/cable/bw om gear saknas.
 const GEAR = {
   bar: ["Skivstång", "Skriv in den totala vikten: stången (oftast 20 kg) plus alla skivor.", "kg totalt"],
@@ -799,3 +929,18 @@ function gearOf(id) {
 }
 
 const CATS = { push: "Push", pull: "Pull", legs: "Ben", core: "Mage" };
+
+// Område i väljaren: efter kroppsdel, inte efter passtyp. Push och pull delas upp per muskel.
+const AREAS = { brost: "Bröst", rygg: "Rygg", axlar: "Axlar", armar: "Armar", ben: "Ben", mage: "Mage", stretch: "Stretch", kondition: "Kondition" };
+const AREA_IDS = {
+  brost: "bankpress hantelpress lutande_hantelpress dips armhavningar lutande_bankpress hantelflyes brostpress_maskin kabelflyes armhavningar_bank nedlutande_bankpress flyes_maskin",
+  axlar: "militarpress sittande_axelpress sidolyft pike_pushups arnoldpress framlyft face_pulls omvanda_flyes shrugs upprakt_rodd push_press axelpress_maskin kabel_sidolyft",
+  armar: "triceps_pushdown fransk_press diamant_armhavningar smal_bankpress skullcrushers bicepscurl hammercurl scottcurl kabelcurl hantelcurl koncentrationscurl kickbacks bankdips",
+};
+function areaOf(id) {
+  for (const [a, ids] of Object.entries(AREA_IDS)) if (ids.split(" ").includes(id)) return a;
+  return { pull: "rygg", legs: "ben", core: "mage", stretch: "stretch", cardio: "kondition" }[EX[id].cat] || "brost";
+}
+// Utrustning i väljarens filter; kabel och maskin hör ihop
+const GEAR_FILTER = { bw: "Kroppsvikt", db: "Hantlar", bar: "Skivstång", machine: "Kabel och maskin", kb: "Kettlebell" };
+const gearGroup = id => { const g = gearOf(id); return g === "cable" ? "machine" : g || "bw"; };

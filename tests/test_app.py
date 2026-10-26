@@ -1376,7 +1376,7 @@ def test_stretch_som_daily(page):
     start(page)
     page.click("[data-dedit]")
     page.click('[data-openpick="daily"]')
-    page.click('.chips [data-cat="stretch"]')
+    page.click('.pchips [data-area="stretch"]')
     shown = page.evaluate("[...document.querySelectorAll('.pick')].filter(e => !e.hidden).map(e => e.querySelector('.pname').textContent)")
     assert "Duvan" in shown and "Höftböjarstretch" in shown and len(shown) == page.evaluate("Object.values(EX).filter(e => e.cat === 'stretch').length")
     page.click('[data-add="duvan"]')
@@ -1412,3 +1412,29 @@ def test_strombrytaren_ser_ut_som_en_strombrytare(page):
     page.evaluate("""document.getElementById('app').insertAdjacentHTML('beforeend', '<input type="checkbox" role="switch" class="switch" id="sw">')""")
     box = page.locator("#sw").bounding_box()
     assert round(box["width"]) == 52 and round(box["height"]) == 32
+
+
+def test_valj_ovning_efter_kroppsdel_och_utrustning(page):
+    start(page)
+    go(page, "pass")
+    page.click(f'[data-pick="{page.evaluate("S.plan.days[0].id")}"]')
+    page.click("[data-edit]")
+    page.click('[data-openpick]')
+    # Push-passet börjar på Bröst
+    assert page.get_attribute('.pchips [data-area].on', "data-area") == "brost"
+    visible = lambda: page.evaluate("[...document.querySelectorAll('.pick')].filter(e => !e.hidden).map(e => e.dataset.area + '/' + e.dataset.gear)")
+    assert visible() and all(v.startswith("brost/") for v in visible())
+    page.click('.pchips [data-gear="db"]')
+    assert visible() and all(v == "brost/db" for v in visible())
+    page.click('.pchips [data-area="armar"]')
+    assert visible() and all(v == "armar/db" for v in visible())
+    # Sökning gäller alla kroppsdelar
+    page.click('.pchips [data-gear="alla"]')
+    page.fill("#exsearch", "stretch")
+    assert any(v.startswith("stretch/") for v in visible())
+    # Instruktionen har en väg tillbaka till listan
+    page.fill("#exsearch", "")
+    page.click('.pick:not([hidden]) .thumb >> nth=0')
+    page.click("[data-infoback]")
+    assert page.locator(".picksheet").count() == 1
+    assert page.evaluate("Object.keys(EX).every(id => AREAS[areaOf(id)])") is True

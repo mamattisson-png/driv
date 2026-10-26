@@ -1319,44 +1319,60 @@ function renderModal() {
   }
   if (modal.info) {
     const e = EX[modal.info];
-    return `<div class="overlay" data-close><div class="sheet"><div class="row between"><h2>${esc(e.name)}</h2><button class="small ghost" data-close>${icon("close", 18)}</button></div>
+    return `<div class="overlay" data-close><div class="sheet">${modal.back ? `<button class="small ghost backlink" data-infoback>‹ Tillbaka till övningarna</button>` : ""}
+      <div class="row between"><h2>${esc(e.name)}</h2><button class="small ghost iconbtn" data-close aria-label="Stäng">${icon("close", 18)}</button></div>
       ${figure(modal.info, "big", true)}<div class="muted">${esc(e.muscles)}</div>
       ${gearOf(modal.info) ? `<div class="gearbox"><b>${GEAR[gearOf(modal.info)][0]}</b><div>${GEAR[gearOf(modal.info)][1]}</div></div>` : ""}
       <ol>${e.cues.map(c => `<li>${esc(c)}</li>`).join("")}</ol></div></div>`;
   }
   const list = exList(modal.pick);
   const replacing = modal.replace != null ? list[modal.replace] : null;
-  const first = targetCats(modal.pick)[0];
-  const cat = modal.cat || (replacing && first !== "bw" ? EX[replacing.id].cat : first);
-  modal.cat = cat;
-  const have = list.map(e => e.id);
   const forDaily = modal.pick === "daily";
+  // Kroppsdelar; kondition bara för dailys. Startar där man troligen letar.
+  const areas = Object.keys(AREAS).filter(a => forDaily || a !== "kondition");
+  if (!modal.area) {
+    const t = forDaily ? null : (modal.pick.startsWith("draft:") ? draft.days[+modal.pick.slice(6)] : dayById(modal.pick)).type;
+    modal.area = replacing ? areaOf(replacing.id) : forDaily ? "mage" : { push: "brost", cpush: "brost", pull: "rygg", cpull: "rygg", legs: "ben", lower: "ben", clegs: "ben" }[t] || "alla";
+  }
+  modal.gear = modal.gear || "alla";
+  const have = list.map(e => e.id);
   const ids = Object.keys(EX).filter(id => forDaily || EX[id].cat !== "cardio");
-  const chips = forDaily ? ["core", "stretch", "cardio", ...Object.keys(CATS).filter(c => c !== "core"), "bw", "all"]
-    : [...Object.keys(CATS), "stretch", "bw", "all"];
-  const chipName = c => CATS[c] || { bw: "Kroppsvikt", stretch: "Stretch", cardio: "Kondition", all: "Alla" }[c];
-  return `<div class="overlay" data-close><div class="sheet"><div class="row between">
-      <h2>${replacing ? `Byt ut ${esc(EX[replacing.id].name)}` : "Välj övning"}</h2><button class="small ghost" data-close>${icon("close", 18)}</button></div>
-    <input id="exsearch" type="search" placeholder="Sök övning eller muskel, t.ex. bröst" value="${esc(modal.q || "")}" autocomplete="off" style="margin-bottom:10px">
-    <div class="chips" style="margin-bottom:10px">${chips.map(c => `<button data-cat="${c}" class="${c === cat ? "on" : ""}">${chipName(c)}</button>`).join("")}</div>
-    <div class="pickgrid">${ids.map(id => `<div class="pick ${have.includes(id) ? "have" : ""}" data-cat="${EX[id].cat}" data-bw="${EX[id].bw ? 1 : ""}" data-q="${esc(norm(EX[id].name + " " + EX[id].muscles + " " + (CATS[EX[id].cat] || (EX[id].cat === "stretch" ? "stretch rörlighet" : "")) + " " + (gearOf(id) ? GEAR[gearOf(id)][0] : "")))}">
-      ${thumb(id)}<div class="pname">${esc(EX[id].name)}</div><div class="muted small">${esc(EX[id].muscles)}</div>
-      ${have.includes(id) ? `<span class="muted small">Finns redan</span>` : `<button class="small primary" data-add="${id}">${replacing ? "Välj" : "Lägg till"}</button>`}</div>`).join("")}</div>
-    <div class="muted" id="nohits" hidden>Inga övningar matchar sökningen.</div></div></div>`;
+  const chip = (attr, k, n, on) => `<button data-${attr}="${k}" class="${on ? "on" : ""}" aria-pressed="${on}">${n}</button>`;
+  const row = id => `<div class="pick ${have.includes(id) ? "have" : ""}" data-area="${areaOf(id)}" data-gear="${gearGroup(id)}"
+      data-q="${esc(norm(EX[id].name + " " + EX[id].muscles + " " + AREAS[areaOf(id)] + " " + (gearOf(id) ? GEAR[gearOf(id)][0] : "")))}">
+      ${thumb(id, "pt")}<div class="grow"><div class="pname">${esc(EX[id].name)}</div><div class="muted small">${esc(EX[id].muscles)}</div></div>
+      ${have.includes(id) ? `<span class="pickhave" aria-label="Finns redan">${icon("check", 18)}</span>`
+        : `<button class="pickadd" data-add="${id}" aria-label="${replacing ? "Välj" : "Lägg till"} ${esc(EX[id].name)}">${icon(replacing ? "right" : "plus", 20)}</button>`}</div>`;
+  return `<div class="overlay" data-close><div class="sheet picksheet"><div class="row between">
+      <h2>${replacing ? `Byt ut ${esc(EX[replacing.id].name)}` : forDaily ? "Lägg till daily" : "Lägg till övning"}</h2><button class="small ghost iconbtn" data-close aria-label="Stäng">${icon("close", 18)}</button></div>
+    <div class="psearch">${icon("search", 18)}<input id="exsearch" type="search" placeholder="Sök övning eller muskel" value="${esc(modal.q || "")}" autocomplete="off" aria-label="Sök övning"></div>
+    <div class="pchips" role="group" aria-label="Kroppsdel">${chip("area", "alla", "Alla", modal.area === "alla")}${areas.map(a => chip("area", a, AREAS[a], modal.area === a)).join("")}</div>
+    <div class="pchips small" role="group" aria-label="Utrustning">${chip("gear", "alla", "All utrustning", modal.gear === "alla")}${Object.entries(GEAR_FILTER).map(([k, n]) => chip("gear", k, n, modal.gear === k)).join("")}</div>
+    <div class="picklist">${areas.map(a => {
+      const group = ids.filter(id => areaOf(id) === a);
+      return group.length ? `<section class="pgroup2" data-group="${a}"><h3 class="klabel">${AREAS[a]}</h3>${group.map(row).join("")}</section>` : "";
+    }).join("")}</div>
+    <div class="muted" id="nohits" hidden>Inga övningar matchar. Prova en annan kroppsdel eller utrustning.</div></div></div>`;
 }
 
-// Sökning filtrerar alla kategorier; utan sökord visas vald kategori
+// Sökning gäller alla kroppsdelar; annars visas vald kroppsdel. Utrustningen filtrerar alltid.
 function filterPicker() {
   const q = norm((modal && modal.q || "").trim());
   let shown = 0;
   for (const el of document.querySelectorAll(".pick")) {
-    const hit = q ? el.dataset.q.includes(q)
-      : modal.cat === "all" || el.dataset.cat === modal.cat || (modal.cat === "bw" && el.dataset.bw);
+    const hit = (q ? el.dataset.q.includes(q) : modal.area === "alla" || el.dataset.area === modal.area)
+      && (modal.gear === "alla" || el.dataset.gear === modal.gear);
     el.hidden = !hit;
     if (hit) shown++;
   }
+  for (const g of document.querySelectorAll(".pgroup2")) g.hidden = !g.querySelector(".pick:not([hidden])");
   const none = document.getElementById("nohits");
   if (none) none.hidden = shown > 0;
+  // Den valda kroppsdelen syns i raden även om den ligger långt till höger
+  for (const r of document.querySelectorAll(".pchips")) {
+    const on = r.querySelector(".on");
+    if (on) r.scrollLeft = on.offsetLeft - (r.clientWidth - on.offsetWidth) / 2;
+  }
 }
 
 // ---------- Logg ----------
@@ -1525,16 +1541,19 @@ document.addEventListener("click", ev => {
   if (t.classList.contains("overlay") && ev.target !== t) return;   // klick inne i rutan
   const ds = t.dataset, prevTab = tab;
   if (ds.close !== undefined) { modal = null; render(); return; }
-  if (ds.info) { modal = { info: ds.info }; render(); return; }
+  if (ds.info) { modal = { info: ds.info, back: modal && modal.pick ? modal : null }; render(); return; }
+  if (ds.infoback !== undefined) { modal = modal.back; render(); filterPicker(); return; }
   if (ds.chart) { modal = { chart: ds.chart }; render(); return; }
   if (ds.letter) { modal = { letter: ds.letter }; render(); return; }
   if (ds.openpick) { modal = { pick: ds.openpick }; render(); return; }
   if (ds.swap) { modal = { pick: ds.swap, replace: +ds.idx }; render(); filterPicker(); return; }
-  if (ds.cat) {
-    modal.cat = ds.cat;
-    modal.q = "";
+  if (ds.area || ds.gear) {
+    if (ds.area) { modal.area = ds.area; modal.q = ""; }
+    else modal.gear = ds.gear;
     render();
     filterPicker();
+    const s = document.querySelector(".picksheet");
+    if (s && ds.area) s.scrollTop = 0;
     return;
   }
   if (ds.askai !== undefined) { askClaude(); return; }
