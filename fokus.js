@@ -40,6 +40,9 @@ function focusAfterSet(d, idx = focus && focus.idx, i = 0) {
 }
 // Anropas efter varje ritning: nästa set (eller nästa övning) hamnar i bild
 function afterFocusRender() {
+  const row = focus && document.querySelector(".fsteps"), cur = row && row.querySelector(".on");
+  if (cur) row.scrollLeft = cur.offsetLeft - (row.clientWidth - cur.offsetWidth) / 2;
+  fitBigNums();
   if (!focus || !focus.scroll) return;
   const where = focus.scroll;
   focus.scroll = null;
@@ -68,6 +71,11 @@ function bigStepper(exId, i, f, val, hint, label, unit) {
         value="${val ?? ""}" placeholder="${hint ?? ""}" data-set="${exId}" data-i="${i}" data-f="${f}" aria-label="${label}, set ${i + 1}">${unit ? `<span>${unit}</span>` : ""}</label>
       ${btn(1, "Öka")}</div></section>`;
 }
+
+function fitBigNums() {
+  for (const el of document.querySelectorAll(".bignum input")) el.style.width = `${Math.max(1, String(el.value || el.placeholder).length) + 0.4}ch`;
+}
+document.addEventListener("input", ev => { if (ev.target.closest && ev.target.closest(".bignum")) fitBigNums(); });
 
 const restText = sec => `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, "0")}`;
 
@@ -102,7 +110,13 @@ function focusView() {
   const ss = g ? `<div class="sstabs" role="tablist" aria-label="Superset">${d.ex.slice(g[0], g[1] + 1).map((x, k) =>
       `<button role="tab" aria-selected="${g[0] + k === focus.idx}" class="${g[0] + k === focus.idx ? "on" : ""}" data-focusgo="${g[0] + k}"><b>${String.fromCharCode(65 + ssIndex(d, g[0]))}${k + 1}</b> ${esc(EX[x.id].name)}</button>`).join("")}</div>
       <button class="sslink2" data-ss="${d.id}" data-idx="${focus.idx === g[1] ? focus.idx - 1 : focus.idx}">Sluta köra som superset</button>`
-    : next ? `<button class="ssmake" data-ss="${d.id}" data-idx="${focus.idx}" aria-label="Gör superset med ${esc(EX[next.id].name)}">${icon("plus", 14)}Gör superset</button>` : "";
+    : focus.ssPick ? (() => {
+        // Välj vilken övning som körs ihop med den här; den flyttas till direkt efter
+        const free = d.ex.map((x, k) => ({ x, k })).filter(({ k }) => k !== focus.idx && !ssGroup(d, k));
+        return `<div class="sspick"><div class="row between"><span class="muted small">Kör ihop med</span><button class="small ghost" data-sspick aria-label="Avbryt">${icon("close", 18)}</button></div>
+          <div class="chips">${free.map(({ x, k }) => `<button data-sspair="${k}">${esc(EX[x.id].name)}</button>`).join("") || `<span class="muted small">Alla andra övningar ingår redan i ett superset.</span>`}</div></div>`;
+      })()
+    : d.ex.length > 1 ? `<button class="ssmake" data-sspick>${icon("plus", 14)}Gör superset</button>` : "";
   const prevTop = prev && topSet(prev);
   const tip = target ? `${prevTop ? `Förra gången ${fmtSet({ kg: +prevTop.kg || 0, reps: +prevTop.reps || 0 }, ex.id)}. ` : ""}Prova <b>${fmtTarget(target, ex.id)}</b>.`
     : `Första gången: välj en vikt du klarar ${esc(ex.reps)} ${timed ? "sekunder" : "gånger"}.`;
@@ -118,8 +132,9 @@ function focusView() {
   const dDone = S.daily.filter(e => dailyDone(logDate(), e.id)).length;
   return `<div class="focus">
     <header class="fhead"><button class="roundbtn" data-focusexit aria-label="Tillbaka till passet">${icon("left", 20)}</button>
-      <div class="grow"><span class="muted small">Övning ${focus.idx + 1} av ${d.ex.length} · ${esc(TYPES[d.type] ? TYPES[d.type].label : d.name)}</span>
-        <div class="fsteps">${d.ex.map((x, k) => `<button data-focusgo="${k}" class="${k === focus.idx ? "on" : ""} ${exDone(w, x) ? "done" : ""}" aria-label="${esc(EX[x.id].name)}"></button>`).join("")}</div></div></header>
+      <span class="muted small">Övning ${focus.idx + 1} av ${d.ex.length} · ${esc(TYPES[d.type] ? TYPES[d.type].label : d.name)}</span></header>
+    <div class="fsteps" role="group" aria-label="Övningar i passet">${d.ex.map((x, k) => `<button data-focusgo="${k}" class="${k === focus.idx ? "on" : ""} ${exDone(w, x) ? "done" : ""}" ${k === focus.idx ? 'aria-current="step"' : ""}>
+      <span class="fn">${exDone(w, x) ? icon("check", 12) : k + 1}</span>${esc(EX[x.id].name)}</button>`).join("")}</div>
     <div class="ftitle"><div class="grow"><h2>${esc(EX[ex.id].name)}</h2>
       <div class="muted">${allDone ? "Alla set klara" : `Set ${sel + 1} av ${ex.sets} · mål ${esc(ex.reps)}${timed ? "" : " reps"}`}</div></div>
       <button class="thumb dt" data-info="${ex.id}" aria-label="Visa hur ${esc(EX[ex.id].name)} görs">${figure(ex.id)}</button></div>
@@ -206,7 +221,7 @@ document.addEventListener("visibilitychange", () => {
 });
 
 document.addEventListener("click", ev => {
-  const t = ev.target.closest("[data-step],[data-focusgo],[data-focusexit],[data-focusend],[data-focusstart],[data-focusex],[data-fdopen],[data-fdclose],[data-fsel]");
+  const t = ev.target.closest("[data-step],[data-focusgo],[data-focusexit],[data-focusend],[data-focusstart],[data-focusex],[data-fdopen],[data-fdclose],[data-fsel],[data-sspick],[data-sspair]");
   if (!t) return;
   if (t.classList.contains("overlay") && ev.target !== t) return;   // klick inne i fönstret
   const ds = t.dataset;
@@ -215,8 +230,17 @@ document.addEventListener("click", ev => {
   if (ds.focusstart) { tab = "pass"; editing = false; startFocus(ds.focusstart); }
   else if (ds.focusex !== undefined) { if (startFocus(currentPassDay().id)) focus.idx = +ds.focusex; }
   else if (ds.focusexit !== undefined) endFocus();
-  else if (ds.focusgo !== undefined) { focus.idx = Math.max(0, +ds.focusgo); focus.sel = null; }
+  else if (ds.focusgo !== undefined) { focus.idx = Math.max(0, +ds.focusgo); focus.sel = null; focus.ssPick = false; }
   else if (ds.fsel !== undefined) focus.sel = +ds.fsel;
+  else if (ds.sspick !== undefined) focus.ssPick = !focus.ssPick;
+  else if (ds.sspair !== undefined) {
+    // Den valda övningen flyttas till direkt efter den här och kopplas ihop med den
+    const d = dayById(focus.dayId), k = +ds.sspair, [x] = d.ex.splice(k, 1);
+    if (k < focus.idx) focus.idx--;
+    d.ex.splice(focus.idx + 1, 0, x);
+    d.ex[focus.idx].ss = true;
+    focus.ssPick = false;
+  }
   else if (ds.step) stepSet(currentPassDay(), ds.ex, +ds.i, ds.step, +ds.dir);
   save();
   render();

@@ -1386,3 +1386,29 @@ def test_stretch_som_daily(page):
     assert page.evaluate("dailyDone(TODAY, 'duvan')") is True
     # Stretch hålls en tid: i ett pass syns bara sekunder, ingen vikt
     assert page.evaluate("isTimed('duvan') && gearOf('duvan') === null && restFor('duvan') === restSettings().iso") is True
+
+
+def test_valj_ovning_till_superset_och_se_passet(page):
+    start(page)
+    go(page, "pass")
+    page.click(f'[data-pick="{page.evaluate("S.plan.days[0].id")}"]')
+    page.click("[data-focusstart]")
+    # Raden överst visar alla övningar med namn, den aktuella markerad
+    names = page.evaluate("S.plan.days[0].ex.map(x => EX[x.id].name)")
+    assert page.locator(".fsteps button").count() == len(names) and names[2] in page.inner_text(".fsteps")
+    assert names[0] in page.inner_text(".fsteps .on")
+    # Superset med en valfri övning: den flyttas till direkt efter
+    third = page.evaluate("S.plan.days[0].ex[2].id")
+    page.click("[data-sspick]")
+    page.click('[data-sspair="2"]')
+    assert page.evaluate("S.plan.days[0].ex[1].id") == third and page.evaluate("S.plan.days[0].ex[0].ss") is True
+    assert page.locator(".sstabs button").count() == 2
+    page.click('.fsteps [data-focusgo="4"]')
+    assert page.evaluate("focus.idx") == 4 and names[4] in page.inner_text(".fsteps .on")
+
+
+def test_strombrytaren_ser_ut_som_en_strombrytare(page):
+    start(page)
+    page.evaluate("""document.getElementById('app').insertAdjacentHTML('beforeend', '<input type="checkbox" role="switch" class="switch" id="sw">')""")
+    box = page.locator("#sw").bounding_box()
+    assert round(box["width"]) == 52 and round(box["height"]) == 32

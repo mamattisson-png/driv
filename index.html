@@ -591,11 +591,10 @@
   .pstats span { font-size: 12px; color: var(--muted); }
   .pgroup { display: flex; flex-direction: column; gap: 8px; margin-top: 18px; }
   .pgroup > .klabel { margin: 0 4px; font-weight: 500; }
-  .switch { appearance: none; -webkit-appearance: none; width: 52px; height: 32px; min-height: 0; flex: none; margin: 0; padding: 0; border: 0;
-    border-radius: 16px; background: var(--line-strong); position: relative; cursor: pointer; }
-  .switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 26px; height: 26px; border-radius: 13px; background: var(--text); transition: transform .15s; }
-  .switch:checked { background: var(--accent-strong); }
-  .switch:checked::after { transform: translateX(20px); background: var(--on-accent); }
+  /* Knoppen ritas som bakgrund; webbläsare visar inte ::after på kryssrutor (Safari) */
+  input[type=checkbox].switch { appearance: none; -webkit-appearance: none; width: 52px; height: 32px; min-height: 0; flex: none; margin: 0; padding: 0;
+    border: 0; border-radius: 16px; cursor: pointer; background: radial-gradient(circle at 16px 50%, var(--text) 12.5px, transparent 13.5px), var(--line-strong); }
+  input[type=checkbox].switch:checked { background: radial-gradient(circle at 36px 50%, var(--on-accent) 12.5px, transparent 13.5px), var(--accent-strong); }
   .tseg { display: flex; gap: 2px; padding: 3px; border-radius: 12px; background: var(--card-2); flex: none; }
   .tseg button { min-height: 36px; padding: 0 10px; border: 0; border-radius: 9px; background: none; font-size: 13px; color: var(--muted); }
   .tseg button.on { background: var(--text); color: var(--bg); font-weight: 600; }
@@ -675,13 +674,17 @@
   body.infocus { padding-bottom: env(safe-area-inset-bottom); }
   .focus { display: flex; flex-direction: column; gap: 16px; min-height: calc(100vh - 32px); }
   .fhead { display: flex; align-items: center; gap: 12px; }
-  .fhead .grow { display: flex; flex-direction: column; gap: 6px; }
   .roundbtn { width: 44px; height: 44px; padding: 0; border-radius: 22px; flex: none; display: grid; place-items: center; }
-  .fsteps { display: flex; gap: 4px; }
-  .fsteps button { flex: 1; min-width: 0; height: 20px; min-height: 0; padding: 8px 0; border: 0; border-radius: 0; background: none; position: relative; }
-  .fsteps button::after { content: ""; position: absolute; left: 0; right: 0; top: 8px; height: 4px; border-radius: 2px; background: var(--line); }
-  .fsteps button.done::after { background: var(--accent); opacity: .55; }
-  .fsteps button.on::after { background: var(--accent); opacity: 1; }
+  .fsteps { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; margin: -6px -16px 0; padding: 2px 16px; scroll-behavior: smooth; }
+  .fsteps::-webkit-scrollbar { display: none; }
+  .fsteps button { flex: none; min-height: 40px; padding: 0 12px 0 6px; border-radius: 99px; display: inline-flex; align-items: center; gap: 8px;
+    font-size: 13px; white-space: nowrap; background: var(--card); color: var(--muted); }
+  .fsteps .fn { width: 26px; height: 26px; border-radius: 13px; display: grid; place-items: center; background: var(--card-2); color: var(--text);
+    font: 600 12px "Unbounded", sans-serif; flex: none; }
+  .fsteps button.done .fn { background: var(--ok-soft); color: var(--ok-text); }
+  .fsteps button.on { background: var(--text); color: var(--bg); border-color: var(--text); font-weight: 600; }
+  .fsteps button.on .fn { background: var(--accent-strong); color: var(--on-accent); }
+  .sspick { display: flex; flex-direction: column; gap: 8px; margin-top: -6px; padding: 10px 12px 12px; border-radius: 16px; border: 1px dashed var(--line-strong); }
   .ftitle { display: flex; align-items: center; gap: 12px; }
   .ftitle h2 { font: 600 30px/1.1 "Unbounded", sans-serif; margin: 0 0 6px; overflow-wrap: anywhere; }
   @media (max-width: 359px) { .ftitle h2 { font-size: 24px; } }
@@ -698,7 +701,7 @@
   .bigrow { display: flex; align-items: center; gap: 10px; }
   .bstep { width: 72px; height: 72px; flex: none; padding: 0; border-radius: 24px; display: grid; place-items: center; background: var(--card); }
   .bignum { flex: 1; min-width: 0; display: flex; align-items: baseline; justify-content: center; gap: 4px; }
-  .bignum input { width: 4ch; field-sizing: content; min-width: 1.5ch; max-width: 100%; border: 0; background: none; padding: 0; text-align: center; color: var(--text);
+  .bignum input { width: 4ch; min-width: 1.5ch; max-width: 100%; border: 0; background: none; padding: 0; text-align: center; color: var(--text);
     font: 600 44px/1.1 "Unbounded", sans-serif; font-variant-numeric: tabular-nums; min-height: 56px; }
   .bignum input::placeholder { color: var(--text); opacity: .45; }
   .bignum span { font-size: 16px; color: var(--muted); flex: none; }
