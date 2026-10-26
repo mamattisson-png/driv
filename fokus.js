@@ -6,6 +6,7 @@
 
 let focus = null;   // { dayId, idx } medan fokusläget är öppet
 let focusDailies = false;   // dailys visas i ett fönster ovanpå passet
+let focusOrder = false;     // fönstret där övningarnas ordning ändras
 
 function startFocus(dayId) {
   const d = dayById(dayId);
@@ -18,7 +19,7 @@ function startFocus(dayId) {
 }
 function endFocus() {
   focus = null;
-  focusDailies = false;
+  focusDailies = false; focusOrder = false;
   keepAwake(false);
 }
 
@@ -40,8 +41,6 @@ function focusAfterSet(d, idx = focus && focus.idx, i = 0) {
 }
 // Anropas efter varje ritning: nästa set (eller nästa övning) hamnar i bild
 function afterFocusRender() {
-  const row = focus && document.querySelector(".fsteps"), cur = row && row.querySelector(".on");
-  if (cur) row.scrollLeft = cur.offsetLeft - (row.clientWidth - cur.offsetWidth) / 2;
   fitBigNums();
   if (!focus || !focus.scroll) return;
   const where = focus.scroll;
@@ -132,9 +131,10 @@ function focusView() {
   const dDone = S.daily.filter(e => dailyDone(logDate(), e.id)).length;
   return `<div class="focus">
     <header class="fhead"><button class="roundbtn" data-focusexit aria-label="Tillbaka till passet">${icon("left", 20)}</button>
-      <span class="muted small">Övning ${focus.idx + 1} av ${d.ex.length} · ${esc(TYPES[d.type] ? TYPES[d.type].label : d.name)}</span></header>
+      <span class="muted small grow">Övning ${focus.idx + 1} av ${d.ex.length} · ${esc(TYPES[d.type] ? TYPES[d.type].label : d.name)}</span>
+      ${d.ex.length > 1 ? `<button class="small ghost" data-forder>Ändra ordning</button>` : ""}</header>
     <div class="fsteps" role="group" aria-label="Övningar i passet">${d.ex.map((x, k) => `<button data-focusgo="${k}" class="${k === focus.idx ? "on" : ""} ${exDone(w, x) ? "done" : ""}" ${k === focus.idx ? 'aria-current="step"' : ""}>
-      <span class="fn">${exDone(w, x) ? icon("check", 12) : k + 1}</span>${esc(EX[x.id].name)}</button>`).join("")}</div>
+      <span class="fn">${exDone(w, x) ? icon("check", 12) : k + 1}</span><span class="nm">${esc(EX[x.id].name)}</span></button>`).join("")}</div>
     <div class="ftitle"><div class="grow"><h2>${esc(EX[ex.id].name)}</h2>
       <div class="muted">${allDone ? "Alla set klara" : `Set ${sel + 1} av ${ex.sets} · mål ${esc(ex.reps)}${timed ? "" : " reps"}`}</div></div>
       <button class="thumb dt" data-info="${ex.id}" aria-label="Visa hur ${esc(EX[ex.id].name)} görs">${figure(ex.id)}</button></div>
@@ -149,7 +149,18 @@ function focusView() {
     <div class="fbar">${restBox}${main}</div>
   </div>${focusDailies ? `<div class="overlay" data-fdclose><div class="sheet">
     <div class="row between"><span class="muted small">Fläta in i passet</span><button class="small ghost iconbtn" data-fdclose aria-label="Stäng">${icon("close", 18)}</button></div>
-    ${dailiesCard(true)}<button class="wide" data-fdclose style="margin-top:14px">Tillbaka till passet</button></div></div>` : ""}`;
+    ${dailiesCard(true)}<button class="wide" data-fdclose style="margin-top:14px">Tillbaka till passet</button></div></div>` : ""}${focusOrder ? orderSheet(d, w) : ""}`;
+}
+// Passets ordning: pilar flyttar en övning ett steg upp eller ned
+function orderSheet(d, w) {
+  return `<div class="overlay" data-forderclose><div class="sheet"><div class="row between"><h2>Ordning</h2>
+      <button class="small ghost iconbtn" data-forderclose aria-label="Stäng">${icon("close", 18)}</button></div>
+    <ol class="forder">${d.ex.map((x, k) => `<li class="${k === focus.idx ? "on" : ""}"><span class="fn">${exDone(w, x) ? icon("check", 12) : k + 1}</span>
+      <span class="grow">${esc(EX[x.id].name)}</span>
+      <button class="small ghost iconbtn" data-fmove="${k}" data-dir="-1" aria-label="Flytta ${esc(EX[x.id].name)} upp" ${k ? "" : "disabled"}>${icon("up", 18)}</button>
+      <button class="small ghost iconbtn" data-fmove="${k}" data-dir="1" aria-label="Flytta ${esc(EX[x.id].name)} ned" ${k < d.ex.length - 1 ? "" : "disabled"}>${icon("down", 18)}</button></li>`).join("")}</ol>
+    ${d.ex.some(x => x.ss) ? `<div class="muted small" style="margin-top:8px">Flyttar du en övning i ett superset bryts supersetet.</div>` : ""}
+    <button class="primary wide" data-forderclose style="margin-top:14px">Klar</button></div></div>`;
 }
 // Bokstaven för ett superset: A för passets första, B för nästa …
 function ssIndex(d, start) {
@@ -221,11 +232,22 @@ document.addEventListener("visibilitychange", () => {
 });
 
 document.addEventListener("click", ev => {
-  const t = ev.target.closest("[data-step],[data-focusgo],[data-focusexit],[data-focusend],[data-focusstart],[data-focusex],[data-fdopen],[data-fdclose],[data-fsel],[data-sspick],[data-sspair]");
-  if (!t) return;
+  const t = ev.target.closest("[data-step],[data-focusgo],[data-focusexit],[data-focusend],[data-focusstart],[data-focusex],[data-fdopen],[data-fdclose],[data-fsel],[data-sspick],[data-sspair],[data-forder],[data-forderclose],[data-fmove]");
+  if (!t || t.disabled) return;
   if (t.classList.contains("overlay") && ev.target !== t) return;   // klick inne i fönstret
   const ds = t.dataset;
   if (ds.fdopen !== undefined || ds.fdclose !== undefined) { focusDailies = ds.fdopen !== undefined; dailyEditing = false; render(); return; }
+  if (ds.forder !== undefined || ds.forderclose !== undefined) { focusOrder = ds.forder !== undefined; render(); return; }
+  if (ds.fmove !== undefined) {
+    // Byter plats med grannen; ett superset som berörs bryts. Fokus stannar på samma övning.
+    const d = dayById(focus.dayId), a = Math.min(+ds.fmove, +ds.fmove + +ds.dir), b = a + 1;
+    if (a < 0 || b >= d.ex.length) return;
+    const cur = d.ex[focus.idx];
+    for (const i of [a - 1, a, b]) if (d.ex[i]) d.ex[i].ss = false;
+    [d.ex[a], d.ex[b]] = [d.ex[b], d.ex[a]];
+    focus.idx = d.ex.indexOf(cur);
+    save(); render(); return;
+  }
   if (ds.focusend !== undefined) { endFocus(); return; }   // själva sparandet sköts av data-finish
   if (ds.focusstart) { tab = "pass"; editing = false; startFocus(ds.focusstart); }
   else if (ds.focusex !== undefined) { if (startFocus(currentPassDay().id)) focus.idx = +ds.focusex; }

@@ -1407,6 +1407,26 @@ def test_valj_ovning_till_superset_och_se_passet(page):
     assert page.evaluate("focus.idx") == 4 and names[4] in page.inner_text(".fsteps .on")
 
 
+def test_alla_ovningar_syns_och_ordningen_kan_andras(page):
+    start(page)
+    go(page, "pass")
+    page.click(f'[data-pick="{page.evaluate("S.plan.days[0].id")}"]')
+    page.click("[data-focusstart]")
+    # Alla övningar ryms i bredd utan att raden rullar
+    assert page.evaluate("(r => r.scrollWidth <= r.clientWidth)(document.querySelector('.fsteps'))") is True
+    ids = page.evaluate("S.plan.days[0].ex.map(x => x.id)")
+    page.click("[data-forder]")
+    page.click('[data-fmove="0"][data-dir="1"]')
+    assert page.evaluate("S.plan.days[0].ex.map(x => x.id)")[:2] == [ids[1], ids[0]]
+    # Fokus följer med övningen man står på
+    assert page.evaluate("focus.idx") == 1
+    page.click('[data-fmove="1"][data-dir="-1"]')
+    assert page.evaluate("S.plan.days[0].ex.map(x => x.id)") == ids
+    assert page.locator('[data-fmove="0"][data-dir="-1"]').is_disabled()
+    page.click(".forder ~ [data-forderclose]")
+    assert page.locator(".forder").count() == 0
+
+
 def test_strombrytaren_ser_ut_som_en_strombrytare(page):
     start(page)
     page.evaluate("""document.getElementById('app').insertAdjacentHTML('beforeend', '<input type="checkbox" role="switch" class="switch" id="sw">')""")

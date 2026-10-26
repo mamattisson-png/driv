@@ -702,15 +702,19 @@
   .focus { display: flex; flex-direction: column; gap: 16px; min-height: calc(100vh - 32px); }
   .fhead { display: flex; align-items: center; gap: 12px; }
   .roundbtn { width: 44px; height: 44px; padding: 0; border-radius: 22px; flex: none; display: grid; place-items: center; }
-  .fsteps { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; margin: -6px -16px 0; padding: 2px 16px; scroll-behavior: smooth; }
-  .fsteps::-webkit-scrollbar { display: none; }
-  .fsteps button { flex: none; min-height: 40px; padding: 0 12px 0 6px; border-radius: 99px; display: inline-flex; align-items: center; gap: 8px;
-    font-size: 13px; white-space: nowrap; background: var(--card); color: var(--muted); }
-  .fsteps .fn { width: 26px; height: 26px; border-radius: 13px; display: grid; place-items: center; background: var(--card-2); color: var(--text);
+  .fsteps { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: -6px; }
+  .fsteps button { min-width: 0; min-height: 38px; padding: 0 10px 0 5px; border-radius: 99px; display: flex; align-items: center; gap: 8px;
+    font-size: 13px; background: var(--card); color: var(--muted); text-align: left; }
+  .fsteps .nm { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .fsteps .fn, .forder .fn { width: 26px; height: 26px; border-radius: 13px; display: grid; place-items: center; background: var(--card-2); color: var(--text);
     font: 600 12px "Unbounded", sans-serif; flex: none; }
   .fsteps button.done .fn { background: var(--ok-soft); color: var(--ok-text); }
   .fsteps button.on { background: var(--text); color: var(--bg); border-color: var(--text); font-weight: 600; }
   .fsteps button.on .fn { background: var(--accent-strong); color: var(--on-accent); }
+  .forder { list-style: none; margin: 8px 0 0; padding: 0; }
+  .forder li { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-top: 1px solid var(--line); }
+  .forder li:first-child { border-top: 0; }
+  .forder li.on .grow { font-weight: 600; }
   .sspick { display: flex; flex-direction: column; gap: 8px; margin-top: -6px; padding: 10px 12px 12px; border-radius: 16px; border: 1px dashed var(--line-strong); }
   .ftitle { display: flex; align-items: center; gap: 12px; }
   .ftitle h2 { font: 600 30px/1.1 "Unbounded", sans-serif; margin: 0 0 6px; overflow-wrap: anywhere; }
