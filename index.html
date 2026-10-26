@@ -15,8 +15,17 @@
   // Utseende väljs i Profil och gäller den här enheten; sätts före första ritningen så att inget blinkar
   try { const t = localStorage.getItem("driv-theme"); if (t === "light" || t === "dark") document.documentElement.dataset.theme = t; } catch (e) {}
   // Testläge (adressen slutar på ?test): egen data i webbläsaren som aldrig kopplas till kontot.
+  // Bara för utvecklaren: första gången öppnas det med en personlig kod (?test=kod), sedan minns enheten det.
+  // Här finns bara kodens fingeravtryck. Andra som skriver ?test får den vanliga appen.
   // Eget manifest så att en ikon på hemskärmen öppnar testläget.
-  window.DRIV_TEST = new URLSearchParams(location.search).has("test");
+  (() => {
+    const q = new URLSearchParams(location.search), code = q.get("test");
+    const fnv = s => { let h = 0x811c9dc5; for (const b of new TextEncoder().encode(s)) h = Math.imul((h ^ b) >>> 0, 0x01000193) >>> 0; return h.toString(16).padStart(8, "0"); };
+    let dev = false;
+    try { dev = localStorage.getItem("driv-dev") === "1"; } catch (e) {}
+    if (code && fnv(code) === "1686b317") { dev = true; try { localStorage.setItem("driv-dev", "1"); } catch (e) {} }
+    window.DRIV_TEST = dev && q.has("test");
+  })();
   if (window.DRIV_TEST) {
     document.querySelector('link[rel="manifest"]').href = "manifest-test.webmanifest";
     document.querySelector('meta[name="apple-mobile-web-app-title"]').content = "Driv test";

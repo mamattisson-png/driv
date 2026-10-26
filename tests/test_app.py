@@ -239,7 +239,7 @@ def test_fokuslage_en_ovning_i_taget(page):
 
 def test_ovningar_visar_utrustning_och_hur_vikten_skrivs(page):
     open_app(page)
-    assert page.evaluate("Object.keys(EX).filter(id => EX[id].cat !== 'cardio' && !GEAR[gearOf(id)])") == []
+    assert page.evaluate("Object.keys(EX).filter(id => !['cardio', 'stretch'].includes(EX[id].cat) && !GEAR[gearOf(id)])") == []
     assert page.evaluate("Object.keys(EX).filter(id => !EX[id].A || !EX[id].cues.length)") == []
     assert page.evaluate("Object.keys(EX).length") >= 75
     page.evaluate("modal = { info: 'bencurl' }; render()")
@@ -1346,6 +1346,13 @@ def test_testlage_har_egen_data(page):
     start(page)
     seed(page, "S.log[TODAY] = {workouts:[],dailies:{},food:[{name:'Riktig mat',kcal:500,protein:20}]}")
     real = page.evaluate("localStorage.getItem('ppl-traning-v2')")
+    # Utan kod är ?test den vanliga appen
+    page.goto(page.base_url + "?test")
+    assert page.locator(".testbar").count() == 0 and page.evaluate("day().food[0].name") == "Riktig mat"
+    page.goto(page.base_url + "?test=fel")
+    assert page.locator(".testbar").count() == 0
+    # Enheten som har öppnat med rätt kod minns det (koden finns inte i koden, bara i webbläsaren)
+    page.evaluate("localStorage.setItem('driv-dev', '1')")
     # Testläget börjar från noll, utan konto, och sparar under en egen nyckel
     page.goto(page.base_url + "?test")
     assert page.locator(".testbar").count() == 1 and page.evaluate("sbEnabled") is False
@@ -1363,3 +1370,19 @@ def test_testlage_har_egen_data(page):
     page.click("[data-testexit]")
     page.wait_for_function("!new URLSearchParams(location.search).has('test') && document.readyState === 'complete'")
     assert page.locator(".testbar").count() == 0 and page.evaluate("day().food[0].name") == "Riktig mat"
+
+
+def test_stretch_som_daily(page):
+    start(page)
+    page.click("[data-dedit]")
+    page.click('[data-openpick="daily"]')
+    page.click('.chips [data-cat="stretch"]')
+    shown = page.evaluate("[...document.querySelectorAll('.pick')].filter(e => !e.hidden).map(e => e.querySelector('.pname').textContent)")
+    assert "Duvan" in shown and "Höftböjarstretch" in shown and len(shown) == page.evaluate("Object.values(EX).filter(e => e.cat === 'stretch').length")
+    page.click('[data-add="duvan"]')
+    page.click("[data-dedit]")   # Klar
+    assert "Duvan" in page.inner_text(".dailies") and "2 × 45 s/sida" in page.inner_text(".dailies")
+    page.click('[data-dcheck="duvan"]')
+    assert page.evaluate("dailyDone(TODAY, 'duvan')") is True
+    # Stretch hålls en tid: i ett pass syns bara sekunder, ingen vikt
+    assert page.evaluate("isTimed('duvan') && gearOf('duvan') === null && restFor('duvan') === restSettings().iso") is True

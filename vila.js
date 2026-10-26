@@ -5,7 +5,7 @@
 const ISOLATION = new Set(["sidolyft", "triceps_pushdown", "fransk_press", "bicepscurl", "hammercurl", "face_pulls",
   "benspark", "bencurl", "vadpress", "glute_bridge"]);
 const restSettings = () => Object.assign({ on: true, compound: 90, iso: 60 }, S.rest);
-const restFor = id => ISOLATION.has(id) || EX[id].cat === "core" ? restSettings().iso : restSettings().compound;
+const restFor = id => ISOLATION.has(id) || EX[id].cat === "core" || EX[id].cat === "stretch" ? restSettings().iso : restSettings().compound;
 const rest = { el: null, end: 0, total: 0, timer: 0, name: "" };
 
 function startRest(exId) {

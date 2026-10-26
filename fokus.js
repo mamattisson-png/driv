@@ -87,7 +87,8 @@ function focusView() {
     // Första gången finns inget förslag: 0 kg och nedre delen av repsintervallet som utgångsläge
     const kg = bigStepper(ex.id, sel, "kg", s.kg, h.kg || 0, bw ? "Extra vikt" : "Vikt", "kg");
     const reps = bigStepper(ex.id, sel, "reps", s.reps, h.reps || repRange(ex.reps).lo || "", timed ? "Sekunder" : "Reps", timed ? "s" : "");
-    return bw ? reps + kg : kg + reps;
+    // Stretch hålls en viss tid; ingen vikt
+    return EX[ex.id].cat === "stretch" ? reps : bw ? reps + kg : kg + reps;
   })();
   const setRows = Array.from({ length: ex.sets }, (_, i) => {
     const st = sets[i] || {}, p = prev ? hintSet(prev, i) : null;

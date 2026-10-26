@@ -1,5 +1,5 @@
 "use strict";
-// Övningsbibliotek. cat: push, pull, legs, core, cardio.
+// Övningsbibliotek. cat: push, pull, legs, core, stretch, cardio.
 // A och B är start- och slutläge för illustrationen (se figur.js).
 
 const P = (base, changes) => Object.assign({}, base, changes);
@@ -631,6 +631,104 @@ const EX = {
     B: { h: [48, 91], t: 78, a: [106, 78], f: [8, 84] },
   },
 
+  // ---------- Stretch (dailys och efter passet) ----------
+  // Hålls i sekunder; figurens andra läge visar hur man går djupare
+  framatfallning: {
+    name: "Stående framåtfällning", cat: "stretch", bw: true, muscles: "Baksida lår, ländrygg", sets: 2, reps: "30 s",
+    cues: ["Stå med fötterna höftbrett och fäll överkroppen framåt från höften.",
+      "Låt armarna hänga mot golvet och knäna vara mjuka.",
+      "Andas ut och sjunk lite djupare för varje andetag."],
+    A: { h: [56, 54], t: 70, a: [80, 78], f: [60, 95] },
+    B: { h: [52, 55], t: 34, a: [66, 92], f: [60, 95] },
+  },
+  hoftbojare_stretch: {
+    name: "Höftböjarstretch", cat: "stretch", bw: true, muscles: "Höftböjare, framsida lår", sets: 2, reps: "30 s/sida",
+    cues: ["Stå på ena knät med den andra foten i golvet framför dig.",
+      "Spänn sätet och för höften framåt tills det drar i framsidan av höften.",
+      "Håll överkroppen upprätt. Byt sida."],
+    A: { h: [56, 70], t: 180, a: [72, 66], a2: [56, 68], f: [80, 95], f2: [28, 93], kb: -1, kb2: 1 },
+    B: { h: [62, 73], t: 176, a: [76, 68], a2: [62, 70], f: [80, 95], f2: [28, 93], kb: -1, kb2: 1 },
+  },
+  framsida_lar_stretch: {
+    name: "Framsida lår", cat: "stretch", bw: true, muscles: "Framsida lår, höftböjare", sets: 2, reps: "30 s/sida",
+    cues: ["Stå på ett ben och ta tag i foten bakom dig.",
+      "Dra hälen mot sätet med knäna nära varandra.",
+      "Håll i något med andra handen om balansen sviktar. Byt sida."],
+    A: { h: [58, 54], t: 180, a: [76, 46], a2: [46, 66], f: [58, 95], f2: [44, 64], kb2: 1, eb2: 1 },
+  },
+  vadstretch: {
+    name: "Vadstretch mot vägg", cat: "stretch", bw: true, muscles: "Vader, hälsena", sets: 2, reps: "30 s/sida",
+    cues: ["Händerna mot väggen, ena foten långt bak.",
+      "Bakre benet rakt och hälen i golvet.",
+      "Luta dig mot väggen tills det drar i vaden. Byt sida."],
+    scene: [["line", 102, 4, 102, 95]],
+    A: { h: [62, 56], t: 158, a: [101, 38], a2: [101, 42], f: [80, 95], f2: [34, 95], kb: -1 },
+    B: { h: [68, 58], t: 152, a: [101, 38], a2: [101, 42], f: [84, 95], f2: [36, 95], kb: -1 },
+  },
+  duvan: {
+    name: "Duvan", cat: "stretch", bw: true, muscles: "Säte, höft", sets: 2, reps: "45 s/sida",
+    cues: ["Främre benet böjt framför dig på golvet, bakre benet rakt bakåt.",
+      "Håll höften rak och sänk dig mot golvet.",
+      "Fäll gärna överkroppen framåt för en djupare stretch. Byt sida."],
+    A: { h: [54, 84], t: 172, a: [70, 94], a2: [62, 94], f: [74, 94], f2: [10, 94], kb: -1, kb2: 1 },
+    B: { h: [54, 86], t: 108, a: [96, 94], a2: [92, 94], f: [74, 94], f2: [10, 94], kb: -1, kb2: 1 },
+  },
+  barnets_position: {
+    name: "Barnets position", cat: "stretch", bw: true, muscles: "Rygg, höfter, axlar", sets: 2, reps: "45 s",
+    cues: ["Sitt på hälarna med knäna isär.",
+      "Fäll överkroppen framåt och sträck armarna längs golvet.",
+      "Slappna av i axlarna och andas lugnt ned i magen."],
+    A: { h: [36, 84], t: 128, a: [84, 90], f: [34, 95], kb: -1, eb: -1 },
+    B: { h: [36, 86], t: 84, a: [102, 94], f: [34, 95], kb: -1, eb: -1 },
+  },
+  katt_ko: {
+    name: "Katt och ko", cat: "stretch", bw: true, muscles: "Rygg, nacke", sets: 2, reps: "10",
+    cues: ["Stå på alla fyra med händerna under axlarna och knäna under höften.",
+      "Runda ryggen upp mot taket och sänk huvudet (katt).",
+      "Svanka sedan lugnt och lyft blicken (ko). Följ andningen."],
+    A: { h: [42, 74], s: [72, 64], a: [72, 95], f: [22, 95], kb: -1 },
+    B: { h: [42, 72], s: [72, 70], a: [72, 95], f: [22, 95], kb: -1 },
+  },
+  brost_dorr: {
+    name: "Bröststretch i dörr", cat: "stretch", bw: true, muscles: "Bröst, framsida axlar", sets: 2, reps: "30 s/sida",
+    cues: ["Lägg underarmen mot en dörrkarm i axelhöjd.",
+      "Ta ett litet steg framåt tills det drar i bröstet.",
+      "Håll axeln nere och vrid inte bålen. Byt sida."],
+    scene: [["line", 36, 4, 36, 95]],
+    A: { h: [58, 54], t: 180, a: [37, 18], a2: [60, 84], f: [58, 95], eb: 1 },
+    B: { h: [64, 54], t: 172, a: [37, 18], a2: [66, 84], f: [70, 95], f2: [56, 95], eb: 1 },
+  },
+  triceps_stretch: {
+    name: "Tricepsstretch", cat: "stretch", bw: true, muscles: "Triceps, axlar", sets: 2, reps: "30 s/sida",
+    cues: ["Lyft armen och böj armbågen så att handen hamnar mellan skulderbladen.",
+      "Dra försiktigt armbågen bakåt med andra handen.",
+      "Håll huvudet rakt. Byt sida."],
+    A: { h: [58, 54], t: 180, a: [54, 28], a2: [60, 8], f: [58, 95], eb: 1, eb2: -1 },
+  },
+  sittande_framatfallning: {
+    name: "Sittande framåtfällning", cat: "stretch", bw: true, muscles: "Baksida lår, rygg", sets: 2, reps: "30 s",
+    cues: ["Sitt med raka ben framför dig.",
+      "Fäll överkroppen framåt från höften och sträck händerna mot fötterna.",
+      "Håll ryggen så rak som möjligt."],
+    A: { h: [34, 92], t: 145, a: [62, 84], f: [76, 94], kb: -1 },
+    B: { h: [34, 92], t: 116, a: [72, 90], f: [76, 94], kb: -1 },
+  },
+  fjarilen: {
+    name: "Fjärilen", cat: "stretch", bw: true, muscles: "Insida lår, ljumskar", sets: 2, reps: "30 s",
+    cues: ["Sitt med fotsulorna mot varandra och knäna utåt.",
+      "Håll i fötterna och sitt rak i ryggen.",
+      "Låt knäna sjunka mot golvet. Tryck gärna lätt med armbågarna."],
+    A: { h: [36, 90], t: 172, a: [56, 90], f: [56, 94], kb: -1 },
+    B: { h: [36, 90], t: 146, a: [58, 92], f: [56, 94], kb: -1 },
+  },
+  kobran: {
+    name: "Kobran", cat: "stretch", bw: true, muscles: "Mage, ländrygg", sets: 2, reps: "20 s",
+    cues: ["Ligg på magen med händerna under axlarna.",
+      "Pressa upp överkroppen med höften kvar i golvet.",
+      "Håll axlarna nere och blicken framåt."],
+    A: { h: [46, 90], s: [76, 86], a: [74, 95], f: [6, 93], eb: -1 },
+    B: { h: [46, 90], s: [72, 68], a: [76, 95], f: [6, 93], eb: -1 },
+  },
   // ---------- Kondition (dailys) ----------
   lop: {
     name: "Löpning", cat: "cardio", muscles: "Kondition, ben", sets: 1, reps: "",
@@ -696,7 +794,7 @@ const GEAR = {
 function gearOf(id) {
   const e = EX[id];
   if (e.gear) return e.gear;
-  if (e.cat === "cardio") return null;
+  if (e.cat === "cardio" || e.cat === "stretch") return null;
   return e.bw ? "bw" : e.hold === "bar" ? "bar" : e.hold === "db" ? "db" : e.cable ? "cable" : "machine";
 }
 

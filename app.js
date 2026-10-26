@@ -1023,7 +1023,7 @@ const VIEWS = {
         <button class="${confirmReset ? "primary" : "ghost"}" data-reset>${confirmReset ? "Tryck igen för att radera allt" : "Nollställ allt"}</button></div>
         ${importMsg ? `<div class="muted" style="margin-top:8px">${esc(importMsg)}</div>` : ""}
         <input type="file" id="importfile" accept="application/json" class="hidden">${installHelp()}
-        ${window.DRIV_TEST ? "" : `<div class="muted small" style="margin-top:10px">Vill du prova något utan att röra din data? <a href="?test" class="linkbtn">Öppna testläget</a></div>`}`;
+`;
     const friends = !sbEnabled ? "" : account.step !== "in" ? "Kräver ett konto"
       : social.profile ? `${social.friends.length ? `${social.friends.length} ${social.friends.length === 1 ? "vän" : "vänner"}` : "Inga vänner än"} · kod ${esc(social.profile.code)}` : "Välj ditt namn";
     const name = (social.profile && social.profile.name) || (account.step === "in" ? account.email.split("@")[0] : "Du");
@@ -1332,13 +1332,14 @@ function renderModal() {
   const have = list.map(e => e.id);
   const forDaily = modal.pick === "daily";
   const ids = Object.keys(EX).filter(id => forDaily || EX[id].cat !== "cardio");
-  const chips = [...Object.keys(CATS), "bw", ...(forDaily ? ["cardio"] : []), "all"];
-  const chipName = c => CATS[c] || { bw: "Kroppsvikt", cardio: "Kondition", all: "Alla" }[c];
+  const chips = forDaily ? ["core", "stretch", "cardio", ...Object.keys(CATS).filter(c => c !== "core"), "bw", "all"]
+    : [...Object.keys(CATS), "stretch", "bw", "all"];
+  const chipName = c => CATS[c] || { bw: "Kroppsvikt", stretch: "Stretch", cardio: "Kondition", all: "Alla" }[c];
   return `<div class="overlay" data-close><div class="sheet"><div class="row between">
       <h2>${replacing ? `Byt ut ${esc(EX[replacing.id].name)}` : "Välj övning"}</h2><button class="small ghost" data-close>${icon("close", 18)}</button></div>
     <input id="exsearch" type="search" placeholder="Sök övning eller muskel, t.ex. bröst" value="${esc(modal.q || "")}" autocomplete="off" style="margin-bottom:10px">
     <div class="chips" style="margin-bottom:10px">${chips.map(c => `<button data-cat="${c}" class="${c === cat ? "on" : ""}">${chipName(c)}</button>`).join("")}</div>
-    <div class="pickgrid">${ids.map(id => `<div class="pick ${have.includes(id) ? "have" : ""}" data-cat="${EX[id].cat}" data-bw="${EX[id].bw ? 1 : ""}" data-q="${esc(norm(EX[id].name + " " + EX[id].muscles + " " + (CATS[EX[id].cat] || "") + " " + (gearOf(id) ? GEAR[gearOf(id)][0] : "")))}">
+    <div class="pickgrid">${ids.map(id => `<div class="pick ${have.includes(id) ? "have" : ""}" data-cat="${EX[id].cat}" data-bw="${EX[id].bw ? 1 : ""}" data-q="${esc(norm(EX[id].name + " " + EX[id].muscles + " " + (CATS[EX[id].cat] || (EX[id].cat === "stretch" ? "stretch rörlighet" : "")) + " " + (gearOf(id) ? GEAR[gearOf(id)][0] : "")))}">
       ${thumb(id)}<div class="pname">${esc(EX[id].name)}</div><div class="muted small">${esc(EX[id].muscles)}</div>
       ${have.includes(id) ? `<span class="muted small">Finns redan</span>` : `<button class="small primary" data-add="${id}">${replacing ? "Välj" : "Lägg till"}</button>`}</div>`).join("")}</div>
     <div class="muted" id="nohits" hidden>Inga övningar matchar sökningen.</div></div></div>`;
