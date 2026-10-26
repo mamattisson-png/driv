@@ -84,10 +84,10 @@ function actsCard(date, title = "Annan träning") {
       <button data-actnew="" data-actdate="${date}">＋ Annan</button></div></section>`;
 }
 
-// På Hem: dagens aktiviteter som små knappar och en länk för att logga en till
+// På Hem: dagens aktiviteter som små knappar. En ny loggas med "+ Annan aktivitet" i passkortet.
 function homeActs() {
-  return `<div class="homeacts">${actsOn(TODAY).map((a, i) => `<button class="dchip on" data-actedit="${i}" data-actdate="${TODAY}">${icon("check", 16)}${esc(a.name)} · ${+a.min} min</button>`).join("")}
-    <button class="ghost small" data-actnew="" data-actdate="${TODAY}">+ Logga annan aktivitet</button></div>`;
+  const list = actsOn(TODAY);
+  return list.length ? `<div class="homeacts">${list.map((a, i) => `<button class="dchip on" data-actedit="${i}" data-actdate="${TODAY}">${icon("check", 16)}${esc(a.name)} · ${+a.min} min</button>`).join("")}</div>` : "";
 }
 
 // Vänner ser aktiviteten precis som ett pass: "Padel · 90 min"

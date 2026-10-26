@@ -724,8 +724,9 @@ function weightCard() {
   }
   if (!weighed && weekdayOf(TODAY) < weighDay()) return "";
   const date = weighed || TODAY;
+  // Kompakt rad: dölja vikten görs under Profil → Vikt
   return `<section class="card wrow" aria-label="Veckans vägning"><div class="grow"><b>Veckans vägning</b>
-      <span class="muted small">${last ? `Senast ${fmtNum(last.kg)} kg · ${dateLabel(last.date)}` : "Väg dig gärna på morgonen, samma veckodag"} · <button class="link small" data-hideweight>Dölj vikt</button></span></div>
+      ${last ? `<span class="muted small">Senast ${fmtNum(last.kg)} kg · ${dateLabel(last.date)}</span>` : ""}</div>
     <input id="wkg" type="number" inputmode="decimal" step="0.1" placeholder="kg" aria-label="Vikt i kg" value="${weights()[date] ?? ""}">
     <button class="small" data-wsave data-wdate="${date}">Spara</button></section>`;
 }
@@ -944,12 +945,14 @@ const VIEWS = {
         ${others.length ? `<div class="muted small">Idag har du även loggat ${others.map(o => esc(o.name)).join(", ")}.</div>` : ""}
         <button class="primary wide bigbtn" data-focusstart="${d.id}">${w && w.done ? "Öppna passet" : `${icon("play", 18)}${w ? "Fortsätt passet" : "Starta passet"}`}</button>
         <div class="row between passlinks">${S.plan.days.length > 1 ? `<button class="ghost" data-tab="pass">Byt pass</button>` : "<span></span>"}
+          <button class="ghost" data-actnew="" data-actdate="${TODAY}">+ Annan aktivitet</button>
           <button class="ghost" data-edit>Ändra övningar</button></div></section>`}`;
     } else {
       const nx = nextScheduled(TODAY);
       passCard = `<section class="card daypass" aria-label="Dagens pass"><div class="passtop"><span class="muted small">Vilodag</span></div>
         <div><h2 class="passname">Vila</h2><div class="muted">Nästa pass: ${WD_LONG[weekdayOf(nx.date)]} · ${esc(nx.day.name)}</div></div>
-        <button class="wide" data-focusstart="${nx.day.id}">Kör ett pass ändå</button></section>`;
+        <button class="wide" data-focusstart="${nx.day.id}">Kör ett pass ändå</button>
+        <div class="row passlinks" style="justify-content:center"><button class="ghost" data-actnew="" data-actdate="${TODAY}">+ Annan aktivitet</button></div></section>`;
     }
     const lw = letterWeekToShow();
     const letter = !lw ? "" : (() => {
@@ -1648,7 +1651,6 @@ document.addEventListener("click", ev => {
   else if (ds.dcheck) day().dailies[ds.dcheck] = !dailyDone(logDate(), ds.dcheck);
   else if (ds.dedit !== undefined) dailyEditing = !dailyEditing;
   else if (ds.letterclose) S.letterSeen = ds.letterclose;
-  else if (ds.hideweight !== undefined) { S.hideWeight = true; toast("Vikten är dold. Visa den igen under Profil."); }
   else if (ds.showweight !== undefined) S.hideWeight = !t.checked;
   else if (ds.wsave !== undefined) {
     const date = ds.wdate || logDate();

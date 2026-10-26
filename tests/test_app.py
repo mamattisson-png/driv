@@ -392,7 +392,7 @@ def test_aktivitet_loggas_och_raknas_som_pass(page):
     assert page.evaluate("weekSummary(weekStart(TODAY)).passes") == 1
     # En egen aktivitet med sträcka, på Hem
     go(page, "idag")
-    page.click('.homeacts [data-actnew=""]')
+    page.click('.daypass [data-actnew=""]')
     page.fill("#actname", "Kanotpaddling")
     page.click('[data-actmin="-15"]')
     page.click('[data-actmin="-15"]')
@@ -564,8 +564,8 @@ def test_kroppsvikt_en_gang_i_veckan_och_kalorimal(page):
     # Vikten kan döljas och visas igen
     prof(page, "vikt")
     page.select_option("[data-weighday]", "0")
+    page.click("[data-showweight]")
     go(page, "idag")
-    page.click("[data-hideweight]")
     assert page.locator("#wkg").count() == 0
     go(page, "historik")
     assert page.locator('.card:has(h2:text-is("Vikt"))').count() == 0
