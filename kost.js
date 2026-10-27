@@ -295,13 +295,23 @@ function rememberAmount(f) {
 // Ett recept är ingredienser och antal portioner; man loggar en portion i taget.
 const recipes = () => S.recipes || (S.recipes = []);
 let recipeEdit = null;    // receptet som skrivs eller ändras: { idx, name, portions, items, msg }
-let recipeList = false;   // listan med egna recept är öppen
-const sumOf = (items, k) => items.reduce((a, i) => a + (+i[k] || 0), 0);
-const recipeTotal = r => ({ kcal: sumKcal(r.items), protein: sumOf(r.items, "protein"), fat: sumOf(r.items, "fat"), fiber: sumOf(r.items, "fiber") });
+let recipeList = false;   // (äldre) listan som ruta; recepten är nu en egen sida
+let recBack = "kost";     // sidan man kom från till Recept
+let recSort = "senast";   // "senast" använda först eller "namn"
+let recQ = "";            // sökningen bland recepten
+let recMealPick = null;   // vald måltid i ett öppet recept
 let recipeOpen = null;    // { idx, n } när ett recept visas: ingredienser och hur många portioner man åt
+const sumOf = (items, k) => items.reduce((a, i) => a + (+i[k] || 0), 0);
+// Fett och fibrer räknas när minst en ingrediens har dem; ingredienser utan värden räknas som 0
+function recipeTotal(r) {
+  const t = { kcal: sumKcal(r.items), protein: sumOf(r.items, "protein") };
+  if (r.items.some(i => i.fat != null)) { t.fat = sumOf(r.items, "fat"); t.fiber = sumOf(r.items, "fiber"); }
+  return t;
+}
 function perPortion(r) {
-  const t = recipeTotal(r), n = Math.max(1, r.portions || 1);
-  return { name: r.name, kcal: Math.round(t.kcal / n), protein: g1(t.protein / n), fat: g1(t.fat / n), fiber: g1(t.fiber / n) };
+  const t = recipeTotal(r), n = Math.max(1, r.portions || 1), p = { name: r.name, kcal: Math.round(t.kcal / n), protein: g1(t.protein / n) };
+  if (t.fat != null) { p.fat = g1(t.fat / n); p.fiber = g1(t.fiber / n); }
+  return p;
 }
 const recMeal = () => recMealPick ?? (foodSheet ? foodSheet.meal : mealByClock());
 const mealFor = () => MEALS[recMeal()][0].toLowerCase();
