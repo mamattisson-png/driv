@@ -880,7 +880,15 @@ const VIEWS = {
     const pct = m.kcal ? e.kcal / m.kcal : 0;
     const kcalTile = `<button class="htile kcaltile" data-go="kost" aria-label="Kalorier: ${tnum(e.kcal)} av ${tnum(m.kcal)}"><span class="klabel">Kalorier</span>
         <span class="ringbox">${ring(pct, 64, pct > 1.05 ? "over" : "")}<b>${Math.round(pct * 100)}%</b></span>
-        <span><b class="hnum">${tnum(e.kcal)}</b><span class="muted small"> / ${tnum(m.kcal)}</span></span></button>`;
+        <span><b class="hnum">${tnum(e.kcal)}</b><span class="muted small"> / ${tnum(m.kcal)}</span></span>
+        <span class="muted small hprot">Protein ${Math.round(e.protein)} / ${m.protein} g</span></button>`;
+    // Resten av dagen: dailys och annan träning öppnas direkt härifrån
+    const nD = S.daily.length, dDone = S.daily.filter(x => dailyDone(TODAY, x.id)).length;
+    const todo = `<section class="card hlist" aria-label="Idag">
+      <button class="hrow" data-trsheet="dailys"><span class="hricon">${ring(nD ? dDone / nD : 0, 30, nD && dDone === nD ? "ok" : "")}</span>
+        <span class="grow"><b>Dailys</b><span class="muted small">${!nD ? "Lägg till det du vill göra varje dag" : dDone === nD ? "Alla klara idag" : `${dDone} av ${nD} klara`}</span></span>${icon("right", 18)}</button>
+      <button class="hrow" data-actnew="" data-actdate="${TODAY}"><span class="hricon">${icon("aktivitet", 22)}</span>
+        <span class="grow"><b>Annan träning</b><span class="muted small">${acts.length ? esc(acts.map(a => `${a.name} ${+a.min} min`).join(", ")) : "Padel, löpning, promenad …"}</span></span>${icon(acts.length ? "plus" : "right", 18)}</button></section>`;
     const segs = Math.max(S.plan.count, passes);
     const week = `<section class="card weekrow" aria-label="Veckan: ${passes} av ${S.plan.count} pass"><span class="klabel">Veckan</span>
       <span class="wsegs" aria-hidden="true">${Array.from({ length: segs }, (_, i) => `<i class="${i < passes ? "on" : ""}"></i>`).join("")}</span>
@@ -898,12 +906,14 @@ const VIEWS = {
       <div class="muted homedate">${cap(today)}</div>
       <h1 class="greet">${greet}</h1>
       <div class="htiles">${passTile}${kcalTile}</div>
+      ${todo}
       ${week}
       ${letter}
       ${accountNudge()}${installNudge()}
       ${friendsNudge()}
       ${friendsHome()}
-      ${S.hideWeight ? "" : weighCardDue()}`;
+      ${S.hideWeight ? "" : weighCardDue()}
+      ${trSheet === "dailys" ? dailysSheet() : ""}`;
   },
 
   pass() {

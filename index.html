@@ -413,6 +413,13 @@
   .pushopts { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); }
   .homerow { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; color: var(--text); font: inherit; padding: 14px 16px; }
   button.homerow { border: 1px solid var(--line); }
+  .hlist { padding: 4px 16px; }
+  .hprot { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .hrow { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; color: var(--text); font: inherit;
+    background: none; border: 0; border-radius: 0; padding: 12px 0; min-height: 60px; }
+  .hrow + .hrow { border-top: 1px solid var(--line); }
+  .hrow .grow { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .hrow > .ic { color: var(--muted); flex: none; }
   .homerow .grow { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
   .hricon { width: 30px; flex: none; display: grid; place-items: center; color: var(--muted); }
   .hrbars { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 4px; }

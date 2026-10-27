@@ -1957,3 +1957,18 @@ def test_manga_vanner(page):
     page.click("[data-unfriend]")
     page.wait_for_function("social.friends.length === 29")
     assert page.locator(".fsheet").count() == 0
+
+
+def test_hem_visar_dailys_och_annan_traning(page):
+    start(page)
+    page.evaluate("""S.daily = [{id:'plankan',sets:3,reps:'45 s'},{id:'russian_twist',sets:3,reps:'20'}]; day().dailies.plankan = true; save(); render()""")
+    assert "1 av 2 klara" in page.text_content(".hlist") and "Protein 0 /" in page.text_content(".kcaltile")
+    # Dailys öppnas direkt på Hem
+    page.click('.hrow[data-trsheet="dailys"]')
+    assert page.locator(".dsheet").is_visible() and page.evaluate("tab") == "idag"
+    page.click('.dsheet [data-dcheck="russian_twist"]')
+    page.click('.dsheet .primary[data-trsheet=""]')
+    assert "Alla klara idag" in page.text_content(".hlist")
+    page.click(".hrow[data-actnew]")
+    assert page.evaluate("!!actSheet")
+    assert not page.errors
