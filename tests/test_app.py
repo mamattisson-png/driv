@@ -393,8 +393,9 @@ def test_recept_byggs_och_loggas_per_portion(page):
     page.click('[data-ruse="0"]')
     f = page.evaluate("day().food.at(-1)")
     assert f["name"] == "Lasagne" and f["meal"] == 3 and abs(f["kcal"] - total / 5) <= 1
-    # Tillbaka i Kost med fönstret öppet; receptet syns bland förslagen i andra måltider
-    assert page.evaluate("tab") == "kost"
+    # Knappen svarar själv, sedan tillbaka i Kost med fönstret öppet; receptet syns bland förslagen i andra måltider
+    assert "Tillagt i middag" in page.inner_text('[data-ruse="0"].flashed') and page.locator(".toast").count() == 0
+    page.wait_for_function("tab === 'kost'")
     page.click('[data-sheetmeal="1"]')
     assert page.locator('.qadd:has-text("Lasagne")').count() == 1
 
@@ -1261,7 +1262,9 @@ def test_vanner_kod_flode_och_peppning(page):
     assert "aldrig vikter, mat eller kroppsvikt" in page.inner_text("#vanner")
     page.fill("#sname", "Anna")
     page.click("[data-profsave]")
-    page.wait_for_selector(".vcode")
+    # Utan vänner: en inbjudan, och koden finns i bladet "Bjud in eller lägg till"
+    page.wait_for_selector(".invitecard")
+    page.click('.flinks [data-fsheet="bjud"]')
     assert page.inner_text(".vcode") == "ANNA01"
     # Lägg till Bo med kod; fel kod ger ett begripligt besked
     page.fill("#vcode", "XXXXXX")
@@ -1270,7 +1273,7 @@ def test_vanner_kod_flode_och_peppning(page):
     page.fill("#vcode", "bo1234")
     page.click("[data-addfriend]")
     page.wait_for_function("social.friends.length === 1")
-    assert "Bo" in page.inner_text("#vanner")
+    assert page.locator(".fsheet").count() == 0 and "Bo" in page.inner_text("#app")
     # Hem visar Bos pass, och peppningen sparas
     go(page, "idag")
     page.wait_for_selector(".friendsrow [data-kudos]")
@@ -1282,7 +1285,9 @@ def test_vanner_kod_flode_och_peppning(page):
     page.click(".friendsrow .fbhead")
     assert page.evaluate("tab") == "vanner" and "Igår · 1 pass" in page.text_content("#app")
     page.click('[data-fday="2026-10-21"]')
-    assert "Bo körde Push" in page.inner_text(".flist >> nth=1")
+    assert "Bo körde Push" in page.inner_text(".flist")
+    # Veckans topp: Bo har ett pass den här veckan
+    assert "Veckans topp" in page.text_content(".ftop") and "Bo" in page.inner_text(".ftop")
     # Ett sparat pass delas med antal övningar, inget annat
     go(page, "pass")
     open_ex(page, "bankpress")
@@ -1301,6 +1306,7 @@ def test_vanner_kod_flode_och_peppning(page):
     page.click(".passdone .wide[data-passdoneclose]")
     # Slutar man dela sparas inga fler pass
     prof(page, "vanner")
+    page.click('[data-fsheet="dela"]')
     page.click("[data-sharing]")
     page.wait_for_function("social.profile && social.profile.sharing === false")
     # Radera konto kräver två tryck
@@ -1870,3 +1876,78 @@ def test_fett_och_fibrer_raknas(page):
     # Mat utan värden (Livsmedelsverkets lista) räknas och visas som saknad
     page.evaluate("day().food.push({ name: 'Okänt', kcal: 100, protein: 1, meal: 1 }); render()")
     assert "saknas för 1 av 3" in page.inner_text(".ksum")
+
+
+def test_bekraftelse_dar_man_tittar_utan_besked(page):
+    start(page)
+    seed(page, "S.log[shift(TODAY, -1)] = {workouts:[], dailies:{}, food:[{name:'Gröt', kcal:300, protein:10, meal:1}]}")
+    go(page, "kost")
+    add_to(page, 1)
+    page.fill("#fname", "1 banan")
+    page.click("[data-addfood]")
+    # Inget besked; måltiden står öppen och raden lyser till med hur mycket som kom till
+    assert page.locator(".toast").count() == 0
+    assert page.locator('.kmrow.fresh[data-kmeal="1"]').count() == 1 and "+108" in page.inner_text(".kmrow.fresh")
+    assert page.locator(".kmitems .krow.fresh").count() == 1
+    # I bladet: det nya hamnar överst i "nu" och lyser till
+    add_to(page, 1)
+    page.fill("#fname", "1 äpple")
+    page.click("[data-addfood]")
+    add_to(page, 1)
+    page.wait_for_selector('.nowcard .nrow')
+    page.click('.qadd:has-text("Gröt")')
+    page.wait_for_selector(".nowcard .nrow.fresh")
+    assert page.locator(".toast").count() == 0 and page.locator(".nowcard .nrow.fresh").count() >= 1
+    assert "fresh" in page.get_attribute(".nowcard .nrow >> nth=0", "class")
+    # Fel visas vid fältet
+    page.evaluate("modal = { prof: true }; render()")
+    page.fill("#pname", "")
+    page.click("[data-pnamesave]")
+    assert page.locator(".ferr").count() == 1 and page.locator(".toast").count() == 0
+    assert page.get_attribute("#pname", "aria-invalid") == "true"
+    page.fill("#pname", "A")
+    assert page.locator(".ferr").count() == 0
+
+
+MANY_NAMES = ["Adam", "Alva", "Amir", "Bella", "Bo", "Calle", "Cecilia", "Daniel", "David", "Ebba", "Elin", "Erik", "Filip", "Frida", "Gustav",
+              "Hanna", "Hugo", "Ida", "Isak", "Jonas", "Julia", "Karin", "Leo", "Lisa", "Maja", "Nils", "Olle", "Sara", "Tove", "Ville"]
+
+
+def test_manga_vanner(page):
+    import datetime, json
+    page.clock.install(time=datetime.datetime(2026, 10, 22, 12, 0))
+    page.context.route("**/config.js", lambda r: r.fulfill(body=SB_CONFIG, content_type="application/javascript"))
+    ids = [f"u{i + 2}" for i in range(len(MANY_NAMES))]
+    profiles = {"u1": {"name": "Anna", "code": "ANNA01", "sharing": True}}
+    profiles.update({u: {"name": n, "code": f"C{i:05d}", "sharing": True} for i, (u, n) in enumerate(zip(ids, MANY_NAMES))})
+    friends = [p for u in ids for p in (["u1", u], [u, "u1"])]
+    act = [{"id": i + 1, "user_id": u, "day": "2026-10-22", "pass": "Ben", "exercises": 5} for i, u in enumerate(ids[:10])]
+    act += [{"id": 100 + i, "user_id": u, "day": "2026-10-20", "pass": "Push", "exercises": 5} for i, u in enumerate(ids[:5])]
+    seed = f"window.__social = {{ profiles: {json.dumps(profiles)}, friends: {json.dumps(friends)}, kudos: [], calls: [], activity: {json.dumps(act)} }};"
+    start(page, SUPABASE_MOCK + seed)
+    login(page)
+    prof(page, "vanner")
+    page.wait_for_selector(".ftop")
+    # Idag: fyra pass syns, resten bakom en knapp
+    assert "Idag · 10 pass" in page.text_content("#app") and page.locator(".flist .fevent").count() == 4
+    page.click("[data-ftoday]")
+    assert page.locator(".flist .fevent").count() == 10
+    # Topplistan: tre först, sedan ens egen plats
+    assert page.locator(".ftop .trow").count() == 4 and page.locator(".ftop .trow.me").count() == 1
+    assert "av 31" in page.inner_text(".ftop")
+    page.click("[data-ftop]")
+    assert page.locator(".ftop .trow").count() == 31
+    # Hela vänlistan på en egen sida: sök, sortering, bokstäver
+    page.click("[data-flist]")
+    assert page.locator(".frrow").count() == 30 and page.locator(".fletters button").count() > 5
+    page.fill("#fsearch", "jul")
+    assert page.locator(".frrow:visible").count() == 1 and "Julia" in page.inner_text(".frrow:visible")
+    page.fill("#fsearch", "")
+    page.click('[data-fsort="aktiva"]')
+    assert "2 pass den här veckan" in page.inner_text(".frrow >> nth=0")
+    # Ta bort en vän via ··· och ett blad
+    page.click('.frrow:has-text("Ville") .fmenu')
+    assert "Ta bort Ville som vän" in page.inner_text(".fsheet")
+    page.click("[data-unfriend]")
+    page.wait_for_function("social.friends.length === 29")
+    assert page.locator(".fsheet").count() == 0

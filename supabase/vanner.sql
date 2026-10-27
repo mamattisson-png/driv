@@ -88,9 +88,13 @@ language sql security definer set search_path = public as $$
     or (user_id = p_friend and friend_id = auth.uid());
 $$;
 
+-- Vännerna med senaste delade pass och antal pass den här veckan (måndag–söndag), för topplistan
 create or replace function public.driv_friends() returns json
 language sql stable security definer set search_path = public as $$
-  select coalesce(json_agg(json_build_object('id', p.user_id, 'name', p.name) order by p.name), '[]'::json)
+  select coalesce(json_agg(json_build_object('id', p.user_id, 'name', p.name,
+      'last', (select max(a.day) from driv_activity a where a.user_id = p.user_id and p.sharing),
+      'week', (select count(*) from driv_activity a where a.user_id = p.user_id and p.sharing and a.day >= date_trunc('week', current_date)::date)
+    ) order by p.name), '[]'::json)
   from driv_friends f join driv_profiles p on p.user_id = f.friend_id
   where f.user_id = auth.uid();
 $$;
@@ -120,7 +124,7 @@ language sql stable security definer set search_path = public as $$
     from driv_activity a join driv_profiles p on p.user_id = a.user_id
     where a.day >= current_date - 14 and p.sharing
       and (a.user_id = auth.uid() or a.user_id in (select friend_id from driv_friends where user_id = auth.uid()))
-    order by a.day desc, a.created_at desc limit 30
+    order by a.day desc, a.created_at desc limit 300
   ) r;
 $$;
 

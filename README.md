@@ -60,7 +60,7 @@ Näringsvärden kommer delvis från [Livsmedelsverkets livsmedelsdatabas](https:
 
 ### Vänner
 
-Kör även [`supabase/vanner.sql`](supabase/vanner.sql) i SQL Editor. Den skapar tabellerna för profiler, vänner, delade pass och peppningar, samt funktionerna appen använder. Tabellerna kan inte läsas direkt; funktionerna kontrollerar själva vem som frågar. Där finns också funktionen som raderar ett konto med allt som hör till det.
+Kör även [`supabase/vanner.sql`](supabase/vanner.sql) i SQL Editor. Den skapar tabellerna för profiler, vänner, delade pass och peppningar, samt funktionerna appen använder. Tabellerna kan inte läsas direkt; funktionerna kontrollerar själva vem som frågar. Där finns också funktionen som raderar ett konto med allt som hör till det. Kör filen igen när den ändrats; den kan köras flera gånger. Vännernas veckosiffror och senaste pass kommer därifrån, med äldre funktioner räknas de ur flödet i stället.
 
 ## Tester
 

@@ -105,6 +105,15 @@ def views(page):
         ${feed.map(feedEvent).join('')}${myKudosEvent({ day: TODAY, pass: 'Push', kudos: 2 })}</section>
         <button class="card fday">${avatars(['Jonas', 'Lisa'], 2)}<span class="grow">Jonas och Lisa</span></button>${inviteMarkup()}`; }""")
     yield "Vänner", "#app"
+    # Vänner med många vänner: topplistan, raderna, bladen och hela listan
+    page.evaluate("""() => { social.friends = ['Bo', 'Sara', 'Erik', 'Lisa', 'Jonas'].map((name, i) => ({ id: 'f' + i, name, week: 5 - i, last: TODAY }));
+      social.feed = []; friendsSheet = 'bjud'; social.msg = 'Hittade ingen med den koden';
+      document.getElementById('app').innerHTML = `${weekTop()}${friendsLinks()}${friendsSheetView()}`; }""")
+    yield "Vänner, topplistan och bjud in", "#app"
+    page.evaluate("""() => { friendsSheet = 'dela'; social.msg = '';
+      document.getElementById('app').innerHTML = friendsListPage(); }""")
+    yield "Vänner, hela listan och delning", "#app"
+    page.evaluate("() => { friendsSheet = null; social.friends = []; social.profile = null; }")
     page.evaluate("render()")
     go(page, "kost")
     yield "Kost", "#app"

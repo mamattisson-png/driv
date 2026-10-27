@@ -138,7 +138,7 @@ function logScanned() {
   closeScanner();
   save();
   render();
-  toast(`Loggat: ${pr.name}`);
+  if (tab !== "kost") toast(`Loggat: ${pr.name}`);
 }
 
 // Skannerns knappar ligger utanför appens vanliga omritning

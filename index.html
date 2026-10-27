@@ -1347,6 +1347,59 @@
   .toast.out { opacity: 0; transition: opacity .45s ease-in; }
   @keyframes toastin { from { transform: translate(-50%, -50%) scale(.9); } to { transform: translate(-50%, -50%) scale(1); } }
   @media (prefers-reduced-motion: reduce) { .toast { animation: none; } }
+  /* Bekräftelse där man tittar: det nya lyser till en gång, knappen svarar själv */
+  .fresh { animation: freshglow 2.2s ease-out both; border-radius: 14px; }
+  @keyframes freshglow { 0%, 45% { background: var(--ok-soft); box-shadow: inset 0 0 0 1.5px var(--ok); } 100% { background: transparent; box-shadow: inset 0 0 0 1.5px transparent; } }
+  .kdaycard .kmrow.fresh, .nowcard .nrow.fresh { margin: 0 -12px; padding-left: 12px; padding-right: 12px; width: calc(100% + 24px); }
+  .kmitems .krow.fresh { margin: 0 -8px; padding-left: 8px; padding-right: 8px; }
+  .kplus { color: var(--ok-text); font-weight: 700; font-size: 13px; font-variant-numeric: tabular-nums; animation: fadeaway 2.4s ease-in both; }
+  @keyframes fadeaway { 0%, 70% { opacity: 1; } 100% { opacity: 0; } }
+  .flashed, .primary.flashed { background: var(--ok) !important; color: var(--on-color) !important; border-color: var(--ok) !important; transition: background .15s; }
+  .linkbtn2.flashed { background: none !important; color: var(--ok-text) !important; }
+  button.flashed { display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+  .ferr { display: flex; align-items: center; gap: 6px; margin: 6px 4px 0; color: var(--bad-text); font-size: 13px; font-weight: 600; }
+  input.bad, .bad { border-color: var(--bad) !important; box-shadow: 0 0 0 1px var(--bad); }
+  @media (prefers-reduced-motion: reduce) { .fresh, .kplus { animation: none; } }
+  /* Vänner: byggt för många vänner */
+  .fempty { display: flex; align-items: center; gap: 14px; padding: 16px; margin-bottom: 18px; }
+  .fempty .col { display: flex; flex-direction: column; gap: 2px; }
+  .fmore { display: flex; align-items: center; justify-content: center; gap: 4px; width: 100%; min-height: 48px; border: 0; border-top: 1px solid var(--line); border-radius: 0;
+    background: none; color: var(--accent-text); font-weight: 600; font-size: 14px; }
+  .ftop { padding: 14px 16px 0; margin-bottom: 18px; }
+  .ftop .klabel { margin: 0; }
+  .tlist { margin: 6px 0 4px; }
+  .trow { display: flex; align-items: center; gap: 10px; min-height: 44px; }
+  .trow.me { margin: 0 -10px; padding: 0 10px; border-radius: 14px; background: var(--accent-soft); }
+  .tplace { width: 22px; font-size: 13px; font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .trow.me .tplace { color: var(--accent-text); }
+  .trow .av.sm { border: 0; }
+  .tname { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 15px; }
+  .trow.me .tname { font-weight: 700; }
+  .tdots { display: flex; gap: 3px; flex: none; }
+  .tdots i { width: 9px; height: 9px; border-radius: 50%; background: var(--line-strong); }
+  .tdots i.on { background: var(--ok); }
+  .trow.me .tdots i.on { background: var(--accent-strong); }
+  .tnum { width: 20px; text-align: right; font-variant-numeric: tabular-nums; }
+  .tgap { text-align: center; color: var(--muted); letter-spacing: 3px; line-height: 12px; }
+  .ftop .fmore { margin: 0 -16px; width: calc(100% + 32px); }
+  .flinks .frow .avs { margin-right: 2px; }
+  .frow { text-align: left; color: var(--text); background: none; }
+  .fsheet { display: flex; flex-direction: column; gap: 12px; }
+  .fsheet .vcode { font: 800 26px "Unbounded", sans-serif; letter-spacing: .12em; margin-top: 2px; }
+  .fsheet .fsub { margin: 8px 2px 0; }
+  .fsheet #vcode { text-transform: uppercase; letter-spacing: .1em; }
+  .fsheet .frow { border-top: 1px solid var(--line); }
+  .fsheet .row .col { display: flex; flex-direction: column; gap: 2px; }
+  .switchrow { display: flex; align-items: center; gap: 14px; min-height: 64px; }
+  .switchrow .col { display: flex; flex-direction: column; gap: 2px; }
+  .dangerbtn { min-height: 52px; border-radius: 16px; border: 1.5px solid var(--bad); background: var(--bad-soft); color: var(--bad-text); font-weight: 600; }
+  .frrow { display: flex; align-items: center; gap: 12px; min-height: 60px; border-top: 1px solid var(--line); }
+  .flistpage .rletter + .frrow, .flistpage > .frrow:first-child { border-top: 0; }
+  .frrow .col { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+  .frrow b { font-weight: 600; }
+  .fmenu { width: 44px; height: 44px; border: 0; background: none; color: var(--muted); font-size: 18px; letter-spacing: 1px; flex: none; }
+  .fletters { display: flex; flex-wrap: wrap; gap: 4px; margin: 8px 0 0; }
+  .fletters button { min-width: 32px; min-height: 32px; padding: 0 6px; border: 0; border-radius: 10px; background: var(--card-2); color: var(--muted); font-size: 13px; font-weight: 600; }
   /* Knappar längst ned: en tät botten bakom dem ända ned till menyn, så att inget skymtar under */
   .kadd, .pagefoot { bottom: calc(88px + env(safe-area-inset-bottom, 0px)); }
   .kadd, .pagefoot { padding: 12px 0; margin-top: 4px; background: var(--bg); }

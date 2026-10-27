@@ -1520,6 +1520,31 @@ function toast(msg) {
   setTimeout(() => el.remove(), 1600);
 }
 
+// En knapp som svarar själv: grön med en bock en kort stund, sedan som förut. Ritas inte om.
+function flashBtn(el, label) {
+  if (!el || el.classList.contains("flashed")) return;
+  const html = el.innerHTML;
+  el.classList.add("flashed");
+  el.innerHTML = label ? `${icon("check", 20)}<span>${esc(label)}</span>` : icon("check", 18);
+  setTimeout(() => { if (el.isConnected) { el.classList.remove("flashed"); el.innerHTML = html; } }, 1300);
+}
+// Efter omritning: samma knapp hittas igen med en väljare
+const flashSel = (sel, label) => flashBtn(document.querySelector(sel), label);
+// Fel visas vid fältet, inte som ett besked
+function fieldError(input, msg) {
+  if (!input) return toast(msg);
+  input.classList.add("bad");
+  input.setAttribute("aria-invalid", "true");
+  // I en etikett hamnar felet sist i den, annars under fältets rad
+  const field = input.closest(".field"), at = field || input.closest(".finput, .row") || input;
+  let e = field ? field.querySelector(".ferr") : at.nextElementSibling;
+  if (!e || !e.classList.contains("ferr")) { e = document.createElement("div"); e.className = "ferr"; e.setAttribute("role", "alert"); if (field) field.append(e); else at.after(e); }
+  e.innerHTML = `${icon("info", 16)}<span></span>`;
+  e.lastChild.textContent = msg;
+  input.focus();
+  input.addEventListener("input", () => { input.classList.remove("bad"); input.removeAttribute("aria-invalid"); e.remove(); }, { once: true });
+}
+
 // Veckans plus: hur många övningar som gått upp, stått still eller gått ned mot förra veckan
 function weekPlus(ws) {
   const prevWs = shift(ws, -7), res = { plus: 0, same: 0, minus: 0, ids: [] };
@@ -1628,7 +1653,7 @@ document.addEventListener("click", ev => {
   if (ds.editprof !== undefined) { modal = { prof: true }; render(); return; }
   if (ds.pnamesave !== undefined) {
     const name = ($("pname").value || "").trim();
-    if (!name) { toast("Skriv ett namn."); return; }
+    if (!name) { fieldError($("pname"), "Skriv ett namn."); return; }
     S.name = name; save(); modal = null; render(); toast("Namnet är sparat");
     if (sbEnabled && account.step === "in" && social.loaded && !social.error)
       socialAction(() => socialRpc("driv_profile_save", { p_name: name, p_sharing: social.profile ? social.profile.sharing : true }));
@@ -1717,7 +1742,7 @@ document.addEventListener("click", ev => {
   else if (ds.showweight !== undefined) S.hideWeight = !t.checked;
   else if (ds.wsave !== undefined) {
     const date = ds.wdate || logDate();
-    if (!logWeight(+String($("wkg").value).replace(",", "."), date)) { toast("Skriv vikten i kg, till exempel 80,5"); return; }
+    if (!logWeight(+String($("wkg").value).replace(",", "."), date)) { fieldError($("wkg"), "Skriv vikten i kg, till exempel 80,5"); return; }
     weightEditing = false;
     toast(`Vikt sparad: ${fmtNum(weights()[date])} kg`);
   }
