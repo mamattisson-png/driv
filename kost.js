@@ -114,11 +114,51 @@ document.addEventListener("input", ev => {
   if (ev.target.id === "rname" && recipeEdit) recipeEdit.name = ev.target.value;
 });
 // Receptfönstret
+// Mängd per portion (gram) när en ingrediens skrivs utan mängd. Första träffen på namnets början gäller.
+const PORTION_GUESS = [
+  [/^(notfars|blandfars|flaskfars|kycklingfars|lammfars|viltfars|fars|kyckling|flaskfile|flaskkarre|kassler|hogrev|biff|entrecote|oxfile|kott|lax|torsk|sej|fisk|rakor|tofu|halloumi|quorn)/, 125],
+  [/^(bacon|chorizo|salami|skinka)/, 35], [/^(korv|falukorv|prinskorv)/, 100], [/^agg/, 60],
+  [/^(gul lok|lok|rodlok|schalottenlok|purjolok)/, 30], [/^vitlok/, 4],
+  [/^(paprika|tomat|morot|morotter|zucchini|squash|aubergine|svamp|champinjon|selleri|gurka|majs|artor|haricots|sockerartor)/, 50],
+  [/^(broccoli|blomkal|vitkal|spenat|gronkal|sallad)/, 60], [/^(bonor|kikartor|linser)/, 60],
+  [/^(krossade tomater|passerade tomater|tomatsas)/, 100], [/^kokosmjolk/, 60],
+  [/^(gradde|matlagningsgradde|vispgradde|creme fraiche|graddfil|turkisk yoghurt)/, 40], [/^(mjolk|filmjolk|yoghurt)/, 100],
+  [/^(ost|riven ost|parmesan|mozzarella|feta)/, 30], [/^(smor|olja|olivolja|rapsolja)/, 10],
+  [/^(pasta|spaghetti|makaroner|penne|nudlar|lasagneplattor|okokt pasta)/, 80], [/^(ris|bulgur|couscous|quinoa)/, 70],
+  [/^(potatis|sotpotatis)/, 200], [/^(mjol|vetemjol|strobrod)/, 15], [/^(tomatpure|soja|socker|honung|buljong)/, 10],
+];
+// Räknas i styck när livsmedlet har en styckvikt
+const COUNT_FOODS = /^(agg|gul lok|lok|rodlok|paprika|tomat|morot|zucchini|squash|aubergine|potatis|banan|apple|citron|lime|avokado|vitlok)/;
+function ingCalc(it) {
+  const g = amtGrams(it.amt);
+  it.kcal = Math.round(it.amt.k * g / 100);
+  it.protein = Math.round(it.amt.p * g / 10) / 10;
+  return it;
+}
+// Gram till mängd i livsmedlets egen enhet: styck för ägg och grönsaker, annars avrundade gram
+function gramsToAmt(a, g, count) {
+  if (count && a.u.st) { const n = g / a.u.st; a.unit = "st"; a.n = n >= 1.5 ? Math.round(n) : Math.max(0.5, Math.round(n * 2) / 2); }
+  else if (a.unit !== "g") a.n = Math.max(0.5, Math.round(g / unitGrams(a, a.unit) * 2) / 2);
+  else { a.unit = "g"; a.n = g < 100 ? Math.max(5, Math.round(g / 5) * 5) : Math.round(g / 25) * 25; }
+  return a;
+}
+function ingredient(i, portions) {
+  if (i.qty != null || i.unit) return ingCalc({ name: i.name, text: i.text, amt: amtFromItem(i) });
+  const key = norm(i.name), hit = PORTION_GUESS.find(([re]) => re.test(key));
+  const per = hit ? hit[1] : Math.min(i.food.portion || 100, 150);
+  const a = amtFromItem({ ...i, unit: "g", grams: per * portions });
+  return ingCalc({ name: i.name, text: i.text, est: true, amt: gramsToAmt(a, per * portions, COUNT_FOODS.test(key)) });
+}
+// Fler eller färre portioner: de uppskattade mängderna följer med, de man skrivit själv står kvar
+function scaleIngredients(r, from) {
+  for (const it of r.items) if (it.est && it.amt) ingCalc(Object.assign(it, { amt: gramsToAmt(it.amt, amtGrams(it.amt) * r.portions / from, it.amt.unit === "st") }));
+}
+const ingText = it => it.amt ? `${cap(it.name)}` : cap(it.text);
 function addIngredients() {
   const el = $("ring"), text = (el.value || "").trim();
   if (!text) return;
   const r = parseFood(text), ok = r.items.filter(i => i.known);
-  ok.forEach(i => recipeEdit.items.push({ name: i.name, text: i.text, kcal: i.kcal, protein: i.protein }));
+  ok.forEach(i => recipeEdit.items.push(ingredient(i, recipeEdit.portions)));
   recipeEdit.msg = r.unknown.length ? `Känns inte igen: ${r.unknown.join(", ")}. Skriv mängd och livsmedel, t.ex. "200 g nötfärs".` : "";
   render();
   const again = $("ring");
@@ -126,7 +166,7 @@ function addIngredients() {
 }
 document.addEventListener("keydown", ev => { if (ev.target.id === "ring" && ev.key === "Enter") { ev.preventDefault(); addIngredients(); } });
 document.addEventListener("click", ev => {
-  const t = ev.target.closest("[data-rlist],[data-rclose],[data-rnew],[data-redit],[data-ruse],[data-rcancel],[data-rport],[data-ringadd],[data-rdel],[data-rsave],[data-rremove]");
+  const t = ev.target.closest("[data-rlist],[data-rclose],[data-rnew],[data-redit],[data-ruse],[data-rcancel],[data-rport],[data-ringadd],[data-rdel],[data-rsave],[data-rremove],[data-ristep],[data-ropen],[data-rback],[data-rn]");
   if (!t || t.disabled) return;
   if (t.classList.contains("overlay") && ev.target !== t) return;   // klick inne i fönstret
   const ds = t.dataset;
@@ -134,15 +174,24 @@ document.addEventListener("click", ev => {
   if (ds.rlist !== undefined) recipeList = true;
   else if (ds.rclose !== undefined) recipeList = false;
   else if (ds.rnew !== undefined) recipeEdit = { idx: null, name: "", portions: 4, items: [], msg: "" };
-  else if (ds.redit) { const r = recipes()[+ds.redit]; recipeEdit = { idx: +ds.redit, name: r.name, portions: r.portions, items: r.items.map(i => ({ ...i })), msg: "" }; }
+  else if (ds.redit) { recipeOpen = null; const r = recipes()[+ds.redit]; recipeEdit = { idx: +ds.redit, name: r.name, portions: r.portions, items: r.items.map(i => ({ ...i })), msg: "" }; }
   else if (ds.ruse) {
-    const p = perPortion(recipes()[+ds.ruse]);
-    addQuick(p, foodSheet ? foodSheet.meal : mealByClock());
-    recipeList = false;
-    toast(`${p.name}: en portion tillagd`);
+    // En portion med plus i listan, eller så många man valt i det öppna receptet
+    const p = perPortion(recipes()[+ds.ruse]), n = recipeOpen ? recipeOpen.n : 1, meal = foodSheet ? foodSheet.meal : mealByClock();
+    if (n === 1) addQuick(p, meal); else logFood({ ...p, qty: n }, meal);
+    recipeList = false; recipeOpen = null;
+    toast(`${p.name}: ${n === 1 ? "en portion" : `${fmtNum(n)} portioner`} tillagd`);
   }
   else if (ds.rcancel !== undefined) recipeEdit = null;
-  else if (ds.rport) recipeEdit.portions = Math.max(1, recipeEdit.portions + +ds.rport);
+  else if (ds.rport) { const from = recipeEdit.portions; recipeEdit.portions = Math.max(1, from + +ds.rport); scaleIngredients(recipeEdit, from); }
+  else if (ds.ristep) {
+    const it = recipeEdit.items[+ds.ristep], n = stepAmount(it.amt, +ds.dir);
+    if (!n) recipeEdit.items.splice(+ds.ristep, 1);
+    else { it.amt.n = n; ingCalc(it); }
+  }
+  else if (ds.ropen) recipeOpen = { idx: +ds.ropen, n: 1 };
+  else if (ds.rback !== undefined) recipeOpen = null;
+  else if (ds.rn !== undefined) recipeOpen.n = Math.max(0.5, Math.min(10, recipeOpen.n + +ds.dir * 0.5));
   else if (ds.rdel) recipeEdit.items.splice(+ds.rdel, 1);
   else if (ds.rsave !== undefined) {
     const r = recipeEdit, name = (r.name || "").trim() || "Mitt recept";
@@ -224,40 +273,62 @@ function rememberAmount(f) {
 const recipes = () => S.recipes || (S.recipes = []);
 let recipeEdit = null;    // receptet som skrivs eller ändras: { idx, name, portions, items, msg }
 let recipeList = false;   // listan med egna recept är öppen
+let recipeOpen = null;    // { idx, n } när ett recept visas: ingredienser och hur många portioner man åt
 const recipeTotal = r => ({ kcal: sumKcal(r.items), protein: r.items.reduce((a, i) => a + (+i.protein || 0), 0) });
 function perPortion(r) {
   const t = recipeTotal(r), n = Math.max(1, r.portions || 1);
   return { name: r.name, kcal: Math.round(t.kcal / n), protein: Math.round(t.protein / n * 10) / 10 };
 }
+const mealFor = () => MEALS[foodSheet ? foodSheet.meal : mealByClock()][0].toLowerCase();
+const stepper = (attr, val, label) => `<div class="fstep"><button ${attr} data-dir="-1" aria-label="${label}: mindre">−</button><b class="famt">${val}</b><button ${attr} data-dir="1" aria-label="${label}: mer">+</button></div>`;
 function recipesSheet() {
   const list = recipes();
-  return `<div class="overlay" data-rclose><div class="sheet">
-    <div class="row between"><h2>Dina recept</h2><button class="small ghost" data-rclose aria-label="Stäng">${icon("close", 18)}</button></div>
-    <div class="muted small" style="margin-bottom:8px">Bygg en rätt av ingredienser en gång, logga sedan en portion med ett tryck.</div>
-    ${list.length ? list.map((r, i) => { const p = perPortion(r);
-      return `<div class="krow"><span class="grow"><b>${esc(r.name)}</b><span class="muted small">${r.portions} portioner · ${p.kcal} kcal och ${fmtNum(p.protein)} g protein per portion</span></span>
-        <button class="small ghost" data-redit="${i}">Ändra</button><button class="small" data-ruse="${i}">Lägg till</button></div>`; }).join("")
-      : `<div class="muted">Inga recept än.</div>`}
-    <button class="primary wide bigbtn" style="margin-top:14px" data-rnew>+ Nytt recept</button>
+  return `<div class="overlay" data-rclose><div class="sheet recsheet foodsheet" role="dialog" aria-label="Dina recept">
+    ${foodSheet ? `<button class="backbtn" data-rclose>${icon("left", 18)}Lägg till mat</button>` : ""}
+    <div class="row between fshead"><span class="col"><span class="klabel">Till ${mealFor()}</span><h2>Dina recept</h2></span>
+      <button class="small ghost iconbtn" data-rclose aria-label="Stäng">${icon("close", 18)}</button></div>
+    <div class="muted small rhint">Tryck på ett recept för att se det. Plus lägger till en portion direkt.</div>
+    ${list.length ? `<div class="qgrid">${list.map((r, i) => { const p = perPortion(r);
+      return `<div class="qadd rrow"><button class="grow col rname" data-ropen="${i}"><b>${esc(r.name)}</b><span class="muted small">${r.portions === 1 ? "1 portion" : `${r.portions} portioner`} · ${p.kcal} kcal${r.portions === 1 ? "" : " per portion"}</span></button>
+        <button class="qplus" data-ruse="${i}" aria-label="Lägg till en portion ${esc(r.name)}">${icon("plus", 18)}</button></div>`; }).join("")}</div>`
+      : `<div class="muted rempty">Inga recept än. Bygg en rätt en gång, sedan loggar du en portion med ett tryck.</div>`}
+    <button class="addbtn" data-rnew>${icon("plus", 18)}Nytt recept</button>
+    <div class="sheet-foot"><button class="primary wide" data-rclose>Klar</button></div>
+  </div></div>`;
+}
+function recipeOpenView() {
+  const r = recipes()[recipeOpen.idx];
+  if (!r) { recipeOpen = null; return recipesSheet(); }
+  const t = recipeTotal(r), p = perPortion(r), n = recipeOpen.n;
+  return `<div class="overlay" data-rback><div class="sheet recsheet foodsheet" role="dialog" aria-label="${esc(r.name)}">
+    <button class="backbtn" data-rback>${icon("left", 18)}Recept</button>
+    <div class="row between fshead"><span class="col"><span class="klabel">Recept · ${r.portions === 1 ? "1 portion" : `${r.portions} portioner`}</span><h2>${esc(r.name)}</h2></span>
+      <button class="pillbtn" data-redit="${recipeOpen.idx}">Ändra</button></div>
+    <div class="rstats"><div><b>${tnum(p.kcal)}</b><span>kcal/portion</span></div><div><b>${fmtNum(Math.round(p.protein))} g</b><span>protein</span></div><div><b>${tnum(t.kcal)}</b><span>kcal totalt</span></div></div>
+    <div class="klabel fsub">Ingredienser</div>
+    <div class="ringlist">${r.items.map(it => `<div class="iline"><span class="grow">${esc(it.amt ? `${amtText(it.amt)} ${it.name.toLowerCase()}` : cap(it.text))}</span><span class="muted">${tnum(it.kcal)} kcal</span></div>`).join("")}</div>
+    <div class="row between reat"><span>Hur mycket åt du?</span>${stepper("data-rn", `${fmtNum(n)} ${n === 1 ? "portion" : "portioner"}`, "Portioner")}</div>
+    <div class="sheet-foot"><button class="primary wide" data-ruse="${recipeOpen.idx}">Lägg till i ${mealFor()} · ${tnum(p.kcal * n)} kcal</button></div>
   </div></div>`;
 }
 function recipeSheet() {
   const r = recipeEdit, t = recipeTotal(r), p = perPortion(r);
-  return `<div class="overlay" data-rcancel><div class="sheet">
-    <div class="row between"><h2>${r.idx == null ? "Nytt recept" : "Ändra recept"}</h2><button class="small ghost" data-rcancel aria-label="Stäng">${icon("close", 18)}</button></div>
-    <label class="field">Namn<input id="rname" value="${esc(r.name)}" placeholder="t.ex. Lasagne" autocomplete="off"></label>
-    <div class="row qtyrow" style="margin-top:10px"><span class="grow">Portioner</span>
-      <button class="step" data-rport="-1" ${r.portions <= 1 ? "disabled" : ""} aria-label="Färre portioner">−</button><b class="qcount">${r.portions}</b>
-      <button class="step" data-rport="1" aria-label="Fler portioner">+</button></div>
-    <h3 class="sheet-sub">Ingredienser</h3>
-    <div class="row"><input id="ring" class="grow" placeholder="t.ex. 500 g nötfärs, 2 dl grädde" autocomplete="off"><button data-ringadd>Lägg till</button></div>
-    ${r.msg ? `<div class="muted small warntext" style="margin-top:6px">${esc(r.msg)}</div>` : ""}
-    ${r.items.map((i, k) => `<div class="krow"><span class="grow"><b>${esc(cap(i.text))}</b><span class="muted small">räknat som ${esc(i.name.toLowerCase())} · ${fmtNum(+i.protein || 0)} g protein</span></span>
-      <span class="kkcal">${tnum(i.kcal)} kcal</span><button class="small ghost" data-rdel="${k}" aria-label="Ta bort ${esc(i.name)}">${icon("close", 18)}</button></div>`).join("")}
-    ${r.items.length ? `<div class="rtotal"><div class="row between"><span>Hela receptet</span><b>${tnum(t.kcal)} kcal</b></div>
-      <div class="row between"><span>En portion (av ${r.portions})</span><b>${tnum(p.kcal)} kcal · ${fmtNum(p.protein)} g protein</b></div></div>` : ""}
-    <div class="sheet-foot row between">${r.idx != null ? `<button class="ghost" data-rremove>Ta bort</button>` : `<span></span>`}
-      <button class="primary" data-rsave ${r.items.length ? "" : "disabled"}>Spara recept</button></div>
+  return `<div class="overlay" data-rcancel><div class="sheet recsheet foodsheet" role="dialog" aria-label="${r.idx == null ? "Nytt recept" : "Ändra recept"}">
+    <div class="row between fshead"><span class="col grow"><span class="klabel">${r.idx == null ? "Nytt recept" : "Ändra recept"}</span>
+      <input id="rname" class="rnamein" value="${esc(r.name)}" placeholder="Namn, t.ex. Lasagne" autocomplete="off" aria-label="Namn på receptet"></span>
+      <button class="small ghost iconbtn" data-rcancel aria-label="Stäng">${icon("close", 18)}</button></div>
+    <div class="row between rport"><span class="col"><span>Portioner</span><span class="muted small">Mängderna räknas för så många</span></span>
+      <div class="fstep"><button data-rport="-1" ${r.portions <= 1 ? "disabled" : ""} aria-label="Färre portioner">−</button><b class="famt qcount">${r.portions}</b>
+      <button data-rport="1" aria-label="Fler portioner">+</button></div></div>
+    <div class="finput ringin"><input id="ring" placeholder="t.ex. nötfärs, ägg, lök, 2 dl grädde" autocomplete="off" aria-label="Ingredienser"><button class="primary small" data-ringadd>Lägg till</button></div>
+    <div class="muted small rhint">Skriv bara vad som ingår. Utan mängd uppskattar vi en vanlig mängd för ${r.portions} ${r.portions === 1 ? "portion" : "portioner"}.</div>
+    ${r.msg ? `<div class="muted small warntext rhint">${esc(r.msg)}</div>` : ""}
+    ${r.items.length ? `<div class="klabel fsub">Ingredienser · ${r.items.length}</div>
+      <div class="ringlist">${r.items.map((it, k) => `<div class="krow ing"><span class="grow"><b>${esc(ingText(it))}</b><span class="muted small">${tnum(it.kcal)} kcal · ${it.est ? `<span class="esttag">uppskattad mängd</span>` : it.amt ? "som du skrev" : `${fmtNum(+it.protein || 0)} g protein`}</span></span>
+        ${it.amt ? stepper(`data-ristep="${k}"`, amtText(it.amt), it.name) : `<button class="small ghost iconbtn" data-rdel="${k}" aria-label="Ta bort ${esc(it.name)}">${icon("close", 18)}</button>`}</div>`).join("")}</div>
+      <div class="rstats two"><div><b>${tnum(p.kcal)}</b><span>kcal per portion · ${fmtNum(Math.round(p.protein))} g protein</span></div><div><b>${tnum(t.kcal)}</b><span>kcal i hela receptet</span></div></div>` : ""}
+    <div class="sheet-foot row between">${r.idx != null ? `<button class="ghost dangertext" data-rremove>Ta bort</button>` : `<span></span>`}
+      <button class="primary grow" data-rsave ${r.items.length ? "" : "disabled"}>Spara recept</button></div>
   </div></div>`;
 }
 
@@ -346,19 +417,39 @@ const MEAL_SVG = [
 ];
 const mealIcon = meal => meal < 0 ? "" : `<svg class="kicon" viewBox="0 0 24 24" aria-hidden="true">${MEAL_SVG[meal]}</svg>`;
 const foodTitle = f => { const a = amountText(f); return isEst(f) ? itemName(f) : `${esc(f.name)}${a ? (a.startsWith("×") ? ` ${a}` : ` · ${a}`) : ""}`; };
+let kostOpen = null;   // måltiden som är utfälld i Kost
+let kostDay = false;  // en annan dag är vald i veckoremsan
 function mealCard(meal, L) {
   const items = L.food.map((f, i) => ({ f, i })).filter(x => (x.f.meal ?? -1) === meal);
   const name = meal < 0 ? "Övrigt" : MEALS[meal][0];
-  // En tom måltid är en streckad rad att lägga till i
-  if (!items.length) return meal < 0 ? "" : `<section class="mealempty" aria-label="${name}"><h2>${name}</h2>
-    <button class="ghost" data-addto="${meal}" data-focusname>+ Lägg till</button></section>`;
-  const sum = sumKcal(items.map(x => x.f)), prot = items.reduce((a, x) => a + (+x.f.protein || 0), 0);
-  return `<section class="card kmeal" aria-label="${name}">
-    <div class="khead"><h2 class="grow">${name}</h2><span>${tnum(sum)} kcal · ${fmtNum(Math.round(prot))} g</span></div>
-    ${items.map(({ f, i }) => `<button class="krow ${isEst(f) ? "est" : ""}" data-fooditem="${i}">
-      <span class="grow"><b>${foodTitle(f)}</b>${isEst(f) ? `<span class="muted small">ungefärligt</span>` : ""}</span><span class="kkcal">${tnum(f.kcal)}</span></button>`).join("")}
-    ${meal >= 0 ? `<button class="ghost small kmore" data-addto="${meal}" data-focusname>+ Lägg till</button>` : ""}
-  </section>`;
+  if (!items.length) return meal < 0 ? "" : `<div class="kmrow empty" aria-label="${name}, inget än"><span class="kmic">${mealIcon(meal)}</span>
+    <span class="grow col"><b>${name}</b><span class="muted small">Inget än</span></span></div>`;
+  const sum = sumKcal(items.map(x => x.f)), prot = items.reduce((a, x) => a + (+x.f.protein || 0), 0), open = kostOpen === meal;
+  const preview = items.length > 2 ? `${items.length} saker · ${fmtNum(Math.round(prot))} g protein` : items.map(x => isEst(x.f) ? "≈ Uppskattning" : x.f.name).join(", ");
+  return `<button class="kmrow" data-kmeal="${meal}" aria-expanded="${open}"><span class="kmic">${mealIcon(meal)}</span>
+      <span class="grow col"><b>${name}</b><span class="muted small kprev">${esc(preview)}</span></span>
+      <b class="kmsum">${tnum(sum)}</b><span class="chev">${icon(open ? "down" : "right", 18)}</span></button>
+    ${open ? `<div class="kmitems">${items.map(({ f, i }) => `<button class="krow ${isEst(f) ? "est" : ""}" data-fooditem="${i}">
+      <span class="grow"><b>${foodTitle(f)}</b>${isEst(f) ? `<span class="muted small">ungefärligt</span>` : ""}</span><span class="kkcal">${tnum(f.kcal)}</span></button>`).join("")}</div>` : ""}`;
+}
+// Veckan: en stapel per dag mot kalorimålet. Ett tryck visar den dagen.
+function kostWeek() {
+  const goal = macros().kcal;
+  return `<div class="kweek" role="group" aria-label="Veckan">${weekDates(weekStart(logDate())).map((d, i) => {
+    const kc = eaten(d).kcal, pct = goal ? Math.min(1, kc / goal) : 0;
+    return `<button class="kwd ${d === logDate() ? "on" : ""}" data-kday="${d}" ${d > TODAY ? "disabled" : ""} aria-pressed="${d === logDate()}" aria-label="${WD_LONG[i]}: ${tnum(kc)} kcal">
+      <span>${WD[i][0]}</span><i class="ktr"><i class="${kc > goal * 1.05 ? "over" : ""}" style="height:${Math.round(pct * 100)}%"></i></i></button>`; }).join("")}</div>`;
+}
+// Kvar idag: kcal som en stapel och protein under
+function kostSummary(e, m) {
+  const left = m.kcal - e.kcal, pct = m.kcal ? Math.min(100, Math.round(e.kcal / m.kcal * 100)) : 0;
+  return `<section class="card dayring ksum" aria-label="${editDate ? dateLabel(editDate) : "Dagens intag"}">
+    <div class="row between ksumtop"><span class="col"><span class="klabel">${left >= 0 ? (editDate ? "Kvar den dagen" : "Kvar idag") : "Över målet"}</span>
+      <b class="kleft">${tnum(Math.abs(left))} <small>kcal</small></b></span>
+      <span class="muted small kate">${tnum(e.kcal)} av ${tnum(m.kcal)}<br>ätit</span></span></div>
+    <div class="bar kbar ${left < -m.kcal * 0.05 ? "over" : ""}"><div style="width:${pct}%"></div></div>
+    <div class="kprot"><div class="row between small"><span class="muted">Protein</span><span><b>${tnum(e.protein)}</b> / ${tnum(m.protein)} g</span></div>${bar(e.protein, m.protein, true, "prot")}</div>
+    ${S.profileSet === false ? `<button class="link small" data-tab="profil" data-popen="kalori">Målet bygger på standardvärden – ställ in ditt</button>` : ""}</section>`;
 }
 
 // Sparade måltider för en viss måltid (äldre sparningar känns igen på namnet, t.ex. "Frukost: …")
@@ -378,20 +469,6 @@ const kstat = (label, v, goal, unit, cls) => `<div class="kstat"><div class="kla
     <div class="kbig">${tnum(v)}${unit === "g" ? " g" : ""}</div><div class="muted small">av ${tnum(goal)} ${unit}</div>
     <div class="bar ${cls}"><div style="width:${goal ? Math.min(100, Math.round(v / goal * 100)) : 0}%"></div></div></div>`;
 const kstats = (e, m) => `<div class="kstats">${kstat("Kalorier", e.kcal, m.kcal, "kcal", e.kcal > m.kcal * 1.05 ? "over" : "")}${kstat("Protein", e.protein, m.protein, "g", e.protein >= m.protein ? "ok" : "prot")}</div>`;
-function dayRing(e, m) {
-  const left = m.kcal - e.kcal, r = 56, c = 2 * Math.PI * r, pct = m.kcal ? Math.min(1, e.kcal / m.kcal) : 0;
-  return `<section class="card dayring" aria-label="${editDate ? dateLabel(editDate) : "Dagens intag"}">
-    ${editDate ? `<h2>${dateLabel(editDate).replace(/^./, c => c.toUpperCase())}</h2>` : ""}
-    <div class="ringrow"><div class="ringwrap"><svg class="ring" viewBox="0 0 132 132" role="img" aria-label="${tnum(e.kcal)} av ${tnum(m.kcal)} kcal">
-        <circle class="ring-bg" cx="66" cy="66" r="${r}"/><circle class="ring-fg ${left < -m.kcal * 0.05 ? "over" : ""}" cx="66" cy="66" r="${r}"
-          stroke-dasharray="${(pct * c).toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 66 66)"/></svg>
-        <div class="ringnum"><b>${tnum(Math.abs(left))}</b><span class="muted">${left >= 0 ? "kcal kvar" : "kcal över"}</span></div></div>
-      <div class="ringinfo">
-        <div class="row between small"><span class="muted">Ätit</span><span>${tnum(e.kcal)} / ${tnum(m.kcal)}</span></div>
-        <div><div class="row between small"><span class="muted">Protein</span><span>${tnum(e.protein)} / ${tnum(m.protein)} g</span></div>${bar(e.protein, m.protein, true, "prot")}</div>
-      </div></div>
-    ${S.profileSet === false ? `<button class="link small" data-tab="profil" data-popen="kalori">Målet bygger på standardvärden – ställ in ditt</button>` : ""}</section>`;
-}
 
 // Bladet för att lägga till mat: måltid, ett fält, tre små val och en enda knapp längst ned.
 // Knappen visar måltid och summa och uppdateras medan man skriver.
@@ -412,7 +489,7 @@ function addSheet(m) {
     <div class="row between fshead"><span class="col"><span class="klabel">Lägg till mat</span><h2>${MEALS[meal][0]}</h2></span>
       <button class="small ghost iconbtn" data-fsclose aria-label="Stäng">${icon("close", 18)}</button></div>
     <div class="mealseg" role="radiogroup" aria-label="Måltid">${MEALS.map(([n], i) => `<button role="radio" data-sheetmeal="${i}" class="${i === meal ? "on" : ""}" aria-checked="${i === meal}">${n}</button>`).join("")}</div>
-    <div class="finput">${icon("search", 18)}<input id="fname" placeholder="t.ex. 2 ägg och 1 banan" autocomplete="off" aria-label="Vad åt du?">
+    <div class="finput">${icon("search", 18)}<input id="fname" placeholder="${items.length ? "Lägg till mer …" : "t.ex. 2 ägg och 1 banan"}" autocomplete="off" aria-label="Vad åt du?">
       ${CAN_SCAN ? `<button class="fscan" data-scan aria-label="Skanna streckkod">${icon("barcode", 22)}</button>` : ""}</div>
     <div class="fopts"><button class="flink ${foodPanel === "kcal" ? "on" : ""}" data-fpanel="${foodPanel === "kcal" ? "senaste" : "kcal"}" aria-pressed="${foodPanel === "kcal"}">Bara kcal</button>
       <button class="flink" data-rlist>Recept${recipes().length ? ` (${recipes().length})` : ""}</button></div>
@@ -422,8 +499,8 @@ function addSheet(m) {
       <div class="muted small">Med text i fältet sparas den som namn, annars blir det en uppskattning.</div></div>
     <div id="fpreview" class="fpreview"></div>
     <div class="fidle">
-    ${items.length ? `<div class="row between sheet-sub"><span>I ${mealName}en nu</span>
-      ${items.filter(x => !isEst(x.f)).length > 1 ? `<button class="link small" data-savegroup="${meal}">Spara som måltid</button>` : ""}</div>${now}` : ""}
+    ${items.length ? `<div class="row between nowhead"><span class="klabel accent">I ${mealName}en nu · ${items.length} ${items.length === 1 ? "sak" : "saker"}</span>
+      ${items.filter(x => !isEst(x.f)).length > 1 ? `<button class="linkbtn2 small" data-savegroup="${meal}">Spara som måltid</button>` : ""}</div><div class="nowcard">${now}</div>` : ""}
     ${foodPanel === "senaste" ? `${!items.length && (last || saved.length) ? `<div class="kshort">
       ${saved.map(({ m: sm, idx }) => `<button class="klink" data-usemeal="${idx}" data-meal="${meal}">${esc(sm.name)}<span class="muted"> · ${sm.kcal} kcal</span></button>`).join("")}
       ${last ? `<button class="klink" data-repeat="${meal}">↻ Samma som ${whenText(last.date)}<span class="muted"> · ${esc(last.items.map(f => isEst(f) ? "uppskattning" : f.name).join(", "))}</span></button>` : ""}</div>` : ""}
@@ -503,18 +580,23 @@ function itemSheet() {
 function kostView() {
   const m = macros(), e = eaten(), L = day();
   m.kcal += burnedOn(logDate());
-  return `<h1>Kost</h1>
-    ${dayRing(e, m)}
-    <div class="kquick"><button class="kask" data-addto="${mealByClock()}" data-focusname>Vad åt du? <span>t.ex. 2 dl mjölk och 1 banan</span></button>
-      ${CAN_SCAN ? `<button class="kscan" data-scan aria-label="Skanna streckkod">${icon("barcode", 22)}</button>` : ""}</div>
+  // Medan man lägger till är den måltiden utfälld, och den förblir det efteråt
+  if (foodSheet) kostOpen = foodSheet.meal;
+  else if (kostOpen == null) { const has = MEALS.map((_, i) => i).filter(i => L.food.some(f => f.meal === i)); kostOpen = has.includes(mealByClock()) ? mealByClock() : has.pop() ?? null; }
+  const wd = cap(parse(logDate()).toLocaleDateString("sv-SE", { weekday: "long", day: "numeric", month: "long" }));
+  return `<h1>Kost</h1><div class="muted kdate">${wd} · vecka ${weekNo(logDate())}</div>
+    ${kostWeek()}
+    ${kostSummary(e, m)}
     ${!L.food.length && yesterdayFood() ? `<button class="klink kday" data-repeatday>Samma mat som igår<span class="muted"> · hela dagen, ${tnum(sumKcal(yesterdayFood()))} kcal</span></button>` : ""}
-    ${MEALS.map((_, i) => mealCard(i, L)).join("")}${mealCard(-1, L)}
+    <section class="card kdaycard" aria-label="Måltider">${MEALS.map((_, i) => mealCard(i, L)).join("")}${mealCard(-1, L)}</section>
+    <div class="kadd"><button class="primary grow kaddmain" data-addto="${mealByClock()}" data-focusname>${icon("plus", 20)}Lägg till mat</button>
+      ${CAN_SCAN ? `<button class="kscan" data-scan aria-label="Skanna streckkod">${icon("barcode", 22)}</button>` : ""}</div>
     <div class="muted small credit">Näringsvärden: Livsmedelsverkets livsmedelsdatabas (CC BY 4.0) och egna uppskattningar.</div>
-    ${recipeEdit ? recipeSheet() : recipeList ? recipesSheet() : foodSheet ? addSheet(m) : foodItem != null ? itemSheet() : ""}`;
+    ${recipeEdit ? recipeSheet() : recipeOpen ? recipeOpenView() : recipeList ? recipesSheet() : foodSheet ? addSheet(m) : foodItem != null ? itemSheet() : ""}`;
 }
 
 document.addEventListener("click", ev => {
-  const t = ev.target.closest("[data-addfood],[data-addto],[data-fsclose],[data-quick],[data-mstep],[data-mdel],[data-repeat],[data-savegroup],[data-sheetmeal],[data-usemeal],[data-repeatday],[data-quickmore],[data-fpanel],[data-fpick],[data-amtopen],[data-fooditem],[data-itemclose],[data-qty],[data-itemfav]");
+  const t = ev.target.closest("[data-addfood],[data-addto],[data-kmeal],[data-kday],[data-fsclose],[data-quick],[data-mstep],[data-mdel],[data-repeat],[data-savegroup],[data-sheetmeal],[data-usemeal],[data-repeatday],[data-quickmore],[data-fpanel],[data-fpick],[data-amtopen],[data-fooditem],[data-itemclose],[data-qty],[data-itemfav]");
   if (!t || t.disabled) return;
   if (t.classList.contains("overlay") && ev.target !== t) return;   // klick inne i fönstret
   const ds = t.dataset;
@@ -540,6 +622,8 @@ document.addEventListener("click", ev => {
   else if (ds.amtopen !== undefined) { const e = t.closest("[data-drow]").querySelector(".famtedit"); e.hidden = !e.hidden; return; }
   else if (ds.addto) { foodSheet = { meal: +ds.addto }; quickMore = false; foodPanel = "senaste"; foodDraft = []; }
   else if (ds.fsclose !== undefined) foodSheet = null;
+  else if (ds.kmeal !== undefined) kostOpen = kostOpen === +ds.kmeal ? -9 : +ds.kmeal;
+  else if (ds.kday) { const d = ds.kday; editDate = d === TODAY ? null : d; kostDay = !!editDate; kostOpen = null; }
   else if (ds.itemclose !== undefined) {
     foodItem = null;
     if (ds.delfood !== undefined) return;   // själva borttagningen sköts av data-delfood

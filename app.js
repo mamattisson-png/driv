@@ -1637,7 +1637,7 @@ document.addEventListener("click", ev => {
     if (ds.tab === "vanner" && tab !== "vanner") vannerBack = tab;
     passDone = null;
     tab = ds.tab; editing = false; dailyEditing = false; draft = null; editDate = null; histDay = null;
-    chosenDay = null; passOpen = false;
+    chosenDay = null; passOpen = false; kostDay = false; kostOpen = null;
     editSnap = null; exSheet = null; ordna = false; trSheet = null;
     if (ds.popen) profOpen = ds.popen;
     if (tab === "upplagg") setupFrom = prevTab;
@@ -1805,6 +1805,8 @@ document.addEventListener("click", ev => {
   else if (ds.savesetup !== undefined) { saveSetup(); onb = 0; daysOpen = false; progOpen = false; }
   else if (ds.cancelsetup !== undefined) { draft = null; tab = setupFrom || "profil"; }
   else if (ds.week) weekOffset = Math.min(0, weekOffset + +ds.week);
+  // Klar: tillbaka till Historik, eller till idag om dagen valdes i Kosts veckoremsa
+  else if (ds.editdone !== undefined && kostDay && tab === "kost") { editDate = null; kostDay = false; kostOpen = null; }
   else if (ds.editdone !== undefined) { histDay = editDate; editDate = null; tab = "historik"; chosenDay = null; if (focus) endFocus(); }
   else if (ds.export !== undefined) { exportData(); return; }
   else if (ds.import !== undefined) { document.getElementById("importfile").click(); return; }

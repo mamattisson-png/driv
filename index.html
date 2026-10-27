@@ -1235,6 +1235,80 @@
   .foodsheet .qadd b { font-weight: 500; }
   .foodsheet .qplus { width: 34px; height: 34px; flex: none; border-radius: 17px; background: var(--card-2); color: var(--accent-text); display: grid; place-items: center; font-size: 15px; }
   .qmore { margin-top: 2px; }
+
+  /* Kost: veckan, kvar idag, måltiderna som rader */
+  .kdate { font-size: 14px; margin: -14px 2px 12px; }
+  .kweek { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; margin-bottom: 12px; }
+  .kwd { display: flex; flex-direction: column; align-items: center; gap: 6px; min-height: 0; padding: 8px 0; border: 0; border-radius: 14px; background: var(--card); color: var(--muted); font-size: 11px; }
+  .kwd .ktr { position: relative; display: block; width: 8px; height: 34px; border-radius: 99px; background: var(--line); overflow: hidden; }
+  .kwd .ktr i { position: absolute; left: 0; right: 0; bottom: 0; background: var(--ok); border-radius: 99px; }
+  .kwd .ktr i.over { background: var(--bad); }
+  .kwd.on { background: var(--text); color: var(--bg); font-weight: 700; }
+  .kwd.on .ktr i { background: var(--accent); }
+  .kwd:disabled { opacity: 1; }
+  .kwd:disabled .ktr { opacity: .4; }
+  .ksum { padding: 16px 18px; }
+  .ksumtop { align-items: flex-end; margin-bottom: 10px; }
+  .kleft { font: 800 32px/1.05 "Unbounded", sans-serif; margin-top: 6px; font-variant-numeric: tabular-nums; }
+  .kleft small { font: 500 14px "Lexend", sans-serif; color: var(--muted); }
+  .kate { text-align: right; }
+  .kbar { height: 8px; margin: 0; }
+  .kprot { margin-top: 14px; }
+  .kprot .bar { height: 5px; margin-top: 6px; }
+  .ksum > .link { margin-top: 12px; display: inline-block; }
+  .kdaycard { padding: 0 16px; }
+  .kmrow { display: flex; width: 100%; align-items: center; gap: 12px; min-height: 64px; padding: 8px 0; border: 0; border-top: 1px solid var(--line); border-radius: 0;
+    background: none; color: var(--text); text-align: left; }
+  .kdaycard > .kmrow:first-child { border-top: 0; }
+  .kmrow .col { min-width: 0; gap: 1px; }
+  .kmrow b { font-weight: 600; }
+  .kprev { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .kmic { width: 36px; height: 36px; border-radius: 18px; background: var(--card-2); color: var(--accent-text); display: grid; place-items: center; flex: none; }
+  .kmrow.empty .kmic { color: var(--muted); }
+  .kmrow.empty b { color: var(--muted); font-weight: 500; }
+  .kmrow .kmsum { font-size: 14px; }
+  .kmitems { margin: -4px 0 6px; }
+  .kmitems .krow { padding: 7px 0 7px 48px; border-top: 0; }
+  .kmitems .krow + .krow { border-top: 0; }
+  .kmitems .krow b { font-size: 15px; font-weight: 400; }
+  /* Lägg till mat: det som redan ligger i måltiden */
+  .nowhead { margin: 14px 2px 6px; }
+  .nowcard { background: var(--card-2); border-radius: 18px; padding: 0 12px; }
+  .nowcard .nrow { padding: 8px 0; border-top: 1px solid var(--line); }
+  .nowcard .nrow:first-child { border-top: 0; }
+  .nowcard .fstep { background: var(--card); }
+  /* Recept */
+  .recsheet { padding-top: 14px; }
+  .recsheet .backbtn { margin: -6px 0 0; }
+  .rhint { margin: 6px 4px 8px; }
+  .rempty { margin: 12px 2px; }
+  .rrow { padding: 0; }
+  .rrow .rname { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; min-height: 56px; border: 0; background: none; padding: 8px 2px; text-align: left; color: var(--text); }
+  .rrow .rname b { font-weight: 500; }
+  .rrow .qplus { border: 0; min-height: 0; padding: 0; }
+  .rnamein { margin-top: 4px; min-height: 44px; border: 0; border-bottom: 1.5px solid var(--line); border-radius: 0; background: none; padding: 0;
+    font: 800 22px "Unbounded", sans-serif; color: var(--text); }
+  .rnamein:focus { border-color: var(--accent); outline: 0; }
+  .rport { margin: 14px 0 10px; }
+  .ringin input { padding: 0 104px 0 16px; }
+  .ringin [data-ringadd] { position: absolute; right: 6px; min-height: 40px; border-radius: 12px; }
+  .ringlist { background: var(--card-2); border-radius: 18px; padding: 0 12px; }
+  .ringlist .krow.ing { padding: 9px 0; border-top: 1px solid var(--line); gap: 10px; }
+  .ringlist .krow.ing:first-child { border-top: 0; }
+  .ringlist .krow.ing b { font-size: 15px; font-weight: 500; }
+  .ringlist .fstep { background: var(--card); }
+  .esttag { color: var(--m-part-text); font-weight: 600; }
+  .iline { display: flex; gap: 10px; padding: 9px 0; border-top: 1px solid var(--line); font-size: 15px; }
+  .iline:first-child { border-top: 0; }
+  .rstats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 14px 0; }
+  .rstats.two { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-bottom: 4px; }
+  .rstats > div { display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; border-radius: 16px; background: var(--card-2); min-width: 0; }
+  .rstats b { font: 700 18px "Unbounded", sans-serif; }
+  .rstats span { font-size: 12px; color: var(--muted); }
+  .reat { margin: 16px 0 4px; }
+  .kadd { position: sticky; bottom: calc(100px + env(safe-area-inset-bottom, 0px)); z-index: 3; display: flex; gap: 8px; margin-top: 4px; }
+  .kaddmain { min-height: 56px; border-radius: 18px; font-size: 17px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .kadd .kscan { width: 56px; height: 56px; border-radius: 18px; }
 </style>
 </head>
 <body>
