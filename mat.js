@@ -408,6 +408,58 @@ function parseFood(text) {
 // ---------- Livsmedelsverket ----------
 // Läggs efter de egna livsmedlen, så att egna namn med portionsstorlekar vinner vid lika långa träffar.
 // Ett livsmedel ärver styck- och portionsvikter från det egna livsmedel namnet börjar med ("Ägg stekt" → ägg).
+
+// Fett och fibrer (g per 100 g) för de vanliga livsmedlen ovan, ungefärliga värden. Nyckel: första namnet.
+// Livsmedelsverkets lista (livsmedel.js) har ännu bara kcal och protein.
+const FAT_FIBER = {
+  "lättmjölk": [0.5, 0], "standardmjölk": [3, 0], "mjölk": [1.5, 0], "havredryck": [1.5, 0.8], "filmjölk": [1.5, 0], "grekisk yoghurt": [10, 0],
+  "yoghurt": [3, 0], "kvarg": [0.2, 0], "keso": [4, 0], "ost": [28, 0], "fetaost": [21, 0], "mozzarella": [17, 0],
+  "smör": [80, 0], "vispgrädde": [36, 0], "matlagningsgrädde": [13, 0], "crème fraiche": [34, 0], "gräddfil": [12, 0], "ägg": [10, 0],
+  "havregryn": [7, 10], "gröt": [1.3, 1.6], "müsli": [6, 8], "granola": [18, 7], "cornflakes": [1, 3], "knäckebröd": [2, 17],
+  "fralla": [4, 3], "rostbröd": [3, 3], "bröd": [3, 6], "smörgås": [8, 4], "tortilla": [7, 3], "pannkaka": [7, 1],
+  "okokt pasta": [1.5, 3], "pasta": [0.9, 1.8], "okokt ris": [1, 1], "ris": [0.3, 0.4], "bulgur": [0.3, 4.5], "couscous": [0.2, 1.4],
+  "quinoa": [1.9, 2.8], "sötpotatis": [0.1, 3], "potatismos": [4, 1.3], "pommes": [15, 3], "potatis": [0.1, 1.8], "kycklingfilé": [1.5, 0],
+  "kycklinglår": [10, 0], "kalkon": [1.5, 0], "nötfärs": [12, 0], "blandfärs": [18, 0], "fläskfilé": [2, 0], "fläskkotlett": [12, 0],
+  "entrecote": [12, 0], "köttbullar": [15, 1], "bacon": [42, 0], "falukorv": [20, 0.5], "skinka": [3, 0], "lax": [13, 0],
+  "torsk": [0.7, 0], "tonfisk": [1, 0], "räkor": [1, 0], "tofu": [7, 1], "bönor": [0.5, 6], "linser": [0.4, 7],
+  "kikärtor": [2.6, 7], "proteinpulver": [5, 2], "proteinshake": [1, 0.5], "proteinbar": [12, 8], "banan": [0.3, 1.8], "äpple": [0.2, 2.4],
+  "päron": [0.1, 3], "apelsin": [0.1, 2.2], "clementin": [0.2, 1.7], "vindruvor": [0.2, 0.9], "blåbär": [0.4, 3], "jordgubbar": [0.3, 2],
+  "russin": [0.5, 4], "avokado": [15, 7], "tomat": [0.2, 1.2], "gurka": [0.1, 0.6], "paprika": [0.3, 1.8], "morot": [0.2, 2.8],
+  "broccoli": [0.4, 2.6], "sallad": [0.2, 1.3], "spenat": [0.4, 2.2], "lök": [0.1, 1.7], "majs": [1.2, 2.4], "ärtor": [0.4, 5],
+  "grönsaker": [0.3, 2.5], "ryggbiff": [3, 0], "högrev": [8, 0], "fläskkarré": [13, 0], "fläsksida": [44, 0], "pulled pork": [9, 0.5],
+  "lammkött": [17, 0], "viltfärs": [3, 0], "kycklingfärs": [5, 0], "helstekt kyckling": [11, 0], "kycklingvingar": [15, 0], "kycklingnuggets": [16, 1],
+  "leverpastej": [21, 1], "salami": [38, 0], "chorizo": [32, 0], "hamburgare kött": [18, 0], "makrill i tomatsås": [19, 0.3], "sill": [13, 0],
+  "kolja": [0.7, 0], "regnbåge": [10, 0], "kräftor": [1, 0], "musslor": [2, 0], "surimi": [1, 0.3], "fiskbullar": [2.5, 0.3],
+  "kaviar": [37, 0], "skagenröra": [22, 0], "halloumi": [25, 0], "parmesan": [29, 0], "brie": [27, 0], "färskost": [24, 0],
+  "ricotta": [10, 0], "riven ost": [26, 0], "skyr": [0.2, 0], "vaniljyoghurt": [2.5, 0], "äggvita": [0.2, 0], "kokt ägg": [11, 0],
+  "chokladmjölk": [1.5, 0.5], "fullkornsris": [1, 1.8], "fullkornspasta": [1.2, 4], "linspasta": [1, 5], "nudlar kokta": [2, 1], "snabbnudlar": [20, 2],
+  "gnocchi": [0.5, 1.5], "klyftpotatis": [5, 2.2], "potatisgratäng": [8, 1.2], "pitabröd": [1.2, 2.2], "naanbröd": [9, 2], "bagel": [1.5, 2.3],
+  "croissant": [21, 2.5], "skorpor": [12, 4], "riskakor": [3, 3], "polarbröd": [5, 4], "havrefras": [3, 6], "chiapudding": [7, 5],
+  "overnight oats": [4, 3], "mango": [0.4, 1.6], "ananas": [0.1, 1.4], "kiwi": [0.5, 3], "melon": [0.2, 0.4], "persika": [0.3, 1.5],
+  "dadlar": [0.4, 7], "torkade aprikoser": [0.5, 7], "granatäpple": [1.2, 4], "körsbär": [0.3, 2], "fruktsallad": [0.2, 1.5], "zucchini": [0.3, 1],
+  "aubergine": [0.2, 3], "blomkål": [0.3, 2], "champinjoner": [0.3, 1.5], "sparris": [0.1, 2], "sockerärtor": [0.2, 2.6], "vitkål": [0.3, 2.5],
+  "rödbetor": [0.2, 2.8], "rödlök": [0.1, 1.7], "rucola": [0.5, 1.6], "oliver": [14, 3], "edamame": [5, 5], "salladsmix": [0.3, 1.5],
+  "valnötter": [60, 7], "pumpafrön": [46, 6], "chiafrön": [31, 34], "kokos": [64, 16], "kokosmjölk": [18, 0], "mandelsmör": [55, 10],
+  "nutella": [31, 3], "hummus": [18, 6], "guacamole": [14, 6], "tzatziki": [6, 0.3], "bearnaisesås": [65, 0], "vitlökssås": [35, 0],
+  "brunsås": [6, 0.3], "salsa": [0.3, 1.3], "krossade tomater": [0.2, 1], "sojasås": [0.1, 0.8], "sweet chili": [0.3, 0.6], "senap": [20, 1],
+  "lingonsylt": [0.2, 1.5], "popcorn": [28, 10], "ostbågar": [30, 2], "kex": [20, 2.5], "dammsugare": [20, 1.5], "cheesecake": [20, 0.5],
+  "gelégodis": [0.2, 0], "chokladbit": [30, 3], "energidryck": [0, 0], "sportdryck": [0, 0], "festis": [0, 0], "cider": [0, 0],
+  "sprit": [0, 0], "varm choklad": [2.5, 0.8], "milkshake": [4, 0.3], "kebabtallrik": [9, 1.5], "kebab i bröd": [10, 2], "falafeltallrik": [9, 3],
+  "falafel": [14, 5], "big mac": [13, 1.5], "tacos": [10, 2.5], "burrito": [7, 2.5], "sushi": [3, 0.6], "pad thai": [7, 1.5],
+  "wok": [5, 2], "spaghetti bolognese": [5, 1.5], "carbonara": [10, 1], "laxpasta": [7, 1], "pastasallad": [8, 1.5], "lasagne": [8, 1],
+  "köttbullar med potatis": [7, 1.5], "köttfärssås": [8, 1], "korv stroganoff": [10, 0.6], "ramen": [3, 0.5], "pyttipanna": [7, 1.5], "korv med bröd": [14, 1.2],
+  "korv med mos": [9, 1], "kycklinggryta": [6, 1], "chili con carne": [5, 3], "gulaschsoppa": [3, 0.8], "ärtsoppa": [2, 4], "tomatsoppa": [2, 1],
+  "omelett": [11, 0], "äggröra": [13, 0], "våffla": [17, 1], "caesarsallad": [9, 1], "kycklingsallad": [5, 1.5], "poké bowl": [4, 1.5],
+  "smoothie": [1, 1.5], "risotto": [5, 0.7], "fish and chips": [12, 1.5], "fiskpinnar": [9, 0.6], "fläskpannkaka": [11, 0.6], "kåldolmar": [8, 1.5],
+  "raggmunk": [11, 1.5], "kycklingwrap": [8, 1.5], "panini": [10, 2], "räksmörgås": [10, 1.5], "baguette": [2, 3], "varm macka": [11, 2],
+  "semla": [13, 1.5], "muffins": [20, 1.5], "kladdkaka": [22, 2], "tårta": [14, 0.5], "chokladboll": [25, 3], "proteinpudding": [1.5, 0],
+  "energibar": [15, 5], "olivolja": [100, 0],
+  "jordnötssmör": [50, 6], "mandlar": [52, 12], "mörk choklad": [42, 11], "choklad": [31, 3], "godis": [5, 0.5], "chips": [33, 4],
+  "glass": [11, 0.5], "kanelbulle": [15, 2], "pizza": [10, 2], "hamburgare": [12, 1.5], "socker": [0, 0], "honung": [0, 0],
+  "sylt": [0.2, 1], "ketchup": [0.2, 0.5], "majonnäs": [79, 0], "pesto": [45, 2], "läsk": [0, 0], "cola zero": [0, 0],
+  "apelsinjuice": [0.2, 0.3], "öl": [0, 0], "vin": [0, 0], "latte": [1.5, 0], "cappuccino": [1.5, 0], "kaffe": [0, 0],
+};
+for (const f of FOODS) { const v = FAT_FIBER[f.n[0]]; if (v) { f.f = v[0]; f.fi = v[1]; } }
 const CURATED = FOODS.length;
 const UNIT_KEYS = ["dl", "st", "msk", "tsk", "skiva", "portion", "bit", "burk", "glas", "kopp", "skopa", "nave", "pase", "klyfta"];
 // Det längsta egna namn som hela namnet börjar med

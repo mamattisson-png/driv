@@ -1309,6 +1309,35 @@
   .kadd { position: sticky; bottom: calc(100px + env(safe-area-inset-bottom, 0px)); z-index: 3; display: flex; gap: 8px; margin-top: 4px; }
   .kaddmain { min-height: 56px; border-radius: 18px; font-size: 17px; display: flex; align-items: center; justify-content: center; gap: 8px; }
   .kadd .kscan { width: 56px; height: 56px; border-radius: 18px; }
+  .kmacros { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 14px; }
+  .kmacros > div { display: flex; flex-direction: column; gap: 2px; min-width: 0; margin: 0; }
+  .kmacros .bar { height: 5px; margin-top: 4px; }
+  .bar.fat > div { background: var(--m-part); }
+  .bar.fib > div { background: var(--pull); }
+  .bar.fib.ok > div { background: var(--ok); }
+  .kmiss { margin-top: 10px; }
+  /* Recept: egna sidor */
+  .recpage { display: flex; flex-direction: column; }
+  .recpage > .backbtn { align-self: flex-start; }
+  .recpage h1 { margin: 4px 0 4px; }
+  .rsub { margin-bottom: 14px; font-size: 14px; }
+  .rsearch { margin-bottom: 2px; }
+  .rlist { padding: 0 16px; margin-top: 8px; }
+  .rletter { margin: 12px 0 2px; color: var(--accent-text); }
+  .rlist .rletter:first-child { margin-top: 10px; }
+  .rnone { padding: 14px 0; }
+  .rtitle { align-items: flex-start; gap: 12px; }
+  .rtitle h1 { overflow-wrap: anywhere; }
+  .rstats.four { grid-template-columns: repeat(auto-fit, minmax(72px, 1fr)); margin-bottom: 6px; }
+  .rtotal2 { margin: 0 2px 4px; }
+  .recpage .mealseg { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; }
+  .pagefoot { position: sticky; bottom: calc(100px + env(safe-area-inset-bottom, 0px)); z-index: 3; display: flex; flex-direction: column; gap: 10px;
+    margin-top: 16px; padding-top: 10px; background: linear-gradient(to bottom, transparent, var(--bg) 14px); }
+  .pagefoot.row { flex-direction: row; align-items: center; }
+  .pagefoot .wide, .pagefoot .bigbtn { margin: 0; }
+  .pagefoot .reat { margin: 0; }
+  .recpage .rnamein { margin: 2px 0 6px; }
+  .krecept { margin: 0 0 14px; }
 </style>
 </head>
 <body>
