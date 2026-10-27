@@ -53,6 +53,7 @@ def page(browser, base_url):
     ctx.route("https://world.openfoodfacts.org/**", lambda r: r.fulfill(
         json=OFF_PRODUCT if "7310000000001" in r.request.url else {"status": 0}))
     pg = ctx.new_page()
+    pg.set_default_timeout(int(os.environ.get("PW_TIMEOUT", "30000")))
     pg.errors = []
     pg.on("pageerror", lambda e: pg.errors.append(str(e)))
     pg.base_url = base_url
@@ -68,13 +69,28 @@ def open_app(page, init_script=None):
     return page
 
 
-def start(page, init_script=None):
-    """Öppnar appen och slutför upplägget med standardvalen (Push/Pull/Legs, 3 pass)."""
-    open_app(page, init_script)
+def finish_setup(page):
+    """Går igenom starten med de val som står: Kom igång, tre steg och Klart."""
+    for step in ("1", "2", "3"):
+        if page.locator(f'[data-onb="{step}"]').count():
+            page.click(f'[data-onb="{step}"]')
     page.click("[data-savesetup]")
+
+
+def to_step(page, n):
+    """Från välkomstsidan till ett steg i starten (1 program, 2 pass och dagar, 3 mål)."""
+    for step in range(1, n + 1):
+        page.click(f'[data-onb="{step}"]')
+
+
+def start(page, init_script=None):
+    """Öppnar appen och slutför starten med standardvalen (Push/Pull/Legs, 3 pass)."""
+    open_app(page, init_script)
+    finish_setup(page)
     return page
 
 
 def go(page, tab):
     # Står man redan i vyn finns ingen knapp till den (Profil saknar profilknapp)
-    page.evaluate(f"tab === '{tab}' && !focus && !editDate || document.querySelector('[data-tab={tab}]').click()")
+    # Inställningar nås från Hem (profilbilden), Kost och Historik; annars direkt
+    page.evaluate(f"tab === '{tab}' && !focus && !editDate || (document.querySelector('[data-tab={tab}]') || {{ click() {{ passDone = null; editDate = null; tab = '{tab}'; render(); }} }}).click()")

@@ -586,7 +586,6 @@ function nextInRotation() {
   return S.plan.days[(last + 1) % S.plan.days.length];
 }
 const suggestedDay = () => isFixed() ? (scheduledDay(TODAY) || nextScheduled(TODAY).day) : nextInRotation();
-const passLabel = d => `Pass ${S.plan.days.indexOf(d) + 1} · ${esc(d.name)}`;
 // Text i rubrikbandet bredvid etiketten: passets nummer, och namnet om det inte redan står på etiketten
 const passBand = d => `Pass ${S.plan.days.indexOf(d) + 1}${norm(d.name) === norm(TYPES[d.type].label) ? "" : ` · <span class="nocaps">${esc(d.name)}</span>`}`;
 
@@ -775,8 +774,7 @@ let passDone = null;     // { dayId, date } medan skärmen för ett avslutat pas
 let chosenDay = null;
 let editing = false;
 let dailyEditing = false;
-let progOpen = false;      // listan med upplägg är ihopfälld tills man vill byta
-let setupMore = false;     // första gången: övningar, dailys och kalorimål är valfria och ihopfällda
+let progOpen = false;      // programmen visas i Upplägg först när man vill byta
 let modal = null;          // { info: exId } eller { pick: lista, replace, cat, q }
 let weekOffset = 0;
 let draft = null;          // utkast i upplägg-vyn
@@ -789,16 +787,14 @@ function render() {
   // Fokusläget tar hela skärmen; menyn kommer tillbaka när man lämnar det
   const inFocus = tab === "pass" && !!focus && !editing;
   nav.classList.toggle("hidden", tab === "upplagg" || inFocus || !!passDone);
+  document.body.classList.toggle("onboard", tab === "upplagg" && !S.setupDone);
   document.body.classList.toggle("infocus", inFocus);
   nav.innerHTML = TABS.map(([id, ic, lbl]) =>
     `<button data-tab="${id}" class="${tab === id ? "on" : ""}" ${tab === id ? 'aria-current="page"' : ""}>${icon(ic, 22)}${lbl}</button>`).join("");
   const banner = editDate && (tab === "kost" || (tab === "pass" && focus && !editing))
     ? `<div class="editbar">Du ändrar <b>${dateLabel(editDate)}</b><button class="small" data-editdone>Klar</button></div>` : "";
   // Kugghjulet behövs inte i upplägget eller i fokusläget, där det skulle ligga över texten
-  // Första starten: Logga in i hörnet för den som redan har ett konto
-  const corner = tab === "upplagg" && !S.setupDone && sbEnabled && account.step !== "in" && !welcomeLogin
-    ? `<button class="corner-login small" data-welcomelogin="login">Logga in</button>` : "";
-  const gear = passDone || tab === "upplagg" || tab === "idag" || tab === "profil" || tab === "vanner" || (tab === "pass" && focus && !editing) ? corner : `<button class="gear ${tab === "profil" ? "on" : ""}" data-tab="profil" aria-label="Profil och inställningar">${icon("profil", 20)}</button>`;
+  const gear = passDone || tab === "upplagg" || tab === "idag" || tab === "profil" || tab === "vanner" || tab === "pass" ? "" : `<button class="gear ${tab === "profil" ? "on" : ""}" data-tab="profil" aria-label="Profil och inställningar">${icon("profil", 20)}</button>`;
   document.getElementById("app").innerHTML = passDone ? passDoneView()
     : gear + banner + VIEWS[tab]() + (modal ? renderModal() : "") + (actSheet ? actSheetView() : "");
   if (modal && modal.pick) filterPicker();
@@ -858,105 +854,33 @@ function dayPicker(selected) {
 
 const VIEWS = {
   upplagg() {
-    if (!draft) draft = {
-      program: S.plan.program || "ppl",
-      count: S.plan.count,
-      mode: S.plan.mode || "flex",
-      weekdays: S.plan.weekdays.slice(),
-      days: JSON.parse(JSON.stringify(S.plan.days)),
-    };
-    const n = draft.count, fixed = draft.mode === "fixed";
-    const picked = draft.weekdays.length, ok = !fixed || picked === n;
-    const sorted = draft.weekdays.slice().sort((a, b) => a - b);
-    const p = S.profile;
-    return `${S.setupDone ? "" : `<div class="brand"><img src="icons/icon-192-v2.png" alt=""><h1 class="ordbild"><b class="wordmark">DRIV</b><span class="slogan">Ditt mål. <em>Ditt driv.</em></span></h1></div>`}
-      ${S.setupDone ? `<button class="small ghost backlink" data-cancelsetup>‹ ${{ idag: "Hem", pass: "Träna" }[setupFrom] || "Profil"}</button>` : ""}
-      <h1>${S.setupDone ? "Ditt upplägg" : "Välj ditt upplägg"}</h1>
-      ${!S.setupDone && account.step === "in" ? `<div class="muted" style="margin:-4px 0 12px">Inloggad som <b>${esc(account.email)}</b>.
-        ${cloud.status === "cloud" ? "Kontot har inget sparat upplägg än. Välj ett nedan och tryck Kom igång, så sparas det på kontot." : cloud.status === "error" ? "Kunde inte hämta från kontot. Ladda om sidan." : "Hämtar från kontot…"}</div>`
-      : !S.setupDone && sbEnabled ? (welcomeLogin
-        ? `<div class="card"><div class="row between"><h2>${welcomeLogin === "login" ? "Logga in" : "Skapa konto"}</h2>
-              <button class="small ghost" data-welcomelogin="" aria-label="Stäng">${icon("close", 18)}</button></div>${accountBody(welcomeLogin)}</div>`
-        : "") : ""}
-      <div class="card"><div class="row between"><h2>1. Vilket upplägg?</h2>
-          <button class="small" data-progtoggle aria-expanded="${progOpen}">${progOpen ? "Fäll ihop" : `Visa alla ${Object.keys(PROGRAMS).length}`}</button></div>
-        ${progOpen ? "" : `<div class="proglist"><button class="on" data-progtoggle><b>${PROGRAMS[draft.program].name}</b>
-          <div class="muted">${PROGRAMS[draft.program].info}</div><div class="muted small">Tryck för att byta upplägg</div></button></div>`}
-        <div ${progOpen ? "" : "hidden"}>
-        <div class="proglist">${Object.entries(PROGRAMS).map(([id, pr]) => `<button data-prog="${id}" class="${draft.program === id ? "on" : ""}" aria-pressed="${draft.program === id}">
-          <b>${pr.name}</b><div class="muted">${pr.info}</div><div class="muted small">Gjort för ${pr.best} pass i veckan</div></button>`).join("")}</div>
-        </div></div>
-      <div class="card"><h2>2. Hur många pass i veckan?</h2>
-        <div class="seg count">${counts(draft.program).map(c => `<button data-count="${c}" class="${n === c ? "on" : ""}" aria-pressed="${n === c}"><b>${c}</b><div class="muted">pass</div></button>`).join("")}</div>
-        <div class="muted small" style="margin-top:8px">Passen blir: ${draft.days.map(d => esc(d.name)).join(", ")}.
-          ${PROGRAMS[draft.program].fit.includes(n) ? "" : `${PROGRAMS[draft.program].name} är gjort för ${PROGRAMS[draft.program].best} pass, så passen har anpassats.`}
-          ${n === 7 ? " Sju pass i veckan kräver bra återhämtning – lyssna på kroppen." : ""}</div>
-        </div>
-      <div class="card"><h2>3. När tränar du?</h2>
-        <div class="seg two">
-          <button data-mode="flex" class="${fixed ? "" : "on"}" aria-pressed="${!fixed}"><b>Olika dagar</b><div class="muted">Pass 1, 2, 3 … i ordning</div></button>
-          <button data-mode="fixed" class="${fixed ? "on" : ""}" aria-pressed="${fixed}"><b>Fasta dagar</b><div class="muted">Varje pass har en veckodag</div></button></div>
-        ${fixed ? `<div class="seg wd" style="margin-top:12px">${WD.map((name, i) => `<button data-wd="${i}" class="${draft.weekdays.includes(i) ? "on" : ""}" aria-pressed="${draft.weekdays.includes(i)}">${name}</button>`).join("")}</div>
-          <div class="muted" style="margin-top:8px">${ok ? `✓ ${n} dagar valda. Tryck på en vald dag för att avmarkera den.` : `Välj ${n} dagar (${picked} valda)`}</div>`
-          : `<div class="muted" style="margin-top:8px">Appen föreslår nästa pass i ordningen när du tränar, vilken dag det än är.</div>`}</div>
-      ${S.setupDone ? "" : `<div class="card goalstep"><h2>4. Ditt mål</h2>
-        <div class="seg three">${Object.entries(GOALS).map(([k, v]) => `<button data-goalpick="${k}" class="${p.goal === k ? "on" : ""}" aria-pressed="${p.goal === k}">${v[0].split(" (")[0]}</button>`).join("")}</div>
-        <div class="muted small" style="margin:10px 0 6px">Fyll i dig själv, så räknas ett kalorimål fram som passar just dig.</div>
-        ${profileFields(p, true)}
-        <div class="goalres">Ditt mål: <b>${tnum(kcalGoal())} kcal</b> och <b>${macros().protein} g protein</b> per dag</div></div>`}
-      ${S.setupDone ? `<div class="card muted small setupnote">Upplägget styr vilka pass du kör och när. Övningarna i ett pass ändrar du under <b>Träna</b>, dailys på <b>Hem</b> och kalorimålet i <b>Profil</b>.</div>`
-        : !setupMore ? `<button class="wide" data-setupmore>Anpassa övningar och dailys <span class="muted">(valfritt)</span></button>
-        <div class="muted small" style="margin:-4px 0 12px">Allt är förifyllt. Övningarna ändrar du sedan under Träna och dailys på Hem.</div>` : `
-      <div class="card"><h2>${S.setupDone ? 4 : 5}. Övningar</h2>
-        <div class="muted" style="margin-bottom:8px">${draft.program === "eget" ? "Lägg till övningar i varje pass." : "Förifyllt. Byt, ta bort eller lägg till."} Tryck på en bild för att se hur övningen görs.</div>
-        ${draft.days.map((d, i) => `<details class="plan-day" open><summary>${fixed && ok ? `<b>${WD[sorted[i]]}</b> · ` : ""}<b>Pass ${i + 1}</b> ${tag(d.type)}
-            <span class="muted">${d.ex.length} övningar</span></summary>
-          ${d.type === "custom" ? `<label class="field" style="margin:4px 0 6px">Namn på passet
-            <input value="${esc(d.name)}" data-dayname="${i}" placeholder="T.ex. Bröst & triceps"></label>` : ""}
-          ${muscleCard("draft:" + i, d.type, d.ex)}
-          ${d.ex.length ? "" : `<div class="muted" style="margin:6px 0">Inga övningar än. Lägg till dem nedan.</div>`}
-          ${exRows("draft:" + i, d.ex, false)}</details>`).join("")}</div>
-      <div class="card"><h2>${S.setupDone ? 5 : 6}. Dailys</h2>
-        <div class="muted" style="margin-bottom:8px">Det du vill göra varje dag. Du bockar av och ändrar dem på Hem.</div>
-        ${exRows("daily", S.daily, false)}</div>
-      ${S.setupDone ? `<div class="card"><h2>6. Kalorimål</h2>${profileFields(p)}
-        <div class="muted" style="margin-top:8px">Mål: <b>${kcalGoal()} kcal</b> · ${macros().protein} g protein per dag</div></div>` : ""}`}
-      <button class="primary wide" data-savesetup ${ok ? "" : "disabled"}>${S.setupDone ? "Spara upplägg" : "Kom igång"}</button>
-
-      ${S.setupDone ? `<button class="ghost wide" data-cancelsetup>Avbryt</button>` : ""}`;
+    if (S.setupDone) return upplaggView();
+    if (welcomeLogin && sbEnabled && account.step !== "in") return loginView();
+    if (account.step === "in" && !onb) onb = 1;
+    return onb ? onbView() : welcomeView();
   },
 
   idag() {
     const m = macros(), e = eaten();
     m.kcal += burnedOn(TODAY);
-    const todays = workoutsOn(TODAY);
-    const suggested = todays.length ? dayById(todays[todays.length - 1].dayId) : isFixed() ? scheduledDay(TODAY) : nextInRotation();
-    const d = (chosenDay && dayById(chosenDay)) || suggested;
-    const weekPasses = weekSummary(weekStart(TODAY)).passes;
-    const others = todays.filter(w => !d || w.dayId !== d.id).map(w => dayById(w.dayId)).filter(Boolean);
-    let passCard;
-    if (d) {
-      // Dagens pass: vad det tränar och hur stort det är. Övningarna visas när passet startas.
-      const w = workoutOn(TODAY, d.id);
-      const done = d.ex.filter(x => exDone(w, x)).length, sets = d.ex.reduce((n, x) => n + (+x.sets || 0), 0);
-      const meta = w && w.done ? "Passet är sparat" : done ? `${done} av ${d.ex.length} övningar klara`
-        : `${d.ex.length} ${d.ex.length === 1 ? "övning" : "övningar"} · ${sets} set`;
-      passCard = `<section class="card daypass" aria-label="Dagens pass">
-        <div class="passtop">${tag(d.type)}<span class="muted small">Dagens pass · Pass ${S.plan.days.indexOf(d) + 1} av ${S.plan.days.length}</span>
-          ${w && w.done ? `<span class="passok">${icon("check", 14)}Klart</span>` : ""}</div>
-        <div><h2 class="passname">${esc(passTitle(d))}</h2><div class="muted">${d.ex.length ? meta : "Passet har inga övningar än."}</div></div>
-        ${others.length ? `<div class="muted small">Idag har du även loggat ${others.map(o => esc(o.name)).join(", ")}.</div>` : ""}
-        <button class="primary wide bigbtn" data-focusstart="${d.id}">${w && w.done ? "Öppna passet" : `${icon("play", 18)}${w ? "Fortsätt passet" : "Starta passet"}`}</button>
-        <div class="row between passlinks">${S.plan.days.length > 1 ? `<button class="ghost" data-tab="pass">Byt pass</button>` : "<span></span>"}
-          <button class="ghost" data-actnew="" data-actdate="${TODAY}">+ Annan aktivitet</button>
-          <button class="ghost" data-editpass="${d.id}">Ändra övningar</button></div></section>`;
-    } else {
-      const nx = nextScheduled(TODAY);
-      passCard = `<section class="card daypass" aria-label="Dagens pass"><div class="passtop"><span class="muted small">Vilodag</span></div>
-        <div><h2 class="passname">Vila</h2><div class="muted">Nästa pass: ${WD_LONG[weekdayOf(nx.date)]} · ${esc(nx.day.name)}</div></div>
-        <button class="wide" data-focusstart="${nx.day.id}">Kör ett pass ändå</button>
-        <div class="row passlinks" style="justify-content:center"><button class="ghost" data-actnew="" data-actdate="${TODAY}">+ Annan aktivitet</button></div></section>`;
-    }
+    const t = todaysPass(), d = t.d, w = t.w, done = w && w.done;
+    const started = w && !done && d.ex.some(x => ((w.sets[x.id]) || []).some(s => s && s.ok));
+    const passes = weekSummary(weekStart(TODAY)).passes, acts = actsOn(TODAY);
+    const greet = done ? "Bra jobbat idag." : started ? "Fortsätt där du var." : t.rest ? (acts.length ? "Snyggt, aktiv vilodag." : "Vilodag idag.") : "Dags att köra.";
+    const nDone = d.ex.filter(x => exDone(w, x)).length;
+    const status = done ? `<span class="oktext">${icon("check", 14)}Klart</span>` : started ? `${nDone} av ${d.ex.length} övningar` : t.rest ? `Vila · nästa ${WD_LONG[weekdayOf(t.next)]}` : "Inte gjort än";
+    const passTile = `<button class="htile passtile ${done ? "ok" : t.rest ? "" : "go"}" data-tab="pass" aria-label="Dagens pass: ${esc(d.name)}, ${done ? "klart" : started ? "påbörjat" : t.rest ? "vilodag" : "inte gjort än"}. Till Träna">
+        <span class="klabel ${done ? "oktext" : "accent"}">${t.rest ? "Nästa pass" : "Dagens pass"}</span>
+        <span class="col"><b class="hname">${esc(d.name)}</b><span class="muted small">${status}</span>${acts.length ? `<span class="muted small">+ ${esc(acts.map(a => a.name).join(", "))}</span>` : ""}</span>
+        <span class="hlink">Till Träna${icon("right", 14)}</span></button>`;
+    const pct = m.kcal ? e.kcal / m.kcal : 0;
+    const kcalTile = `<button class="htile kcaltile" data-go="kost" aria-label="Kalorier: ${tnum(e.kcal)} av ${tnum(m.kcal)}"><span class="klabel">Kalorier</span>
+        <span class="ringbox">${ring(pct, 64, pct > 1.05 ? "over" : "")}<b>${Math.round(pct * 100)}%</b></span>
+        <span><b class="hnum">${tnum(e.kcal)}</b><span class="muted small"> / ${tnum(m.kcal)}</span></span></button>`;
+    const segs = Math.max(S.plan.count, passes);
+    const week = `<section class="card weekrow" aria-label="Veckan: ${passes} av ${S.plan.count} pass"><span class="klabel">Veckan</span>
+      <span class="wsegs" aria-hidden="true">${Array.from({ length: segs }, (_, i) => `<i class="${i < passes ? "on" : ""}"></i>`).join("")}</span>
+      <b class="small">${passes} av ${S.plan.count} pass</b></section>`;
     const lw = letterWeekToShow();
     const letter = !lw ? "" : (() => {
       const c = weekSummary(lw), recs = weekRecords(lw).length;
@@ -964,55 +888,27 @@ const VIEWS = {
         <span class="grow"><b>Din vecka ${weekNo(lw)}</b><span class="muted small">${c.passes} av ${S.plan.count} pass${recs ? ` · ${recs} ${recs === 1 ? "nytt personbästa" : "nya personbästa"}` : ""}</span></span>
         <button class="small" data-letter="${lw}">Visa</button><button class="small ghost iconbtn" data-letterclose="${lw}" aria-label="Stäng sammanfattningen">${icon("close", 18)}</button></div>`;
     })();
+    const today = new Date().toLocaleDateString("sv-SE", { weekday: "long", day: "numeric", month: "long" });
     return `<header class="homehead"><div class="brand"><img src="icons/icon-192-v2.png" alt=""><div class="ordbild"><span class="wordmark">DRIV</span><span class="slogan">Ditt mål. <em>Ditt driv.</em></span></div></div>
-        <button class="gear" data-tab="profil" aria-label="Profil och inställningar">${icon("profil", 20)}</button></header>
-      ${weekStrip(weekPasses)}
+        <button class="gear avbtn" data-tab="profil" aria-label="Inställningar">${esc(profName().slice(0, 1).toUpperCase())}</button></header>
+      <div class="muted homedate">${cap(today)}</div>
+      <h1 class="greet">${greet}</h1>
+      <div class="htiles">${passTile}${kcalTile}</div>
+      ${week}
       ${letter}
       ${accountNudge()}${installNudge()}
       ${friendsNudge()}
-      ${passCard}
       ${friendsHome()}
-      ${homeActs()}
-      ${homeSummary(e, m)}
-      ${dailiesCard(false, true)}
       ${S.hideWeight ? "" : weighCardDue()}`;
   },
 
   pass() {
     if (focus && !editing) return focusView();
+    if (editDate) return pastView();
     const d = currentPassDay();
-    const w = workoutOn(logDate(), d.id);
-    const done = d.ex.filter(x => exDone(w, x)).length, logged = w && Object.values(w.sets).some(a => a.some(hasData));
-    const Day = editDate ? dateLabel(editDate).replace(/^./, c => c.toUpperCase()) : "";
-    return `${editDate ? `<button class="small ghost backlink" data-editdone>‹ Tillbaka till Historik</button>
-        <h1>Logga i efterhand</h1><div class="pastsub">${Day} · vecka ${weekNo(editDate)}</div>
-        <div class="muted small pastnote">Ett pass du redan har gjort. Inget startas, fyll bara i vad du lyfte.</div>`
-      : `<h1>Träna</h1>`}
-      ${editing || editDate ? "" : planLine()}
-      ${dayPicker(d && d.id)}
-      ${editing || editDate ? "" : `<div class="row between passmeta"><div class="col"><span class="muted small">${esc(TYPES[d.type] && d.type !== "custom" ? TYPES[d.type].muscles : d.name)}</span>
-        <span class="passcount">${d.ex.length} ${d.ex.length === 1 ? "övning" : "övningar"}</span></div><button class="ghost" data-edit>Ändra övningar</button></div>`}
-      ${editing ? `<div class="card"><div class="row between"><h2>${passLabel(d)}</h2><button class="small ghost" data-edit>Klar</button></div>
-          <div class="muted">${TYPES[d.type].muscles}</div></div>${editList(d)}
-          <button class="primary wide bigbtn" data-edit>Klar</button>`
-        : !d.ex.length ? `<div class="card muted">Passet har inga övningar än. <button class="link" data-edit>Lägg till övningar</button></div>`
-        : editDate ? `${pastLog(d, w)}
-          <div class="row between passmeta"><span class="muted small">${TYPES[d.type].muscles}</span><button class="link small" data-edit>Ändra övningar</button></div>
-          ${w && w.done ? `<div class="card done-card"><b>Passet är sparat för ${dateLabel(editDate)}.</b>
-                <button class="small" style="margin-top:8px" data-finish="${d.id}">Öppna passet igen</button></div>`
-            : `<button class="primary wide bigbtn" data-finish="${d.id}">Spara och gå tillbaka till Historik</button>
-               <div class="muted small finish-note">Passet sparas på ${dateLabel(editDate)}.</div>`}`
-        : `${passOverview(d, w)}
-          ${w && w.done
-            ? `<div class="card done-card"><b>Bra jobbat, passet är sparat!</b>
-                <div class="muted small">Det räknas in i veckans pass och jämförelsen med förra veckan.</div>
-                <button class="small" style="margin-top:8px" data-finish="${d.id}">Öppna passet igen</button></div>`
-            : logged
-            ? `<button class="primary wide bigbtn" data-finish="${d.id}">Spara passet · ${done} av ${d.ex.length} klara</button>
-               <div class="muted small finish-note">Fortsätt genom att trycka på en övning. Passet räknas även om du inte hunnit alla.</div>`
-            : `<button class="primary wide bigbtn" data-focusstart="${d.id}">${icon("play", 18)}Starta passet</button>
-               <div class="muted small finish-note">En övning i taget. Allt du loggar sparas direkt.</div>`}`}
-      ${editing ? "" : actsCard(logDate(), editDate ? "Annan träning den här dagen" : "Annan träning")}`;
+    if (editing) return editView(d) + (exSheet != null && d.ex[exSheet] ? exSheetView(d) : "");
+    if (passOpen && chosenDay) return passetView(d);
+    return traningView();
   },
 
   kost: () => kostView(),
@@ -1044,20 +940,19 @@ const VIEWS = {
       ? `<input type="checkbox" role="switch" class="switch" data-pushtoggle aria-label="Notiser" ${push.on ? "checked" : ""} ${push.busy ? "disabled" : ""}>` : "";
     const themeSeg = `<div class="tseg" role="radiogroup" aria-label="Utseende">${Object.entries(THEMES).map(([k, n]) =>
       `<button role="radio" data-theme-set="${k}" class="${themeNow() === k ? "on" : ""}" aria-checked="${themeNow() === k}" aria-pressed="${themeNow() === k}">${k === "auto" ? "Auto" : n}</button>`).join("")}</div>`;
-    return `<header class="phead"><button class="roundbtn" data-tab="${profBack}" aria-label="Tillbaka">${icon("left", 20)}</button><h1>Profil</h1></header>
+    return `<button class="backbtn" data-tab="${profBack}">${icon("left", 18)}${{ idag: "Hem", pass: "Träna", kost: "Kost", historik: "Historik" }[profBack] || "Tillbaka"}</button>
+      <h1 class="ptitle">Inställningar</h1>
       <section class="card pcard" aria-label="Du"><div class="row"><span class="avatar" aria-hidden="true">${esc(name.slice(0, 1).toUpperCase())}</span>
           <div class="grow col"><b>${esc(name)}</b><span class="muted small">${cloud.status === "cloud" ? "Sparas på ditt konto" : "Sparas på den här enheten"}</span></div>
           <button class="small" data-editprof>Ändra</button></div>
         <div class="pstats"><div><b>${S.plan.count}</b><span>pass i veckan</span></div><div><b>${tnum(m.kcal)}</b><span>kcal om dagen</span></div>
           <div><b>${fmtNum(last ? last.kg : p.weight)}</b><span>kg senast</span></div></div></section>
-      ${group("Träning", `<div class="prow"><div class="prow-line"><button class="prow-head" data-tab="upplagg"><span class="pic">${icon("upplagg", 20)}</span><span class="grow"><b>Upplägg</b>
-          <span class="muted small">${PROGRAMS[S.plan.program || "ppl"].name} · ${isFixed() ? S.plan.weekdays.map(i => WD[i]).join(", ") : `${S.plan.count} pass i veckan`}</span></span><span class="chev">${icon("right", 18)}</span></button></div></div>
-        ${profRow("vila", "timer", "Vilotimer", rs.on ? `På · ${rs.compound} / ${rs.iso} sek` : "Av", `
+      ${group("Träning", `${profRow("vila", "timer", "Vilotimer", rs.on ? `På · ${rs.compound} / ${rs.iso} sek` : "Av", `
           <label class="row"><input type="checkbox" data-resttoggle ${rs.on ? "checked" : ""}><span>Starta en vilotimer när jag bockar av ett set</span></label>
           <div class="grid2" style="margin-top:10px">
             <label class="field">Basövningar (sek)<input type="number" inputmode="numeric" id="restcompound" value="${rs.compound}"></label>
             <label class="field">Isolering och mage (sek)<input type="number" inputmode="numeric" id="restiso" value="${rs.iso}"></label></div>`)}
-        ${profRow("aktiviteter", "aktivitet", "Aktiviteter", [S.actCount !== false ? "Räknas som pass" : "", S.actKcal ? "kcal läggs till" : ""].filter(Boolean).join(" · ") || "Padel, vandring och annat", `
+        ${profRow("aktiviteter", "aktivitet", "Annan träning", [S.actCount !== false ? "Räknas som pass" : "", S.actKcal ? "kcal läggs till" : ""].filter(Boolean).join(" · ") || "Padel, vandring och annat", `
           <label class="row"><input type="checkbox" data-actcount ${S.actCount !== false ? "checked" : ""}><span>En aktivitet på minst 45 minuter räknas som ett pass i veckan</span></label>
           <label class="row" style="margin-top:8px"><input type="checkbox" data-actkcal ${S.actKcal ? "checked" : ""}><span>Lägg till förbrända kcal i dagens kalorimål</span></label>
           <div class="muted small" style="margin-top:6px">Förbrända kcal är en uppskattning efter aktivitet, tid och din vikt. Den blir lätt för hög, därför är det avstängt från början.</div>`)}`)}
@@ -1084,35 +979,34 @@ const VIEWS = {
   },
 };
 
+// Logga i efterhand (från Historik): välj pass och fyll i alla set på en gång
+function pastView() {
+  const d = currentPassDay();
+  const w = workoutOn(logDate(), d.id);
+  const Day = dateLabel(editDate).replace(/^./, c => c.toUpperCase());
+  return `<button class="small ghost backlink" data-editdone>‹ Tillbaka till Historik</button>
+      <h1>Logga i efterhand</h1><div class="pastsub">${Day} · vecka ${weekNo(editDate)}</div>
+      <div class="muted small pastnote">Ett pass du redan har gjort. Inget startas, fyll bara i vad du lyfte.</div>
+      ${dayPicker(d && d.id)}
+      ${!d.ex.length ? `<div class="card muted">Passet har inga övningar än.</div>`
+        : `${pastLog(d, w)}
+          ${w && w.done ? `<div class="card done-card"><b>Passet är sparat för ${dateLabel(editDate)}.</b>
+                <button class="small" style="margin-top:8px" data-finish="${d.id}">Öppna passet igen</button></div>`
+            : `<button class="primary wide bigbtn" data-finish="${d.id}">Spara och gå tillbaka till Historik</button>
+               <div class="muted small finish-note">Passet sparas på ${dateLabel(editDate)}.</div>`}`}
+      ${actsCard(logDate(), "Annan träning den här dagen")}`;
+}
+
 // Utseende: automatiskt (som telefonen), ljust eller mörkt. Sparas per enhet.
 const THEMES = { auto: "Automatiskt", light: "Ljust", dark: "Mörkt" };
-function themeNow() { try { return localStorage.getItem("driv-theme") || "auto"; } catch (e) { return "auto"; } }
+// Mörkt är standard; Automatiskt följer telefonen
+function themeNow() { try { return localStorage.getItem("driv-theme") || "dark"; } catch (e) { return "dark"; } }
 function setTheme(t) {
-  try { if (t === "auto") localStorage.removeItem("driv-theme"); else localStorage.setItem("driv-theme", t); } catch (e) {}
+  try { localStorage.setItem("driv-theme", t); } catch (e) {}
   if (t === "auto") delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = t;
 }
 
 let setupFrom = null;
-// Hem: en rad med dagens kalorier, protein och veckans pass. Tryck för att komma till Kost.
-// Dagens kalorier och protein som två rutor; ett tryck öppnar Kost
-function homeSummary(e, m) {
-  const tile = (label, v, goal, unit, cls) => `<button class="hstat" data-go="kost"><span class="klabel">${label}</span>
-    <span><span class="hnum">${tnum(v)}</span><span class="muted small"> / ${tnum(goal)}${unit}</span></span>${bar(v, goal, cls === "prot", cls)}</button>`;
-  return `<section class="homesum" aria-label="Dagens mat">${tile("Kalorier", e.kcal, m.kcal, "", "")}${tile("Protein", e.protein, m.protein, " g", "prot")}</section>`;
-}
-// Veckan som sju rutor: prick för dagar med pass, idag ljus
-function weekStrip(passes) {
-  const dates = weekDates(weekStart(TODAY));
-  const day = new Date().toLocaleDateString("sv-SE", { weekday: "long", day: "numeric", month: "long" }).replace(/^./, c => c.toUpperCase());
-  return `<section class="weekstrip" aria-label="Veckan"><div class="row between"><h1 class="muted small">${day} · <span class="caps">v. ${weekNo(TODAY)}</span></h1>
-      <span class="muted small"><b class="strong">${passes}</b> av ${S.plan.count} pass</span></div>
-    <div class="wdays">${dates.map((d, i) => {
-      const trained = workoutsOn(d).some(w => w.done) || actsOn(d).some(actCounts);
-      return `<div class="wday ${d === TODAY ? "today" : ""} ${d > TODAY ? "future" : ""}" aria-label="${WD_LONG[i]}${trained ? ": pass" : ""}"><span>${WD[i][0]}</span><i class="${trained ? "on" : d === TODAY ? "ring" : ""}"></i></div>`;
-    }).join("")}</div></section>`;
-}
-// Passets rubrik: musklerna det tränar, eller namnet på ett eget pass
-const passTitle = d => d.type === "custom" || !TYPES[d.type] ? d.name : TYPES[d.type].muscles.replace(/, ([^,]*)$/, " & $1");
 
 // Profilen är en lista där en rad i taget kan fällas ut
 let profOpen = null;
@@ -1229,18 +1123,6 @@ function exRows(target, list, withOrder) {
       ${withOrder && target !== "daily" && i < list.length - 1 ? `<button class="sslink ${e.ss ? "on" : ""}" data-ss="${target}" data-idx="${i}" aria-pressed="${!!e.ss}">${e.ss
         ? `Superset med ${esc(EX[list[i + 1].id].name)} <span class="muted">· tryck för att dela</span>` : "＋ Superset med nästa"}</button>` : ""}`).join("") +
     `<button class="small" style="margin-top:8px" data-openpick="${target}">+ Lägg till ${target === "daily" ? "daily" : "övning"}</button>`;
-}
-
-function editList(d) {
-  const name = d.type === "custom" ? `<label class="field" style="margin-bottom:10px">Namn på passet
-    <input value="${esc(d.name)}" data-passname="${d.id}" placeholder="T.ex. Bröst & triceps"></label>` : "";
-  return `${muscleCard(d.id, d.type, d.ex)}<div class="card">${name}${exRows(d.id, d.ex, true)}</div>`;
-}
-// Överst i Träna: vilket upplägg man kör, och vägen dit det ändras
-function planLine() {
-  const when = isFixed() ? S.plan.weekdays.map(i => WD[i]).join(", ") : `${S.plan.count} pass i veckan`;
-  return `<button class="planline" data-tab="upplagg"><span class="grow"><span class="muted small">Upplägg</span>
-    <b>${esc(PROGRAMS[S.plan.program || "ppl"].name)} · ${when}</b></span><span class="planedit">Ändra${icon("right", 16)}</span></button>`;
 }
 
 // ---------- Muskelkartan ----------
@@ -1428,24 +1310,48 @@ function letterWeekToShow() {
   return sum.passes || sum.dailies || sum.kcal || Object.keys(S.log).some(d => d >= ws && d < shift(ws, 7)) ? ws : null;
 }
 
-// Skärmen när ett pass är klart: set, nya personbästa och, utan vänner, en inbjudan
+// Konfetti runt bocken när passet är klart. Samma mönster varje gång (fast frö).
+function confetti() {
+  const cols = ["#ff6b1a", "#6fd99a", "#fbbf24", "#5e95ff", "#ff8a47", "#b17cff"];
+  let seed = 7;
+  const rnd = () => (seed = (seed * 9301 + 49297) % 233280) / 233280;
+  const parts = [];
+  for (let i = 0; i < 28; i++) {
+    const a = rnd() * Math.PI * 2, r = 46 + rnd() * 64, x = (160 + Math.cos(a) * r * 1.5).toFixed(1), y = (64 + Math.sin(a) * r * 0.7).toFixed(1);
+    const c = cols[i % cols.length], rot = Math.round(rnd() * 180), dl = (rnd() * 0.25).toFixed(2);
+    parts.push(i % 3 ? `<rect x="${x}" y="${y}" width="8" height="3.5" rx="1.5" fill="${c}" transform="rotate(${rot} ${x} ${y})" style="animation-delay:${dl}s"/>`
+      : `<circle cx="${x}" cy="${y}" r="2.6" fill="${c}" style="animation-delay:${dl}s"/>`);
+  }
+  return `<svg class="confetti" viewBox="0 0 320 130" aria-hidden="true">${parts.join("")}</svg>`;
+}
+
+// Skärmen när ett pass är klart: tid, set, nya personbästa och total vikt, och delning med vänner
 function passDoneView() {
   const d = dayById(passDone.dayId), date = passDone.date;
   if (!d) { passDone = null; return VIEWS[tab](); }
   const w = workoutOn(date, d.id);
-  const sets = w ? Object.values(w.sets).reduce((n, arr) => n + arr.filter(s => s && s.ok).length, 0) : 0;
-  const prs = d.ex.map(x => { const t = topSet(setsOn(date, x.id)), b = bestBefore(x.id, date); return t && b && betterSet(t, b) ? { id: x.id, t } : null; }).filter(Boolean);
-  const passes = weekSummary(weekStart(date)).passes, label = TYPES[d.type] ? TYPES[d.type].label : d.name;
+  const okSets = w ? Object.values(w.sets).flatMap(a => a.filter(s => s && s.ok)) : [];
+  const vol = okSets.reduce((a, s) => a + (+s.kg || 0) * (+s.reps || 0), 0);
+  const min = w && w.start && w.end ? Math.max(1, Math.round((w.end - w.start) / 60000)) : null;
+  const prs = d.ex.map(x => { const t = topSet(setsOn(date, x.id)), b = bestBefore(x.id, date); return t && b && betterSet(t, b) ? { id: x.id, t, b } : null; }).filter(Boolean);
+  const passes = weekSummary(weekStart(date)).passes;
+  const stat = (v, l) => `<div><b>${v}</b><span class="muted small">${l}</span></div>`;
+  const stats = [min != null ? stat(min, min === 1 ? "minut" : "minuter") : "", stat(okSets.length, "set"), stat(prs.length, prs.length === 1 ? "nytt PB" : "nya PB"),
+    vol ? stat(vol >= 1000 ? `${fmtNum(Math.round(vol / 100) / 10)} t` : `${Math.round(vol)} kg`, "total vikt") : ""].filter(Boolean);
+  const gain = p => { const dk = (+p.t.kg || 0) - (+p.b.kg || 0); return dk > 0 ? `+${fmtNum(dk)} kg` : `+${(+p.t.reps || 0) - (+p.b.reps || 0)} ${repUnit(p.id)}`; };
+  const when = parse(date).toLocaleDateString("sv-SE", { weekday: "long", day: "numeric", month: "long" });
+  const sharing = typeof social !== "undefined" && social.profile && social.profile.sharing;
   return `<div class="passdone">
-    <header class="pdhead"><button class="roundbtn" data-passdoneclose aria-label="Stäng">${icon("close", 18)}</button></header>
-    <div class="pdtop"><span class="pdcheck" aria-hidden="true">${icon("check", 34)}</span><h1>Bra jobbat!</h1>
-      <span class="muted">${esc(label)} klart · ${passes} av ${S.plan.count} pass den här veckan</span></div>
-    <section class="pdstats" aria-label="Passet"><div><b>${sets}</b><span class="muted small">set</span></div>
-      <div><b>${prs.length}</b><span class="muted small">${prs.length === 1 ? "nytt PB" : "nya PB"}</span></div></section>
-    ${prs.length ? `<div class="pdpb">${icon("trend", 18)}<span>Nytt PB i ${esc(EX[prs[0].id].name.toLowerCase())}: <b>${fmtSet({ kg: +prs[0].t.kg || 0, reps: +prs[0].t.reps || 0 }, prs[0].id)}</b></span></div>` : ""}
-    <div class="pdspace"></div>
+    <div class="pdtop">${confetti()}<span class="pdcheck" aria-hidden="true">${icon("check", 36)}</span><h1>Passet klart!</h1>
+      <span class="muted">${esc(d.name)} · ${when}</span><span class="muted small">${passes} av ${S.plan.count} pass den här veckan</span></div>
+    <section class="pdstats ${stats.length % 2 ? "odd" : ""}" aria-label="Passet">${stats.join("")}</section>
+    ${prs.length ? `<section class="card pdpbs" aria-label="Nya personbästa">${prs.map(p => `<div class="pdpb"><span class="grow col"><b>${esc(EX[p.id].name)}</b>
+        <span class="muted small">${fmtSet2({ kg: +p.t.kg || 0, reps: +p.t.reps || 0 }, p.id)}</span></span><span class="pbtag">PB ${gain(p)}</span></div>`).join("")}</section>` : ""}
+    ${sharing ? `<label class="card pdshare"><span class="grow col"><b>Dela med vänner</b><span class="muted small">De ser att du kört ${esc(d.name)}, inga vikter</span></span>
+      <input type="checkbox" role="switch" class="switch" data-pdshare ${passDone.shared === false ? "" : "checked"} aria-label="Dela passet med vänner"></label>` : ""}
     ${inviteCard()}
-    <button class="wide" data-passdoneclose>Till Hem</button></div>`;
+    <div class="pdspace"></div>
+    <button class="wide bigbtn lightbtn" data-passdoneclose>Klar</button></div>`;
 }
 
 function renderModal() {
@@ -1529,6 +1435,8 @@ function workoutFor(d) {
   const L = day();
   let w = L.workouts.find(x => x.dayId === d.id);
   if (!w) L.workouts.push(w = { dayId: d.id, sets: {}, done: false });
+  // Klockan i fokusläget: passet räknas från när det startades
+  if (!w.start && focus && focus.dayId === d.id && !editDate) w.start = focus.start;
   return w;
 }
 function setAt(d, exId, i) {
@@ -1564,9 +1472,7 @@ function todayTarget(ex) {
   }
   return { kg, reps: hi ? Math.min(reps + 1, hi) : reps + 1, why: "+1 rep" };
 }
-const fmtTarget = (t, id) => EX[id].bw
-  ? `${t.reps} ${repUnit(id)}${t.kg ? ` +${fmtNum(t.kg)} kg` : ""}`
-  : `${fmtNum(t.kg)} kg × ${t.reps}`;
+const fmtTarget = (t, id) => fmtSet2({ kg: +t.kg || 0, reps: t.reps }, id);
 // Exempelvärden för ett set: dagens mål om det finns, annars förra gångens set
 function setHint(ex, i) {
   const t = todayTarget(ex);
@@ -1588,7 +1494,7 @@ const toasted = new Set();
 function checkRecord(exId, s) {
   if (!hasData(s) || toasted.has(exId)) return;
   const ws = weekStart(logDate()), prevWeek = exWeek(exId, shift(ws, -7)), ever = bestBefore(exId, ws);
-  const set = fmtSet({ kg: +s.kg || 0, reps: +s.reps || 0 }, exId);
+  const set = fmtSet2({ kg: +s.kg || 0, reps: +s.reps || 0 }, exId);
   if (ever && betterSet(s, ever)) toast(`Nytt PB i ${EX[exId].name}: ${set}`);
   else if (prevWeek && betterSet(s, prevWeek)) toast(`Bättre än förra veckan i ${EX[exId].name}: ${set}`);
   else return;
@@ -1723,7 +1629,7 @@ document.addEventListener("click", ev => {
   if (ds.chart) { modal = { chart: ds.chart }; render(); return; }
   if (ds.letter) { modal = { letter: ds.letter }; render(); return; }
   if (ds.openpick) { modal = { pick: ds.openpick }; render(); return; }
-  if (ds.swap) { modal = { pick: ds.swap, replace: +ds.idx }; render(); filterPicker(); return; }
+  if (ds.swap) { exSheet = null; modal = { pick: ds.swap, replace: +ds.idx }; render(); filterPicker(); return; }
   if (ds.swapwhen) { modal.today = ds.swapwhen === "true"; render(); filterPicker(); return; }
   if (ds.askai !== undefined) { askClaude(); return; }
   if (ds.passdoneclose !== undefined) { passDone = null; tab = "idag"; render(); window.scrollTo(0, 0); return; }
@@ -1731,17 +1637,29 @@ document.addEventListener("click", ev => {
     if (ds.tab === "vanner" && tab !== "vanner") vannerBack = tab;
     passDone = null;
     tab = ds.tab; editing = false; dailyEditing = false; draft = null; editDate = null; histDay = null;
-    if (tab !== "pass") chosenDay = null;
+    chosenDay = null; passOpen = false;
+    editSnap = null; exSheet = null; ordna = false; trSheet = null;
     if (ds.popen) profOpen = ds.popen;
     if (tab === "upplagg") setupFrom = prevTab;
   }
   else if (ds.themeSet) setTheme(ds.themeSet);
   else if (ds.psec) profOpen = profOpen === ds.psec ? null : ds.psec;
   else if (ds.go) { tab = ds.go; if (ds.day) chosenDay = ds.day; }
-  else if (ds.pick) { chosenDay = ds.pick; }
-  else if (ds.edit !== undefined) editing = !editing;
+  else if (ds.pick) { chosenDay = ds.pick; passOpen = true; if (!editDate) window.scrollTo(0, 0); }
+  else if (ds.edit !== undefined) {
+    editing = !editing;
+    if (editing) startEdit(currentPassDay()); else { editSnap = null; exSheet = null; ordna = false; }
+    window.scrollTo(0, 0);
+  }
   // Övningarna ändras bara i Träna; från Hem kommer man dit med passet öppet för ändring
-  else if (ds.editpass) { tab = "pass"; chosenDay = ds.editpass; editing = true; editDate = null; window.scrollTo(0, 0); }
+  else if (ds.editpass) { tab = "pass"; chosenDay = ds.editpass; passOpen = true; editing = true; editDate = null; startEdit(dayById(ds.editpass)); window.scrollTo(0, 0); }
+  else if (ds.ok && ds.w !== undefined) {
+    // Uppvärmning: inga rekord, ingen vila; nästa set väljs
+    const d = currentPassDay(), ex = d.ex.find(x => x.id === ds.ok), s = warmAt(d, ds.ok, +ds.i);
+    s.ok = !s.ok;
+    if (s.ok && ex) { const h = warmHint(d, ex, +ds.i); if (s.reps === undefined || s.reps === "") s.reps = h.reps; if ((s.kg === undefined || s.kg === "") && +h.kg) s.kg = h.kg; }
+    if (focus) focus.sel = null;
+  }
   else if (ds.ok) {
     const d = currentPassDay(), s = setAt(d, ds.ok, +ds.i);
     s.ok = !s.ok;
@@ -1772,7 +1690,7 @@ document.addEventListener("click", ev => {
     // I efterhand räknas set med ifyllda värden som gjorda när passet sparas
     if (editDate && !w.done) for (const arr of Object.values(w.sets)) for (const st of arr) if (st && hasData(st)) st.ok = true;
     w.done = !w.done;
-    if (w.done) restoreSwaps(dayById(ds.finish), w);
+    if (w.done) { restoreSwaps(dayById(ds.finish), w); if (w.start && !editDate) w.end = Date.now(); stopRest(); }
     shareWorkout(dayById(ds.finish), logDate(), w.done);
     // Ett sparat pass visar skärmen Pass klart; i efterhand går man tillbaka till dagen i Historik
     if (w.done && editDate) { histDay = editDate; editDate = null; tab = "historik"; }
@@ -1805,7 +1723,7 @@ document.addEventListener("click", ev => {
   else if (ds.fbsend !== undefined) { sendFeedback(); return; }
   else if (ds.fbagain !== undefined) { feedback.sent = false; feedback.msg = ""; }
   else if (ds.verifycode !== undefined) { verifyLoginCode(); return; }
-  else if (ds.welcomelogin !== undefined) welcomeLogin = ds.welcomelogin || null;
+  else if (ds.welcomelogin !== undefined) { welcomeLogin = ds.welcomelogin || null; account.msg = ""; }
   else if (ds.gokonto !== undefined) {
     openProfRow("konto", "acctemail");
     return;
@@ -1845,7 +1763,7 @@ document.addEventListener("click", ev => {
   else if (ds.remnotify !== undefined) S.reminder = Object.assign({ time: "20:00" }, S.reminder, { notify: t.checked });
   else if (ds.delmeal) S.meals.splice(+ds.delmeal, 1);
   else if (ds.delfood) day().food.splice(+ds.delfood, 1);
-  else if (ds.xdel) exList(ds.xdel).splice(+ds.idx, 1);
+  else if (ds.xdel) { exList(ds.xdel).splice(+ds.idx, 1); exSheet = null; }
   else if (ds.mcadd) exList(ds.t).push(exEntry(ds.mcadd));
   else if (ds.mv) {
     const list = exList(ds.t), i = +ds.idx, j = i + +ds.mv;
@@ -1865,16 +1783,15 @@ document.addEventListener("click", ev => {
     modal = null;
   }
   else if (ds.count) {
-    draft.count = +ds.count;
+    draft.count = Math.max(1, Math.min(7, +ds.count));
     draft.days = makeDays(draft.program, draft.count, draft.days);
     if (draft.weekdays.length !== draft.count) draft.weekdays = DEFAULT_WEEKDAYS[draft.count].slice();
   }
   else if (ds.mode) draft.mode = ds.mode;
   else if (ds.progtoggle !== undefined) progOpen = !progOpen;
-  else if (ds.setupmore !== undefined) setupMore = true;
   else if (ds.prog) {
     draft.program = ds.prog;
-    progOpen = false;
+    if (S.setupDone) progOpen = false;
     const c = counts(ds.prog);
     if (!c.includes(draft.count)) draft.count = c.includes(3) ? 3 : c[0];
     if (draft.weekdays.length !== draft.count) draft.weekdays = DEFAULT_WEEKDAYS[draft.count].slice();
@@ -1885,7 +1802,7 @@ document.addEventListener("click", ev => {
     if (w.includes(i)) w.splice(w.indexOf(i), 1);
     else if (w.length < draft.count) w.push(i);
   }
-  else if (ds.savesetup !== undefined) saveSetup();
+  else if (ds.savesetup !== undefined) { saveSetup(); onb = 0; daysOpen = false; progOpen = false; }
   else if (ds.cancelsetup !== undefined) { draft = null; tab = setupFrom || "profil"; }
   else if (ds.week) weekOffset = Math.min(0, weekOffset + +ds.week);
   else if (ds.editdone !== undefined) { histDay = editDate; editDate = null; tab = "historik"; chosenDay = null; if (focus) endFocus(); }
@@ -1921,10 +1838,10 @@ document.addEventListener("change", ev => {
       t.value = v;
       toast(`Högst ${setMax(ds.set, ds.f)} ${ds.f === "kg" ? "kg" : isTimed(ds.set) ? "sekunder" : "reps"}`);
     }
-    setAt(d, ds.set, +ds.i)[ds.f] = v;
+    (ds.w !== undefined ? warmAt(d, ds.set, +ds.i) : setAt(d, ds.set, +ds.i))[ds.f] = v;
     // Senare set utan egen vikt visar den nya vikten som förslag
     const ex = d.ex.find(x => x.id === ds.set);
-    if (ds.f === "kg" && ex) for (const inp of document.querySelectorAll(`[data-set="${ds.set}"][data-f="kg"]`)) {
+    if (ds.f === "kg" && ex && ds.w === undefined) for (const inp of document.querySelectorAll(`[data-set="${ds.set}"][data-f="kg"]:not([data-w])`)) {
       const k = +inp.dataset.i > +ds.i && liveHint(d, ex, +inp.dataset.i).kg;
       if (k) inp.placeholder = k;
     }
@@ -2024,7 +1941,7 @@ setInterval(() => {
 // ---------- Testläge ----------
 // Ett band överst med exempeldata, börja om och lämna. Allt gäller bara testdatan.
 function seedDemo() {
-  if (!S.setupDone) { VIEWS.upplagg(); saveSetup(); }
+  if (!S.setupDone) { ensureDraft(); saveSetup(); }
   const D = S.plan.days;
   for (let k = 1; k <= 20; k++) {
     if (S.log[shift(TODAY, -k)]) continue;

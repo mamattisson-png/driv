@@ -21,7 +21,7 @@ def test_appen_startar_utan_nat(browser, base_url):
     pg.wait_for_function("!!navigator.serviceWorker.controller")
     ctx.set_offline(True)
     pg.reload()
-    assert pg.locator("[data-savesetup]").count() == 1
+    assert pg.locator('.welcome [data-onb="1"]').count() == 1
     assert pg.evaluate("typeof FOODS !== 'undefined' && typeof EX !== 'undefined'")
     ctx.close()
 

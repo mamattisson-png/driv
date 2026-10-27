@@ -1,5 +1,5 @@
 """Webbläsartester för Driv. Kör med: python -m pytest tests"""
-from conftest import go, open_app, start
+from conftest import finish_setup, go, open_app, start, to_step
 
 KONTO = '.card:has(h2:text-is("Konto"))'
 
@@ -8,6 +8,8 @@ def open_ex(page, ex_id):
     """Öppnar en övning i passet i fokusläget, från listan i Träna eller från en annan övning."""
     if page.locator(".pastlog").count():
         return   # i efterhand syns alla övningar och set direkt
+    if not page.locator(".focus, [data-focusex]").count():
+        page.click("[data-seepass]")   # från Träna: dagens pass
     i = page.evaluate(f"currentPassDay().ex.findIndex(x => x.id === '{ex_id}')")
     page.click(f'[data-focusgo="{i}"]' if page.locator(".focus").count() else f'[data-focusex="{i}"]')
 
@@ -15,6 +17,7 @@ def open_ex(page, ex_id):
 def to_list(page):
     """Lämnar fokusläget och visar listan med passets övningar."""
     if page.locator(".focus").count():
+        page.click("[data-fend]")
         page.click("[data-focusexit]")
 
 
@@ -45,54 +48,62 @@ def seed(page, js):
 def test_alla_upplagg_har_giltiga_standardovningar(page):
     open_app(page)
     assert page.evaluate("Object.values(DEFAULT_EX).flat().map(x => x.split('@')[0]).filter(id => !EX[id])") == []
-    page.click("button.on[data-progtoggle]")
+    to_step(page, 1)
     for prog in page.evaluate("Object.keys(PROGRAMS)"):
         page.click(f'[data-prog="{prog}"]')
         assert page.evaluate(f"counts('{prog}')") == [1, 2, 3, 4, 5, 6, 7]
+        page.click('[data-onb="2"]')
         for c in range(1, 8):
             page.click(f'[data-count="{c}"]')
             assert page.evaluate("draft.days.length") == c
             assert page.evaluate("draft.days.every(d => d.ex.length || d.type === 'custom')")
-        page.click("button.on[data-progtoggle]")
+        page.click('[data-onb="1"]')
 
 
 def test_eget_upplagg_med_egna_namn_och_ovningar(page):
     open_app(page)
-    page.click("button.on[data-progtoggle]")
+    to_step(page, 1)
     page.click('[data-prog="eget"]')
+    page.click('[data-onb="2"]')
     page.click('[data-count="2"]')
-    page.click("[data-setupmore]")
-    page.fill('[data-dayname="0"]', "Bröst & triceps")
-    page.press('[data-dayname="0"]', "Tab")
-    page.click('[data-openpick="draft:0"]')
+    finish_setup(page)
+    # Passen döps och får övningar i Träna
+    go(page, "pass")
+    page.click(f'[data-pick="{page.evaluate("S.plan.days[0].id")}"]')
+    assert "inga övningar" in page.inner_text(".empty")
+    page.click(".empty [data-edit]")
+    page.fill("[data-passname]", "Bröst & triceps")
+    page.press("[data-passname]", "Tab")
+    page.click("[data-openpick]")
     page.fill("#exsearch", "bänk")
     page.click(".pick:not([hidden]) [data-add]")
-    page.click('[data-count="3"]')
-    assert page.evaluate("draft.days[0].name") == "Bröst & triceps"
-    page.click("[data-savesetup]")
-    assert "Bröst & triceps" in page.inner_text(".daypass")
+    page.click("button.primary[data-edit]")
+    assert page.evaluate("[S.plan.days[0].name, S.plan.days[0].ex.length, S.plan.days.length]") == ["Bröst & triceps", 1, 2]
+    page.click("[data-passback]")
+    assert "BRÖST & TRICEPS" in page.inner_text(".ptiles").upper()
 
 
 def test_hem_visar_dagens_pass(page):
     start(page)
     seed(page, "S.log[shift(TODAY,-7)] = {workouts:[{dayId:S.plan.days[0].id,done:true,sets:{bankpress:[{kg:80,reps:8,ok:true}]}}],dailies:{},food:[]}")
     assert page.inner_text("#nav [data-tab=idag]").endswith("Hem")
-    # Musklerna som rubrik och passets storlek; övningarna visas först när passet startas
-    d = page.evaluate("({n: currentPassDay().ex.length, sets: currentPassDay().ex.reduce((a, x) => a + x.sets, 0), title: passTitle(currentPassDay())})")
-    card = page.inner_text(".daypass")
-    assert d["title"] in card and f'{d["n"]} övningar · {d["sets"]} set' in card
-    assert page.locator("#app [data-pick]").count() == 0
-    assert page.locator(".weekstrip .wday").count() == 7
-    page.click(".daypass [data-tab=pass]")
+    # Hem visar bara dagens pass och om det är gjort; allt om passen finns under Träna
+    d = page.evaluate("({name: todaysPass().d.name, n: todaysPass().d.ex.length, title: passMuscles(todaysPass().d)})")
+    tile = page.inner_text(".passtile")
+    assert d["name"].upper() in tile.upper() and "Inte gjort än" in tile
+    assert page.locator("#app [data-pick], #app [data-focusstart]").count() == 0
+    assert page.locator(".weekrow .wsegs i").count() == 3 and "0 av 3 pass" in page.inner_text(".weekrow")
+    page.click(".passtile")
     assert page.evaluate("tab") == "pass" and page.locator("[data-pick]").count() == 3
-    go(page, "idag")
+    assert f'{d["title"]} · {d["n"]} övningar' in page.inner_text(".daypass")
     page.click(".daypass [data-focusstart]")
     assert page.locator(".focus").count() == 1
 
 def test_kort_start_och_paminnelse_om_kalorimal(page):
     open_app(page)
-    # Första gången: upplägg, antal, dagar och mål; övningar och dailys är valfria
-    assert page.locator(".goalstep [data-prof]").count() == 5 and page.locator("[data-openpick^=draft]").count() == 0
+    # Första gången: program, antal och dagar, och mål; övningar och dailys ändras sen
+    to_step(page, 3)
+    assert page.locator(".goalfields [data-prof]").count() == 5 and page.locator("[data-openpick^=draft]").count() == 0
     page.click("[data-savesetup]")
     go(page, "kost")
     assert "standardvärden" in page.inner_text(".dayring")
@@ -105,9 +116,10 @@ def test_kort_start_och_paminnelse_om_kalorimal(page):
 def test_mal_i_starten_ger_eget_kalorimal(page):
     open_app(page)
     standard = page.evaluate("kcalGoal()")
+    to_step(page, 3)
     page.click('[data-goalpick="cut"]')
-    page.fill(".goalstep [data-prof=weight]", "70")
-    page.press(".goalstep [data-prof=weight]", "Tab")
+    page.fill(".goalfields [data-prof=weight]", "70")
+    page.press(".goalfields [data-prof=weight]", "Tab")
     assert page.evaluate("S.profile.goal") == "cut" and page.evaluate("kcalGoal()") < standard
     assert "140 g protein" in page.inner_text(".goalres")
     page.click("[data-savesetup]")
@@ -128,12 +140,13 @@ def test_guide_for_hemskarmen_pa_iphone(page):
 
 def test_fasta_dagar_kraver_ratt_antal(page):
     open_app(page)
+    to_step(page, 2)
     page.click('[data-count="4"]')
     page.click('[data-mode="fixed"]')
     page.click('[data-wd="0"]')
-    assert page.is_disabled("[data-savesetup]")
+    assert page.is_disabled('[data-onb="3"]')
     page.click('[data-wd="6"]')
-    page.click("[data-savesetup]")
+    finish_setup(page)
     assert page.evaluate("S.plan.weekdays") == [1, 3, 4, 6]
 
 
@@ -157,9 +170,9 @@ def test_vikt_jamfors_med_forra_veckan(page):
 
 def test_kroppsvikt_ovningar_raknas_i_reps_och_sekunder(page):
     open_app(page)
-    page.click("button.on[data-progtoggle]")
+    to_step(page, 1)
     page.click('[data-prog="cali"]')
-    page.click("[data-savesetup]")
+    finish_setup(page)
     seed(page, """const d = S.plan.days[0]; S.log[shift(TODAY,-7)] = {workout:{dayId:d.id,done:true,sets:{
         armhavningar:[{reps:12,ok:true}], plankan:[{reps:45,ok:true}]}},dailies:{},food:[]}""")
     go(page, "pass")
@@ -180,11 +193,12 @@ def test_dagens_mal_fylls_i_och_pers_firas(page):
     go(page, "pass")
     page.click("[data-pick]")
     # Listan visar förra gången; förslaget för idag står i fokusläget
-    assert "förra: 80 kg × 8" in page.locator(".exlist .exrow2", has_text="Bänkpress").inner_text()
-    assert "förra: 10" in page.locator(".exlist .exrow2", has_text="Dips").inner_text()
+    assert "Förra gången\n80 kg · 8 reps" in page.locator(".exlist .exrow2", has_text="Bänkpress").inner_text()
+    assert "Förra gången\n10 reps" in page.locator(".exlist .exrow2", has_text="Dips").inner_text()
+    assert "4 set · 6–8 reps" in page.locator(".exlist .exrow2", has_text="Bänkpress").inner_text()
     open_ex(page, "bankpress")
     assert "Bänkpress" in page.inner_text(".focus h2")
-    assert "Förra gången 80 kg × 8. Prova 82,5 kg × 6." in page.inner_text(".ftip")
+    assert "Förra gången 80 kg · 8 reps. Prova 82,5 kg · 6 reps." in page.inner_text(".ftip")
     page.click('[data-ok=bankpress][data-i="0"]')
     assert page.evaluate("JSON.stringify(day().workouts[0].sets.bankpress[0])") == '{"ok":true,"reps":6,"kg":82.5}'
     assert "Nytt PB" in page.inner_text(".toast")
@@ -219,7 +233,7 @@ def test_fokuslage_en_ovning_i_taget(page):
     page.click("[data-focusstart]")
     assert page.evaluate("tab") == "pass" and page.locator(".focus").count() == 1
     assert "Bänkpress" in page.inner_text(".focus h2")
-    assert "förra: 80 kg × 8" in page.inner_text(".fset >> nth=0")
+    assert "Förra gången: 80 kg · 8 reps" in page.inner_text(".fset >> nth=0")
     page.wait_for_function("window.__wake.includes('på')")
     # Stegen utgår från dagens mål (82,5 × 6) som syns i de tomma fälten
     page.click('[data-step=kg][data-i="0"][data-dir="1"]')
@@ -234,9 +248,10 @@ def test_fokuslage_en_ovning_i_taget(page):
     assert "Lutande hantelpress" in page.inner_text(".focus h2")
     # Till sista övningen och spara passet
     page.click(f'[data-focusgo="{page.evaluate("S.plan.days[0].ex.length - 1")}"]')
+    page.click("[data-fend]")
     page.click("[data-focusend]")
     assert page.evaluate("focus") is None and page.evaluate("tab") == "idag"
-    assert "Bra jobbat!" in page.inner_text(".passdone") and page.locator("#nav.hidden").count() == 1
+    assert "Passet klart!" in page.inner_text(".passdone") and page.locator("#nav.hidden").count() == 1
     page.click(".passdone .wide[data-passdoneclose]")
     assert page.locator(".passdone").count() == 0
     assert page.evaluate("workoutsOn(TODAY)[0].done") is True
@@ -254,12 +269,15 @@ def test_ovningar_visar_utrustning_och_hur_vikten_skrivs(page):
     assert "stången (oftast 20 kg)" in page.inner_text(".gearbox")
 
 
-def test_upplagg_har_tillbaka_till_profil(page):
+def test_upplagg_har_tillbaka_till_trana(page):
     start(page)
-    go(page, "profil")
-    page.click('.prow-head[data-tab="upplagg"]')
+    go(page, "pass")
+    page.click('.trprog [data-tab="upplagg"]')
     page.click(".backlink")
-    assert page.evaluate("tab") == "profil" and page.evaluate("draft") is None
+    assert page.evaluate("tab") == "pass" and page.evaluate("draft") is None
+    # Upplägget finns inte i Inställningar
+    go(page, "profil")
+    assert page.locator('[data-tab="upplagg"]').count() == 0
 
 
 def test_utseende_kan_valjas(page):
@@ -277,38 +295,47 @@ def test_utseende_kan_valjas(page):
 
 def test_upplagg_och_ovningar_andras_pa_ett_stalle(page):
     start(page)
-    go(page, "profil")
-    page.click('.plist [data-tab="upplagg"]')
-    assert page.evaluate("tab") == "upplagg" and "Profil" in page.inner_text(".backlink")
-    # Efter starten är upplägget bara program, antal pass och dagar
-    assert page.locator("[data-openpick^=draft], [data-prof], [data-dedit]").count() == 0
-    assert "Träna" in page.inner_text(".setupnote")
-    page.click(".backlink")
-    assert page.evaluate("tab") == "profil"
-    # Från Träna: upplägget överst, och sparat upplägg går tillbaka till Träna
+    # Upplägget nås från Träna och är bara program, antal pass och dagar
     go(page, "pass")
-    page.click(".planline")
+    page.click('.trprog [data-tab="upplagg"]')
     assert page.evaluate("tab") == "upplagg" and "Träna" in page.inner_text(".backlink")
+    assert page.locator("[data-openpick^=draft], [data-prof], [data-dedit]").count() == 0
+    page.click('[data-count="4"]')
+    page.click("[data-daysopen]")
+    page.click('[data-mode="fixed"]')
     page.click("[data-savesetup]")
-    assert page.evaluate("tab") == "pass"
-    # Ändra övningar på Hem öppnar passet i Träna, där övningarna ändras
-    go(page, "idag")
-    d = page.get_attribute(".daypass [data-editpass]", "data-editpass")
-    n = page.evaluate(f"dayById('{d}').ex.length")
-    page.click(".daypass [data-editpass]")
-    assert page.evaluate("tab") == "pass" and page.evaluate("editing") and page.evaluate("currentPassDay().id") == d
-    page.click("[data-xdel] >> nth=0")
-    assert page.locator("[data-xdel]").count() == n - 1
+    assert page.evaluate("tab") == "pass" and page.evaluate("[S.plan.count, S.plan.mode]") == [4, "fixed"]
+    # Övningarna ändras i passet: ett blad per övning, Avbryt ångrar och Spara sparar
+    page.click("[data-seepass]")
+    d = page.evaluate("currentPassDay().id")
+    ex = page.evaluate(f"dayById('{d}').ex.map(x => [x.id, x.sets, x.reps])")
+    page.click("[data-edit]")
+    page.click('[data-exsheet="0"]')
+    page.click(".sheet [data-xdel]")
+    assert page.locator("[data-exsheet]").count() == len(ex) - 1
+    page.click("[data-editcancel]")
+    assert not page.evaluate("editing") and page.evaluate(f"dayById('{d}').ex.map(x => [x.id, x.sets, x.reps])") == ex
+    page.click("[data-edit]")
+    page.click('[data-exsheet="0"]')
+    page.click('.sheet [data-exstep="sets"][data-dir="1"]')
+    page.click('.sheet [data-exstep="warm"][data-dir="1"]')
+    page.click('.sheet [data-exstep="reps"][data-dir="1"]')
+    page.click(".sheet [data-exsheetclose]")
+    page.click('[data-exsheet="1"]')
+    page.click(".sheet [data-xdel]")
     page.click("button.primary[data-edit]")
-    assert not page.evaluate("editing") and page.evaluate(f"dayById('{d}').ex.length") == n - 1
+    got = page.evaluate(f"dayById('{d}').ex")
+    assert not page.evaluate("editing") and len(got) == len(ex) - 1
+    assert [got[0]["sets"], got[0]["warm"], got[0]["reps"]] == [ex[0][1] + 1, 1, page.evaluate(f"stepReps('{ex[0][2]}', 1, '{ex[0][0]}')")]
 
 
 def test_eget_pass_kan_doptas_i_trana(page):
     open_app(page)
-    page.click("button.on[data-progtoggle]")
+    to_step(page, 1)
     page.click('[data-prog="eget"]')
-    page.click("[data-savesetup]")
+    finish_setup(page)
     go(page, "pass")
+    page.click("[data-pick]")
     page.click("[data-edit]")
     page.fill("[data-passname]", "Rygg & armar")
     page.press("[data-passname]", "Tab")
@@ -387,9 +414,12 @@ def test_superset_vaxlar_och_vilar_efter_varvet(page):
     go(page, "pass")
     page.click(f'[data-pick="{page.evaluate("S.plan.days[0].id")}"]')
     page.click("[data-edit]")
-    page.click('[data-ss][data-idx="0"]')   # bänkpress + lutande hantelpress
+    page.click('[data-exsheet="0"]')
+    page.click('.sheet [data-ss][data-idx="0"]')   # bänkpress + lutande hantelpress
     assert page.evaluate("S.plan.days[0].ex[0].ss") is True
-    page.click("[data-edit]")
+    page.click(".sheet [data-exsheetclose]")
+    assert "SUPERSET" in page.inner_text(".ssgroup").upper()
+    page.click("button.primary[data-edit]")
     assert "A1" in page.inner_text('.exlist .exrow2 >> nth=0') and "A2" in page.inner_text('.exlist .exrow2 >> nth=1')
     page.click("[data-focusstart]")
     page.click('[data-ok=bankpress][data-i="0"]')
@@ -400,12 +430,13 @@ def test_superset_vaxlar_och_vilar_efter_varvet(page):
     assert page.evaluate("focus.idx") == 0 and page.evaluate("rest.end > Date.now()") is True
 
 
-def test_hem_har_en_rad_med_dagens_siffror(page):
+def test_hem_visar_dagens_kalorier(page):
     start(page)
     seed(page, "logFood({name: 'Gröt', kcal: 300, protein: 10}, 0)")
     go(page, "idag")
-    assert "300" in page.inner_text(".homesum") and "10" in page.inner_text(".homesum")
-    page.click(".homesum [data-go=kost] >> nth=0")
+    goal = page.evaluate("macros().kcal")
+    assert "300" in page.inner_text(".kcaltile") and f"{goal:,}".replace(",", "\xa0") in page.inner_text(".kcaltile")
+    page.click(".kcaltile")
     assert page.evaluate("tab") == "kost"
 
 
@@ -413,15 +444,15 @@ def test_aktivitet_loggas_och_raknas_som_pass(page):
     start(page)
     go(page, "pass")
     assert page.locator("text=Kommande").count() == 0
-    page.click('.actcard [data-actnew="Padel"]')
+    page.click('.ttile[data-actnew]')
+    page.click('[data-actpick="Padel"]')
     page.click('[data-actmin="15"]')   # 75 min
     page.click('[data-actint="3"]')
     page.click("[data-actsave]")
     assert page.evaluate("S.log[TODAY].acts") == [{"name": "Padel", "min": 75, "int": 3}]
     assert page.evaluate("weekSummary(weekStart(TODAY)).passes") == 1
-    # En egen aktivitet med sträcka, på Hem
-    go(page, "idag")
-    page.click('.daypass [data-actnew=""]')
+    # En egen aktivitet, och dagens aktiviteter syns under rutorna i Träna
+    page.click('.ttile[data-actnew]')
     page.fill("#actname", "Kanotpaddling")
     page.click('[data-actmin="-15"]')
     page.click('[data-actmin="-15"]')
@@ -437,7 +468,7 @@ def test_aktivitet_loggas_och_raknas_som_pass(page):
     assert page.evaluate("macros().kcal + burnedOn(TODAY)") > goal
     assert f"{goal + page.evaluate('burnedOn(TODAY)'):,}".replace(",", "\xa0") in page.inner_text(".dayring")
     # Ändra och ta bort
-    go(page, "idag")
+    go(page, "pass")
     page.click('.homeacts [data-actedit="1"]')
     page.click("[data-actdel]")
     assert page.evaluate("S.log[TODAY].acts.length") == 1
@@ -458,7 +489,7 @@ def test_dailys_under_passet(page):
     go(page, "pass")
     page.click(f'[data-pick="{page.evaluate("S.plan.days[0].id")}"]')
     page.click("[data-focusstart]")
-    assert "Dailys · 0 av 2 klara" in page.inner_text("[data-fdopen]")
+    assert "Dailys 0 av 2" in page.inner_text("[data-fdopen]")
     page.click("[data-fdopen]")
     assert page.locator(".overlay [data-dedit]").count() == 0
     page.click('.overlay [data-dcheck="plankan"]')
@@ -466,7 +497,7 @@ def test_dailys_under_passet(page):
     assert page.locator(".overlay").count() == 1   # fönstret står kvar tills man stänger
     page.click(".overlay button.wide[data-fdclose]")
     assert page.locator(".overlay").count() == 0 and page.locator(".focus").count() == 1
-    assert "Dailys · 1 av 2 klara" in page.inner_text("[data-fdopen]")
+    assert "Dailys 1 av 2" in page.inner_text("[data-fdopen]")
 
 
 def test_vikten_foljer_med_och_orimliga_tal_begransas(page):
@@ -497,6 +528,7 @@ def test_bilder_ar_stilla_i_listor_men_animeras_ensamma(page):
     start(page)
     go(page, "pass")
     assert page.locator(".thumb animate").count() == 0
+    page.click("[data-seepass]")
     page.click('[data-focusex="0"]')
     page.click(".focus .thumb")
     assert page.locator(".sheet .fig animate").count() > 0
@@ -554,7 +586,8 @@ def test_dailys_flyttas_over_fran_gammalt_format(page):
     page.reload()
     assert page.evaluate("S.daily.map(e => e.id)") == ["plankan", "lop", "promenad"]
     assert page.evaluate("S.log['2026-01-05'].dailies") == {"lop": {"km": 5, "min": 30}, "plankan": True, "promenad": True}
-    go(page, "idag")
+    go(page, "pass")
+    page.click("[data-trsheet=dailys]")
     page.click("[data-dcheck=plankan]")
     assert page.evaluate("dailyDone(TODAY, 'plankan')")
     # Löpningen får samma bock när km är ifyllt
@@ -573,6 +606,7 @@ def test_kroppsvikt_en_gang_i_veckan_och_kalorimal(page):
     import datetime
     page.clock.install(time=datetime.datetime(2026, 10, 22, 8, 0))   # torsdag
     open_app(page)
+    to_step(page, 3)
     page.click('[data-goalpick="cut"]')
     page.click("[data-savesetup]")
     seed(page, "S.weights['2026-10-15'] = 82; S.weights['2026-10-16'] = 81.8")
@@ -971,10 +1005,10 @@ def test_logga_in_fran_startsidan(page):
     # Ny enhet: tom webbläsare och utloggad, startsidan visas
     page.evaluate("localStorage.clear(); sessionStorage.removeItem('sess')")
     page.reload()
-    assert page.locator("[data-savesetup]").count() == 1
-    page.click('.corner-login')
-    assert "Logga in" in page.inner_text(".card:has(#acctemail) h2")
-    assert "bara för att logga in" in page.inner_text(".card:has(#acctemail)")
+    assert page.locator('.welcome [data-onb="1"]').count() == 1
+    page.click('[data-welcomelogin="login"]')
+    assert "Välkommen tillbaka" in page.inner_text(".login h1")
+    assert "bara för att logga in" in page.inner_text(".login")
     page.fill("#acctemail", "test@exempel.se")
     page.click("[data-sendcode]")
     page.fill("#acctcode", "123456")
@@ -998,7 +1032,7 @@ def test_inloggad_utan_upplagg_far_besked(page):
     text = page.inner_text("#app")
     assert "Inloggad som ny@exempel.se" in text and "inget sparat upplägg" in text
     assert page.locator("[data-welcomelogin]").count() == 0
-    page.click("[data-savesetup]")
+    finish_setup(page)
     page.wait_for_function("window.__db.settings && window.__db.settings.setupDone")
 
 
@@ -1053,7 +1087,7 @@ def test_tom_dag_skriver_inte_over_annan_enhets_loggning(page):
     login(page)
     # En annan enhet har loggat mat en dag som den här enheten bara har en tom post för
     page.evaluate("""() => { window.__D = TODAY.slice(0, 8) + (TODAY.endsWith('-01') ? '02' : '01');
-      const m = window.__db['m-' + TODAY.slice(0, 7)];
+      const m = window.__db['m-' + TODAY.slice(0, 7)] || (window.__db['m-' + TODAY.slice(0, 7)] = { days: {} });
       m.days[__D] = { workouts: [], dailies: {}, food: [{ name: 'Lax', kcal: 500, protein: 40 }], _t: { food: 1 } }; }""")
     page.evaluate("day(__D); S.letterSeen = 'x'; save()")
     page.wait_for_function("S.log[__D].food.length === 1 && !cloud.pushing")
@@ -1101,11 +1135,13 @@ def test_tva_pass_samma_dag_och_gammalt_format(page):
     open_ex(page, "bankpress")
     page.click('[data-ok=bankpress][data-i="0"]')
     to_list(page)
+    page.click("[data-passback]")
     page.click(f'[data-pick="{page.evaluate("S.plan.days[1].id")}"]')
     open_ex(page, "marklyft")
     page.click('[data-ok=marklyft][data-i="0"]')
     to_list(page)
     assert page.evaluate("workoutsOn(TODAY).map(w => Object.keys(w.sets)[0])") == ["bankpress", "marklyft"]
+    page.click("[data-passback]")
     for d in page.evaluate("S.plan.days.slice(0, 2).map(d => d.id)"):
         page.click(f'[data-pick="{d}"]')
         page.click(f'[data-finish="{d}"]')
@@ -1152,9 +1188,10 @@ def test_fyra_flikar_och_profil_via_kugghjulet(page):
     assert abs((first["x"] - 0) - (1400 - last["x"] - last["width"])) < 2
     page.set_viewport_size({"width": 390, "height": 844})
     page.click(".gear")
-    assert page.evaluate("tab") == "profil"
-    # Dailys bockas av direkt på Idag
-    go(page, "idag")
+    assert page.evaluate("tab") == "profil" and "Inställningar" in page.inner_text("h1")
+    # Dailys bockas av under Träna
+    go(page, "pass")
+    page.click("[data-trsheet=dailys]")
     page.click("[data-dcheck=plankan]")
     assert page.evaluate("dailyDone(TODAY, 'plankan')")
 
@@ -1251,8 +1288,12 @@ def test_vanner_kod_flode_och_peppning(page):
     page.wait_for_function("window.__social.activity.some(x => x.user_id === 'u1')")
     mine = page.evaluate("window.__social.activity.find(x => x.user_id === 'u1')")
     assert {k: mine[k] for k in ("day", "pass", "exercises")} == {"day": "2026-10-22", "pass": "Push", "exercises": 1}
-    # Pass klart: med en vän visas ingen inbjudan
-    assert "Bra jobbat!" in page.inner_text(".passdone") and page.locator(".invitecard").count() == 0
+    # Pass klart: med en vän visas ingen inbjudan, och passet kan tas bort ur vännernas flöde
+    assert "Passet klart!" in page.inner_text(".passdone") and page.locator(".invitecard").count() == 0
+    page.click("[data-pdshare]")
+    page.wait_for_function("!window.__social.activity.some(x => x.user_id === 'u1')")
+    page.click("[data-pdshare]")
+    page.wait_for_function("window.__social.activity.some(x => x.user_id === 'u1')")
     page.click(".passdone .wide[data-passdoneclose]")
     # Slutar man dela sparas inga fler pass
     prof(page, "vanner")
@@ -1333,7 +1374,7 @@ def test_vanlank_visar_forfragan(page):
     page.context.route("**/config.js", lambda r: r.fulfill(body=SB_CONFIG, content_type="application/javascript"))
     page.add_init_script(SUPABASE_MOCK)
     page.goto(page.base_url + "?v=BO1234")
-    page.click("[data-savesetup]")
+    finish_setup(page)
     assert "BO1234" in page.inner_text(".nudge")
     page.click("[data-gofriends]")
     assert page.evaluate("tab") == "vanner" and "Kräver ett konto" in page.inner_text("#vanner")
@@ -1417,6 +1458,8 @@ def test_testlage_har_egen_data(page):
 
 def test_stretch_som_daily(page):
     start(page)
+    go(page, "pass")
+    page.click("[data-trsheet=dailys]")
     page.click("[data-dedit]")
     page.click('[data-openpick="daily"]')
     page.select_option("[data-areasel]", "stretch")
@@ -1545,7 +1588,7 @@ def test_vilotimern_lagger_sig_inte_over_fokuslistan(page):
     go(page, "pass")
     page.click(f'[data-pick="{page.evaluate("S.plan.days[0].id")}"]')
     page.click("[data-focusstart]")
-    page.click(".fbar [data-ok]")
+    page.click(".fset.active .fdone")
     assert page.evaluate("document.body.classList.contains('resting')") is True
     # Den vanliga timerlisten är dold; knapparna ligger i fokuslistan ovanför Klart set
     assert not page.locator(".rest").is_visible()
@@ -1612,8 +1655,14 @@ def test_pass_klart_visar_set_och_nytt_pb(page):
     page.evaluate("const w = workoutFor(S.plan.days[0]); w.sets.bankpress = [{kg: 82.5, reps: 8, ok: true}, {kg: 80, reps: 8, ok: true}]; save(); render()")
     page.click("button[data-finish]")
     text = page.inner_text(".passdone")
-    assert "Bra jobbat!" in text and "1 av 3 pass den här veckan" in text
-    assert "2\nset" in text and "1\nnytt PB" in text and "Nytt PB i bänkpress: 82,5 kg × 8" in text
+    assert "Passet klart!" in text and "1 av 3 pass den här veckan" in text
+    assert "2\nset" in text and "1\nnytt PB" in text and "1,3 t\ntotal vikt" in text
+    pb = page.inner_text(".pdpbs")
+    assert "Bänkpress" in pb and "82,5 kg · 8 reps" in pb and "PB +2,5 kg" in pb
+    # Med en starttid visas också hur länge passet tog
+    page.click(".passdone [data-passdoneclose]")
+    page.evaluate("const w = workoutsOn(TODAY)[0]; w.start = Date.now() - 47 * 60000; w.end = Date.now(); passDone = { dayId: w.dayId, date: TODAY }; render()")
+    assert "47\nminuter" in page.inner_text(".passdone")
 
 
 def test_inbjudan_efter_passet_utan_vanner(page):
@@ -1676,8 +1725,10 @@ def test_muskelkarta_forslag_roda_forst_och_lagg_till(page):
     first = page.get_attribute(".msugg [data-mcadd] >> nth=0", "data-mcadd")
     page.click(".msugg [data-mcadd] >> nth=0")
     assert page.evaluate("S.plan.days[0].ex.at(-1)") == {"id": first, "sets": page.evaluate(f"EX['{first}'].sets"), "reps": page.evaluate(f"EX['{first}'].reps")}
-    # Musklerna står under övningens namn
-    assert "Bröst" in page.inner_text(".subex .mline >> nth=0")
+    # Musklerna står under övningens namn i bladet
+    page.click('[data-exsheet="0"]')
+    assert "Bröst" in page.inner_text(".sheet .mline")
+    page.click(".sheet [data-exsheetclose]")
     # Inte under själva passet
     page.evaluate("editing = false; render()")
     page.click("[data-focusstart]")
@@ -1687,3 +1738,22 @@ def test_muskelkarta_forslag_roda_forst_och_lagg_till(page):
 def test_eget_pass_har_ingen_muskelkarta(page):
     start(page)
     assert page.evaluate("muscleCard('x', 'custom', [])") == ""
+
+
+def test_uppvarmning_fore_arbetsseten(page):
+    start(page)
+    seed(page, "S.log[shift(TODAY,-7)] = {workouts:[{dayId:S.plan.days[0].id,done:true,sets:{bankpress:[{kg:80,reps:8,ok:true}]}}],dailies:{},food:[]}; S.plan.days[0].ex[0].warm = 2")
+    go(page, "pass")
+    page.click(f'[data-pick="{page.evaluate("S.plan.days[0].id")}"]')
+    assert "+2 uppv." in page.inner_text(".exlist .exrow2 >> nth=0")
+    page.click("[data-focusstart]")
+    # Uppvärmningen kommer först, med ett förslag under arbetsvikten (82,5 kg idag)
+    assert "Uppvärmning 1" in page.inner_text(".fset.active") and "Förslag: 32,5 kg · 8 reps" in page.inner_text(".fset.active")
+    page.click(".fset.active .fdone")
+    page.click('.fset.active [data-step=kg][data-w][data-dir="1"]')
+    page.click(".fset.active .fdone")
+    assert "Set 1" in page.inner_text(".fset.active")
+    w = page.evaluate("workoutsOn(TODAY)[0]")
+    assert w["warm"]["bankpress"] == [{"ok": True, "reps": 8, "kg": 32.5}, {"kg": 67.5, "ok": True, "reps": 5}]
+    # Uppvärmningen räknas inte som set, och ingen vila startar
+    assert w["sets"] == {} and page.evaluate("!!rest.el") is False

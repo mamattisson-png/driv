@@ -4,7 +4,7 @@ import datetime
 
 import pytest
 
-from conftest import go, start
+from conftest import finish_setup, go, open_app
 
 # Räknar ut kontrasten för varje synlig text mot närmaste bakgrund och returnerar de som är för låga.
 # Vanlig text kräver 4,5:1; stor text (24 px, eller 18,7 px fet) 3:1. Inaktiva knappar räknas inte.
@@ -49,7 +49,20 @@ CONTRAST = r"""
 def views(page):
     """Går igenom appens vyer och fönster; ger (namn, rotelement) för varje."""
     page.clock.install(time=datetime.datetime(2026, 10, 25, 12, 0))   # en söndag, så att veckobrevet syns
-    start(page)
+    open_app(page)
+    page.evaluate("setTheme('auto')")   # följer färgschemat som testet väljer
+    yield "Välkommen", "#app"
+    for step, name in [(1, "Steg 1, program"), (2, "Steg 2, pass och dagar"), (3, "Steg 3, mål")]:
+        page.click(f'[data-onb="{step}"]')
+        if step == 2:
+            page.click('[data-mode="fixed"]')
+        yield name, "#app"
+    page.evaluate("document.getElementById('app').insertAdjacentHTML('beforeend', `<div id='inl'>${loginView()}</div>`)")
+    yield "Logga in", "#inl"
+    page.evaluate("account.step = 'code'; account.email = 'a@b.se'; document.getElementById('inl').innerHTML = loginView(); account.step = 'email'")
+    yield "Logga in, kod", "#inl"
+    page.evaluate("document.getElementById('inl').remove()")
+    finish_setup(page)
     page.evaluate("""() => { const D = S.plan.days;
       for (const [o, k] of [[-1, 0], [-3, 1], [-5, 2], [-8, 0], [-10, 1]]) S.log[shift(TODAY, o)] = {workouts: [{dayId: D[k].id, done: true,
         sets: {bankpress: [{kg: 80, reps: 8, ok: true}], marklyft: [{kg: 120, reps: 5, ok: true}]}}], dailies: {plankan: true, lop: {km: 5}},
@@ -59,13 +72,24 @@ def views(page):
     yield "Idag", "#app"
     go(page, "pass")
     yield "Träna", "#app"
-    page.evaluate("chosenDay = S.plan.days[0].id; window.__ex = S.plan.days[0].ex; S.plan.days[0].ex = [{ id: 'kabelflyes', sets: 3, reps: '12' }, { id: 'lutande_hantelpress', sets: 3, reps: '10' }]; editing = true; render()")
-    yield "Ändra övningar", "#app"
-    page.evaluate("S.plan.days[0].ex = window.__ex; editing = false; chosenDay = null; render()")
+    page.click("[data-trsheet=dailys]")
+    yield "Dailys", ".sheet"
+    page.click(".sheet [data-trsheet='']")
     page.click(f'[data-pick="{page.evaluate("S.plan.days[0].id")}"]')
+    yield "Passet", "#app"
+    page.evaluate("chosenDay = S.plan.days[0].id; window.__ex = S.plan.days[0].ex; S.plan.days[0].ex = [{ id: 'kabelflyes', sets: 3, reps: '12', ss: true }, { id: 'lutande_hantelpress', sets: 3, reps: '10', warm: 2 }]; editing = true; render()")
+    yield "Ändra övningar", "#app"
+    page.click('[data-exsheet="1"]')
+    yield "Övningens blad", ".sheet"
+    page.evaluate("S.plan.days[0].ex = window.__ex; S.plan.days[0].ex[0].warm = 1; exSheet = null; editing = false; render()")
     page.click("[data-focusstart]")
-    page.click('[data-ok=bankpress][data-i="0"]')
+    yield "Fokusläge, uppvärmning", "body"
+    page.click('[data-ok=bankpress][data-w][data-i="0"]')
+    page.click('[data-ok=bankpress][data-i="0"]:not([data-w])')
     yield "Fokusläge", "body"
+    page.click("[data-fend]")
+    yield "Avsluta passet", ".sheet"
+    page.click(".sheet [data-fendclose]")
     page.click("[data-restskip]")
     page.evaluate("openAct(TODAY, null, 'Padel'); render()")
     yield "Logga aktivitet", ".sheet"
@@ -114,7 +138,7 @@ def views(page):
     yield "Profil, kalorimål", "#app"
     page.evaluate("document.querySelector('[data-psec=konto]').click()")
     yield "Profil, konto", "#app"
-    page.evaluate("document.querySelector('[data-tab=upplagg]').click()")
+    page.evaluate("setupFrom = 'pass'; tab = 'upplagg'; daysOpen = true; render()")
     yield "Upplägg", "#app"
     yield "Flikar", "#nav"
 
