@@ -1344,7 +1344,7 @@
     border: 1px solid var(--line-strong); font-weight: 500; font-size: 15px; z-index: 40; animation: toastin .25s ease-out; }
   .toastic { width: 26px; height: 26px; border-radius: 13px; flex: none; display: grid; place-items: center; background: var(--ok); color: var(--on-color); }
   .toast.out { opacity: 0; transform: translate(-50%, -8px); transition: opacity .4s, transform .4s; }
-  @keyframes toastin { from { opacity: 0; transform: translate(-50%, -12px); } to { opacity: 1; transform: translate(-50%, 0); } }
+  @keyframes toastin { from { transform: translate(-50%, -64px); } to { transform: translate(-50%, 0); } }
   @media (prefers-reduced-motion: reduce) { .toast { animation: none; } }
   /* Knappar längst ned: en tät botten bakom dem ända ned till menyn, så att inget skymtar under */
   .kadd, .pagefoot { bottom: calc(88px + env(safe-area-inset-bottom, 0px)); }
