@@ -89,11 +89,12 @@ def test_hem_visar_dagens_pass(page):
     assert page.inner_text("#nav [data-tab=idag]").endswith("Hem")
     # Hem visar dagen i tur och ordning: först dagens pass, som kan startas direkt
     d = page.evaluate("({name: todaysPass().d.name, n: todaysPass().d.ex.length, title: passMuscles(todaysPass().d)})")
-    step = page.inner_text(".hstep >> nth=0")
-    assert d["name"] in step and f'{d["title"]} · {d["n"]} övningar' in step
-    assert "0 av 3 pass" in page.inner_text(".hsub") and page.locator("#app [data-pick]").count() == 0
-    go(page, "pass")
-    assert page.locator("[data-pick]").count() == 3
+    tile = page.inner_text(".passtile")
+    assert d["name"].upper() in tile.upper() and f'{d["title"]} · {d["n"]} övningar' in tile
+    assert page.locator("#app [data-pick], #app [data-focusstart]").count() == 0
+    assert page.locator(".weekrow .wsegs i").count() == 3 and "0 av 3 pass" in page.inner_text(".weekrow")
+    page.click(".passtile")
+    assert page.evaluate("tab") == "pass" and page.locator("[data-pick]").count() == 3
     assert f'{d["title"]} · {d["n"]} övningar' in page.inner_text(".daypass")
     page.click(".daypass [data-focusstart]")
     assert page.locator(".focus").count() == 1
@@ -438,9 +439,9 @@ def test_hem_visar_dagens_kalorier(page):
     seed(page, "logFood({name: 'Gröt', kcal: 300, protein: 10}, 0)")
     go(page, "idag")
     goal = page.evaluate("macros().kcal")
-    food = page.inner_text(".hstep[data-go=kost]")
+    food = page.inner_text(".kcaltile")
     assert "300" in food and f"{goal:,}".replace(",", "\xa0") in food and "10 / " in food
-    page.click(".hstep[data-go=kost]")
+    page.click(".kcaltile")
     assert page.evaluate("tab") == "kost"
 
 
@@ -1274,18 +1275,16 @@ def test_vanner_kod_flode_och_peppning(page):
     page.click("[data-addfriend]")
     page.wait_for_function("social.friends.length === 1")
     assert page.locator(".fsheet").count() == 0 and "Bo" in page.inner_text("#app")
-    # Hem visar Bos pass, och peppningen sparas
+    # Hem visar Bos pass på raden Vänner, som leder till vänsidan
     go(page, "idag")
-    page.wait_for_selector(".friendsrow [data-kudos]")
-    assert "Bo körde Push" in page.inner_text(".friendsrow") and "igår" in page.inner_text(".friendsrow")
-    page.click("[data-kudos='1']")
-    page.wait_for_function("window.__social.kudos.length === 1")
-    assert "Peppat" in page.inner_text(".friendsrow") and page.locator("[data-kudos='1']").count() == 0
-    # Vänsidan: igår hopfällt, fälls ut med ett tryck
-    page.click(".friendsrow .fbhead")
+    page.wait_for_function("document.querySelector('.hlist').textContent.includes('Bo körde Push')")
+    page.click('.hlist [data-tab="vanner"]')
+    # Vänsidan: igår hopfällt, fälls ut med ett tryck, och peppningen sparas
     assert page.evaluate("tab") == "vanner" and "Igår · 1 pass" in page.text_content("#app")
     page.click('[data-fday="2026-10-21"]')
     assert "Bo körde Push" in page.inner_text(".flist")
+    page.click(".flist [data-kudos='1']")
+    page.wait_for_function("window.__social.kudos.length === 1")
     # Veckans topp: Bo har ett pass den här veckan
     assert "Veckans topp" in page.text_content(".ftop") and "Bo" in page.inner_text(".ftop")
     # Ett sparat pass delas med antal övningar, inget annat
@@ -1962,13 +1961,13 @@ def test_manga_vanner(page):
 def test_hem_visar_dailys_och_annan_traning(page):
     start(page)
     page.evaluate("""S.daily = [{id:'plankan',sets:3,reps:'45 s'},{id:'russian_twist',sets:3,reps:'20'}]; day().dailies.plankan = true; save(); render()""")
-    assert "1 av 2 klara" in page.text_content(".hsteps") and "g protein" in page.text_content(".hsteps")
+    assert "1/2" in page.text_content(".dailytile") and "g protein" in page.text_content(".kcaltile")
     # Dailys öppnas direkt på Hem
-    page.click('.hstep[data-trsheet="dailys"]')
+    page.click('.dailytile')
     assert page.locator(".dsheet").is_visible() and page.evaluate("tab") == "idag"
     page.click('.dsheet [data-dcheck="russian_twist"]')
     page.click('.dsheet .primary[data-trsheet=""]')
-    assert "Dailys klara" in page.text_content(".hsteps")
+    assert "Klara" in page.text_content(".dailytile")
     page.click(".hrow[data-actnew]")
     assert page.evaluate("!!actSheet")
     assert not page.errors

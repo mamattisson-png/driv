@@ -414,18 +414,6 @@
   .homerow { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; color: var(--text); font: inherit; padding: 14px 16px; }
   button.homerow { border: 1px solid var(--line); }
   .hlist { padding: 4px 16px; }
-  .hsub { margin: -10px 0 18px; }
-  .hsteps { display: flex; flex-direction: column; gap: 10px; margin-bottom: 8px; }
-  .hstep { display: block; width: 100%; text-align: left; color: var(--text); font: inherit; padding: 16px; margin: 0; }
-  .hstephead { display: flex; align-items: center; gap: 14px; }
-  .hstephead .grow { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
-  .hstephead b { font-size: 17px; }
-  .hstephead > .ic { color: var(--muted); flex: none; }
-  .hnum2 { width: 36px; height: 36px; border-radius: 99px; flex: none; display: grid; place-items: center;
-    background: var(--accent-strong); color: var(--on-accent); font-weight: 700; font-size: 16px; }
-  .hnum2.ok { background: var(--ok-strong); color: var(--on-color); }
-  .hstep.ok .hstephead b { color: var(--muted); }
-  .hstepbtn { margin-top: 14px; min-height: 48px; display: flex; align-items: center; justify-content: center; gap: 6px; }
   .hsec { margin: 18px 4px 8px; }
   .hweigh .card { border: 0; background: none; padding: 0; margin: 0; box-shadow: none; width: 100%; }
   .hprot { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -962,7 +950,13 @@
   .gear.avbtn { position: static; width: 42px; height: 42px; border-radius: 99px; border: 0; background: var(--accent-soft); color: var(--accent-text); font-weight: 700; font-size: 16px; }
   .homedate { font-size: 14px; }
   .greet { margin: 2px 0 18px; font-size: 30px; }
-  .htiles { display: grid; grid-template-columns: 1.15fr 1fr; gap: 10px; margin-bottom: 12px; }
+  .htiles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+  .htiles .passtile { grid-column: 1 / -1; min-height: 0; }
+  .htiles .kcaltile, .htiles .dailytile { min-height: 0; }
+  .htile .klabel { display: inline-flex; align-items: center; gap: 8px; }
+  .hno { width: 22px; height: 22px; border-radius: 99px; display: inline-grid; place-items: center; flex: none;
+    background: var(--accent-strong); color: var(--on-accent); font: 700 12px/1 "Unbounded", sans-serif; letter-spacing: 0; }
+  .hno.ok { background: var(--ok-strong); color: var(--on-color); }
   .htile { display: flex; flex-direction: column; justify-content: space-between; align-items: flex-start; gap: 8px; text-align: left; min-height: 168px;
     padding: 16px; border-radius: 24px; background: var(--card); border: 1.5px solid var(--line); color: var(--text); box-shadow: var(--shadow-card); }
   .htile.go { border-color: var(--accent); }
