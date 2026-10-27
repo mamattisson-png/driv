@@ -647,9 +647,9 @@ function kostView() {
     <section class="card kdaycard" aria-label="Måltider">${MEALS.map((_, i) => mealCard(i, L)).join("")}${mealCard(-1, L)}</section>
     <button class="card homerow krecept" data-rlist><span class="kmic">${icon("kost", 18)}</span><span class="grow col"><b>Dina recept</b>
       <span class="muted small">${recipes().length ? `${recipes().length} recept` : "Bygg en rätt en gång, logga en portion med ett tryck"}</span></span><span class="chev">${icon("right", 18)}</span></button>
+    <div class="muted small credit">Näringsvärden: Livsmedelsverkets livsmedelsdatabas (CC BY 4.0) och egna uppskattningar.</div>
     <div class="kadd"><button class="primary grow kaddmain" data-addto="${mealByClock()}" data-focusname>${icon("plus", 20)}Lägg till mat</button>
       ${CAN_SCAN ? `<button class="kscan" data-scan aria-label="Skanna streckkod">${icon("barcode", 22)}</button>` : ""}</div>
-    <div class="muted small credit">Näringsvärden: Livsmedelsverkets livsmedelsdatabas (CC BY 4.0) och egna uppskattningar.</div>
     ${foodSheet ? addSheet(m) : foodItem != null ? itemSheet() : ""}`;
 }
 

@@ -1338,6 +1338,20 @@
   .pagefoot .reat { margin: 0; }
   .recpage .rnamein { margin: 2px 0 6px; }
   .krecept { margin: 0 0 14px; }
+  /* Besked överst: en mörk bricka som glider ned och försvinner */
+  .toast { top: calc(12px + env(safe-area-inset-top, 0px)); bottom: auto; display: flex; align-items: center; gap: 10px; width: max-content;
+    max-width: calc(100% - 32px); padding: 10px 16px 10px 10px; border-radius: 16px; background: var(--card-2); color: var(--text);
+    border: 1px solid var(--line-strong); font-weight: 500; font-size: 15px; z-index: 40; animation: toastin .25s ease-out; }
+  .toastic { width: 26px; height: 26px; border-radius: 13px; flex: none; display: grid; place-items: center; background: var(--ok); color: var(--on-color); }
+  .toast.out { opacity: 0; transform: translate(-50%, -8px); transition: opacity .4s, transform .4s; }
+  @keyframes toastin { from { opacity: 0; transform: translate(-50%, -12px); } to { opacity: 1; transform: translate(-50%, 0); } }
+  @media (prefers-reduced-motion: reduce) { .toast { animation: none; } }
+  /* Knappar längst ned: en tät botten bakom dem ända ned till menyn, så att inget skymtar under */
+  .kadd, .pagefoot { bottom: calc(88px + env(safe-area-inset-bottom, 0px)); }
+  .kadd, .pagefoot { padding: 12px 0; margin-top: 4px; background: var(--bg); }
+  .stickcta { box-shadow: 0 14px 0 var(--bg); }
+  body::after { background: var(--bg); height: calc(90px + env(safe-area-inset-bottom, 0px)); }
+  .credit { margin-bottom: 0; }
 </style>
 </head>
 <body>

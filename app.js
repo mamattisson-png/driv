@@ -1510,7 +1510,9 @@ function toast(msg) {
   const el = document.createElement("div");
   el.className = "toast";
   el.setAttribute("role", "status");
-  el.textContent = msg;
+  // Överst på skärmen, så att den aldrig hamnar över knapparna längst ned
+  el.innerHTML = `<span class="toastic" aria-hidden="true">${icon(/^(Högst|Skriv|Kunde)/.test(msg) ? "info" : "check", 16)}</span><span></span>`;
+  el.lastChild.textContent = msg;
   document.body.appendChild(el);
   setTimeout(() => el.classList.add("out"), 2600);
   setTimeout(() => el.remove(), 3100);
