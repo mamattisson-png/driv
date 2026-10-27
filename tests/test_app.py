@@ -87,14 +87,13 @@ def test_hem_visar_dagens_pass(page):
     start(page)
     seed(page, "S.log[shift(TODAY,-7)] = {workouts:[{dayId:S.plan.days[0].id,done:true,sets:{bankpress:[{kg:80,reps:8,ok:true}]}}],dailies:{},food:[]}")
     assert page.inner_text("#nav [data-tab=idag]").endswith("Hem")
-    # Hem visar bara dagens pass och om det är gjort; allt om passen finns under Träna
+    # Hem visar dagen i tur och ordning: först dagens pass, som kan startas direkt
     d = page.evaluate("({name: todaysPass().d.name, n: todaysPass().d.ex.length, title: passMuscles(todaysPass().d)})")
-    tile = page.inner_text(".passtile")
-    assert d["name"].upper() in tile.upper() and "Inte gjort än" in tile
-    assert page.locator("#app [data-pick], #app [data-focusstart]").count() == 0
-    assert page.locator(".weekrow .wsegs i").count() == 3 and "0 av 3 pass" in page.inner_text(".weekrow")
-    page.click(".passtile")
-    assert page.evaluate("tab") == "pass" and page.locator("[data-pick]").count() == 3
+    step = page.inner_text(".hstep >> nth=0")
+    assert d["name"] in step and f'{d["title"]} · {d["n"]} övningar' in step
+    assert "0 av 3 pass" in page.inner_text(".hsub") and page.locator("#app [data-pick]").count() == 0
+    go(page, "pass")
+    assert page.locator("[data-pick]").count() == 3
     assert f'{d["title"]} · {d["n"]} övningar' in page.inner_text(".daypass")
     page.click(".daypass [data-focusstart]")
     assert page.locator(".focus").count() == 1
@@ -439,8 +438,9 @@ def test_hem_visar_dagens_kalorier(page):
     seed(page, "logFood({name: 'Gröt', kcal: 300, protein: 10}, 0)")
     go(page, "idag")
     goal = page.evaluate("macros().kcal")
-    assert "300" in page.inner_text(".kcaltile") and f"{goal:,}".replace(",", "\xa0") in page.inner_text(".kcaltile")
-    page.click(".kcaltile")
+    food = page.inner_text(".hstep[data-go=kost]")
+    assert "300" in food and f"{goal:,}".replace(",", "\xa0") in food and "10 / " in food
+    page.click(".hstep[data-go=kost]")
     assert page.evaluate("tab") == "kost"
 
 
@@ -620,14 +620,14 @@ def test_kroppsvikt_en_gang_i_veckan_och_kalorimal(page):
     page.click("[data-wsave]")
     assert page.evaluate("S.weights['2026-10-22']") == 70 and page.evaluate("S.profile.weight") == 70
     assert page.evaluate("kcalGoal()") < 2360
-    # Därefter försvinner rutan från Hem; vikten över tid finns under Historik
-    assert page.locator("#wkg").count() == 0 and "VECKANS" not in page.inner_text("#app").upper()
+    # Därefter blir rutan en rad med veckans vikt; vikten över tid finns under Historik
+    assert page.locator("#wkg").count() == 0 and "Veckans vikt" in page.inner_text("#app")
     # Före vägningsdagen syns ingen ruta
     prof(page, "vikt")
     page.select_option("[data-weighday]", "4")
     page.evaluate("delete S.weights['2026-10-22']; save()")
     go(page, "idag")
-    assert "Veckans" not in page.inner_text("#app")
+    assert page.locator("#wkg").count() == 0 and "Väg dig fredag" in page.inner_text("#app")
     # Vikten kan döljas och visas igen
     prof(page, "vikt")
     page.select_option("[data-weighday]", "0")
@@ -1962,13 +1962,13 @@ def test_manga_vanner(page):
 def test_hem_visar_dailys_och_annan_traning(page):
     start(page)
     page.evaluate("""S.daily = [{id:'plankan',sets:3,reps:'45 s'},{id:'russian_twist',sets:3,reps:'20'}]; day().dailies.plankan = true; save(); render()""")
-    assert "1 av 2 klara" in page.text_content(".hlist") and "Protein 0 /" in page.text_content(".kcaltile")
+    assert "1 av 2 klara" in page.text_content(".hsteps") and "g protein" in page.text_content(".hsteps")
     # Dailys öppnas direkt på Hem
-    page.click('.hrow[data-trsheet="dailys"]')
+    page.click('.hstep[data-trsheet="dailys"]')
     assert page.locator(".dsheet").is_visible() and page.evaluate("tab") == "idag"
     page.click('.dsheet [data-dcheck="russian_twist"]')
     page.click('.dsheet .primary[data-trsheet=""]')
-    assert "Alla klara idag" in page.text_content(".hlist")
+    assert "Dailys klara" in page.text_content(".hsteps")
     page.click(".hrow[data-actnew]")
     assert page.evaluate("!!actSheet")
     assert not page.errors

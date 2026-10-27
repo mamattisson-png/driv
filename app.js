@@ -724,7 +724,7 @@ function weightCard() {
       <span class="muted small">${prev != null ? `${weightBadge(now - prev)} mot förra veckan` : "Första vägningen"}</span></div>
       <button class="small" data-wedit>Ändra</button></section>`;
   }
-  if (!weighed && weekdayOf(TODAY) < weighDay()) return "";
+  if (!weighed && !weightEditing && weekdayOf(TODAY) < weighDay()) return "";
   const date = weighed || TODAY;
   // Kompakt rad: dölja vikten görs under Profil → Vikt
   return `<section class="card wrow" aria-label="Veckans vägning"><div class="grow"><b>Veckans vägning</b>
@@ -870,29 +870,46 @@ const VIEWS = {
     const t = todaysPass(), d = t.d, w = t.w, done = w && w.done;
     const started = w && !done && d.ex.some(x => ((w.sets[x.id]) || []).some(s => s && s.ok));
     const passes = weekSummary(weekStart(TODAY)).passes, acts = actsOn(TODAY);
-    const greet = done ? "Bra jobbat idag." : started ? "Fortsätt där du var." : t.rest ? (acts.length ? "Snyggt, aktiv vilodag." : "Vilodag idag.") : "Dags att köra.";
     const nDone = d.ex.filter(x => exDone(w, x)).length;
-    const status = done ? `<span class="oktext">${icon("check", 14)}Klart</span>` : started ? `${nDone} av ${d.ex.length} övningar` : t.rest ? `Vila · nästa ${WD_LONG[weekdayOf(t.next)]}` : "Inte gjort än";
-    const passTile = `<button class="htile passtile ${done ? "ok" : t.rest ? "" : "go"}" data-tab="pass" aria-label="Dagens pass: ${esc(d.name)}, ${done ? "klart" : started ? "påbörjat" : t.rest ? "vilodag" : "inte gjort än"}. Till Träna">
-        <span class="klabel ${done ? "oktext" : "accent"}">${t.rest ? "Nästa pass" : "Dagens pass"}</span>
-        <span class="col"><b class="hname">${esc(d.name)}</b><span class="muted small">${status}</span>${acts.length ? `<span class="muted small">+ ${esc(acts.map(a => a.name).join(", "))}</span>` : ""}</span>
-        <span class="hlink">Till Träna${icon("right", 14)}</span></button>`;
-    const pct = m.kcal ? e.kcal / m.kcal : 0;
-    const kcalTile = `<button class="htile kcaltile" data-go="kost" aria-label="Kalorier: ${tnum(e.kcal)} av ${tnum(m.kcal)}"><span class="klabel">Kalorier</span>
-        <span class="ringbox">${ring(pct, 64, pct > 1.05 ? "over" : "")}<b>${Math.round(pct * 100)}%</b></span>
-        <span><b class="hnum">${tnum(e.kcal)}</b><span class="muted small"> / ${tnum(m.kcal)}</span></span>
-        <span class="muted small hprot">Protein ${Math.round(e.protein)} / ${m.protein} g</span></button>`;
-    // Resten av dagen: dailys och annan träning öppnas direkt härifrån
     const nD = S.daily.length, dDone = S.daily.filter(x => dailyDone(TODAY, x.id)).length;
-    const todo = `<section class="card hlist" aria-label="Idag">
-      <button class="hrow" data-trsheet="dailys"><span class="hricon">${ring(nD ? dDone / nD : 0, 30, nD && dDone === nD ? "ok" : "")}</span>
-        <span class="grow"><b>Dailys</b><span class="muted small">${!nD ? "Lägg till det du vill göra varje dag" : dDone === nD ? "Alla klara idag" : `${dDone} av ${nD} klara`}</span></span>${icon("right", 18)}</button>
-      <button class="hrow" data-actnew="" data-actdate="${TODAY}"><span class="hricon">${icon("aktivitet", 22)}</span>
-        <span class="grow"><b>Annan träning</b><span class="muted small">${acts.length ? esc(acts.map(a => `${a.name} ${+a.min} min`).join(", ")) : "Padel, löpning, promenad …"}</span></span>${icon(acts.length ? "plus" : "right", 18)}</button></section>`;
-    const segs = Math.max(S.plan.count, passes);
-    const week = `<section class="card weekrow" aria-label="Veckan: ${passes} av ${S.plan.count} pass"><span class="klabel">Veckan</span>
-      <span class="wsegs" aria-hidden="true">${Array.from({ length: segs }, (_, i) => `<i class="${i < passes ? "on" : ""}"></i>`).join("")}</span>
-      <b class="small">${passes} av ${S.plan.count} pass</b></section>`;
+    // Dagen som en kort lista i tur och ordning: passet, maten och dailys. Det som är gjort får en bock.
+    let n = 0;
+    const step = (ok, title, sub, attrs, body = "") => {
+      n++;
+      const num = `<span class="hnum2 ${ok ? "ok" : ""}" aria-hidden="true">${ok ? icon("check", 16) : n}</span>`;
+      const head = `${num}<span class="grow"><b>${title}</b><span class="muted small">${sub}</span></span>`;
+      return body ? `<section class="card hstep ${ok ? "ok" : ""}"><div class="hstephead">${head}</div>${body}</section>`
+        : `<button class="card hstep ${ok ? "ok" : ""}" ${attrs}><span class="hstephead">${head}${icon("right", 18)}</span></button>`;
+    };
+    const exN = `${d.ex.length} ${d.ex.length === 1 ? "övning" : "övningar"}`;
+    const passStep = t.rest
+      ? step(acts.length > 0, acts.length ? "Aktiv vilodag" : "Vilodag", `${acts.length ? esc(acts.map(a => a.name).join(", ")) : "Återhämtning idag"} · nästa pass ${WD_LONG[weekdayOf(t.next)]}`, "",
+        `<button class="wide hstepbtn" data-tab="pass">Kör ett pass ändå${icon("right", 16)}</button>`)
+      : done ? step(true, `${esc(d.name)} klart`, `${exN} · sparat`, `data-tab="pass"`)
+      : step(false, esc(d.name), started ? `${nDone} av ${exN} klara` : `${esc(passMuscles(d))} · ${exN}`, "",
+        `<button class="primary wide hstepbtn" data-focusstart="${d.id}">${icon("play", 16)}${started ? "Fortsätt" : "Starta"} ${esc(d.name)}</button>`);
+    const foodOk = m.kcal > 0 && e.kcal >= m.kcal * 0.9;
+    const foodStep = step(foodOk, foodOk ? "Dagens mat är loggad" : "Logga dagens mat",
+      `${tnum(e.kcal)} / ${tnum(m.kcal)} kcal · ${Math.round(e.protein)} / ${m.protein} g protein`, `data-go="kost"`);
+    const dailyStep = nD ? step(dDone === nD, dDone === nD ? "Dailys klara" : "Gör dina dailys", `${dDone} av ${nD} klara`, `data-trsheet="dailys"`) : "";
+
+    // Övrigt idag: rader som öppnar det man vill göra
+    const row = (ic, title, sub, attrs) => `<button class="hrow" ${attrs}><span class="hricon">${icon(ic, 22)}</span>
+      <span class="grow"><b>${title}</b><span class="muted small">${sub}</span></span>${icon("right", 18)}</button>`;
+    const ws = weekStart(TODAY), weighed = weekDates(ws).some(x => x <= TODAY && weights()[x] > 0);
+    const weighDue = !weighed && weekdayOf(TODAY) >= weighDay();
+    const weigh = S.hideWeight ? ""
+      : weightEditing || weighDue ? `<div class="hrow hweigh">${weightCard()}</div>`
+      : weighed ? row("vikt", "Veckans vikt", `${fmtNum(weekAvgWeight(ws))} kg${weekAvgWeight(shift(ws, -7)) != null ? ` · ${fmtNum(weekAvgWeight(ws) - weekAvgWeight(shift(ws, -7)))} kg mot förra veckan`.replace("· -", "· −") : ""}`, "data-wedit")
+      : row("vikt", "Veckans vägning", `Väg dig ${WD_LONG[weighDay()]}`, "data-wedit");
+    // Med vänner visas deras senaste pass med Peppa under listan; annars en rad hit
+    const hasFriends = account.step === "in" && social.friends.length > 0;
+    const friends = !sbEnabled || hasFriends ? "" : row("vanner", "Vänner",
+      account.step !== "in" ? "Logga in och träna med vänner" : "Bjud in en kompis och peppa varandra", account.step === "in" ? "data-gofriends" : `data-tab="vanner"`);
+    const other = `<h3 class="klabel hsec">Övrigt idag</h3><section class="card hlist" aria-label="Övrigt idag">
+      ${row("aktivitet", "Annan aktivitet", acts.length ? esc(acts.map(a => `${a.name} ${+a.min} min`).join(", ")) : "Logga löpning, padel, promenad m.m.", `data-actnew="" data-actdate="${TODAY}"`)}
+      ${weigh}${friends}</section>`;
+
     const lw = letterWeekToShow();
     const letter = !lw ? "" : (() => {
       const c = weekSummary(lw), recs = weekRecords(lw).length;
@@ -901,18 +918,18 @@ const VIEWS = {
         <button class="small" data-letter="${lw}">Visa</button><button class="small ghost iconbtn" data-letterclose="${lw}" aria-label="Stäng sammanfattningen">${icon("close", 18)}</button></div>`;
     })();
     const today = new Date().toLocaleDateString("sv-SE", { weekday: "long", day: "numeric", month: "long" });
+    const sub = done ? "Dagens pass är klart. Bra jobbat!" : started ? "Fortsätt där du var." : t.rest ? "Ingen planerad styrketräning idag." : `${esc(d.name)} står på schemat.`;
     return `<header class="homehead"><div class="brand"><img src="icons/icon-192-v2.png" alt=""><div class="ordbild"><span class="wordmark">DRIV</span><span class="slogan">Ditt mål. <em>Ditt driv.</em></span></div></div>
         <button class="gear avbtn" data-tab="profil" aria-label="Inställningar">${esc(profName().slice(0, 1).toUpperCase())}</button></header>
-      <div class="muted homedate">${cap(today)}</div>
-      <h1 class="greet">${greet}</h1>
-      <div class="htiles">${passTile}${kcalTile}</div>
-      ${todo}
-      ${week}
-      ${letter}
+      <div class="klabel homedate">${today}</div>
+      <h1 class="greet">Idag</h1>
+      <div class="muted hsub">${sub} <span class="nowrap">Vecka ${weekNo(TODAY)}: ${passes} av ${S.plan.count} pass.</span></div>
       ${accountNudge()}${installNudge()}
       ${friendsNudge()}
-      ${friendsHome()}
-      ${S.hideWeight ? "" : weighCardDue()}
+      <div class="hsteps">${passStep}${foodStep}${dailyStep}</div>
+      ${letter}
+      ${other}
+      ${hasFriends ? friendsHome() : ""}
       ${trSheet === "dailys" ? dailysSheet() : ""}`;
   },
 
