@@ -1418,22 +1418,32 @@ function renderModal() {
       const group = ids.filter(id => areaOf(id) === a);
       return group.length ? `<section class="pgroup2" data-group="${a}"><h3 class="klabel">${AREAS[a]}</h3>${group.map(row).join("")}</section>` : "";
     }).join("")}</div>
-    <div class="muted" id="nohits" hidden>Inga övningar matchar. Prova en annan kroppsdel eller utrustning.</div></div></div>`;
+    <div class="muted" id="nohits" hidden><span></span><button class="small" data-pickall hidden></button></div></div></div>`;
 }
 
-// Sökning gäller alla kroppsdelar; annars visas vald kroppsdel. Utrustningen filtrerar alltid.
+document.addEventListener("click", ev => {
+  if (!ev.target.closest || !ev.target.closest("[data-pickall]") || !modal || !modal.pick) return;
+  modal.area = "alla"; render(); filterPicker();
+});
+// Sökningen gäller inom vald kroppsdel och utrustning. Finns inget där men i andra kroppsdelar
+// erbjuds en knapp som söker i alla.
 function filterPicker() {
   const q = norm((modal && modal.q || "").trim());
-  let shown = 0;
+  let shown = 0, elsewhere = 0;
   for (const el of document.querySelectorAll(".pick")) {
-    const hit = (q ? el.dataset.q.includes(q) : modal.area === "alla" || el.dataset.area === modal.area)
-      && (modal.gear === "alla" || el.dataset.gear === modal.gear);
+    const match = (!q || el.dataset.q.includes(q)) && (modal.gear === "alla" || el.dataset.gear === modal.gear);
+    const hit = match && (modal.area === "alla" || el.dataset.area === modal.area);
     el.hidden = !hit;
-    if (hit) shown++;
+    if (hit) shown++; else if (match) elsewhere++;
   }
   for (const g of document.querySelectorAll(".pgroup2")) g.hidden = !g.querySelector(".pick:not([hidden])");
   const none = document.getElementById("nohits");
-  if (none) none.hidden = shown > 0;
+  if (!none) return;
+  none.hidden = shown > 0;
+  const btn = none.querySelector("[data-pickall]");
+  none.firstChild.textContent = elsewhere && modal.area !== "alla" ? `Inget i ${AREAS[modal.area]} matchar.` : "Inga övningar matchar. Prova en annan kroppsdel eller utrustning.";
+  btn.hidden = !(elsewhere && modal.area !== "alla");
+  btn.textContent = `Visa ${elsewhere} i alla kroppsdelar`;
 }
 
 // ---------- Logg ----------
@@ -1861,9 +1871,9 @@ document.addEventListener("click", ev => {
 
 document.addEventListener("change", ev => {
   const t = ev.target, ds = t.dataset;
-  // Väljarens filter: kroppsdel nollställer sökningen och börjar högst upp
+  // Väljarens filter: sökningen står kvar och gäller inom vald kroppsdel; listan börjar högst upp
   if ((ds.areasel !== undefined || ds.gearsel !== undefined) && modal && modal.pick) {
-    if (ds.areasel !== undefined) { modal.area = t.value; modal.q = ""; } else modal.gear = t.value;
+    if (ds.areasel !== undefined) modal.area = t.value; else modal.gear = t.value;
     render(); filterPicker();
     const s = document.querySelector(".picksheet");
     if (s && ds.areasel !== undefined) s.scrollTop = 0;

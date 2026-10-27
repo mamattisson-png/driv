@@ -1550,10 +1550,16 @@ def test_valj_ovning_efter_kroppsdel_och_utrustning(page):
     assert visible() and all(v == "brost/db" for v in visible())
     page.select_option("[data-areasel]", "armar")
     assert visible() and all(v == "armar/db" for v in visible())
-    # Sökning gäller alla kroppsdelar
+    # Sökningen gäller inom vald kroppsdel; finns inget där erbjuds en sökning i alla
     page.select_option("[data-gearsel]", "alla")
     page.fill("#exsearch", "stretch")
+    assert not visible() and "Inget i" in page.inner_text("#nohits")
+    page.click("[data-pickall]")
     assert any(v.startswith("stretch/") for v in visible())
+    # Vald kroppsdel och sökning tillsammans: Stretch + rygg visar bara stretchövningar
+    page.fill("#exsearch", "rygg")
+    page.select_option("[data-areasel]", "stretch")
+    assert page.input_value("#exsearch") == "rygg" and visible() and all(v.startswith("stretch/") for v in visible())
     # Instruktionen har en väg tillbaka till listan
     page.fill("#exsearch", "")
     page.click('.pick:not([hidden]) .thumb >> nth=0')
