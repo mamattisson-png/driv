@@ -1235,6 +1235,24 @@
   .foodsheet .qadd b { font-weight: 500; }
   .foodsheet .qplus { width: 34px; height: 34px; flex: none; border-radius: 17px; background: var(--card-2); color: var(--accent-text); display: grid; place-items: center; font-size: 15px; }
   .qmore { margin-top: 2px; }
+
+  /* Kost: alla måltider i ett kort och en enda knapp för att lägga till, längst ned ovanför menyn */
+  .kdaycard { padding: 4px 16px; }
+  .kmsec { padding: 10px 0 8px; }
+  .kmsec + .kmsec { border-top: 1px solid var(--line); }
+  .kmhead { display: flex; align-items: center; gap: 10px; min-height: 36px; }
+  .kmhead h2 { margin: 0; font-size: 16px; font-weight: 600; text-align: left; }
+  .kmhead .kicon { color: var(--accent-text); }
+  .kmsec.empty .kmhead h2, .kmsec.empty .kicon { color: var(--muted); }
+  .kmsec.empty { padding: 4px 0; }
+  .kmsum { font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .kmsec .krow { padding: 7px 0 7px 30px; border-top: 0; }
+  .kmsec .krow + .krow { border-top: 0; }
+  .kmsec .krow b { font-size: 15px; font-weight: 400; }
+  .kmsec .kkcal { font-size: 14px; }
+  .kadd { position: sticky; bottom: calc(100px + env(safe-area-inset-bottom, 0px)); z-index: 3; display: flex; gap: 8px; margin-top: 4px; }
+  .kaddmain { min-height: 56px; border-radius: 18px; font-size: 17px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .kadd .kscan { width: 56px; height: 56px; border-radius: 18px; }
 </style>
 </head>
 <body>

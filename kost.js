@@ -337,7 +337,7 @@ const sumKcal = items => items.reduce((a, f) => a + (+f.kcal || 0), 0);
 const mealTarget = (meal, m) => Math.round(m.kcal * MEALS[meal][1] / 10) * 10;
 
 // En måltid i översikten: rubrik med summa och en rad per sak (namn och mängd till vänster, kcal
-// till höger). Tomma måltider visas inte; allt läggs till med en enda knapp.
+// till höger). Alla måltider står i ett kort; allt läggs till med en enda knapp längst ned.
 const MEAL_SVG = [
   '<path d="M3 18h18M6 14a6 6 0 0 1 12 0M12 4v3M4.9 8.9l1.4 1.4M19.1 8.9l-1.4 1.4"/>',
   '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
@@ -349,15 +349,12 @@ const foodTitle = f => { const a = amountText(f); return isEst(f) ? itemName(f) 
 function mealCard(meal, L) {
   const items = L.food.map((f, i) => ({ f, i })).filter(x => (x.f.meal ?? -1) === meal);
   const name = meal < 0 ? "Övrigt" : MEALS[meal][0];
-  // En tom måltid är en streckad rad att lägga till i
-  if (!items.length) return meal < 0 ? "" : `<section class="mealempty" aria-label="${name}"><h2>${name}</h2>
-    <button class="ghost" data-addto="${meal}" data-focusname>+ Lägg till</button></section>`;
+  if (!items.length) return meal < 0 ? "" : `<section class="kmsec empty" aria-label="${name}"><div class="kmhead">${mealIcon(meal)}<h2 class="grow">${name}</h2><span class="muted small">Inget än</span></div></section>`;
   const sum = sumKcal(items.map(x => x.f)), prot = items.reduce((a, x) => a + (+x.f.protein || 0), 0);
-  return `<section class="card kmeal" aria-label="${name}">
-    <div class="khead"><h2 class="grow">${name}</h2><span>${tnum(sum)} kcal · ${fmtNum(Math.round(prot))} g</span></div>
+  return `<section class="kmsec" aria-label="${name}">
+    <div class="kmhead">${mealIcon(meal)}<h2 class="grow">${name}</h2><span class="kmsum">${tnum(sum)} kcal<span class="muted"> · ${fmtNum(Math.round(prot))} g</span></span></div>
     ${items.map(({ f, i }) => `<button class="krow ${isEst(f) ? "est" : ""}" data-fooditem="${i}">
       <span class="grow"><b>${foodTitle(f)}</b>${isEst(f) ? `<span class="muted small">ungefärligt</span>` : ""}</span><span class="kkcal">${tnum(f.kcal)}</span></button>`).join("")}
-    ${meal >= 0 ? `<button class="ghost small kmore" data-addto="${meal}" data-focusname>+ Lägg till</button>` : ""}
   </section>`;
 }
 
@@ -505,10 +502,10 @@ function kostView() {
   m.kcal += burnedOn(logDate());
   return `<h1>Kost</h1>
     ${dayRing(e, m)}
-    <div class="kquick"><button class="kask" data-addto="${mealByClock()}" data-focusname>Vad åt du? <span>t.ex. 2 dl mjölk och 1 banan</span></button>
-      ${CAN_SCAN ? `<button class="kscan" data-scan aria-label="Skanna streckkod">${icon("barcode", 22)}</button>` : ""}</div>
     ${!L.food.length && yesterdayFood() ? `<button class="klink kday" data-repeatday>Samma mat som igår<span class="muted"> · hela dagen, ${tnum(sumKcal(yesterdayFood()))} kcal</span></button>` : ""}
-    ${MEALS.map((_, i) => mealCard(i, L)).join("")}${mealCard(-1, L)}
+    <section class="card kdaycard" aria-label="Måltider">${MEALS.map((_, i) => mealCard(i, L)).join("")}${mealCard(-1, L)}</section>
+    <div class="kadd"><button class="primary grow kaddmain" data-addto="${mealByClock()}" data-focusname>${icon("plus", 20)}Lägg till mat</button>
+      ${CAN_SCAN ? `<button class="kscan" data-scan aria-label="Skanna streckkod">${icon("barcode", 22)}</button>` : ""}</div>
     <div class="muted small credit">Näringsvärden: Livsmedelsverkets livsmedelsdatabas (CC BY 4.0) och egna uppskattningar.</div>
     ${recipeEdit ? recipeSheet() : recipeList ? recipesSheet() : foodSheet ? addSheet(m) : foodItem != null ? itemSheet() : ""}`;
 }
