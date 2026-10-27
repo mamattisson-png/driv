@@ -1394,13 +1394,13 @@ function renderModal() {
   const areas = Object.keys(AREAS).filter(a => forDaily || a !== "kondition");
   if (!modal.area) {
     const t = forDaily ? null : (modal.pick.startsWith("draft:") ? draft.days[+modal.pick.slice(6)] : dayById(modal.pick)).type;
-    modal.area = replacing ? areaOf(replacing.id) : forDaily ? "mage" : { push: "brost", cpush: "brost", pull: "rygg", cpull: "rygg", legs: "ben", lower: "ben", clegs: "ben" }[t] || "alla";
+    modal.area = replacing ? areaOf(replacing.id) : forDaily ? "mage" : { push: "push", cpush: "push", pull: "pull", cpull: "pull", legs: "legs", lower: "legs", clegs: "legs" }[t] || "alla";
   }
   modal.gear = modal.gear || "alla";
   const have = list.map(e => e.id);
   const ids = Object.keys(EX).filter(id => forDaily || EX[id].cat !== "cardio");
-  const row = id => `<div class="pick ${have.includes(id) ? "have" : ""}" data-area="${areaOf(id)}" data-gear="${gearGroup(id)}"
-      data-q="${esc(norm(EX[id].name + " " + EX[id].muscles + " " + AREAS[areaOf(id)] + " " + (gearOf(id) ? GEAR[gearOf(id)][0] : "")))}">
+  const row = id => `<div class="pick ${have.includes(id) ? "have" : ""}" data-area="${areaOf(id)}" data-cat="${EX[id].cat}" data-gear="${gearGroup(id)}"
+      data-q="${esc(norm(EX[id].name + " " + EX[id].muscles + " " + AREAS[areaOf(id)] + " " + (PASS_WORDS[EX[id].cat] || "") + " " + (gearOf(id) ? GEAR[gearOf(id)][0] : "")))}">
       ${thumb(id, "pt")}<div class="grow"><div class="pname">${esc(EX[id].name)}</div><div class="muted small">${esc(EX[id].muscles)}</div></div>
       ${have.includes(id) ? `<span class="pickhave" aria-label="Finns redan">${icon("check", 18)}</span>`
         : `<button class="pickadd" data-add="${id}" aria-label="${replacing ? "Välj" : "Lägg till"} ${esc(EX[id].name)}">${icon(replacing ? "right" : "plus", 20)}</button>`}</div>`;
@@ -1411,7 +1411,9 @@ function renderModal() {
     <div class="psearch">${icon("search", 18)}<input id="exsearch" type="search" placeholder="Sök övning eller muskel" value="${esc(modal.q || "")}" autocomplete="off" aria-label="Sök övning"></div>
     <div class="pfilters">
       <label class="pfilter ${modal.area !== "alla" ? "on" : ""}"><span class="sr">Kroppsdel</span><select data-areasel aria-label="Kroppsdel">
-        <option value="alla">Alla kroppsdelar</option>${areas.map(a => `<option value="${a}" ${modal.area === a ? "selected" : ""}>${AREAS[a]}</option>`).join("")}</select>${icon("down", 16)}</label>
+        <option value="alla">Alla övningar</option>
+        <optgroup label="Pass">${Object.entries(PASS_FILTER).map(([k, n]) => `<option value="${k}" ${modal.area === k ? "selected" : ""}>${n}</option>`).join("")}</optgroup>
+        <optgroup label="Kroppsdel">${areas.map(a => `<option value="${a}" ${modal.area === a ? "selected" : ""}>${AREAS[a]}</option>`).join("")}</optgroup></select>${icon("down", 16)}</label>
       <label class="pfilter ${modal.gear !== "alla" ? "on" : ""}"><span class="sr">Utrustning</span><select data-gearsel aria-label="Utrustning">
         <option value="alla">All utrustning</option>${Object.entries(GEAR_FILTER).map(([k, n]) => `<option value="${k}" ${modal.gear === k ? "selected" : ""}>${n}</option>`).join("")}</select>${icon("down", 16)}</label></div>
     <div class="picklist">${areas.map(a => {
@@ -1425,6 +1427,11 @@ document.addEventListener("click", ev => {
   if (!ev.target.closest || !ev.target.closest("[data-pickall]") || !modal || !modal.pick) return;
   modal.area = "alla"; render(); filterPicker();
 });
+// Passtyper att filtrera på, och ord som gör att sökningen hittar dem ("pull" ger alla dragövningar)
+const PASS_FILTER = { push: "Push: bröst, axlar, triceps", pull: "Pull: rygg, biceps", legs: "Ben: lår, säte, vader" };
+const PASS_WORDS = { push: "push overkropp", pull: "pull overkropp", legs: "legs ben underkropp", core: "core bal" };
+const inArea = (el, a) => a === "alla" || (PASS_FILTER[a] ? el.dataset.cat === a : el.dataset.area === a);
+const areaLabel = a => PASS_FILTER[a] ? PASS_FILTER[a].split(":")[0] : AREAS[a];
 // Sökningen gäller inom vald kroppsdel och utrustning. Finns inget där men i andra kroppsdelar
 // erbjuds en knapp som söker i alla.
 function filterPicker() {
@@ -1432,7 +1439,7 @@ function filterPicker() {
   let shown = 0, elsewhere = 0;
   for (const el of document.querySelectorAll(".pick")) {
     const match = (!q || el.dataset.q.includes(q)) && (modal.gear === "alla" || el.dataset.gear === modal.gear);
-    const hit = match && (modal.area === "alla" || el.dataset.area === modal.area);
+    const hit = match && inArea(el, modal.area);
     el.hidden = !hit;
     if (hit) shown++; else if (match) elsewhere++;
   }
@@ -1441,9 +1448,9 @@ function filterPicker() {
   if (!none) return;
   none.hidden = shown > 0;
   const btn = none.querySelector("[data-pickall]");
-  none.firstChild.textContent = elsewhere && modal.area !== "alla" ? `Inget i ${AREAS[modal.area]} matchar.` : "Inga övningar matchar. Prova en annan kroppsdel eller utrustning.";
+  none.firstChild.textContent = elsewhere && modal.area !== "alla" ? `Inget i ${areaLabel(modal.area)} matchar.` : "Inga övningar matchar. Prova en annan kroppsdel eller utrustning.";
   btn.hidden = !(elsewhere && modal.area !== "alla");
-  btn.textContent = `Visa ${elsewhere} i alla kroppsdelar`;
+  btn.textContent = `Visa ${elsewhere} bland alla övningar`;
 }
 
 // ---------- Logg ----------
