@@ -1757,3 +1757,19 @@ def test_uppvarmning_fore_arbetsseten(page):
     assert w["warm"]["bankpress"] == [{"ok": True, "reps": 8, "kg": 32.5}, {"kg": 67.5, "ok": True, "reps": 5}]
     # Uppvärmningen räknas inte som set, och ingen vila startar
     assert w["sets"] == {} and page.evaluate("!!rest.el") is False
+
+
+def test_alla_ovningar_ar_kompletta(page):
+    start(page)
+    bad = page.evaluate("""() => { const names = new Set(), out = [];
+      for (const [id, e] of Object.entries(EX)) {
+        if (names.has(e.name.toLowerCase())) out.push(id + ': namnet finns redan');
+        names.add(e.name.toLowerCase());
+        if (!e.A || !figure(id).includes('<svg')) out.push(id + ': ingen figur');
+        if (!['stretch', 'cardio'].includes(e.cat) && !(e.prim && e.prim.length)) out.push(id + ': saknar huvudmuskel');
+        if (!e.cues || e.cues.length < 2) out.push(id + ': för få instruktioner');
+        if (!AREAS[areaOf(id)]) out.push(id + ': ingen kroppsdel');
+      }
+      return out; }""")
+    assert bad == []
+    assert page.evaluate("Object.keys(EX).length") >= 180
