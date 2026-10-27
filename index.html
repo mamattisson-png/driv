@@ -926,6 +926,23 @@
   .dangertext { color: var(--bad-text); }
   .oktext .ic, .passok .ic { display: inline-block; vertical-align: -2px; margin-right: 3px; }
   .hring-bg { fill: none; stroke: var(--line); stroke-width: 5; }
+  .dstart { width: 44px; height: 44px; padding: 0; border-radius: 99px; flex: none; display: grid; place-items: center;
+    color: var(--accent-text); border-color: var(--accent); background: transparent; }
+  .dtover { z-index: 12; }
+  .dtmid { display: flex; align-items: center; justify-content: center; gap: 12px; margin: 14px 0 6px; }
+  .fig.dtfig { width: 96px; height: auto; background: var(--bg); border-radius: 12px; flex: none; }
+  .dtring { position: relative; width: 168px; height: 168px; flex: none; }
+  .dtring .hring-fg { stroke: var(--accent); transition: stroke-dasharray .25s linear; }
+  .dtring .dt-rest .hring-fg { stroke: var(--muted); }
+  .dtring .ok .hring-fg { stroke: var(--ok); }
+  .dtcenter { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .dt-time { font-size: 40px; font-variant-numeric: tabular-nums; line-height: 1.1; }
+  .dtlabel { color: var(--muted); font-size: 14px; }
+  .dtcheck { color: var(--ok-text); }
+  .dtdots { display: flex; justify-content: center; gap: 8px; margin: 8px 0 16px; }
+  .dtdot { width: 10px; height: 10px; border-radius: 99px; background: var(--line-strong); }
+  .dtdot.on { background: var(--accent); }
+  .dtdot.ok { background: var(--ok); }
   .hring-fg { fill: none; stroke: var(--ok); stroke-width: 5; stroke-linecap: round; }
   .hring.over .hring-fg { stroke: var(--bad); }
   .hring.ok .hring-fg { stroke: var(--ok); }
@@ -981,7 +998,7 @@
   .ttile { display: flex; flex-direction: column; justify-content: space-between; align-items: flex-start; gap: 8px; min-height: 140px; padding: 14px 16px;
     border-radius: 22px; background: var(--card); border: 1px solid var(--line); color: var(--text); text-align: left; min-width: 0; }
   .ttile .muted { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
-  .dsheet .sheeth { font: 800 22px "Unbounded", sans-serif; margin: 2px 0 8px; }
+  .dsheet .sheeth, .dtsheet .sheeth { font: 800 22px "Unbounded", sans-serif; margin: 2px 0 8px; }
   .dsheet .dailies { padding: 0; }
   .sheetbtns { margin-top: 16px; }
 

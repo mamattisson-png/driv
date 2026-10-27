@@ -799,7 +799,7 @@ function render() {
   // Kugghjulet behövs inte i upplägget eller i fokusläget, där det skulle ligga över texten
   const gear = passDone || tab === "upplagg" || tab === "idag" || tab === "profil" || tab === "vanner" || tab === "pass" || tab === "recept" ? "" : `<button class="gear ${tab === "profil" ? "on" : ""}" data-tab="profil" aria-label="Profil och inställningar">${icon("profil", 20)}</button>`;
   document.getElementById("app").innerHTML = passDone ? passDoneView()
-    : gear + banner + VIEWS[tab]() + (modal ? renderModal() : "") + (actSheet ? actSheetView() : "");
+    : gear + banner + VIEWS[tab]() + (modal ? renderModal() : "") + (actSheet ? actSheetView() : "") + (dtimer ? dtimerView() : "");
   if (modal && modal.pick) filterPicker();
   if (tab === "recept" && typeof filterRecipes === "function") filterRecipes();
   afterFocusRender();
@@ -840,7 +840,7 @@ function dailiesCard(inPass, banded) {
       ? `<label class="runf"><input class="run" type="number" inputmode="decimal" step="0.1" min="0" value="${v.km || ""}" data-run="${id}" data-f="km" aria-label="Kilometer"><span>km</span></label>
          <label class="runf"><input class="run" type="number" inputmode="numeric" min="0" value="${v.min || ""}" data-run="${id}" data-f="min" aria-label="Minuter"><span>min</span></label>
          <button class="done-btn big ${ok ? "on" : ""}" data-runcheck="${id}" aria-pressed="${ok}" aria-label="${esc(EX[id].name)}: ${ok ? "klar" : "fyll i km eller minuter"}">${check}</button>`
-      : `<button class="done-btn big ${ok ? "on" : ""}" data-dcheck="${id}" aria-pressed="${ok}" aria-label="${esc(EX[id].name)} klar">${check}</button>`;
+      : `${ok || EX[id].cat === "cardio" ? "" : `<button class="dstart" data-dstart="${id}" aria-label="Starta ${esc(EX[id].name)}">${icon("play", 16)}</button>`}<button class="done-btn big ${ok ? "on" : ""}" data-dcheck="${id}" aria-pressed="${ok}" aria-label="${esc(EX[id].name)} klar">${check}</button>`;
     return `<div class="daily ${ok ? "ok" : ""}">${thumb(id, "dt")}<div class="grow"><b>${esc(EX[id].name)}</b>
       ${sub ? `<span class="muted small">${sub}</span>` : ""}</div>${its > 1 ? `<span class="muted small streak">${its} dagar i rad</span>` : ""}${ctl}</div>`;
   }).join("");

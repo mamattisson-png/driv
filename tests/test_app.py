@@ -1957,3 +1957,36 @@ def test_manga_vanner(page):
     page.click("[data-unfriend]")
     page.wait_for_function("social.friends.length === 29")
     assert page.locator(".fsheet").count() == 0
+
+
+def test_starta_en_daily_med_timer(page):
+    start(page)
+    page.evaluate("""S.daily = [{id:'plankan',sets:2,reps:'45 s'},{id:'russian_twist',sets:2,reps:'20'}]; save(); render()""")
+    page.click('[data-tab="pass"]')
+    page.click('[data-trsheet="dailys"]')
+    # Plankan på tid: först några sekunder att komma i position, sedan nedräkning från 45
+    page.click('[data-dstart="plankan"]')
+    assert "0:45" in page.inner_text(".dtsheet") and "Set 1 av 2" in page.text_content(".dtsheet")
+    page.click("[data-dtgo]")
+    assert page.evaluate("dtimer.phase") == "prep"
+    page.evaluate("dtimer.end = Date.now()")
+    page.wait_for_function("dtimer.phase === 'work' && dtimer.total === 45")
+    page.evaluate("dtimer.end = Date.now()")
+    # Efter setet: vila, sedan set 2; sista setet bockar av dailyn
+    page.wait_for_function("dtimer.phase === 'rest'")
+    page.click("[data-dtskip]")
+    assert "Set 2 av 2" in page.text_content(".dtsheet")
+    page.click("[data-dtgo]")
+    page.evaluate("dtimer.end = Date.now()")
+    page.wait_for_function("dtimer.phase === 'work'")
+    page.click("[data-dtset]")
+    assert page.evaluate("dtimer.phase") == "done" and page.evaluate("dailyDone(TODAY, 'plankan')")
+    page.click(".dtsheet [data-dtclose] >> nth=-1")
+    assert not page.locator(".dtsheet").count() and not page.locator('[data-dstart="plankan"]').count()
+    # Reps-övningar: Klart set och vila mellan seten
+    page.click('[data-dstart="russian_twist"]')
+    page.click("[data-dtset]")
+    assert page.evaluate("dtimer.phase") == "rest"
+    page.click("[data-dtclose]")
+    assert not page.evaluate("dailyDone(TODAY, 'russian_twist')")
+    assert not page.errors
