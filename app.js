@@ -1511,11 +1511,13 @@ function toast(msg) {
   el.className = "toast";
   el.setAttribute("role", "status");
   // Överst på skärmen, så att den aldrig hamnar över knapparna längst ned
-  el.innerHTML = `<span class="toastic" aria-hidden="true">${icon(/^(Högst|Skriv|Kunde)/.test(msg) ? "info" : "check", 16)}</span><span></span>`;
+  el.innerHTML = `<span class="toastic" aria-hidden="true">${icon(/^(Högst|Skriv|Kunde)/.test(msg) ? "info" : "check", 22)}</span><span></span>`;
   el.lastChild.textContent = msg;
   document.body.appendChild(el);
-  setTimeout(() => el.classList.add("out"), 2600);
-  setTimeout(() => el.remove(), 3100);
+  // Ett nytt besked ersätter det förra
+  document.querySelectorAll(".toast").forEach(t => t !== el && t.remove());
+  setTimeout(() => el.classList.add("out"), 1100);
+  setTimeout(() => el.remove(), 1600);
 }
 
 // Veckans plus: hur många övningar som gått upp, stått still eller gått ned mot förra veckan
