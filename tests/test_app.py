@@ -775,6 +775,7 @@ def test_uppskattningar_raknas_inte_dubbelt(page):
     # En uppskattning visas som just det och kan inte bli favorit
     page.evaluate("day().food.push({name: 'Uppskattning', kcal: 600, protein: 30, meal: 3, est: true}); render()")
     assert "≈ Uppskattning" in page.inner_text("#app")
+    page.click('[data-kmeal="3"]')   # middagen fälls ut
     page.click(f'[data-fooditem="{page.evaluate("day().food.length - 1")}"]')
     assert page.locator("[data-itemfav]").count() == 0
 
@@ -1796,3 +1797,39 @@ def test_fett_och_fibrer_fran_livsmedelsverket(page):
     text = page.inner_text(".dayring")
     assert "Fett" in text and "Fibrer" in text and "/ 35 g" in text
     assert page.evaluate("eaten().fiber") > 0
+
+
+def test_kost_veckan_maltider_och_recept_med_uppskattade_mangder(page):
+    start(page)
+    seed(page, """S.log[shift(TODAY, -1)] = {workouts:[], dailies:{}, food:[{name:'Pasta', kcal:4000, protein:25, meal:1}]};
+      day().food.push({name:'Gröt', kcal:300, protein:10, meal:0}, {name:'Kaffe', kcal:10, protein:1, meal:0})""")
+    go(page, "kost")
+    # Veckan: en stapel per dag, över målet syns, och en tidigare dag går att öppna
+    if page.evaluate("weekdayOf(TODAY) > 0"):
+        assert page.locator(f'[data-kday="{page.evaluate("shift(TODAY, -1)")}"] .ktr i.over').count() == 1
+    assert "KVAR IDAG" in page.inner_text(".ksum").upper() and "310 av" in page.inner_text(".ksum")
+    # Måltiderna är rader; frukosten fälls ut och ihop
+    page.evaluate("kostOpen = -9; render()")
+    assert "Gröt, Kaffe" in page.inner_text('[data-kmeal="0"]') and page.locator("[data-fooditem]").count() == 0
+    page.click('[data-kmeal="0"]')
+    assert page.locator("[data-fooditem]").count() == 2
+    # En enda knapp lägger till; recept utan mängder får uppskattade mängder för antalet portioner
+    page.click(".kaddmain")
+    page.click("[data-rlist]")
+    page.click("[data-rnew]")
+    page.fill("#rname", "Köttfärssås")
+    page.fill("#ring", "nötfärs, lök, 2 dl grädde")
+    page.click("[data-ringadd]")
+    items = page.evaluate("recipeEdit.items.map(i => [i.name, i.amt.n, i.amt.unit, !!i.est])")
+    assert items == [["Nötfärs", 500, "g", True], ["Lök", 1, "st", True], ["Vispgrädde", 2, "dl", False]]
+    page.click('[data-rport="1"]')   # 5 portioner: bara de uppskattade växer
+    assert page.evaluate("recipeEdit.items.map(i => i.amt.n)")[0] == 625 and page.evaluate("recipeEdit.items[2].amt.n") == 2
+    page.click('[data-ristep="1"][data-dir="-1"]')
+    page.click("[data-rsave]")
+    # Ett öppnat recept: välj antal portioner och lägg till
+    page.click('[data-ropen="0"]')
+    page.click('[data-rn][data-dir="1"]')
+    kcal = page.evaluate("perPortion(S.recipes[0]).kcal")
+    page.click(".sheet [data-ruse]")
+    f = page.evaluate("day().food.at(-1)")
+    assert f["name"] == "Köttfärssås" and f["qty"] == 1.5 and abs(f["kcal"] - kcal * 1.5) <= 1
