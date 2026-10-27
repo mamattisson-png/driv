@@ -19,7 +19,4 @@ jobs:
           pip install -r tests/requirements.txt
           python -m playwright install --with-deps chromium
       - name: Kör testerna
-        run: |
-          python -m pytest tests -v -rf > out.txt 2>&1 || true
-          grep -E '^(FAILED|ERROR)|passed|failed' out.txt | sed 's/^/::error::/'
-          grep -E '^E  ' out.txt | head -30 | sed 's/^/::warning::/'
+        run: python -m pytest tests -v
