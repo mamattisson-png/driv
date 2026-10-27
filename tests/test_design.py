@@ -113,11 +113,15 @@ def views(page):
     page.fill("#fname", "bolognese och 2 ägg")
     page.click(".sheet h2")
     yield "Lägg till mat", ".sheet"
-    page.evaluate("recipeEdit = { idx: null, name: 'Lasagne', portions: 4, items: [{ name: 'Nötfärs', text: '500 g nötfärs', kcal: 1100, protein: 95 }], msg: 'Känns inte igen: x' }; render()")
-    yield "Recept", ".sheet"
-    page.evaluate("recipeEdit = null; S.recipes = [{ name: 'Lasagne', portions: 4, items: [{ name: 'Nötfärs', text: '500 g', kcal: 1100, protein: 95 }] }]; recipeList = true; render()")
-    yield "Dina recept", ".sheet"
-    page.evaluate("recipeList = false; render()")
+    page.evaluate("tab = 'recept'; recipeEdit = { idx: null, name: 'Lasagne', portions: 4, items: [{ name: 'Nötfärs', text: '500 g nötfärs', kcal: 1100, protein: 95 }], msg: 'Känns inte igen: x' }; render()")
+    page.fill("#ring", "nötfärs, lök")
+    page.click("[data-ringadd]")
+    yield "Recept", "#app"
+    page.evaluate("recipeEdit = null; S.recipes = [{ name: 'Lasagne', portions: 4, items: [{ name: 'Nötfärs', text: '500 g', kcal: 1100, protein: 95, fat: 60, fiber: 0 }] }, { name: 'Tacos', portions: 4, items: [] }, { name: 'Chili', portions: 4, items: [] }, { name: 'Gryta', portions: 4, items: [] }]; render()")
+    yield "Dina recept", "#app"
+    page.evaluate("recipeOpen = { idx: 0, n: 1 }; render()")
+    yield "Ett recept", "#app"
+    page.evaluate("recipeOpen = null; tab = 'kost'; render()")
     page.click("#faddbtn")
     page.click('[data-fooditem="0"]')
     yield "Ändra mat", ".sheet"

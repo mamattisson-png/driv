@@ -604,10 +604,11 @@ function macros() {
   // Fibrer enligt de nordiska näringsrekommendationerna: minst 25 g för kvinnor och 35 g för män
   return { kcal, protein, fat, carbs: Math.max(0, Math.round((kcal - protein * 4 - fat * 9) / 4)), fiber: S.profile.sex === "f" ? 25 : 35 };
 }
+// Fett och fibrer finns bara på mat från de vanliga livsmedlen och recept; known räknar hur många som har dem
 function eaten(date = logDate()) {
-  return (S.log[date] ? S.log[date].food : []).reduce(
-    (a, f) => ({ kcal: a.kcal + (+f.kcal || 0), protein: a.protein + (+f.protein || 0), fat: a.fat + (+f.fat || 0), fiber: a.fiber + (+f.fiber || 0) }),
-    { kcal: 0, protein: 0, fat: 0, fiber: 0 });
+  return (S.log[date] ? S.log[date].food : []).reduce((a, f) => ({ kcal: a.kcal + (+f.kcal || 0), protein: a.protein + (+f.protein || 0),
+    fat: a.fat + (+f.fat || 0), fiber: a.fiber + (+f.fiber || 0), known: a.known + (f.fat != null ? 1 : 0), n: a.n + 1 }),
+    { kcal: 0, protein: 0, fat: 0, fiber: 0, known: 0, n: 0 });
 }
 
 // ---------- Veckojämförelse ----------
@@ -792,14 +793,15 @@ function render() {
   document.body.classList.toggle("onboard", tab === "upplagg" && !S.setupDone);
   document.body.classList.toggle("infocus", inFocus);
   nav.innerHTML = TABS.map(([id, ic, lbl]) =>
-    `<button data-tab="${id}" class="${tab === id ? "on" : ""}" ${tab === id ? 'aria-current="page"' : ""}>${icon(ic, 22)}${lbl}</button>`).join("");
+    `<button data-tab="${id}" class="${tab === id || (tab === "recept" && id === "kost") ? "on" : ""}" ${tab === id ? 'aria-current="page"' : ""}>${icon(ic, 22)}${lbl}</button>`).join("");
   const banner = editDate && (tab === "kost" || (tab === "pass" && focus && !editing))
     ? `<div class="editbar">Du ändrar <b>${dateLabel(editDate)}</b><button class="small" data-editdone>Klar</button></div>` : "";
   // Kugghjulet behövs inte i upplägget eller i fokusläget, där det skulle ligga över texten
-  const gear = passDone || tab === "upplagg" || tab === "idag" || tab === "profil" || tab === "vanner" || tab === "pass" ? "" : `<button class="gear ${tab === "profil" ? "on" : ""}" data-tab="profil" aria-label="Profil och inställningar">${icon("profil", 20)}</button>`;
+  const gear = passDone || tab === "upplagg" || tab === "idag" || tab === "profil" || tab === "vanner" || tab === "pass" || tab === "recept" ? "" : `<button class="gear ${tab === "profil" ? "on" : ""}" data-tab="profil" aria-label="Profil och inställningar">${icon("profil", 20)}</button>`;
   document.getElementById("app").innerHTML = passDone ? passDoneView()
     : gear + banner + VIEWS[tab]() + (modal ? renderModal() : "") + (actSheet ? actSheetView() : "");
   if (modal && modal.pick) filterPicker();
+  if (tab === "recept" && typeof filterRecipes === "function") filterRecipes();
   afterFocusRender();
   updateBadge();
 }
@@ -914,6 +916,8 @@ const VIEWS = {
   },
 
   kost: () => kostView(),
+
+  recept: () => receptView(),
 
   historik: () => historikView(),
 
@@ -1639,7 +1643,7 @@ document.addEventListener("click", ev => {
     if (ds.tab === "vanner" && tab !== "vanner") vannerBack = tab;
     passDone = null;
     tab = ds.tab; editing = false; dailyEditing = false; draft = null; editDate = null; histDay = null;
-    chosenDay = null; passOpen = false; kostDay = false; kostOpen = null;
+    chosenDay = null; passOpen = false; kostDay = false; kostOpen = null; recipeOpen = null; recipeEdit = null;
     editSnap = null; exSheet = null; ordna = false; trSheet = null;
     if (ds.popen) profOpen = ds.popen;
     if (tab === "upplagg") setupFrom = prevTab;

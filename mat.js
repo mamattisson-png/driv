@@ -411,6 +411,7 @@ function parseFood(text) {
 // ---------- Livsmedelsverket ----------
 // Läggs efter de egna livsmedlen, så att egna namn med portionsstorlekar vinner vid lika långa träffar.
 // Ett livsmedel ärver styck- och portionsvikter från det egna livsmedel namnet börjar med ("Ägg stekt" → ägg).
+
 const CURATED = FOODS.length;
 const UNIT_KEYS = ["dl", "st", "msk", "tsk", "skiva", "portion", "bit", "burk", "glas", "kopp", "skopa", "nave", "pase", "klyfta"];
 // Det längsta egna namn som hela namnet börjar med

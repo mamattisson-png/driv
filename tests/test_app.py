@@ -377,21 +377,24 @@ def test_recept_byggs_och_loggas_per_portion(page):
     start(page)
     go(page, "kost")
     add_to(page, 3)
-    page.click("[data-rlist]")
+    page.click(".sheet [data-rlist]")
     page.click("[data-rnew]")
     page.fill("#rname", "Lasagne")
     page.fill("#ring", "500 g nötfärs, 2 dl grädde, okändgrej")
     page.click("[data-ringadd]")
     assert page.evaluate("recipeEdit.items.length") == 2
-    assert "okändgrej" in page.inner_text(".sheet") and page.input_value("#ring") == "okändgrej"
+    assert "okändgrej" in page.inner_text(".recpage") and page.input_value("#ring") == "okändgrej"
     page.click('[data-rport="1"]')   # 5 portioner
     total = page.evaluate("recipeTotal(recipeEdit).kcal")
     page.click("[data-rsave]")
     assert page.evaluate("S.recipes.map(r => [r.name, r.portions])") == [["Lasagne", 5]]
+    # Recepten är en egen sida; det sparade receptet visas öppet
+    assert page.evaluate("tab") == "recept" and "Lasagne" in page.inner_text("h1")
     page.click('[data-ruse="0"]')
     f = page.evaluate("day().food.at(-1)")
     assert f["name"] == "Lasagne" and f["meal"] == 3 and abs(f["kcal"] - total / 5) <= 1
-    # Receptet syns bland förslagen i andra måltider
+    # Tillbaka i Kost med fönstret öppet; receptet syns bland förslagen i andra måltider
+    assert page.evaluate("tab") == "kost"
     page.click('[data-sheetmeal="1"]')
     assert page.locator('.qadd:has-text("Lasagne")').count() == 1
 
@@ -1815,7 +1818,7 @@ def test_kost_veckan_maltider_och_recept_med_uppskattade_mangder(page):
     assert page.locator("[data-fooditem]").count() == 2
     # En enda knapp lägger till; recept utan mängder får uppskattade mängder för antalet portioner
     page.click(".kaddmain")
-    page.click("[data-rlist]")
+    page.click(".sheet [data-rlist]")
     page.click("[data-rnew]")
     page.fill("#rname", "Köttfärssås")
     page.fill("#ring", "nötfärs, lök, 2 dl grädde")
@@ -1826,10 +1829,44 @@ def test_kost_veckan_maltider_och_recept_med_uppskattade_mangder(page):
     assert page.evaluate("recipeEdit.items.map(i => i.amt.n)")[0] == 625 and page.evaluate("recipeEdit.items[2].amt.n") == 2
     page.click('[data-ristep="1"][data-dir="-1"]')
     page.click("[data-rsave]")
-    # Ett öppnat recept: välj antal portioner och lägg till
-    page.click('[data-ropen="0"]')
+    # Ett öppnat recept: fett och fibrer per portion, välj antal portioner och lägg till
+    assert "fett" in page.inner_text(".rstats") and "fibrer" in page.inner_text(".rstats")
     page.click('[data-rn][data-dir="1"]')
     kcal = page.evaluate("perPortion(S.recipes[0]).kcal")
-    page.click(".sheet [data-ruse]")
+    page.click(".pagefoot [data-ruse]")
     f = page.evaluate("day().food.at(-1)")
     assert f["name"] == "Köttfärssås" and f["qty"] == 1.5 and abs(f["kcal"] - kcal * 1.5) <= 1
+
+
+def test_recept_ar_en_sida_med_sok_och_sortering(page):
+    start(page)
+    seed(page, """S.recipes = ['Tacos', 'Lasagne', 'Ärtsoppa', 'Chili', 'Laxpasta'].map((name, i) => ({ name, portions: 4, used: shift(TODAY, -i),
+      items: [{ name: 'Nötfärs', text: '500 g nötfärs', kcal: 875, protein: 100 }] }))""")
+    go(page, "kost")
+    page.click(".krecept")
+    assert page.evaluate("tab") == "recept" and page.locator("#nav [data-tab=kost].on").count() == 1
+    names = lambda: [n for n in page.evaluate("[...document.querySelectorAll('.rrow:not([hidden]) .rname b')].map(b => b.textContent)")]
+    assert names() == ["Tacos", "Lasagne", "Ärtsoppa", "Chili", "Laxpasta"]   # senast använda först
+    page.click('[data-rsort="namn"]')
+    assert names() == ["Chili", "Lasagne", "Laxpasta", "Tacos", "Ärtsoppa"]
+    page.fill("#rsearch", "la")
+    assert names() == ["Lasagne", "Laxpasta"]
+    page.fill("#rsearch", "nötfärs")   # ingredienser hittas också
+    assert len(names()) == 5
+    page.click("[data-rclose]")
+    assert page.evaluate("tab") == "kost"
+
+
+def test_fett_och_fibrer_raknas(page):
+    start(page)
+    go(page, "kost")
+    page.click(".kaddmain")
+    page.fill("#fname", "2 dl havregryn och 1 banan")
+    page.click("#faddbtn")
+    f = page.evaluate("day().food.map(x => [x.name, x.fat, x.fiber])")
+    assert f[0][0] == "Havregryn" and f[0][1] > 0 and f[0][2] > 5 and f[1][2] > 1
+    text = page.inner_text(".kmacros")
+    assert "Fett" in text and "Fibrer" in text
+    # Mat utan värden (Livsmedelsverkets lista) räknas och visas som saknad
+    page.evaluate("day().food.push({ name: 'Okänt', kcal: 100, protein: 1, meal: 1 }); render()")
+    assert "saknas för 1 av 3" in page.inner_text(".ksum")
