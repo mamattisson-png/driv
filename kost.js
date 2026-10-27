@@ -396,7 +396,7 @@ function dayRing(e, m) {
 // Bladet för att lägga till mat: måltid, ett fält, tre små val och en enda knapp längst ned.
 // Knappen visar måltid och summa och uppdateras medan man skriver.
 function addSheet(m) {
-  const meal = foodSheet.meal, mealName = MEALS[meal][0].toLowerCase(), q = quickList(meal), shown = quickMore ? q : q.slice(0, 8);
+  const meal = foodSheet.meal, mealName = MEALS[meal][0].toLowerCase(), q = quickList(meal), shown = quickMore ? q : q.slice(0, 6);
   const food = day().food, items = food.map((f, i) => ({ f, i })).filter(x => x.f.meal === meal);
   const double = items.length > 1;
   const last = items.length ? null : lastSlot(meal), saved = items.length ? [] : savedFor(meal).slice(0, 3);   // en uppskattning bredvid riktig mat kan räknas dubbelt
@@ -404,15 +404,18 @@ function addSheet(m) {
     ${isEst(f) ? `<button class="small qminus" data-mdel="${i}" aria-label="Ta bort uppskattningen">${icon("close", 18)}</button>`
       : `<div class="fstep"><button data-mstep="-1" data-mi="${i}" aria-label="Mindre ${esc(f.name)}">−</button><b class="famt qcount">${amountText(f) || "1"}</b>
          <button data-mstep="1" data-mi="${i}" aria-label="Mer ${esc(f.name)}">+</button></div>`}</div>`).join("");
+  // Förslagen som en lista: namn och kcal, plus till höger (stjärna för favoriter)
   const quick = shown.map((f, i) => `<button class="qadd ${f.kind === "meal" ? "meal" : f.kind === "recipe" ? "recipe" : ""}" data-quick="${i}" aria-label="Lägg till ${esc(f.name)}">
-      <span class="qplus" aria-hidden="true">${f.kind === "fav" ? "★" : "+"}</span><b>${esc(f.name)}</b><span class="muted">${f.kcal} kcal${f.kind === "recipe" ? "/portion" : ""}</span></button>`).join("");
-  const tab = (k, n) => `<button data-fpanel="${k}" class="${foodPanel === k ? "on" : ""}" aria-pressed="${foodPanel === k}">${n}</button>`;
+      <span class="grow col"><b>${esc(f.name)}</b><span class="muted small">${f.kcal} kcal${f.kind === "recipe" ? " per portion" : f.kind === "meal" ? " · sparad måltid" : ""}</span></span>
+      <span class="qplus ${f.kind === "fav" ? "fav" : ""}" aria-hidden="true">${f.kind === "fav" ? "★" : icon("plus", 18)}</span></button>`).join("");
   return `<div class="overlay" data-fsclose><div class="sheet foodsheet" role="dialog" aria-label="Lägg till mat">
-    <div class="row between"><h2>Lägg till mat</h2><button class="small ghost iconbtn" data-fsclose aria-label="Stäng">${icon("close", 18)}</button></div>
-    <div class="tseg mealseg" role="radiogroup" aria-label="Måltid">${MEALS.map(([n], i) => `<button role="radio" data-sheetmeal="${i}" class="${i === meal ? "on" : ""}" aria-checked="${i === meal}">${n}</button>`).join("")}</div>
-    <div class="frow"><input id="fname" placeholder="Vad åt du? t.ex. 2 ägg och 1 banan" autocomplete="off" aria-label="Vad åt du?">
+    <div class="row between fshead"><span class="col"><span class="klabel">Lägg till mat</span><h2>${MEALS[meal][0]}</h2></span>
+      <button class="small ghost iconbtn" data-fsclose aria-label="Stäng">${icon("close", 18)}</button></div>
+    <div class="mealseg" role="radiogroup" aria-label="Måltid">${MEALS.map(([n], i) => `<button role="radio" data-sheetmeal="${i}" class="${i === meal ? "on" : ""}" aria-checked="${i === meal}">${n}</button>`).join("")}</div>
+    <div class="finput">${icon("search", 18)}<input id="fname" placeholder="t.ex. 2 ägg och 1 banan" autocomplete="off" aria-label="Vad åt du?">
       ${CAN_SCAN ? `<button class="fscan" data-scan aria-label="Skanna streckkod">${icon("barcode", 22)}</button>` : ""}</div>
-    <div class="chips foodtabs">${tab("senaste", "Senaste")}<button data-rlist>Recept${recipes().length ? ` (${recipes().length})` : ""}</button>${tab("kcal", "Bara kcal")}</div>
+    <div class="fopts"><button class="flink ${foodPanel === "kcal" ? "on" : ""}" data-fpanel="${foodPanel === "kcal" ? "senaste" : "kcal"}" aria-pressed="${foodPanel === "kcal"}">Bara kcal</button>
+      <button class="flink" data-rlist>Recept${recipes().length ? ` (${recipes().length})` : ""}</button></div>
     <div class="manual" ${foodPanel === "kcal" ? "" : "hidden"}><div class="row">
       <label class="field grow">kcal<input id="fkcal" type="number" inputmode="numeric" placeholder="ca ${mealTarget(meal, m)}"></label>
       <label class="field grow">Protein (g)<input id="fprot" type="number" inputmode="numeric" placeholder="valfritt"></label></div>
@@ -424,8 +427,8 @@ function addSheet(m) {
     ${foodPanel === "senaste" ? `${!items.length && (last || saved.length) ? `<div class="kshort">
       ${saved.map(({ m: sm, idx }) => `<button class="klink" data-usemeal="${idx}" data-meal="${meal}">${esc(sm.name)}<span class="muted"> · ${sm.kcal} kcal</span></button>`).join("")}
       ${last ? `<button class="klink" data-repeat="${meal}">↻ Samma som ${whenText(last.date)}<span class="muted"> · ${esc(last.items.map(f => isEst(f) ? "uppskattning" : f.name).join(", "))}</span></button>` : ""}</div>` : ""}
-    ${q.length ? `<h3 class="sheet-sub">Senaste</h3><div class="qgrid">${quick}</div>
-      ${q.length > 8 ? `<button class="small ghost" data-quickmore>${quickMore ? "Visa färre" : `Visa fler (${q.length - 8})`}</button>` : ""}` : ""}` : ""}
+    ${q.length ? `<h3 class="klabel fsub">Senaste</h3><div class="qgrid">${quick}</div>
+      ${q.length > 6 ? `<button class="small ghost qmore" data-quickmore>${quickMore ? "Visa färre" : `Visa fler (${q.length - 6})`}</button>` : ""}` : ""}` : ""}
     </div>
     <div class="sheet-foot"><button class="primary wide" id="faddbtn" data-addfood>Klar</button></div>
   </div></div>`;

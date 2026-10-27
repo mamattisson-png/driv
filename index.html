@@ -2,7 +2,7 @@
 <html lang="sv">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#0d0e10">
 <meta name="description" content="Driv – träning, mat och vanor, enkelt och på ett ställe.">
 <link rel="manifest" href="manifest.webmanifest">
@@ -1208,6 +1208,33 @@
 
   /* Inställningar */
   .ptitle { margin: 4px 0 16px; }
+
+  /* Tangentbordet: rutor ovanför det (Android krymper sidan; iOS mäts med visualViewport, --kb) */
+  .overlay { padding-bottom: var(--kb, 0px); }
+  .sheet { max-height: calc(100dvh - var(--kb, 0px) - 24px); }
+  /* Lägg till mat: måltiden som rubrik, ett fält, två små val och förslagen som en lista */
+  .foodsheet { padding-top: 14px; }
+  .fshead h2 { font: 800 22px/1.2 "Unbounded", sans-serif; margin: 2px 0 0; }
+  .foodsheet .mealseg { display: flex; gap: 6px; margin: 12px 0 12px; overflow-x: auto; scrollbar-width: none; }
+  .foodsheet .mealseg button { flex: none; min-height: 36px; padding: 0 14px; border-radius: 99px; border: 1.5px solid transparent; background: var(--card-2); color: var(--muted); font-size: 14px; }
+  .foodsheet .mealseg button.on { background: var(--accent-soft); border-color: var(--accent); color: var(--text); font-weight: 600; }
+  .finput { position: relative; display: flex; align-items: center; }
+  .finput > .ic { position: absolute; left: 14px; color: var(--muted); pointer-events: none; }
+  .finput input { height: 54px; border-radius: 18px; padding: 0 56px 0 42px; background: var(--card-2); border: 1.5px solid transparent; font-size: 16px; }
+  .finput input:focus { border-color: var(--accent); outline: 0; }
+  .finput .fscan { position: absolute; right: 5px; width: 44px; height: 44px; border: 0; border-radius: 14px; background: none; color: var(--accent-text); }
+  .fopts { display: flex; gap: 18px; margin: 6px 4px 2px; }
+  .flink { border: 0; background: none; padding: 0; min-height: 36px; color: var(--muted); font-size: 14px; font-weight: 500; }
+  .flink.on { color: var(--accent-text); font-weight: 600; }
+  .fsub { margin: 14px 2px 2px; }
+  .foodsheet .qgrid { display: flex; flex-direction: column; gap: 0; }
+  .foodsheet .qadd { display: flex; width: 100%; align-items: center; gap: 12px; min-height: 56px; padding: 8px 2px; border: 0; border-top: 1px solid var(--line);
+    border-radius: 0; background: none; text-align: left; font-size: 15px; }
+  .foodsheet .qadd:first-child { border-top: 0; }
+  .foodsheet .qadd .col { gap: 1px; min-width: 0; }
+  .foodsheet .qadd b { font-weight: 500; }
+  .foodsheet .qplus { width: 34px; height: 34px; flex: none; border-radius: 17px; background: var(--card-2); color: var(--accent-text); display: grid; place-items: center; font-size: 15px; }
+  .qmore { margin-top: 2px; }
 </style>
 </head>
 <body>
@@ -1232,6 +1259,11 @@
 <script src="app.js"></script>
 <script src="livsmedel.js" async></script>
 <script>
+  // Tangentbordets höjd där sidan inte krymper av sig själv (iOS): rutor lägger sig ovanför
+  if (window.visualViewport) {
+    const vv = window.visualViewport, kb = () => document.documentElement.style.setProperty("--kb", `${Math.max(0, Math.round(innerHeight - vv.height - vv.offsetTop))}px`);
+    vv.addEventListener("resize", kb); vv.addEventListener("scroll", kb); kb();
+  }
   // Offline och installation på hemskärmen när appen ligger på en vanlig webbplats
   if (!window.claude && "serviceWorker" in navigator && (location.protocol === "https:" || window.__swTest)) {
     // Appen startar från cachen. Finns en ny version installeras den i bakgrunden och
