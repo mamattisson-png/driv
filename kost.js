@@ -18,10 +18,14 @@ function mealByClock() {
 }
 const currentMeal = () => foodSheet ? foodSheet.meal : mealByClock();
 
-// All mat loggas här, så att den hamnar i rätt måltid. Med amt styr mängden kcal och protein;
-// med qty är kcal och protein per styck.
+// Gram med en decimal (fett och fibrer)
+const g1 = v => Math.round(v * 10) / 10;
+// All mat loggas här, så att den hamnar i rätt måltid. Med amt styr mängden kcal, protein, fett och fibrer;
+// med qty är de per styck. Fett och fibrer saknas när livsmedlet inte har dem (egna kcal, äldre loggar).
 function logFood(item, meal = currentMeal()) {
   const f = { name: item.name, kcal: Math.round(+item.kcal || 0), protein: Math.round(+item.protein || 0), meal };
+  if (item.fat != null) f.fat = g1(+item.fat);
+  if (item.fiber != null) f.fiber = g1(+item.fiber);
   if (item.est) f.est = true;
   if (item.amt) { f.amt = { ...item.amt, u: { ...item.amt.u } }; applyAmt(f); }
   else if (item.qty && item.qty !== 1) setQty(f, item.qty);
@@ -29,7 +33,7 @@ function logFood(item, meal = currentMeal()) {
 }
 
 // ---------- Mängd ----------
-// amt = { n, unit, k, p, u }: mängd i en enhet, kcal och protein per 100 g och gram per enhet.
+// amt = { n, unit, k, p, fa, fi, u }: mängd i en enhet, kcal, protein, fett och fibrer per 100 g och gram per enhet.
 // Det är mängden man ändrar; kcal och protein räknas fram.
 const UNIT_NAMES = { g: "g", dl: "dl", st: "st", msk: "msk", tsk: "tsk", skiva: "skivor", portion: "portion", bit: "bitar",
   burk: "burk", glas: "glas", kopp: "kopp", skopa: "skopor", nave: "nävar", pase: "påse", klyfta: "klyftor" };
@@ -40,6 +44,8 @@ function applyAmt(f) {
   const g = amtGrams(f.amt);
   f.kcal = Math.round(f.amt.k * g / 100);
   f.protein = Math.round(f.amt.p * g / 100);
+  if (f.amt.fa != null) f.fat = g1(f.amt.fa * g / 100);
+  if (f.amt.fi != null) f.fiber = g1(f.amt.fi * g / 100);
 }
 // Från en tolkad rad ("2 dl mjölk", "bolognese") till mängd och enhet
 function amtFromItem(i) {
@@ -53,7 +59,9 @@ function amtFromItem(i) {
   else if (["g", "hg", "kg"].includes(unit)) { unit = "g"; n = Math.round(i.grams); }
   else if (["ml", "cl", "l"].includes(unit)) { unit = "dl"; n = i.qty * { ml: 0.01, cl: 0.1, l: 10 }[i.unit]; }
   else n = i.qty ?? 1;
-  return { n, unit, k: food.kcal, p: food.p, u };
+  const a = { n, unit, k: food.kcal, p: food.p, u };
+  if (food.fat != null) { a.fa = food.fat; a.fi = food.fib || 0; }
+  return a;
 }
 // Enheter att välja mellan: gram och de som livsmedlet har vikter för
 const unitChoices = a => ["g", ...Object.keys(a.u), ...(a.unit !== "g" && !a.u[a.unit] ? [a.unit] : [])];
@@ -118,7 +126,7 @@ function addIngredients() {
   const el = $("ring"), text = (el.value || "").trim();
   if (!text) return;
   const r = parseFood(text), ok = r.items.filter(i => i.known);
-  ok.forEach(i => recipeEdit.items.push({ name: i.name, text: i.text, kcal: i.kcal, protein: i.protein }));
+  ok.forEach(i => recipeEdit.items.push({ name: i.name, text: i.text, kcal: i.kcal, protein: i.protein, fat: i.fat || 0, fiber: i.fiber || 0 }));
   recipeEdit.msg = r.unknown.length ? `Känns inte igen: ${r.unknown.join(", ")}. Skriv mängd och livsmedel, t.ex. "200 g nötfärs".` : "";
   render();
   const again = $("ring");
@@ -191,14 +199,19 @@ document.addEventListener("change", ev => {
 });
 
 // Antal: kcal och protein sparas som totalsummor, per styck ligger i per
-const perUnit = f => f.amt ? { name: f.name, kcal: f.kcal, protein: f.protein, amt: { ...f.amt } }
-  : { name: f.name, kcal: f.per ? f.per.kcal : f.kcal, protein: f.per ? f.per.protein : f.protein };
+const perUnit = f => {
+  if (f.amt) return { name: f.name, kcal: f.kcal, protein: f.protein, fat: f.fat, fiber: f.fiber, amt: { ...f.amt } };
+  const s = f.per || f;
+  return { name: f.name, kcal: s.kcal, protein: s.protein, fat: s.fat, fiber: s.fiber };
+};
 function setQty(f, q) {
   const u = perUnit(f);
   f.kcal = Math.round(u.kcal * q);
   f.protein = Math.round(u.protein * q);
+  if (u.fat != null) f.fat = g1(u.fat * q);
+  if (u.fiber != null) f.fiber = g1(u.fiber * q);
   if (q === 1) { delete f.qty; delete f.per; }
-  else { f.qty = q; f.per = { kcal: u.kcal, protein: u.protein }; }
+  else { f.qty = q; f.per = { kcal: u.kcal, protein: u.protein }; if (u.fat != null) { f.per.fat = u.fat; f.per.fiber = u.fiber; } }
 }
 const qtyText = f => f.amt ? ` · ${amtText(f.amt)}` : f.qty ? ` × ${fmtNum(f.qty)}` : "";
 
@@ -224,10 +237,11 @@ function rememberAmount(f) {
 const recipes = () => S.recipes || (S.recipes = []);
 let recipeEdit = null;    // receptet som skrivs eller ändras: { idx, name, portions, items, msg }
 let recipeList = false;   // listan med egna recept är öppen
-const recipeTotal = r => ({ kcal: sumKcal(r.items), protein: r.items.reduce((a, i) => a + (+i.protein || 0), 0) });
+const sumOf = (items, k) => items.reduce((a, i) => a + (+i[k] || 0), 0);
+const recipeTotal = r => ({ kcal: sumKcal(r.items), protein: sumOf(r.items, "protein"), fat: sumOf(r.items, "fat"), fiber: sumOf(r.items, "fiber") });
 function perPortion(r) {
   const t = recipeTotal(r), n = Math.max(1, r.portions || 1);
-  return { name: r.name, kcal: Math.round(t.kcal / n), protein: Math.round(t.protein / n * 10) / 10 };
+  return { name: r.name, kcal: Math.round(t.kcal / n), protein: g1(t.protein / n), fat: g1(t.fat / n), fiber: g1(t.fiber / n) };
 }
 function recipesSheet() {
   const list = recipes();
@@ -389,6 +403,8 @@ function dayRing(e, m) {
       <div class="ringinfo">
         <div class="row between small"><span class="muted">Ätit</span><span>${tnum(e.kcal)} / ${tnum(m.kcal)}</span></div>
         <div><div class="row between small"><span class="muted">Protein</span><span>${tnum(e.protein)} / ${tnum(m.protein)} g</span></div>${bar(e.protein, m.protein, true, "prot")}</div>
+        <div class="row between small"><span class="muted">Fett</span><span>${tnum(e.fat)} / ${tnum(m.fat)} g</span></div>
+        <div class="row between small"><span class="muted">Fibrer</span><span>${tnum(e.fiber)} / ${tnum(m.fiber)} g</span></div>
       </div></div>
     ${S.profileSet === false ? `<button class="link small" data-tab="profil" data-popen="kalori">Målet bygger på standardvärden – ställ in ditt</button>` : ""}</section>`;
 }
@@ -492,7 +508,7 @@ function itemSheet() {
       : `<div class="row qtyrow"><span class="grow">Antal</span>
       <button class="step" data-qty="-1" ${q <= 0.5 ? "disabled" : ""} aria-label="Färre">−</button><b class="qcount">${fmtNum(q)}</b>
       <button class="step" data-qty="1" aria-label="Fler">+</button></div>`}
-    <div class="muted" style="margin-top:8px">${f.kcal} kcal · ${f.protein} g protein${!f.amt && q !== 1 ? ` <span class="small">(${u.kcal} kcal per st)</span>` : ""}</div>
+    <div class="muted" style="margin-top:8px">${f.kcal} kcal · ${f.protein} g protein${f.fat != null ? ` · ${fmtNum(f.fat)} g fett · ${fmtNum(f.fiber || 0)} g fibrer` : ""}${!f.amt && q !== 1 ? ` <span class="small">(${u.kcal} kcal per st)</span>` : ""}</div>
     <div class="row" style="margin-top:12px">${isEst(f) ? `<span class="grow muted small">En uppskattning blir aldrig favorit eller förslag.</span>`
       : `<button class="grow" data-itemfav>${isFav(f) ? "★ Favorit" : "☆ Gör till favorit"}</button>`}
       <button class="ghost" data-delfood="${foodItem}" data-itemclose>Ta bort</button></div>
@@ -571,7 +587,7 @@ document.addEventListener("click", ev => {
     const names = items.map(f => f.name + qtyText(f)).join(", ");
     S.meals.push({
       name: names.length > 40 ? names.slice(0, 38) + "…" : names, slot: meal,
-      kcal: sumKcal(items), protein: items.reduce((a, f) => a + (+f.protein || 0), 0),
+      kcal: sumKcal(items), protein: sumOf(items, "protein"), fat: g1(sumOf(items, "fat")), fiber: g1(sumOf(items, "fiber")),
       items: items.map(f => ({ ...perUnit(f), qty: f.qty })),
     });
     toast("Sparad bland snabbvalen");

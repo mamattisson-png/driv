@@ -18,7 +18,7 @@ På mobilen kan du lägga den på hemskärmen: *Dela → Lägg till på hemskär
 - **Dailys:** egna övningar, löpning eller promenad att bocka av direkt på Hem, med streaks och påminnelse i kalendern.
 - **Vänner:** lägg till varandra med en vänkod eller länk, se när vänner kört ett pass och peppa dem 👏. Bara att ett pass är gjort delas – aldrig vikter, mat eller kroppsvikt – och delningen går att stänga av.
 - **Fyra flikar:** Hem, Träna (med kommande pass), Kost och Historik. Profil och inställningar nås via kugghjulet.
-- **Kost:** kalorimål och makron från ålder, längd, vikt, aktivitet och mål. Skriv vad du åt i fritext, till exempel "2 dl mjölk och 1 banan", så räknas kalorier och protein ut från drygt 2 800 livsmedel och rätter. Medan du skriver föreslår appen träffar, och felstavningar som "kottbullar" hittar rätt. Sidan visar en ruta per måltid (frukost, lunch, mellanmål, middag); *+ Lägg till* öppnar sök och snabbval för just den måltiden. Mängden styr: varje livsmedel får antal, gram, dl eller portioner som går att ändra, och kalorier och protein räknas fram. Favoriter, egna måltider och det du ätit nyligen ligger som snabbval, och samma snabbval två gånger blir två stycken. En måltid kan upprepas från förra gången med ett tryck, och flera saker kan sparas som en måltid. Logga även en måltid med ungefärliga kalorier eller skanna streckkoden på en vara.
+- **Kost:** kalorimål och makron från ålder, längd, vikt, aktivitet och mål. Skriv vad du åt i fritext, till exempel "2 dl mjölk och 1 banan", så räknas kalorier, protein, fett och fibrer ut från drygt 2 800 livsmedel och rätter. Medan du skriver föreslår appen träffar, och felstavningar som "kottbullar" hittar rätt. Sidan visar en ruta per måltid (frukost, lunch, mellanmål, middag); *+ Lägg till* öppnar sök och snabbval för just den måltiden. Mängden styr: varje livsmedel får antal, gram, dl eller portioner som går att ändra, och kalorier och protein räknas fram. Favoriter, egna måltider och det du ätit nyligen ligger som snabbval, och samma snabbval två gånger blir två stycken. En måltid kan upprepas från förra gången med ett tryck, och flera saker kan sparas som en måltid. Logga även en måltid med ungefärliga kalorier eller skanna streckkoden på en vara.
 
 ## Data och integritet
 
@@ -44,7 +44,7 @@ Näringsvärden kommer delvis från [Livsmedelsverkets livsmedelsdatabas](https:
 | `ovningar.js` | Övningsbiblioteket med instruktioner och poser |
 | `figur.js` | Ritar de animerade övningsbilderna som SVG |
 | `mat.js` | Egna livsmedel med portionsstorlekar, tolkning av fritext, förslag och felstavning |
-| `livsmedel.js` | Livsmedelsverkets livsmedelsdatabas (namn, kcal och protein per 100 g); laddas efter appen |
+| `livsmedel.js` | Livsmedelsverkets livsmedelsdatabas (namn, kcal, protein, fett och fibrer per 100 g); laddas efter appen. Byggs om med `python3 tools/livsmedel.py` |
 | `config.js` | Supabase-projektets adress, publika nyckel och publika nyckel för notiser |
 | `supabase/` | SQL för tabeller och funktioner, och Edge Function `driv-push` som skickar notiser |
 | `supabase/schema.sql` | Tabell och åtkomstregler i Supabase |

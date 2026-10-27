@@ -382,6 +382,7 @@ function parseItem(raw) {
     ? food.portion || food.st || (food.msk ? 2 * food.msk : 100)
     : grams(food, qty == null ? 1 : qty, unit);
   return { text: raw.trim(), known: true, corrected, grams: Math.round(g), kcal: Math.round(food.kcal * g / 100), protein: Math.round(food.p * g / 10) / 10,
+    fat: food.fat == null ? null : Math.round(food.fat * g / 10) / 10, fiber: food.fib == null ? null : Math.round(food.fib * g / 10) / 10,
     food, qty, unit, name: cap(corrected || food.label || food.n[0]) };
 }
 
@@ -400,6 +401,8 @@ function parseFood(text) {
     items,
     kcal: known.reduce((a, i) => a + i.kcal, 0),
     protein: Math.round(known.reduce((a, i) => a + i.protein, 0)),
+    fat: Math.round(known.reduce((a, i) => a + (i.fat || 0), 0)),
+    fiber: Math.round(known.reduce((a, i) => a + (i.fiber || 0), 0)),
     unknown: items.filter(i => !i.known).map(i => i.text),
   };
 }
@@ -418,13 +421,46 @@ function baseFood(name, list) {
   }
   return best;
 }
+// Egna livsmedel där namnet ger fel träff hos Livsmedelsverket ("nötfärs" blir annars "Lasagne nötfärs")
+const LMV_MATCH = {
+  "nötfärs": "Nöt färs rå fett 10%", "halloumi": "Ost halloumi rå fett 22%", "kokos": "Kokosflingor", "glass": "Glass fett 12%",
+  "baguette": "Bröd vitt vete fibrer ca 2,5% typ baguette", "mandlar": "Sötmandel", "havredryck": "Havredryck fett 1,5% berikad",
+  "kokt ägg": "Ägg kokt", "knäckebröd": "Hårt bröd fullkorn råg fibrer 14,5% typ Vika",
+};
 function addLMV(list) {
   const own = FOODS.slice(0, CURATED);
-  for (const [label, kcal, p] of list) {
+  const lmv = [];
+  for (const [label, kcal, p, fat, fib] of list) {
     const n = label.toLowerCase();
     const base = baseFood(n, own), units = {};
     if (base) for (const k of UNIT_KEYS) if (base[k]) units[k] = base[k];
-    FOODS.push({ ...units, n: [n], kcal, p, lmv: true, label });
+    const f = { ...units, n: [n], kcal, p, fat, fib, lmv: true, label };
+    FOODS.push(f); lmv.push(f);
+  }
+  // De egna livsmedlen får fett och fibrer från Livsmedelsverkets närmaste livsmedel med samma namn
+  // (räknat i proportion till kalorierna). Utan en rimlig träff blir de okända.
+  const byLabel = new Map(lmv.map(l => [l.label, l]));
+  for (const f of own) {
+    if (f.fat != null) continue;
+    const fixed = byLabel.get(LMV_MATCH[f.n[0]]);
+    // Först namn som börjar likadant, annars namnet som andra ord ("keso" i "Ost keso fett 4%")
+    // Bland träffar med rimliga kalorier vinner det kortaste namnet: "Pasta okokt" före "Pasta carbonara m. …"
+    let best = fixed || null;
+    const ok = l => Math.abs(l.kcal - f.kcal) <= 0.35 * Math.max(f.kcal, 1);
+    const near = l => ok(l) && (!best || l.label.length < best.label.length);
+    const a = f.n[0];   // bara huvudnamnet: synonymer som "biff" eller "paj" ger fel träffar
+    if (!best) for (const l of lmv) if (l.kcal && (l.n[0] === a || l.n[0].startsWith(a + " ")) && near(l)) best = l;
+    if (!best) {
+      for (const l of lmv) {
+        const w = l.n[0].split(" ");
+        if (l.kcal && w.slice(1, 1 + a.split(" ").length).join(" ") === a && near(l)) best = l;
+      }
+    }
+    if (best) {
+      const k = f.kcal / best.kcal;
+      f.fat = Math.round(best.fat * k * 10) / 10;
+      f.fib = Math.round(best.fib * k * 10) / 10;
+    }
   }
   SEARCH = null;   // sökindexet byggs om med de nya livsmedlen
 }

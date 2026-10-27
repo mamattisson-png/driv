@@ -601,11 +601,13 @@ function kcalGoal() {
 function macros() {
   const kcal = kcalGoal(), w = S.profile.weight;
   const protein = Math.round(2 * w), fat = Math.round(0.8 * w);
-  return { kcal, protein, fat, carbs: Math.max(0, Math.round((kcal - protein * 4 - fat * 9) / 4)) };
+  // Fibrer enligt de nordiska näringsrekommendationerna: minst 25 g för kvinnor och 35 g för män
+  return { kcal, protein, fat, carbs: Math.max(0, Math.round((kcal - protein * 4 - fat * 9) / 4)), fiber: S.profile.sex === "f" ? 25 : 35 };
 }
 function eaten(date = logDate()) {
   return (S.log[date] ? S.log[date].food : []).reduce(
-    (a, f) => ({ kcal: a.kcal + (+f.kcal || 0), protein: a.protein + (+f.protein || 0) }), { kcal: 0, protein: 0 });
+    (a, f) => ({ kcal: a.kcal + (+f.kcal || 0), protein: a.protein + (+f.protein || 0), fat: a.fat + (+f.fat || 0), fiber: a.fiber + (+f.fiber || 0) }),
+    { kcal: 0, protein: 0, fat: 0, fiber: 0 });
 }
 
 // ---------- Veckojämförelse ----------

@@ -109,7 +109,7 @@ async function lookupBarcode(code) {
       return;
     }
     const name = [pr.product_name_sv || pr.product_name, (pr.brands || "").split(",")[0]].filter(Boolean).join(" · ") || `Produkt ${code}`;
-    scanner.product = { code, name, kcal: +kcal, p: +(n.proteins_100g || 0) };
+    scanner.product = { code, name, kcal: +kcal, p: +(n.proteins_100g || 0), fa: n.fat_100g == null ? null : +n.fat_100g, fi: +(n.fiber_100g || 0) };
     const portion = Math.round(+pr.serving_quantity || 100);
     scanStatus("Hittad! Ange hur mycket du åt.");
     out.innerHTML = `<div class="card scan-product"><b>${esc(name)}</b>
@@ -132,7 +132,9 @@ function updateScanCalc() {
 function logScanned() {
   const pr = scanner.product, g = +scanner.el.querySelector("#scangrams").value || 0;
   if (!pr || !g) return;
-  logFood({ name: pr.name, amt: { n: Math.round(g), unit: "g", k: pr.kcal, p: pr.p, u: {} } });
+  const amt = { n: Math.round(g), unit: "g", k: pr.kcal, p: pr.p, u: {} };
+  if (pr.fa != null) { amt.fa = pr.fa; amt.fi = pr.fi; }
+  logFood({ name: pr.name, amt });
   closeScanner();
   save();
   render();

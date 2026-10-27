@@ -1773,3 +1773,26 @@ def test_alla_ovningar_ar_kompletta(page):
       return out; }""")
     assert bad == []
     assert page.evaluate("Object.keys(EX).length") >= 180
+
+
+def test_fett_och_fibrer_fran_livsmedelsverket(page):
+    start(page)
+    page.wait_for_function("FOODS.some(f => f.lmv)")
+    # Livsmedelsverkets livsmedel har fett och fibrer per 100 g; egna livsmedel ärver dem från närmaste namn
+    assert page.evaluate("FOODS.filter(f => f.lmv).every(f => f.fat != null && f.fib != null)") is True
+    assert page.evaluate("findFood('havregryn').fib") > 5
+    r = page.evaluate("parseFood('1 banan och 2 dl mjölk')")
+    assert r["fiber"] >= 1 and r["fat"] >= 2
+    # Loggat med mängd: fett och fibrer följer mängden
+    go(page, "kost")
+    add_to(page, 0)
+    page.fill("#fname", "100 g havregryn")
+    page.click("[data-addfood]")
+    f = page.evaluate("day().food[0]")
+    assert f["fat"] > 3 and f["fiber"] > 5
+    page.evaluate("const f = day().food[0]; f.amt.n = 200; applyAmt(f)")
+    assert round(page.evaluate("day().food[0].fiber"), 1) == round(f["fiber"] * 2, 1)
+    page.evaluate("render()")
+    text = page.inner_text(".dayring")
+    assert "Fett" in text and "Fibrer" in text and "/ 35 g" in text
+    assert page.evaluate("eaten().fiber") > 0
