@@ -1,11 +1,13 @@
 """Passens etiketter skiljer turordning från schemalagda och genomförda dagar."""
+import datetime
+
 from conftest import start, go
 
 
 def prepare(page, mode="flex", log=""):
+    page.clock.install(time=datetime.datetime(2026, 10, 29, 12, 0))
     start(page)
     page.evaluate("""({mode, log}) => {
-        TODAY = '2026-10-29';
         S.plan.mode = mode; S.plan.weekdays = [0, 2, 4]; S.log = {};
         if (log) eval(log);
         tab = 'pass'; render();
