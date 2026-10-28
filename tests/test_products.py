@@ -192,7 +192,7 @@ def test_samma_sokning_anvander_cache(page):
 
 
 @pytest.mark.parametrize('mode,width',[('light',320),('dark',390)])
-def test_produktsokning_far_plats_och_har_kontrast(page,mode,width):
+def test_produktsokning_far_plats_och_har_kontrast(page,mode,width,tmp_path):
     page.set_viewport_size({'width':width,'height':844})
     page.emulate_media(color_scheme=mode)
     p={**PRODUCT,'product_name_sv':'Krämig pastagratäng med kyckling & soltorkade tomater','brands':['Testmärke']}
@@ -202,7 +202,7 @@ def test_produktsokning_far_plats_och_har_kontrast(page,mode,width):
     page.wait_for_selector('[data-productpick]')
     assert page.evaluate('document.documentElement.scrollWidth <= innerWidth')
     assert page.locator('#app').evaluate(CONTRAST)==[]
-    page.screenshot(path=f'/workspace/scratch/dfece4e3397a/products-{mode}-{width}.png',full_page=True)
+    page.screenshot(path=str(tmp_path / f'products-{mode}-{width}.png'),full_page=True)
     page.click('[data-productpick="0"]'); page.click('#faddbtn')
     page.click('[data-fooditem="0"]')
     assert page.locator('#app').evaluate(CONTRAST)==[]
