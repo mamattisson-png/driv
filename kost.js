@@ -42,7 +42,7 @@ function logFood(item, meal = currentMeal()) {
 }
 
 // ---------- Mängd ----------
-// amt = { n, unit, k, p, fa, fi, u }: mängd i en enhet, kcal, protein, fett och fibrer per 100 g och gram per enhet.
+// amt = { n, unit, k, p, fa, fi, u }: mängd och näringsbas. Vanliga varor har bas 100 g/ml; restaurangportioner använder skalfaktorn 100 utan påstådd vikt.
 // Det är mängden man ändrar; kcal och protein räknas fram.
 const UNIT_NAMES = { g: "g", ml: "ml", forp: "förpackning", dl: "dl", st: "st", msk: "msk", tsk: "tsk", krm: "krm", skiva: "skivor", portion: "portion", bit: "bitar",
   burk: "burk", glas: "glas", kopp: "kopp", skopa: "skopor", nave: "nävar", pase: "påse", klyfta: "klyftor" };
@@ -72,13 +72,13 @@ function amtFromItem(i) {
   else n = i.qty ?? 1;
   if (food.code && food.basis === "ml" && !i.unit && i.qty == null) { unit = "dl"; n = 1; }
   const a = { n, unit, k: food.kcal, p: food.p, u };
-  if (food.code) { a.code = food.code; a.basis = food.basis; a.updated = food.updated; }
+  if (food.code) { a.code = food.code; a.basis = food.basis; a.updated = food.updated; if (food.source) a.source = { ...food.source }; }
   if (food.fat != null) a.fa = food.fat;
   if (food.fib != null) a.fi = food.fib;
   return a;
 }
 // Enheter att välja mellan: gram och de som livsmedlet har vikter för
-const unitChoices = a => [...new Set([a.basis === "ml" ? "ml" : "g", ...Object.keys(a.u), ...(a.unit !== "g" && !a.u[a.unit] ? [a.unit] : [])])];
+const unitChoices = a => a.basis === "portion" ? ["portion"] : [...new Set([a.basis === "ml" ? "ml" : "g", ...Object.keys(a.u), ...(a.unit !== "g" && !a.u[a.unit] ? [a.unit] : [])])];
 function setUnit(a, unit) {
   const g = amtGrams(a);
   a.unit = unit;
@@ -102,13 +102,14 @@ function amtInputs(a, attr) {
 let foodDraft = [];
 function draftRows(items) {
   foodDraft = items.map(i => i.known ? { name: i.name, corrected: i.corrected, amt: amtFromItem(i), text: i.text, typed: i.typed, alts: variantFoods(i.typed, i.food) }
-    : (() => { const { prefix, rest } = splitAmount(i.text); return { text: i.text, prefix, rest, sugg: suggestFoods(rest, 4) }; })());
+    : (() => { const { prefix, rest } = splitAmount(i.text); return { text: i.text, prefix, rest, note: i.note, sugg: suggestFoods(rest, 4) }; })());
   return foodDraft.map((d, j) => d.amt ? draftRow(d, j) : askRow(d, j)).join("");
 }
 // Ungefär vad ett förslag ger: per styck eller portion om det finns, annars per 100 g
 const suggKcal = f => Math.round(f.kcal * (f.st || f.portion || 100) / 100);
 function askRow(d, j) {
   return `<div class="fask"><div class="fask-q"><span class="fdot" aria-hidden="true"></span><span>${d.sugg.length ? "Vilken menade du med" : "Känner inte igen"} <b>${esc(d.rest || d.text)}</b>${d.sugg.length ? "?" : ""}</span></div>
+    ${d.note ? `<div class="muted small">${esc(d.note)}</div>` : ""}
     ${d.sugg.length ? `<div class="fask-opts">${d.sugg.map((x, k) => `<button data-fpick="${j}:${k}">${esc(x.label)} · ${suggKcal(x.food)} kcal</button>`).join("")}</div>`
       : `<div class="muted small">Skriv mängd och livsmedel, t.ex. "150 g kyckling", eller välj Bara kcal.</div>`}</div>`;
 }
@@ -639,7 +640,7 @@ function addPage(m) {
     ${q.length ? `<h3 class="klabel fsub">Senaste</h3><div class="qgrid">${quick}</div>
       ${q.length > 6 ? `<button class="small ghost qmore" data-quickmore>${quickMore ? "Visa färre" : `Visa fler (${q.length - 6})`}</button>` : ""}` : ""}` : ""}
     </div>
-    <div class="muted small credit">Näringsvärden: Livsmedelsverket (CC BY 4.0), egna uppskattningar och <a href="https://world.openfoodfacts.org/" target="_blank" rel="noopener">Open Food Facts</a> (<a href="produkter.json" download>produktdata, ODbL</a>).</div>
+    <div class="muted small credit">Näringsvärden: Livsmedelsverket (CC BY 4.0), egna uppskattningar och <a href="https://world.openfoodfacts.org/" target="_blank" rel="noopener">Open Food Facts</a> (<a href="produkter.json" download>produktdata, ODbL</a>) samt <a href="https://www.mcdonalds.com/se/sv-se/naringskalkylatorn.html" target="_blank" rel="noopener">McDonald's Sverige</a>.</div>
     <div class="pagefoot"><button class="primary wide bigbtn" id="faddbtn" data-addfood>Klar</button></div>
   </div>`;
 }
@@ -702,7 +703,7 @@ function itemPage() {
   const tile = (v, l) => `<div><b>${v}</b><span>${l}</span></div>`;
   return `<div class="kpage foodsheet itempage"><button class="backbtn" data-itemclose>${icon("left", 18)}${mealName}</button>
     <span class="klabel">${mealName}</span><h1>${itemName(f)}</h1>
-    ${f.amt && /^\d{8,14}$/.test(f.amt.code || "") ? `<div class="muted small">Produktdata: <a href="https://world.openfoodfacts.org/product/${f.amt.code}" target="_blank" rel="noopener">Open Food Facts</a> (ODbL). Kontrollera mot förpackningen.</div>` : ""}
+    ${typeof productSourceHtml === "function" ? productSourceHtml(f.amt) : ""}
     <section class="card kiamt">${f.amt ? `<div class="row qtyrow"><span class="grow">Mängd</span>${amtInputs(f.amt, "data-iamt")}</div>`
       : isEst(f) ? `<div class="muted">Ungefärligt, utan mängd.</div>`
       : `<div class="row qtyrow"><span class="grow">Antal${q !== 1 ? `<span class="muted small"> · ${u.kcal} kcal per st</span>` : ""}</span>

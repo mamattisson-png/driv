@@ -32,6 +32,12 @@ Produktdata kommer från Open Food Facts och är användarbidrag som kan vara ä
 
 Katalogen kan uppdateras med `python tools/produkter.py --refresh` (ett litet starturval) eller `python tools/produkter.py --input FIL [FIL ...]` för sparade söksvar, JSONL eller Open Food Facts TSV-export. Stora datamängder ska hämtas som export. Importören skriver först en temporär fil och ersätter inte katalogen med ett tomt eller felaktigt svar.
 
+### Restaurangmat
+
+Katalogen innehåller 180 produkter och storlekar från McDonald’s Sverige, hämtade från deras officiella näringskalkylator. Sök exempelvis `big mac`, `donken pommes` eller `mcdonalds nuggets`. Näringsvärdena gäller en standardportion av vald produkt och storlek. Ange antal portioner; okänd portionsvikt omvandlas inte till gram eller ml. Lägg till burgare, pommes och dryck separat för en hel meny.
+
+Källa och kontrolldatum sparas med loggningen. Restaurangdata ligger separat i `restauranger.json` och uppdateras med `python tools/mcdonalds.py`. Den lokala katalogen fungerar även utan nät.
+
 ## Data och integritet
 
 Utan konto sparas allt bara i webbläsaren på den enhet du använder. Under *Profil → Data* kan du exportera en säkerhetskopia och importera den på en annan enhet.

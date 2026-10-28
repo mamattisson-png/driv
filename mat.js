@@ -346,12 +346,13 @@ function startsWord(text, name) {
 function findFood(text, list = FOODS) {
   let best = null, len = 0;
   for (const f of list) for (const name of f.n) {
-    if (name.length > len && startsWord(text, name)) { best = f; len = name.length; }
+    if ((name.length > len || (name.length === len && f.restaurant && !(best && best.restaurant))) && startsWord(text, name)) { best = f; len = name.length; }
   }
   return best;
 }
 
 function grams(food, qty, unit) {
+  if (food.basis === "portion" && unit && unit !== "portion") return null;
   if (food.code && ((food.basis === "ml" && ["g", "hg", "kg"].includes(unit)) ||
     (food.basis !== "ml" && ["ml", "cl", "dl", "l"].includes(unit)))) return null;
   if (food.code && unit && !["g", "hg", "kg", "ml", "cl", "dl", "l"].includes(unit) && !food[unit]) return null;
@@ -374,7 +375,8 @@ function parseItem(raw, index = 0) {
   if (!s) return null;
   // "laxfilé 125 g" → "125 g laxfilé"
   const tail = s.match(/^([^\d].*?)\s+(\d+(?:[.,]\d+)?\s*[a-zåäö]*)$/);
-  if (tail) s = tail[2] + " " + tail[1];
+  // Storleken i ett exakt restaurangnamn hör till produktens identitet.
+  if (tail && !(typeof exactRestaurantProduct === "function" && exactRestaurantProduct(s, index))) s = tail[2] + " " + tail[1];
   let qty = null, unit = null;
   const num = s.match(/^(\d+(?:[.,]\d+)?|\d+\/\d+)\s*/);
   if (num) {
@@ -400,6 +402,7 @@ function parseItem(raw, index = 0) {
     if (fz) { food = fz.food; corrected = fz.label; }
   }
   if (!food || (!food.code && !food.n.some(n => fold(n) === fold(s)) && typeof brandedQuery === "function" && brandedQuery(s))) return { text: raw.trim(), known: false };
+  if (food.restaurant && /(?:meny(?:n|er)?\b|\b(?:menu|meal)\b)/.test(s)) return { text: raw.trim(), known: false, note: "Lägg till burgare, pommes och dryck var för sig. En produkt är inte en hel meny." };
   // Utan mängd: en portion, en styck, eller två matskedar för såser och pålägg
   const g = qty == null && !unit
     ? (food.def ? food[food.def] : food.portion || food.st || (food.msk ? 2 * food.msk : 100))

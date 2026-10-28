@@ -77,6 +77,10 @@ function chosenProduct(text, index) {
   const entry = productChoices.get(index);
   return entry && fold(text) === fold(entry.alias) ? entry.food : null;
 }
+function exactRestaurantProduct(text, index) {
+  return !!chosenProduct(text, index)?.restaurant ||
+    [...(productAliases.get(text) || [])].some(code => productCodes.get(code)?.restaurant);
+}
 function ambiguousProduct(text) { return (productAliases.get(text)?.size || 0) > 1; }
 function brandedQuery(text) {
   const words = ` ${fold(text).replace(/[^\p{L}\p{N}]+/gu, " ")} `;
@@ -167,3 +171,46 @@ document.addEventListener("click", ev => {
     if (input) searchProducts(input.value.trim());
   } else pickProduct(+t.dataset.productpick);
 });
+
+// Restaurangernas publicerade standardportioner är en separat källa, inte OFF-data.
+function restaurantFood(record) {
+  if (!record || !/^mcd-se-\d{6}$/.test(record.id || "") || record.chain !== "McDonald's") return null;
+  const name = productText(record.name).replace(/[®™]/g, "").trim(), n = record.per_portion || {};
+  const kcal = productNumber(n.kcal, 5000), p = productNumber(n.protein, 500);
+  if (!name || name.length > 160 || kcal === null || p === null) return null;
+  const fat = productNumber(n.fat, 500), fib = productNumber(n.fiber, 500);
+  if ((n.fat != null && fat === null) || (n.fiber != null && fib === null)) return null;
+  const sourceUrl = /^https:\/\/www\.mcdonalds\.com\/se\/sv-se\/(?:product\/[\w-]+\.html|naringskalkylatorn\.html)$/.test(record.source_url || "")
+    ? record.source_url : "https://www.mcdonalds.com/se/sv-se/naringskalkylatorn.html";
+  const label = `McDonald's ${name}`;
+  const alternatives = new Set([name, name.replace(/mcnuggets/gi, "nuggets").replace(/coca[- ]?cola/gi, "cola")]);
+  const aliases = new Set([label.toLowerCase()]);
+  for (const value of alternatives) for (const chain of ["mcdonalds", "mc donalds", "donken"]) aliases.add(`${chain} ${value}`.toLowerCase());
+  if (record.id === "mcd-se-200000") { aliases.add("big mac"); aliases.add("bigmac"); }
+  // 100 är en intern skalfaktor per portion, aldrig en påstådd vikt i gram.
+  return { code: record.id, label, n: [...aliases], brand: "McDonald's", restaurant: true,
+    basis: "portion", def: "portion", portion: 100, kcal, p, fat, fib,
+    source: { name: "McDonald's Sverige", url: sourceUrl, checked: record.checked_at || null },
+    updated: Number.isFinite(Date.parse(record.checked_at)) ? Date.parse(record.checked_at) / 1000 : null };
+}
+function addRestaurants(records) {
+  const result = (records || []).map(restaurantFood).filter(Boolean).map(registerProduct);
+  for (const alias of ["mcdonalds", "mc donalds", "donken"]) productBrands.add(alias);
+  return result;
+}
+const restaurantsReady = window.claude ? Promise.resolve([]) : fetch("restauranger.json")
+  .then(r => { if (!r.ok) throw Error("Restaurangkatalogen saknas"); return r.json(); })
+  .then(data => {
+    const result = addRestaurants(data.restaurants);
+    if (document.getElementById("fname") && typeof foodPreview === "function") foodPreview();
+    return result;
+  }).catch(() => []);
+function productSourceHtml(amount) {
+  if (!amount) return "";
+  if (amount.source && /^mcd-se-\d{6}$/.test(amount.code || "") &&
+    /^https:\/\/www\.mcdonalds\.com\/se\/sv-se\/(?:product\/[\w-]+\.html|naringskalkylatorn\.html)$/.test(amount.source.url || "")) {
+    return `<div class="muted small">Standardportion enligt <a href="${esc(amount.source.url)}" target="_blank" rel="noopener">McDonald's Sverige</a>. Avser produkten, inte en hel meny.</div>`;
+  }
+  if (/^\d{8,14}$/.test(amount.code || "")) return `<div class="muted small">Produktdata: <a href="https://world.openfoodfacts.org/product/${amount.code}" target="_blank" rel="noopener">Open Food Facts</a> (ODbL). Kontrollera mot förpackningen.</div>`;
+  return "";
+}

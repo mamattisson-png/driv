@@ -23,3 +23,9 @@ Beslut: använd ett litet lokalt urval och en uttrycklig nätsökning med reserv
 Enhetskontroll: byte från 100 g till förpackning ska visa 0,25 av en 400 g-förpackning och behålla samma näringsvärden. Det tidigare halvstegsavrundningen för portioner används därför inte för förpackningar. Återskapad i test före rättning.
 
 Slutverifiering: `PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS=1 python -m pytest tests -q` → 135 passerade tester, inklusive 24 produkttester. Syntaxkontroller och git diff --check godkända. Mobilvyerna verifierade vid 320 px ljust läge och 390 px mörkt läge, inklusive kontrast och horisontell bredd.
+
+## Restaurangmat — tillägg
+
+Användaren vill även ha restaurangmat, såsom McDonald's. Lägg till McDonald's Sveriges publicerade produkter och storlekar från deras egen näringskalkylator i samma lokala sökning. Portionsvärden används direkt: okänd portionsvikt får inte bli gram eller ml, och en enskild produkt är inte en meny. Separat restaurangkatalog och källa, inte felaktig ODbL-märkning av McDonald's-data. Bevara källa i loggar/favoriter och ersätt den gamla grova Big Mac-uppskattningen med den specifika svenska produkten. Testa portionsskalning, källvisning, varianter, menyfrågor och offline.
+
+Restaurangtillägget klart: 180 svenska McDonald's-produkter och storlekar. Separat kodgranskning hittade storlekar sist i produktnamn samt sammansatta/engelska menyfrågor; båda återskapades och rättades. Slutverifiering: 147 tester passerar, inklusive 12 restaurangtester. `node tests/test_restaurants.cjs` verifierar samtliga 180 valda produktnamn, portionsskalning, otillåtna viktenheter och menyfrågor. JavaScript/Python-syntax och `git diff --check` godkända. Service worker: driv-54e6cbee. Inte publicerat live.
