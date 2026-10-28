@@ -1,6 +1,6 @@
 # Kommande funktioner
 
-Inställningar → Appen → Kommande funktioner visar en gemensam lista, även utan konto. Användarna kan läsa listan; den ingår inte i personlig träningsdata eller kontosynk.
+Inställningar → Appen → Kommande funktioner öppnar en egen sida med en gemensam lista, även utan konto. Tillbaka-knappen leder till inställningarna. Användarna kan läsa listan; den ingår inte i personlig träningsdata eller kontosynk.
 
 Ändra `UPCOMING_FEATURES` i `kommande.js` för att lägga till, uppdatera eller ta bort en punkt. Varje punkt har `title`, `description` och `status`:
 

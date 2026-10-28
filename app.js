@@ -884,7 +884,7 @@ function render() {
   const banner = editDate && (tab === "kost" || (tab === "pass" && focus && !editing))
     ? `<div class="editbar">Du ändrar <b>${dateLabel(editDate)}</b><button class="small" data-editdone>Klar</button></div>` : "";
   // Kugghjulet behövs inte i upplägget eller i fokusläget, där det skulle ligga över texten
-  const gear = passDone || tab === "kost" || tab === "upplagg" || tab === "idag" || tab === "profil" || tab === "vanner" || tab === "pass" || tab === "recept" ? "" : `<button class="gear ${tab === "profil" ? "on" : ""}" data-tab="profil" aria-label="Profil och inställningar">${icon("profil", 20)}</button>`;
+  const gear = passDone || tab === "kost" || tab === "upplagg" || tab === "idag" || tab === "profil" || tab === "kommande" || tab === "vanner" || tab === "pass" || tab === "recept" ? "" : `<button class="gear ${tab === "profil" ? "on" : ""}" data-tab="profil" aria-label="Profil och inställningar">${icon("profil", 20)}</button>`;
   document.getElementById("app").innerHTML = passDone ? passDoneView()
     : gear + banner + VIEWS[tab]() + (modal ? renderModal() : "") + (actSheet ? actSheetView() : "");
   if (modal && modal.pick) filterPicker();
@@ -1010,6 +1010,8 @@ const VIEWS = {
 
   vanner() { return friendsView(); },
 
+  kommande: () => upcomingFeaturesPage(),
+
   profil() {
     checkPush();
     const p = S.profile, m = macros(), rs = restSettings(), r = S.reminder;
@@ -1065,7 +1067,8 @@ const VIEWS = {
       ${group("Appen", `${profRow("utseende", "utseende", "Utseende", "", null, themeSeg)}
         ${profRow("konto", "data", sbEnabled ? "Konto och data" : "Data", account.step === "in" ? esc(account.email) : sbEnabled ? "Inloggning, exportera, importera" : "Exportera, importera",
           `${accountCard()}${data}`)}
-        ${profRow("kommande", "idea", "Kommande funktioner", "Se vad som är på gång i Driv", upcomingFeaturesView())}
+        <div class="prow"><div class="prow-line"><button class="prow-head" data-tab="kommande"><span class="pic">${icon("idea", 20)}</span><span class="grow"><b>Kommande funktioner</b>
+          <span class="muted small">Se vad som är på gång i Driv</span></span><span class="chev">${icon("right", 18)}</span></button></div></div>
         ${sbEnabled ? profRow("tyck", "chat", "Tyck till", "Vad saknas, vad är krångligt?", feedbackCard()) : ""}
         ${isDevAccount() ? `<div class="prow"><div class="prow-line"><button class="prow-head" data-opentest><span class="pic">${icon("test", 20)}</span><span class="grow"><b>Testläge</b>
           <span class="muted small">Egen data som inte rör ditt konto</span></span><span class="chev">${icon("right", 18)}</span></button></div></div>` : ""}`)}
