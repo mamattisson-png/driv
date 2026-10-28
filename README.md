@@ -22,7 +22,7 @@ På mobilen kan du lägga den på hemskärmen: *Dela → Lägg till på hemskär
 
 ### Märkesvaror
 
-Matsökningen innehåller även en lokal startkatalog med 273 märkesvaror från 121 märken, inklusive 85 från Felix. Urvalet omfattar flera matkategorier: färdigrätter, mejeri, bröd, drycker, snacks, proteinprodukter och skafferivaror. Det är ett starturval, inte alla produkter på den svenska marknaden.
+Matsökningen innehåller även en lokal startkatalog med 1125 märkesvaror från 245 märken, inklusive 85 från Felix. Utökningen omfattar även urval från ICA, Coop, Garant, Eldorado, Arla, Scan, Dafgårds, Findus, Gooh, Oatly, Pågen, Wasa, Valio, Lindahls, Barebells, Nocco, ProPud, Estrella, OLW och Santa Maria. Urvalet omfattar flera matkategorier: färdigrätter, mejeri, bröd, drycker, snacks, proteinprodukter och skafferivaror. Det är ett starturval, inte alla produkter på den svenska marknaden.
 
 Skriv exempelvis `Felix paj` och välj en produkt. Namn, märke och förpackningsstorlek hjälper till att skilja träffarna åt. Ange gram eller ml, eller välj **förpackning** när vikten/volymen är känd. En förpackning antas inte vara en portion, och okänd fetthalt eller fiberhalt anges inte som noll.
 
