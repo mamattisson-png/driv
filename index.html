@@ -1279,6 +1279,42 @@
   .kmadd { width: 40px; height: 40px; flex: none; padding: 0; border-radius: 20px; border: 0; background: var(--card-2); color: var(--accent-text);
     display: grid; place-items: center; }
   .kmrow:not(.empty) .kmadd { background: none; border: 1px solid var(--line-strong); }
+  /* Kost, översikten: luftigare – datumrad, en ring i mitten, lugna rutor och ett kort per måltid */
+  .kdnav { display: flex; align-items: center; justify-content: space-between; margin: 4px -8px 6px; }
+  .kdnav .iconbtn { width: 44px; height: 44px; color: var(--muted); }
+  .kdtitle { display: inline-flex; align-items: center; gap: 8px; border: 0; background: none; color: var(--text); font: 700 14px "Lexend", sans-serif;
+    letter-spacing: .1em; text-transform: uppercase; min-height: 44px; padding: 0 10px; }
+  .kdtitle .ic { color: var(--accent-text); }
+  .kringbox { padding: 4px 0 8px; margin-bottom: 8px; }
+  .kringrow { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 4px; }
+  .kside { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  .kside b { font: 600 22px "Lexend", sans-serif; font-variant-numeric: tabular-nums; }
+  .kring { position: relative; width: 168px; height: 168px; }
+  .kring .hring-bg, .kring .hring-fg { stroke-width: 2.6; }
+  .kring .hring-fg { stroke: var(--accent); }
+  .kring .hring.over .hring-fg { stroke: var(--bad); }
+  .kringc { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; text-align: center; }
+  .kringbox .kleft { font: 800 34px/1.05 "Unbounded", sans-serif; margin: 2px 0; }
+  .kringbox .kmacros { gap: 10px; margin-top: 18px; }
+  .kmac { background: var(--card); border-radius: 18px; padding: 12px 12px 14px; }
+  .kmac .small:first-child { font-weight: 600; }
+  .kmac .small b { font-weight: 600; }
+  .kringbox .kmiss { margin: 10px 4px 0; }
+  .kringbox > .link { margin: 10px 4px 0; display: inline-block; }
+  .ksec { font: 700 13px "Lexend", sans-serif; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin: 22px 4px 10px; }
+  .kmeals { display: flex; flex-direction: column; gap: 12px; }
+  .kmcard { display: flex; align-items: center; gap: 10px; width: 100%; background: var(--card); border: 0; border-radius: 22px; padding: 10px 14px 10px 16px;
+    color: var(--text); text-align: left; font: inherit; }
+  .kmcard.kmrow { border: 0; min-height: 0; }
+  .kmcard .kmopen { min-height: 76px; gap: 14px; }
+  .kmcard .kmic { width: 48px; height: 48px; border-radius: 24px; }
+  .kmcard .kmic .kicon { width: 24px; height: 24px; }
+  .kmcard b { font-size: 17px; font-weight: 600; }
+  .kmcard .kmsum { color: var(--text); margin-top: 2px; font-weight: 600; }
+  .kmcard .kmadd { width: 44px; height: 44px; border-radius: 22px; background: var(--card-2); border: 0; }
+  .kmcard.empty b { color: var(--text); }
+  .kmeals .kmrow.fresh { margin: 0; width: 100%; }
+  .krecept.kmcard { margin: 12px 0 14px; min-height: 76px; }
   /* Kosts sidor: en måltid, Lägg till och ett livsmedel */
   .kpage { display: flex; flex-direction: column; }
   .kpage > .backbtn { align-self: flex-start; }

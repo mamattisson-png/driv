@@ -1827,17 +1827,20 @@ def test_kost_veckan_maltider_och_recept_med_uppskattade_mangder(page):
     seed(page, """S.log[shift(TODAY, -1)] = {workouts:[], dailies:{}, food:[{name:'Pasta', kcal:4000, protein:25, meal:1}]};
       day().food.push({name:'Gröt', kcal:300, protein:10, meal:0}, {name:'Kaffe', kcal:10, protein:1, meal:0})""")
     go(page, "kost")
-    # Veckan: en stapel per dag, över målet syns, och en tidigare dag går att öppna
+    # Datumraden: pilar till dagen före, och ett tryck på datumet visar veckan med en stapel per dag
+    assert "IDAG" in page.inner_text(".kdtitle").upper() and page.locator(".kdnav [data-kday]:last-child").is_disabled()
+    page.click("[data-kweekopen]")
     if page.evaluate("weekdayOf(TODAY) > 0"):
-        assert page.locator(f'[data-kday="{page.evaluate("shift(TODAY, -1)")}"] .ktr i.over').count() == 1
-    assert "KVAR IDAG" in page.inner_text(".ksum").upper() and "310 av" in page.inner_text(".ksum")
+        assert page.locator(f'.kweek [data-kday="{page.evaluate("shift(TODAY, -1)")}"] .ktr i.over').count() == 1
+    # Ringen: ätit, kvar och målet
+    assert "KVAR IDAG" in page.inner_text(".ksum").upper() and "310" in page.inner_text(".kside") and "av 2" in page.inner_text(".kringc")
     # Måltiderna är rader; ett tryck öppnar måltidens sida
     assert "Gröt, Kaffe" in page.inner_text('[data-mealpage="0"]') and page.locator("[data-fooditem]").count() == 0
     page.click('[data-mealpage="0"]')
     assert page.locator("[data-fooditem]").count() == 2
     page.click("[data-mealback]")
     # En enda knapp lägger till; recept utan mängder får uppskattade mängder för antalet portioner
-    page.click(".kaddmain")
+    page.click(".kmadd >> nth=0")
     page.click(".addpage [data-rlist]")
     page.click("[data-rnew]")
     page.fill("#rname", "Köttfärssås")
@@ -1880,7 +1883,7 @@ def test_recept_ar_en_sida_med_sok_och_sortering(page):
 def test_fett_och_fibrer_raknas(page):
     start(page)
     go(page, "kost")
-    page.click(".kaddmain")
+    page.click(".kmadd >> nth=0")
     page.fill("#fname", "2 dl havregryn och 1 banan")
     page.click("#faddbtn")
     f = page.evaluate("day().food.map(x => [x.name, x.fat, x.fiber])")

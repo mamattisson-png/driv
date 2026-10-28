@@ -502,10 +502,10 @@ function mealCard(meal, L, m) {
   const name = meal < 0 ? "Övrigt" : MEALS[meal][0], sum = sumKcal(items.map(x => x.f));
   const added = sumKcal(items.filter(x => fresh.has(x.f)).map(x => x.f));
   const sub = items.length ? items.map(x => isEst(x.f) ? "≈ Uppskattning" : x.f.name).join(", ") : `Förslag ca ${tnum(mealTarget(meal, m))} kcal`;
-  return `<div class="kmrow ${items.length ? "" : "empty"} ${items.some(x => fresh.has(x.f)) ? "fresh" : ""}">
+  return `<div class="kmcard kmrow ${items.length ? "" : "empty"} ${items.some(x => fresh.has(x.f)) ? "fresh" : ""}">
       <button class="kmopen" data-mealpage="${meal}" aria-label="${name}: ${items.length ? `${tnum(sum)} kcal` : "inget än"}"><span class="kmic">${mealIcon(meal)}</span>
-        <span class="grow col"><b>${name}</b><span class="muted small kprev">${esc(sub)}</span></span>
-        ${added ? `<span class="kplus" aria-label="${tnum(added)} kcal tillagt">+${tnum(added)}</span>` : ""}${items.length ? `<b class="kmsum">${tnum(sum)}</b>` : ""}</button>
+        <span class="grow col"><b>${name}</b><span class="muted small kprev">${esc(sub)}</span>
+        ${items.length ? `<span class="small kmsum">${tnum(sum)} kcal${added ? ` <span class="kplus">+${tnum(added)}</span>` : ""}</span>` : ""}</span></button>
       ${meal < 0 ? "" : `<button class="kmadd" data-addto="${meal}" aria-label="Lägg till i ${name.toLowerCase()}">${icon("plus", 20)}</button>`}</div>`;
 }
 // Sidan för en måltid: det man ätit (ett tryck öppnar livsmedlet), summan mot förslaget och näringen
@@ -543,6 +543,20 @@ function kostWeek() {
     const kc = eaten(d).kcal, pct = goal ? Math.min(1, kc / goal) : 0;
     return `<button class="kwd ${d === logDate() ? "on" : ""}" data-kday="${d}" ${d > TODAY ? "disabled" : ""} aria-pressed="${d === logDate()}" aria-label="${WD_LONG[i]}: ${tnum(kc)} kcal">
       <span>${WD[i][0]}</span><i class="ktr"><i class="${kc > goal * 1.05 ? "over" : ""}" style="height:${Math.round(pct * 100)}%"></i></i></button>`; }).join("")}</div>`;
+}
+// Dagen som en ring: ätit till vänster, kvar i mitten och bränt till höger. Under: tre lugna rutor för protein, fett och fibrer.
+let kostWeekOpen = false;
+function kostRing(e, m) {
+  const left = m.kcal - e.kcal, pct = m.kcal ? e.kcal / m.kcal : 0, burned = burnedOn(logDate());
+  const tile = (cls, label, v, goal, reach) => `<div class="kmac ${cls}"><span class="small">${label}</span><span class="small"><b>${tnum(v)}</b> / ${tnum(goal)} g</span>${bar(v, goal, reach, cls)}</div>`;
+  return `<section class="kringbox dayring ksum" aria-label="${editDate ? dateLabel(editDate) : "Dagens intag"}">
+    <div class="kringrow"><div class="kside"><span class="muted small">Ätit</span><b>${tnum(e.kcal)}</b></div>
+      <div class="kring">${ring(pct, 168, left < -m.kcal * 0.05 ? "over" : "")}<div class="kringc"><span class="small">${left >= 0 ? (editDate ? "Kvar den dagen" : "Kvar idag") : "Över målet"}</span>
+        <b class="kleft">${tnum(Math.abs(left))}</b><span class="muted small">av ${tnum(m.kcal)} kcal</span></div></div>
+      <div class="kside"><span class="muted small">Bränt</span><b>${tnum(burned)}</b></div></div>
+    <div class="kmacros">${tile("prot", "Protein", e.protein, m.protein, true)}${tile("fat", "Fett", e.fat, m.fat, false)}${tile("fib", "Fibrer", e.fiber, m.fiber, true)}</div>
+    ${e.n > e.known ? `<div class="muted small kmiss">Fett och fibrer saknas för ${e.n - e.known} av ${e.n} saker idag.</div>` : ""}
+    ${S.profileSet === false ? `<button class="link small" data-tab="profil" data-popen="kalori">Målet bygger på standardvärden – ställ in ditt</button>` : ""}</section>`;
 }
 // Kvar idag: kcal som en stapel och protein under
 function kostSummary(e, m) {
@@ -695,21 +709,24 @@ function kostView() {
   if (foodItem != null && L.food[foodItem]) return itemPage();
   if (foodSheet) return addPage(m);
   if (mealPage != null) return mealPageView(m);
-  const wd = cap(parse(logDate()).toLocaleDateString("sv-SE", { weekday: "long", day: "numeric", month: "long" }));
-  return `<h1>Kost</h1><div class="muted kdate">${wd} · vecka ${weekNo(logDate())}</div>
-    ${kostWeek()}
-    ${kostSummary(e, m)}
+  const d = logDate(), prev = shift(d, -1), next = shift(d, 1);
+  const dl = d === TODAY ? "Idag" : d === shift(TODAY, -1) ? "Igår" : cap(WD_LONG[weekdayOf(d)]);
+  const dayText = `${dl}, ${parse(d).toLocaleDateString("sv-SE", { day: "numeric", month: "short" }).replace(".", "")}`;
+  return `<div class="kdnav"><button class="iconbtn ghost" data-kday="${prev}" aria-label="Dagen före">${icon("left", 20)}</button>
+      <button class="kdtitle" data-kweekopen aria-expanded="${kostWeekOpen}">${icon("kalender", 16)}${dayText}</button>
+      <button class="iconbtn ghost" data-kday="${next}" ${next > TODAY ? "disabled" : ""} aria-label="Dagen efter">${icon("right", 20)}</button></div>
+    ${kostWeekOpen ? kostWeek() : ""}
+    ${kostRing(e, m)}
     ${!L.food.length && yesterdayFood() ? `<button class="klink kday" data-repeatday>Samma mat som igår<span class="muted"> · hela dagen, ${tnum(sumKcal(yesterdayFood()))} kcal</span></button>` : ""}
-    <section class="card kdaycard" aria-label="Måltider">${MEALS.map((_, i) => mealCard(i, L, m)).join("")}${mealCard(-1, L, m)}</section>
-    <button class="card homerow krecept" data-rlist><span class="kmic">${icon("kost", 18)}</span><span class="grow col"><b>Dina recept</b>
+    <h2 class="ksec">Måltider</h2>
+    <div class="kmeals" aria-label="Måltider">${MEALS.map((_, i) => mealCard(i, L, m)).join("")}${mealCard(-1, L, m)}</div>
+    <button class="kmcard krecept" data-rlist><span class="kmic">${icon("kost", 22)}</span><span class="grow col"><b>Dina recept</b>
       <span class="muted small">${recipes().length ? `${recipes().length} recept` : "Bygg en rätt en gång, logga en portion med ett tryck"}</span></span><span class="chev">${icon("right", 18)}</span></button>
-    <div class="muted small credit">Näringsvärden: Livsmedelsverkets livsmedelsdatabas (CC BY 4.0) och egna uppskattningar.</div>
-    <div class="kadd"><button class="primary grow kaddmain" data-addto="${mealByClock()}" data-focusname>${icon("plus", 20)}Lägg till mat</button>
-      ${CAN_SCAN ? `<button class="kscan" data-scan aria-label="Skanna streckkod">${icon("barcode", 22)}</button>` : ""}</div>`;
+    <div class="muted small credit">Näringsvärden: Livsmedelsverkets livsmedelsdatabas (CC BY 4.0) och egna uppskattningar.</div>`;
 }
 
 document.addEventListener("click", ev => {
-  const t = ev.target.closest("[data-addfood],[data-addto],[data-kmeal],[data-kday],[data-fsclose],[data-quick],[data-mstep],[data-mdel],[data-repeat],[data-savegroup],[data-sheetmeal],[data-usemeal],[data-repeatday],[data-quickmore],[data-fpanel],[data-fpick],[data-fvar],[data-amtopen],[data-fooditem],[data-itemclose],[data-qty],[data-itemfav],[data-mealpage],[data-mealback]");
+  const t = ev.target.closest("[data-addfood],[data-addto],[data-kmeal],[data-kday],[data-fsclose],[data-quick],[data-mstep],[data-mdel],[data-repeat],[data-savegroup],[data-sheetmeal],[data-usemeal],[data-repeatday],[data-quickmore],[data-fpanel],[data-fpick],[data-fvar],[data-amtopen],[data-fooditem],[data-itemclose],[data-qty],[data-itemfav],[data-mealpage],[data-mealback],[data-kweekopen]");
   if (!t || t.disabled) return;
   if (t.classList.contains("overlay") && ev.target !== t) return;   // klick inne i fönstret
   const ds = t.dataset, page = kostPageKey();
@@ -738,6 +755,7 @@ document.addEventListener("click", ev => {
   else if (ds.fsclose !== undefined) { mealPage = ds.tomeal != null || foodSheet.from === "meal" ? foodSheet.meal : null; foodSheet = null; }
   else if (ds.mealpage) mealPage = +ds.mealpage;
   else if (ds.mealback !== undefined) mealPage = null;
+  else if (ds.kweekopen !== undefined) kostWeekOpen = !kostWeekOpen;
   else if (ds.kday) { const d = ds.kday; editDate = d === TODAY ? null : d; kostDay = !!editDate; mealPage = null; }
   else if (ds.itemclose !== undefined) {
     const f = day().food[foodItem];

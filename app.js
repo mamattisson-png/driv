@@ -797,7 +797,7 @@ function render() {
   const banner = editDate && (tab === "kost" || (tab === "pass" && focus && !editing))
     ? `<div class="editbar">Du ändrar <b>${dateLabel(editDate)}</b><button class="small" data-editdone>Klar</button></div>` : "";
   // Kugghjulet behövs inte i upplägget eller i fokusläget, där det skulle ligga över texten
-  const gear = passDone || (tab === "kost" && kostPageKey() !== "kost") || tab === "upplagg" || tab === "idag" || tab === "profil" || tab === "vanner" || tab === "pass" || tab === "recept" ? "" : `<button class="gear ${tab === "profil" ? "on" : ""}" data-tab="profil" aria-label="Profil och inställningar">${icon("profil", 20)}</button>`;
+  const gear = passDone || tab === "kost" || tab === "upplagg" || tab === "idag" || tab === "profil" || tab === "vanner" || tab === "pass" || tab === "recept" ? "" : `<button class="gear ${tab === "profil" ? "on" : ""}" data-tab="profil" aria-label="Profil och inställningar">${icon("profil", 20)}</button>`;
   document.getElementById("app").innerHTML = passDone ? passDoneView()
     : gear + banner + VIEWS[tab]() + (modal ? renderModal() : "") + (actSheet ? actSheetView() : "");
   if (modal && modal.pick) filterPicker();
