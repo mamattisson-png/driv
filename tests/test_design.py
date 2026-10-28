@@ -120,8 +120,8 @@ def views(page):
     page.click("[data-addto]")
     page.click('[data-sheetmeal="1"]')
     page.fill("#fname", "bolognese och 2 ägg")
-    page.click(".sheet h2")
-    yield "Lägg till mat", ".sheet"
+    page.click(".addpage h1")
+    yield "Lägg till mat", "#app"
     page.evaluate("tab = 'recept'; recipeEdit = { idx: null, name: 'Lasagne', portions: 4, items: [{ name: 'Nötfärs', text: '500 g nötfärs', kcal: 1100, protein: 95 }], msg: 'Känns inte igen: x' }; render()")
     page.fill("#ring", "nötfärs, lök")
     page.click("[data-ringadd]")
@@ -132,9 +132,10 @@ def views(page):
     yield "Ett recept", "#app"
     page.evaluate("recipeOpen = null; tab = 'kost'; render()")
     page.click("#faddbtn")
+    yield "En måltid", "#app"
     page.click('[data-fooditem="0"]')
-    yield "Ändra mat", ".sheet"
-    page.click(".sheet [data-itemclose].primary")
+    yield "Ändra mat", "#app"
+    page.click(".pagefoot [data-itemclose]")
     go(page, "historik")
     yield "Historik", "#app"
     page.click(f'[data-histday="{page.evaluate("shift(TODAY, -1)")}"]')

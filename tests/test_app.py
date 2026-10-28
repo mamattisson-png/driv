@@ -377,7 +377,7 @@ def test_recept_byggs_och_loggas_per_portion(page):
     start(page)
     go(page, "kost")
     add_to(page, 3)
-    page.click(".sheet [data-rlist]")
+    page.click(".addpage [data-rlist]")
     page.click("[data-rnew]")
     page.fill("#rname", "Lasagne")
     page.fill("#ring", "500 g nötfärs, 2 dl grädde, okändgrej")
@@ -393,9 +393,11 @@ def test_recept_byggs_och_loggas_per_portion(page):
     page.click('[data-ruse="0"]')
     f = page.evaluate("day().food.at(-1)")
     assert f["name"] == "Lasagne" and f["meal"] == 3 and abs(f["kcal"] - total / 5) <= 1
-    # Knappen svarar själv, sedan tillbaka i Kost med fönstret öppet; receptet syns bland förslagen i andra måltider
+    # Knappen svarar själv, sedan tillbaka i Kost på middagens sida; receptet syns bland förslagen i andra måltider
     assert "Tillagt i middag" in page.inner_text('[data-ruse="0"].flashed') and page.locator(".toast").count() == 0
-    page.wait_for_function("tab === 'kost'")
+    page.wait_for_function("tab === 'kost' && mealPage === 3")
+    assert "Lasagne" in page.inner_text(".kitems")
+    page.click(".pagefoot [data-addto]")
     page.click('[data-sheetmeal="1"]')
     assert page.locator('.qadd:has-text("Lasagne")').count() == 1
 
@@ -672,7 +674,7 @@ def test_fritext_forslag_och_felstavning(page):
     page.click('.fask [data-fpick$=":0"]')
     assert "Lägg till i lunch ·" in page.inner_text("#faddbtn")
     page.click("[data-addfood]")
-    assert page.evaluate("day().food.length") == 2 and page.locator(".sheet").count() == 0
+    assert page.evaluate("day().food.length") == 2 and page.evaluate("mealPage") == 1 and page.locator(".addpage").count() == 0
 
 
 def test_kost_maltider_forslag_mangd_och_upprepa(page):
@@ -682,12 +684,14 @@ def test_kost_maltider_forslag_mangd_och_upprepa(page):
       {name:'Pasta', kcal:700, protein:25, meal:1}]}""")
     go(page, "kost")
     amounts = lambda meal: page.evaluate(f"day().food.filter(f => f.meal === {meal}).map(f => [f.name, f.kcal, f.amt ? f.amt.n + ' ' + f.amt.unit : ''])")
-    # Sidan visar bara måltiderna; att lägga till sker i ett eget fönster per måltid
+    # Översikten visar bara måltiderna; att lägga till sker på en egen sida per måltid
     assert page.locator("#fname").count() == 0
     # Som igår: gammalt "Ägg × 2" har fått mängden 2 st
     add_to(page, 0)
     page.click('[data-repeat="0"]')
     page.click('#faddbtn')
+    assert page.evaluate("mealPage") == 0
+    page.click("[data-mealback]")
     assert amounts(0) == [["Gröt", 300, ""], ["Ägg", 154, "2 st"]]
     # Fritext i lunch
     add_to(page, 1)
@@ -695,42 +699,43 @@ def test_kost_maltider_forslag_mangd_och_upprepa(page):
     assert page.inner_text("#faddbtn") == "Lägg till i lunch · 108 kcal"
     page.click("[data-addfood]")
     assert page.evaluate("day().food.at(-1).meal") == 1
-    add_to(page, 1)
-    # Ett förslag läggs till med sin senaste mängd och flyttar upp till "I lunchen nu"
+    # Från måltidens sida till Lägg till; ett förslag läggs till med sin senaste mängd
+    page.click(".pagefoot [data-addto]")
     page.click('.qadd:has-text("Ägg")')
     assert amounts(1)[-1] == ["Ägg", 154, "2 st"]
     assert page.locator('.qadd:has-text("Ägg")').count() == 0
-    assert page.locator(".sheet .qadd button").count() == 0   # ett förslag är en enda knapp, utan egna − och +
-    row = page.locator('.nrow:has-text("Ägg")')
-    row.locator('[data-mstep="-1"]').click()
-    assert amounts(1)[-1] == ["Ägg", 77, "1 st"]
-    page.locator('.nrow:has-text("Ägg") [data-mstep="1"]').click()
-    page.locator('.nrow:has-text("Ägg") [data-mstep="1"]').click()
-    assert amounts(1)[-1] == ["Ägg", 231, "3 st"]
+    assert page.locator(".addpage .qadd button").count() == 0   # ett förslag är en enda knapp, utan egna − och +
+    assert "I lunchen: 2 saker" in page.inner_text(".kinnow")
     # Klar syns även i ett lågt fönster
     page.set_viewport_size({"width": 1200, "height": 500})
     klar = page.locator("#faddbtn").bounding_box()
     assert klar["y"] + klar["height"] <= 500
     page.set_viewport_size({"width": 390, "height": 844})
     page.click('#faddbtn')
-    assert page.locator(".sheet").count() == 0
-    assert "Ägg · 3 st\n231" in page.inner_text("#app")
-    # Tryck på en loggad sak: favorit med sin mängd, ta bort
+    assert page.evaluate("mealPage") == 1 and page.locator(".addpage").count() == 0
+    assert "Ägg" in page.inner_text(".kitems") and "2 st" in page.inner_text(".kitems")
+    # Livsmedlets sida: mängd, favorit med sin mängd, ta bort
     i = page.evaluate("day().food.findIndex(f => f.meal === 1 && f.name === 'Ägg')")
     page.click(f'[data-fooditem="{i}"]')
+    page.click('.itempage [data-astep="-1"]')
+    assert amounts(1)[-1] == ["Ägg", 77, "1 st"]
+    page.click('.itempage [data-astep="1"]')
+    page.click('.itempage [data-astep="1"]')
+    assert amounts(1)[-1] == ["Ägg", 231, "3 st"]
     page.click("[data-itemfav]")
     assert page.evaluate("S.favs.map(f => [f.name, f.amt.n, f.amt.unit])") == [["Ägg", 3, "st"]]
-    page.click(".sheet [data-delfood]")
-    assert page.locator(".sheet").count() == 0
+    page.click(".itempage [data-delfood]")
+    assert page.locator(".itempage").count() == 0 and page.evaluate("mealPage") == 1
     assert page.evaluate("day().food.some(f => f.meal === 1 && f.name === 'Ägg')") is False
     # Frukosten sparad som måltid: föreslås bara till frukost och loggas del för del
-    add_to(page, 0)
+    page.click("[data-mealback]")
+    page.click('[data-mealpage="0"]')
     page.click('[data-savegroup="0"]')
-    page.click('#faddbtn')
+    page.click("[data-mealback]")
     add_to(page, 3)
     assert page.locator('.qadd.meal').count() == 0
     page.click('#faddbtn')
-    page.evaluate("day().food = day().food.filter(f => f.meal !== 0); save(); render()")
+    page.evaluate("day().food = day().food.filter(f => f.meal !== 0); mealPage = null; save(); render()")
     add_to(page, 0)
     page.click('.qadd.meal')
     assert amounts(0) == [["Gröt", 300, ""], ["Ägg", 154, "2 st"]]
@@ -751,6 +756,7 @@ def test_hela_garadagen_och_sparad_maltid_med_ett_tryck(page):
     page.click('[data-usemeal][data-meal="0"]')
     page.click('#faddbtn')
     assert page.evaluate("day().food.map(f => [f.name, f.meal])") == [["Gröt", 0], ["Kaffe", 0]]
+    page.click("[data-mealback]")
     assert page.locator("[data-repeatday]").count() == 0   # dagen är inte tom längre
     page.evaluate("day().food = []; save(); render()")
     page.click("[data-repeatday]")
@@ -767,19 +773,20 @@ def test_uppskattningar_raknas_inte_dubbelt(page):
     assert page.inner_text("#faddbtn") == "Lägg till i mellanmål · 300 kcal"
     page.click("#faddbtn")
     assert page.evaluate("day().food.at(-1)") == {"name": "Uppskattning", "kcal": 300, "protein": 17, "meal": 2, "est": True}
-    add_to(page, 2)
+    page.click(".pagefoot [data-addto]")
     # Uppskattningen är aldrig ett förslag eller en favorit
     assert page.locator('.qadd:has-text("Uppskattning")').count() == 0
-    # Riktig mat i samma måltid: varning och ett tryck för att ta bort uppskattningen
+    # Riktig mat i samma måltid: varning på måltidens sida och ett tryck för att ta bort uppskattningen
     page.click('.qadd:has-text("Pasta")')
-    assert "räknas dubbelt" in page.inner_text(".sheet")
-    page.click(".sheet .nrow.est [data-mdel]")
-    assert page.evaluate("day().food.filter(f => f.meal === 2).map(f => f.name)") == ["Pasta"]
     page.click('#faddbtn')
+    assert "räknas dubbelt" in page.inner_text(".kitems")
+    page.click(".kirow.est [data-mdel]")
+    assert page.evaluate("day().food.filter(f => f.meal === 2).map(f => f.name)") == ["Pasta"]
+    page.click("[data-mealback]")
     # En uppskattning visas som just det och kan inte bli favorit
     page.evaluate("day().food.push({name: 'Uppskattning', kcal: 600, protein: 30, meal: 3, est: true}); render()")
     assert "≈ Uppskattning" in page.inner_text("#app")
-    page.click('[data-kmeal="3"]')   # middagen fälls ut
+    page.click('[data-mealpage="3"]')
     page.click(f'[data-fooditem="{page.evaluate("day().food.length - 1")}"]')
     assert page.locator("[data-itemfav]").count() == 0
 
@@ -806,7 +813,7 @@ def test_mangd_styr_kalorierna(page):
     go(page, "kost")
     add_to(page, 1)
     page.fill("#fname", "bolognese")
-    page.click(".sheet h2")
+    page.click(".addpage h1")
     row = page.locator("[data-drow]").first
     assert "Spaghetti bolognese" in row.inner_text() and "675 kcal" in row.inner_text()
     assert row.locator(".famt").inner_text() == "1 portion"
@@ -823,7 +830,7 @@ def test_mangd_styr_kalorierna(page):
     row.locator('[data-astep="-1"]').click()
     assert row.locator(".amt-n").input_value() == "100"
     # Fälten för egna kcal syns inte när allt känns igen
-    assert page.locator(".sheet .manual").is_hidden()
+    assert page.locator(".addpage .manual").is_hidden()
     page.click("[data-addfood]")
     f = page.evaluate("day().food[0]")
     assert [f["name"], f["kcal"], f["protein"], f["amt"]["n"], f["amt"]["unit"]] == ["Spaghetti bolognese", 150, 7, 100, "g"]
@@ -835,13 +842,14 @@ def test_mangd_styr_kalorierna(page):
     page.locator('[data-iamt="u"]').select_option("portion")
     page.wait_for_function("day().food[0].amt.unit === 'portion'")
     assert page.evaluate("[day().food[0].amt.n, day().food[0].kcal]") == [0.5, 338]
-    page.click('.sheet [data-astep="1"]')
+    page.click('.itempage [data-astep="1"]')
     assert page.evaluate("[day().food[0].amt.n, day().food[0].kcal]") == [1, 675]
     # Två ägg: flera rader i en text blir var sin rad med sin mängd
-    page.click("[data-itemclose].primary")
+    page.click(".pagefoot [data-itemclose]")
+    page.click("[data-mealback]")
     add_to(page, 0)
     page.fill("#fname", "2 ägg och 1 dl mjölk")
-    page.click(".sheet h2")
+    page.click(".addpage h1")
     page.click("[data-addfood]")
     assert page.evaluate("day().food.filter(f => f.meal === 0).map(f => [f.name, f.amt.n, f.amt.unit, f.kcal])") == [["Ägg", 2, "st", 154], ["Mjölk", 1, "dl", 46]]
 
@@ -850,7 +858,7 @@ def test_streckkod_fran_open_food_facts(page):
     start(page, "window.BarcodeDetector = class { async detect() { return window.__code ? [{ rawValue: window.__code }] : []; } };")
     go(page, "kost")
     add_to(page, 0)
-    page.click(".sheet [data-scan]")
+    page.click(".addpage [data-scan]")
     page.wait_for_function("scanner.stream !== null")
     page.evaluate("window.__code = '7310000000001'")
     page.wait_for_selector(".scan-product")
@@ -858,7 +866,7 @@ def test_streckkod_fran_open_food_facts(page):
     assert "92 kcal" in page.inner_text("#scancalc")
     page.click("[data-scanlog]")
     assert page.evaluate("day().food[0].kcal") == 92
-    page.click(".sheet [data-scan]")
+    page.click("[data-scan]")
     page.fill("#scancode", "0000000000017")
     page.click("[data-scanlookup]")
     page.wait_for_function("document.querySelector('#scanstatus').textContent.includes('finns inte')")
@@ -1808,7 +1816,7 @@ def test_fett_och_fibrer_fran_livsmedelsverket(page):
     assert f["fat"] > 3 and f["fiber"] > 5
     page.evaluate("const f = day().food[0]; f.amt.n = 200; applyAmt(f)")
     assert round(page.evaluate("day().food[0].fiber"), 1) == round(f["fiber"] * 2, 1)
-    page.evaluate("render()")
+    page.evaluate("mealPage = null; render()")
     text = page.inner_text(".dayring")
     assert "Fett" in text and "Fibrer" in text and "/ 35 g" in text
     assert page.evaluate("eaten().fiber") > 0
@@ -1823,14 +1831,14 @@ def test_kost_veckan_maltider_och_recept_med_uppskattade_mangder(page):
     if page.evaluate("weekdayOf(TODAY) > 0"):
         assert page.locator(f'[data-kday="{page.evaluate("shift(TODAY, -1)")}"] .ktr i.over').count() == 1
     assert "KVAR IDAG" in page.inner_text(".ksum").upper() and "310 av" in page.inner_text(".ksum")
-    # Måltiderna är rader; frukosten fälls ut och ihop
-    page.evaluate("kostOpen = -9; render()")
-    assert "Gröt, Kaffe" in page.inner_text('[data-kmeal="0"]') and page.locator("[data-fooditem]").count() == 0
-    page.click('[data-kmeal="0"]')
+    # Måltiderna är rader; ett tryck öppnar måltidens sida
+    assert "Gröt, Kaffe" in page.inner_text('[data-mealpage="0"]') and page.locator("[data-fooditem]").count() == 0
+    page.click('[data-mealpage="0"]')
     assert page.locator("[data-fooditem]").count() == 2
+    page.click("[data-mealback]")
     # En enda knapp lägger till; recept utan mängder får uppskattade mängder för antalet portioner
     page.click(".kaddmain")
-    page.click(".sheet [data-rlist]")
+    page.click(".addpage [data-rlist]")
     page.click("[data-rnew]")
     page.fill("#rname", "Köttfärssås")
     page.fill("#ring", "nötfärs, lök, 2 dl grädde")
@@ -1877,6 +1885,8 @@ def test_fett_och_fibrer_raknas(page):
     page.click("#faddbtn")
     f = page.evaluate("day().food.map(x => [x.name, x.fat, x.fiber])")
     assert f[0][0] == "Havregryn" and f[0][1] > 0 and f[0][2] > 5 and f[1][2] > 1
+    assert "fett" in page.inner_text(".kmtotal") and "fibrer" in page.inner_text(".kmtotal")
+    page.click("[data-mealback]")
     text = page.inner_text(".kmacros")
     assert "Fett" in text and "Fibrer" in text
     # Mat utan värden (Livsmedelsverkets lista) räknas och visas som saknad
@@ -1891,20 +1901,16 @@ def test_bekraftelse_dar_man_tittar_utan_besked(page):
     add_to(page, 1)
     page.fill("#fname", "1 banan")
     page.click("[data-addfood]")
-    # Inget besked; måltiden står öppen och raden lyser till med hur mycket som kom till
+    # Inget besked; måltidens sida visas och det nya lyser till, och i översikten raden med hur mycket som kom till
     assert page.locator(".toast").count() == 0
-    assert page.locator('.kmrow.fresh[data-kmeal="1"]').count() == 1 and "+108" in page.inner_text(".kmrow.fresh")
-    assert page.locator(".kmitems .krow.fresh").count() == 1
-    # I bladet: det nya hamnar överst i "nu" och lyser till
+    assert page.locator(".kirow.fresh").count() == 1
+    page.click("[data-mealback]")
+    assert page.locator('.kmrow.fresh [data-mealpage="1"]').count() == 1 and "+108" in page.inner_text(".kmrow.fresh")
+    # På Lägg till lyser raden till måltiden till när ett förslag lagts till
     add_to(page, 1)
-    page.fill("#fname", "1 äpple")
-    page.click("[data-addfood]")
-    add_to(page, 1)
-    page.wait_for_selector('.nowcard .nrow')
     page.click('.qadd:has-text("Gröt")')
-    page.wait_for_selector(".nowcard .nrow.fresh")
-    assert page.locator(".toast").count() == 0 and page.locator(".nowcard .nrow.fresh").count() >= 1
-    assert "fresh" in page.get_attribute(".nowcard .nrow >> nth=0", "class")
+    page.wait_for_selector(".kinnow.fresh")
+    assert page.locator(".toast").count() == 0
     # Fel visas vid fältet
     page.evaluate("modal = { prof: true }; render()")
     page.fill("#pname", "")

@@ -1230,6 +1230,7 @@
   .fvars { display: flex; align-items: center; gap: 6px; margin: -2px -20px 10px 0; padding-right: 20px; overflow-x: auto; scrollbar-width: none; }
   .fvars::-webkit-scrollbar { display: none; }
   .fvars > * { flex: none; }
+  .addpage .fvars { margin-right: -16px; padding-right: 16px; }
   .fvars button { min-height: 36px; padding: 0 12px; border-radius: 99px; border: 1px solid var(--line-strong); background: none; color: var(--text); font-size: 13px; }
   .foodsheet .qgrid { display: flex; flex-direction: column; gap: 0; }
   .foodsheet .qadd { display: flex; width: 100%; align-items: center; gap: 12px; min-height: 56px; padding: 8px 2px; border: 0; border-top: 1px solid var(--line);
@@ -1271,6 +1272,44 @@
   .kmrow.empty .kmic { color: var(--muted); }
   .kmrow.empty b { color: var(--muted); font-weight: 500; }
   .kmrow .kmsum { font-size: 14px; }
+  .kmrow { gap: 8px; padding: 0; }
+  .kmopen { display: flex; flex: 1; min-width: 0; align-items: center; gap: 12px; min-height: 64px; padding: 8px 0; border: 0; border-radius: 0;
+    background: none; color: var(--text); text-align: left; font: inherit; }
+  .kmopen .col { min-width: 0; gap: 1px; }
+  .kmadd { width: 40px; height: 40px; flex: none; padding: 0; border-radius: 20px; border: 0; background: var(--card-2); color: var(--accent-text);
+    display: grid; place-items: center; }
+  .kmrow:not(.empty) .kmadd { background: none; border: 1px solid var(--line-strong); }
+  /* Kosts sidor: en måltid, Lägg till och ett livsmedel */
+  .kpage { display: flex; flex-direction: column; }
+  .kpage > .backbtn { align-self: flex-start; }
+  .kpage h1 { margin: 2px 0 12px; overflow-wrap: anywhere; }
+  .kpage > .card { margin-bottom: 12px; }
+  .kitems { padding: 0 6px 0 16px; }
+  .kirow { display: flex; align-items: center; gap: 4px; border-top: 1px solid var(--line); }
+  .kirow:first-child { border-top: 0; }
+  .kirow.fresh { margin: 0 -6px 0 -12px; padding-left: 12px; }
+  .kirow > .col { min-width: 0; gap: 2px; padding: 12px 0; border: 0; border-radius: 0; background: none; color: var(--text); text-align: left; font: inherit; }
+  .kirow b { font-weight: 600; font-size: 16px; }
+  .kirow.est b { font-style: italic; color: var(--muted); }
+  .kidel { width: 44px; height: 44px; flex: none; padding: 0; border: 0; background: none; color: var(--muted); display: grid; place-items: center; }
+  .kempty { padding: 18px 16px; }
+  .kmtotal .row { align-items: baseline; margin-bottom: 8px; }
+  .kmbig { font: 800 26px "Unbounded", sans-serif; }
+  .kmbig small { font: 500 14px "Lexend", sans-serif; color: var(--muted); }
+  .kmtotal .rstats { margin: 12px 0 4px; }
+  .rstats.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .ksave { margin-top: 8px; }
+  .kshort.card { padding: 0 16px; }
+  .addpage .fshead h1 { margin-bottom: 4px; }
+  .kinnow { display: flex; align-items: center; gap: 6px; margin: 10px 0 0; padding: 10px 14px; border-radius: 14px; background: var(--card-2); }
+  .kintake { margin: 12px 0 4px; padding: 12px 14px; }
+  .kintake .bar { margin: 8px 0; }
+  .kintake3 { display: flex; justify-content: space-between; gap: 8px; color: var(--muted); }
+  .kintake3 b { color: var(--text); }
+  .kiamt { padding: 12px 16px; }
+  .kiamt .qtyrow { margin: 0; }
+  .kinote { margin: -2px 2px 10px; }
+  .kiacts { gap: 8px; margin: 4px 0 12px; }
   .kmitems { margin: -4px 0 6px; }
   .kmitems .krow { padding: 7px 0 7px 48px; border-top: 0; }
   .kmitems .krow + .krow { border-top: 0; }

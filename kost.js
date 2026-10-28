@@ -1,12 +1,13 @@
 "use strict";
 // ---------- Kost: snabb loggning ----------
-// Sidan visar dagens mål och en kompakt ruta med måltiderna. "+ Lägg till" öppnar ett fönster för
-// just den måltiden: sökning, det som redan ligger i måltiden (med − mängd +) och förslag (favoriter,
-// egna måltider och det man ätit senast). Uppskattningar ("ca 600 kcal") är en egen sorts post som
-// aldrig blir favorit eller förslag. Laddas före app.js; anropas först när appen ritas.
+// Varje steg är en egen sida, inga fönster: översikten (dagens mål och måltiderna), en måltid (det man
+// ätit, summa och näring), Lägg till (sökning och förslag för just den måltiden) och ett livsmedel
+// (mängd och näring). Uppskattningar ("ca 600 kcal") är en egen sorts post som aldrig blir favorit
+// eller förslag. Laddas före app.js; anropas först när appen ritas.
 
-let foodSheet = null;     // { meal } när fönstret för att lägga till är öppet
-let foodItem = null;      // index i dagens mat när en loggad sak är öppen
+let foodSheet = null;     // { meal, from } på sidan Lägg till; from är "meal" om man kom från måltiden
+let foodItem = null;      // index i dagens mat när ett livsmedel är öppet
+let mealPage = null;      // måltiden vars sida är öppen
 let quickMore = false;    // visa fler förslag
 let foodPanel = "senaste"; // under fältet: "senaste" (förslag) eller "kcal" (bara kcal)
 let quickCache = [];
@@ -215,7 +216,7 @@ document.addEventListener("click", ev => {
     if (open) {
       // Knappen blir grön en kort stund, sedan tillbaka dit man kom ifrån där måltiden lyser till
       save(); flashBtn(t, where); t.disabled = true;
-      setTimeout(() => { recipeOpen = null; tab = recBack || "kost"; kostOpen = meal; render(); top(); }, 750);
+      setTimeout(() => { recipeOpen = null; tab = recBack || "kost"; if (tab === "kost") { foodSheet = null; mealPage = meal; } render(); top(); }, 750);
       return;
     }
     save(); render(); flashSel(`[data-ruse="${ds.ruse}"]`);
@@ -494,21 +495,46 @@ const MEAL_SVG = [
 ];
 const mealIcon = meal => meal < 0 ? "" : `<svg class="kicon" viewBox="0 0 24 24" aria-hidden="true">${MEAL_SVG[meal]}</svg>`;
 const foodTitle = f => { const a = amountText(f); return isEst(f) ? itemName(f) : `${esc(f.name)}${a ? (a.startsWith("×") ? ` ${a}` : ` · ${a}`) : ""}`; };
-let kostOpen = null;   // måltiden som är utfälld i Kost
 let kostDay = false;  // en annan dag är vald i veckoremsan
-function mealCard(meal, L) {
+function mealCard(meal, L, m) {
   const items = L.food.map((f, i) => ({ f, i })).filter(x => (x.f.meal ?? -1) === meal);
-  const name = meal < 0 ? "Övrigt" : MEALS[meal][0];
-  if (!items.length) return meal < 0 ? "" : `<div class="kmrow empty" aria-label="${name}, inget än"><span class="kmic">${mealIcon(meal)}</span>
-    <span class="grow col"><b>${name}</b><span class="muted small">Inget än</span></span></div>`;
-  const sum = sumKcal(items.map(x => x.f)), prot = items.reduce((a, x) => a + (+x.f.protein || 0), 0), open = kostOpen === meal;
+  if (meal < 0 && !items.length) return "";
+  const name = meal < 0 ? "Övrigt" : MEALS[meal][0], sum = sumKcal(items.map(x => x.f));
   const added = sumKcal(items.filter(x => fresh.has(x.f)).map(x => x.f));
-  const preview = items.length > 2 ? `${items.length} saker · ${fmtNum(Math.round(prot))} g protein` : items.map(x => isEst(x.f) ? "≈ Uppskattning" : x.f.name).join(", ");
-  return `<button class="kmrow ${items.some(x => fresh.has(x.f)) ? "fresh" : ""}" data-kmeal="${meal}" aria-expanded="${open}"><span class="kmic">${mealIcon(meal)}</span>
-      <span class="grow col"><b>${name}</b><span class="muted small kprev">${esc(preview)}</span></span>
-      ${added ? `<span class="kplus" aria-label="${tnum(added)} kcal tillagt">+${tnum(added)}</span>` : ""}<b class="kmsum">${tnum(sum)}</b><span class="chev">${icon(open ? "down" : "right", 18)}</span></button>
-    ${open ? `<div class="kmitems">${items.map(({ f, i }) => `<button class="krow ${isEst(f) ? "est" : ""} ${fresh.has(f) ? "fresh" : ""}" data-fooditem="${i}">
-      <span class="grow"><b>${foodTitle(f)}</b>${isEst(f) ? `<span class="muted small">ungefärligt</span>` : ""}</span><span class="kkcal">${tnum(f.kcal)}</span></button>`).join("")}</div>` : ""}`;
+  const sub = items.length ? items.map(x => isEst(x.f) ? "≈ Uppskattning" : x.f.name).join(", ") : `Förslag ca ${tnum(mealTarget(meal, m))} kcal`;
+  return `<div class="kmrow ${items.length ? "" : "empty"} ${items.some(x => fresh.has(x.f)) ? "fresh" : ""}">
+      <button class="kmopen" data-mealpage="${meal}" aria-label="${name}: ${items.length ? `${tnum(sum)} kcal` : "inget än"}"><span class="kmic">${mealIcon(meal)}</span>
+        <span class="grow col"><b>${name}</b><span class="muted small kprev">${esc(sub)}</span></span>
+        ${added ? `<span class="kplus" aria-label="${tnum(added)} kcal tillagt">+${tnum(added)}</span>` : ""}${items.length ? `<b class="kmsum">${tnum(sum)}</b>` : ""}</button>
+      ${meal < 0 ? "" : `<button class="kmadd" data-addto="${meal}" aria-label="Lägg till i ${name.toLowerCase()}">${icon("plus", 20)}</button>`}</div>`;
+}
+// Sidan för en måltid: det man ätit (ett tryck öppnar livsmedlet), summan mot förslaget och näringen
+function mealPageView(m) {
+  const meal = mealPage, L = day(), name = meal < 0 ? "Övrigt" : MEALS[meal][0];
+  const list = L.food.map((f, i) => ({ f, i })).filter(x => (x.f.meal ?? -1) === meal), items = list.map(x => x.f);
+  const sum = sumKcal(items), target = meal < 0 ? 0 : mealTarget(meal, m);
+  const known = items.filter(f => f.fat != null);
+  const tile = (v, l) => `<div><b>${v}</b><span>${l}</span></div>`;
+  const last = !items.length && meal >= 0 ? lastSlot(meal) : null, saved = !items.length && meal >= 0 ? savedFor(meal).slice(0, 3) : [];
+  const rows = list.map(({ f, i }) => `<div class="kirow ${isEst(f) ? "est" : ""} ${fresh.has(f) ? "fresh" : ""}">
+      <button class="grow col" data-fooditem="${i}"><b>${itemName(f)}</b><span class="muted small">${tnum(f.kcal)} kcal${amountText(f) ? ` · ${amountText(f)}` : ""}${isEst(f) && items.length > 1 ? ` · <span class="warntext">kan räknas dubbelt</span>` : ` · ${fmtNum(Math.round(f.protein))} g protein`}</span></button>
+      <button class="kidel" data-mdel="${i}" aria-label="Ta bort ${esc(isEst(f) ? "uppskattningen" : f.name)}">${icon("close", 18)}</button></div>`).join("");
+  const wd = cap(parse(logDate()).toLocaleDateString("sv-SE", { weekday: "long", day: "numeric", month: "long" }));
+  return `<div class="kpage foodsheet"><button class="backbtn" data-mealback>${icon("left", 18)}Kost</button>
+    <span class="klabel">${wd}</span><h1>${name}</h1>
+    ${items.length ? `<section class="card kitems" aria-label="I ${name.toLowerCase()}en">${rows}</section>`
+      : `<div class="card kempty muted">Inget i ${name.toLowerCase()}en än.</div>`}
+    ${!items.length && (last || saved.length) ? `<div class="kshort card">
+      ${saved.map(({ m: sm, idx }) => `<button class="klink" data-usemeal="${idx}" data-meal="${meal}">${esc(sm.name)}<span class="muted"> · ${sm.kcal} kcal</span></button>`).join("")}
+      ${last ? `<button class="klink" data-repeat="${meal}">↻ Samma som ${whenText(last.date)}<span class="muted"> · ${esc(last.items.map(f => isEst(f) ? "uppskattning" : f.name).join(", "))}</span></button>` : ""}</div>` : ""}
+    ${items.length ? `<section class="card kmtotal"><div class="row between"><b class="kmbig">${tnum(sum)} <small>kcal</small></b>
+        ${target ? `<span class="muted small">Förslag ca ${tnum(target)} kcal</span>` : ""}</div>
+      ${target ? bar(sum, target) : ""}
+      <div class="rstats ${known.length ? "three" : "two"}">${tile(`${fmtNum(Math.round(sumOf(items, "protein")))} g`, "protein")}
+        ${known.length ? `${tile(`${fmtNum(Math.round(sumOf(known, "fat")))} g`, "fett")}${tile(`${fmtNum(Math.round(sumOf(known, "fiber")))} g`, "fibrer")}` : tile(`${items.length}`, items.length === 1 ? "sak" : "saker")}</div>
+      ${known.length && known.length < items.length ? `<div class="muted small">Fett och fibrer saknas för ${items.length - known.length} av ${items.length}.</div>` : ""}
+      ${meal >= 0 && items.filter(f => !isEst(f)).length > 1 ? `<button class="linkbtn2 small ksave" data-savegroup="${meal}">Spara som måltid</button>` : ""}</section>` : ""}
+    ${meal >= 0 ? `<div class="pagefoot"><button class="primary wide bigbtn" data-addto="${meal}" data-from="meal" data-focusname>${icon("plus", 18)}Lägg till mat</button></div>` : ""}</div>`;
 }
 // Veckan: en stapel per dag mot kalorimålet. Ett tryck visar den dagen.
 function kostWeek() {
@@ -552,24 +578,20 @@ const kstat = (label, v, goal, unit, cls) => `<div class="kstat"><div class="kla
     <div class="bar ${cls}"><div style="width:${goal ? Math.min(100, Math.round(v / goal * 100)) : 0}%"></div></div></div>`;
 const kstats = (e, m) => `<div class="kstats">${kstat("Kalorier", e.kcal, m.kcal, "kcal", e.kcal > m.kcal * 1.05 ? "over" : "")}${kstat("Protein", e.protein, m.protein, "g", e.protein >= m.protein ? "ok" : "prot")}</div>`;
 
-// Bladet för att lägga till mat: måltid, ett fält, tre små val och en enda knapp längst ned.
+// Sidan Lägg till: måltid, ett fält, två små val, dagens intag och förslagen, och en enda knapp längst ned.
 // Knappen visar måltid och summa och uppdateras medan man skriver.
-function addSheet(m) {
+function addPage(m) {
   const meal = foodSheet.meal, mealName = MEALS[meal][0].toLowerCase(), q = quickList(meal), shown = quickMore ? q : q.slice(0, 6);
   const food = day().food, items = food.map((f, i) => ({ f, i })).filter(x => x.f.meal === meal);
-  const double = items.length > 1;
   const last = items.length ? null : lastSlot(meal), saved = items.length ? [] : savedFor(meal).slice(0, 3);   // en uppskattning bredvid riktig mat kan räknas dubbelt
-  const now = [...items.filter(x => fresh.has(x.f)).reverse(), ...items.filter(x => !fresh.has(x.f))].map(({ f, i }) => `<div class="nrow krow ${isEst(f) ? "est" : ""} ${fresh.has(f) ? "fresh" : ""}"><span class="grow"><b>${itemName(f)}</b><span class="muted small">${f.kcal} kcal${isEst(f) && double ? ` · <span class="warntext">kan räknas dubbelt</span>` : ""}</span></span>
-    ${isEst(f) ? `<button class="small qminus" data-mdel="${i}" aria-label="Ta bort uppskattningen">${icon("close", 18)}</button>`
-      : `<div class="fstep"><button data-mstep="-1" data-mi="${i}" aria-label="Mindre ${esc(f.name)}">−</button><b class="famt qcount">${amountText(f) || "1"}</b>
-         <button data-mstep="1" data-mi="${i}" aria-label="Mer ${esc(f.name)}">+</button></div>`}</div>`).join("");
   // Förslagen som en lista: namn och kcal, plus till höger (stjärna för favoriter)
   const quick = shown.map((f, i) => `<button class="qadd ${f.kind === "meal" ? "meal" : f.kind === "recipe" ? "recipe" : ""}" data-quick="${i}" aria-label="Lägg till ${esc(f.name)}">
       <span class="grow col"><b>${esc(f.name)}</b><span class="muted small">${f.kcal} kcal${f.kind === "recipe" ? " per portion" : f.kind === "meal" ? " · sparad måltid" : ""}</span></span>
       <span class="qplus ${f.kind === "fav" ? "fav" : ""}" aria-hidden="true">${f.kind === "fav" ? "★" : icon("plus", 18)}</span></button>`).join("");
-  return `<div class="overlay" data-fsclose><div class="sheet foodsheet" role="dialog" aria-label="Lägg till mat">
-    <div class="row between fshead"><span class="col"><span class="klabel">Lägg till mat</span><h2>${MEALS[meal][0]}</h2></span>
-      <button class="small ghost iconbtn" data-fsclose aria-label="Stäng">${icon("close", 18)}</button></div>
+  const e = eaten(), pct = v => m.kcal ? Math.min(100, Math.round(v / m.kcal * 100)) : 0;
+  const back = foodSheet.from === "meal" ? MEALS[meal][0] : "Kost";
+  return `<div class="kpage foodsheet addpage" aria-label="Lägg till mat"><button class="backbtn" data-fsclose>${icon("left", 18)}${back}</button>
+    <div class="fshead"><span class="klabel">Lägg till i</span><h1>${MEALS[meal][0]}</h1></div>
     <div class="mealseg" role="radiogroup" aria-label="Måltid">${MEALS.map(([n], i) => `<button role="radio" data-sheetmeal="${i}" class="${i === meal ? "on" : ""}" aria-checked="${i === meal}">${n}</button>`).join("")}</div>
     <div class="finput">${icon("search", 18)}<input id="fname" placeholder="${items.length ? "Lägg till mer …" : "t.ex. 2 ägg och 1 banan"}" autocomplete="off" aria-label="Vad åt du?">
       ${CAN_SCAN ? `<button class="fscan" data-scan aria-label="Skanna streckkod">${icon("barcode", 22)}</button>` : ""}</div>
@@ -581,16 +603,18 @@ function addSheet(m) {
       <div class="muted small">Med text i fältet sparas den som namn, annars blir det en uppskattning.</div></div>
     <div id="fpreview" class="fpreview"></div>
     <div class="fidle">
-    ${items.length ? `<div class="row between nowhead"><span class="klabel accent">I ${mealName}en nu · <span class="${items.some(x => fresh.has(x.f)) ? "oktext" : ""}">${items.length} ${items.length === 1 ? "sak" : "saker"}</span></span>
-      ${items.filter(x => !isEst(x.f)).length > 1 ? `<button class="linkbtn2 small" data-savegroup="${meal}">Spara som måltid</button>` : ""}</div><div class="nowcard">${now}</div>` : ""}
-    ${foodPanel === "senaste" ? `${!items.length && (last || saved.length) ? `<div class="kshort">
+    ${items.length ? `<button class="klink kinnow ${items.some(x => fresh.has(x.f)) ? "fresh" : ""}" data-fsclose data-tomeal="${meal}"><span class="grow">I ${mealName}en: <b>${items.length} ${items.length === 1 ? "sak" : "saker"} · ${tnum(sumKcal(items.map(x => x.f)))} kcal</b></span>${icon("right", 16)}</button>` : ""}
+    <section class="card kintake" aria-label="Dagens intag"><div class="row between"><span class="small">Dagens intag</span><b class="small">${tnum(e.kcal)} / ${tnum(m.kcal)} kcal</b></div>
+      <div class="bar"><div style="width:${pct(e.kcal)}%"></div></div>
+      <div class="kintake3 small"><span>Protein <b>${tnum(e.protein)}</b>/${tnum(m.protein)} g</span><span>Fett <b>${tnum(e.fat)}</b>/${tnum(m.fat)} g</span><span>Fibrer <b>${tnum(e.fiber)}</b>/${m.fiber} g</span></div></section>
+    ${foodPanel === "senaste" ? `${!items.length && (last || saved.length) ? `<div class="kshort card">
       ${saved.map(({ m: sm, idx }) => `<button class="klink" data-usemeal="${idx}" data-meal="${meal}">${esc(sm.name)}<span class="muted"> · ${sm.kcal} kcal</span></button>`).join("")}
       ${last ? `<button class="klink" data-repeat="${meal}">↻ Samma som ${whenText(last.date)}<span class="muted"> · ${esc(last.items.map(f => isEst(f) ? "uppskattning" : f.name).join(", "))}</span></button>` : ""}</div>` : ""}
     ${q.length ? `<h3 class="klabel fsub">Senaste</h3><div class="qgrid">${quick}</div>
       ${q.length > 6 ? `<button class="small ghost qmore" data-quickmore>${quickMore ? "Visa färre" : `Visa fler (${q.length - 6})`}</button>` : ""}` : ""}` : ""}
     </div>
-    <div class="sheet-foot"><button class="primary wide" id="faddbtn" data-addfood>Klar</button></div>
-  </div></div>`;
+    <div class="pagefoot"><button class="primary wide bigbtn" id="faddbtn" data-addfood>Klar</button></div>
+  </div>`;
 }
 // Vad knappen längst ned gör just nu: lägga till det som står i fältet (med summa) eller stänga
 function foodPending() {
@@ -641,54 +665,59 @@ function pickFood(j, k) {
   foodPreview();
   input.focus();
 }
-function itemSheet() {
+// Sidan för ett livsmedel: mängd, näring, favorit och ta bort
+function itemPage() {
   const f = day().food[foodItem];
   if (!f) { foodItem = null; return ""; }
-  const q = f.qty || 1, u = perUnit(f);
-  return `<div class="overlay" data-itemclose><div class="sheet">
-    <div class="row between"><h2>${itemName(f)}</h2><button class="small ghost" data-itemclose aria-label="Stäng">${icon("close", 18)}</button></div>
-    ${f.amt ? `<div class="row qtyrow"><span class="grow">Mängd</span>${amtInputs(f.amt, "data-iamt")}</div>`
-      : `<div class="row qtyrow"><span class="grow">Antal</span>
+  const q = f.qty || 1, u = perUnit(f), meal = f.meal ?? -1, mealName = meal < 0 ? "Övrigt" : MEALS[meal][0];
+  const tile = (v, l) => `<div><b>${v}</b><span>${l}</span></div>`;
+  return `<div class="kpage foodsheet itempage"><button class="backbtn" data-itemclose>${icon("left", 18)}${mealName}</button>
+    <span class="klabel">${mealName}</span><h1>${itemName(f)}</h1>
+    <section class="card kiamt">${f.amt ? `<div class="row qtyrow"><span class="grow">Mängd</span>${amtInputs(f.amt, "data-iamt")}</div>`
+      : isEst(f) ? `<div class="muted">Ungefärligt, utan mängd.</div>`
+      : `<div class="row qtyrow"><span class="grow">Antal${q !== 1 ? `<span class="muted small"> · ${u.kcal} kcal per st</span>` : ""}</span>
       <button class="step" data-qty="-1" ${q <= 0.5 ? "disabled" : ""} aria-label="Färre">−</button><b class="qcount">${fmtNum(q)}</b>
-      <button class="step" data-qty="1" aria-label="Fler">+</button></div>`}
-    <div class="muted" style="margin-top:8px">${f.kcal} kcal · ${f.protein} g protein${f.fat != null ? ` · ${fmtNum(f.fat)} g fett · ${fmtNum(f.fiber || 0)} g fibrer` : ""}${!f.amt && q !== 1 ? ` <span class="small">(${u.kcal} kcal per st)</span>` : ""}</div>
-    <div class="row" style="margin-top:12px">${isEst(f) ? `<span class="grow muted small">En uppskattning blir aldrig favorit eller förslag.</span>`
+      <button class="step" data-qty="1" aria-label="Fler">+</button></div>`}</section>
+    <div class="rstats four">${tile(tnum(f.kcal), "kcal")}${tile(`${fmtNum(f.protein)} g`, "protein")}
+      ${tile(f.fat != null ? `${fmtNum(f.fat)} g` : "–", "fett")}${tile(f.fat != null ? `${fmtNum(f.fiber || 0)} g` : "–", "fibrer")}</div>
+    ${f.fat == null && !isEst(f) ? `<div class="muted small kinote">Fett och fibrer finns inte för det här livsmedlet.</div>` : ""}
+    <div class="row kiacts">${isEst(f) ? `<span class="grow muted small">En uppskattning blir aldrig favorit eller förslag.</span>`
       : `<button class="grow" data-itemfav>${isFav(f) ? "★ Favorit" : "☆ Gör till favorit"}</button>`}
-      <button class="ghost" data-delfood="${foodItem}" data-itemclose>Ta bort</button></div>
-    <button class="primary wide" data-itemclose style="margin-top:12px">Klar</button>
-  </div></div>`;
+      <button class="ghost dangertext" data-delfood="${foodItem}" data-itemclose>Ta bort</button></div>
+    <div class="pagefoot"><button class="primary wide bigbtn" data-itemclose>Klar</button></div></div>`;
 }
 
+// Vilken av Kosts sidor som visas; byts sidan börjar den överst
+const kostPageKey = () => foodItem != null ? "vara" : foodSheet ? "lagg" : mealPage != null ? `maltid${mealPage}` : "kost";
 function kostView() {
   const m = macros(), e = eaten(), L = day();
   m.kcal += burnedOn(logDate());
-  // Medan man lägger till är den måltiden utfälld, och den förblir det efteråt
-  if (foodSheet) kostOpen = foodSheet.meal;
-  else if (kostOpen == null) { const has = MEALS.map((_, i) => i).filter(i => L.food.some(f => f.meal === i)); kostOpen = has.includes(mealByClock()) ? mealByClock() : has.pop() ?? null; }
+  if (foodItem != null && L.food[foodItem]) return itemPage();
+  if (foodSheet) return addPage(m);
+  if (mealPage != null) return mealPageView(m);
   const wd = cap(parse(logDate()).toLocaleDateString("sv-SE", { weekday: "long", day: "numeric", month: "long" }));
   return `<h1>Kost</h1><div class="muted kdate">${wd} · vecka ${weekNo(logDate())}</div>
     ${kostWeek()}
     ${kostSummary(e, m)}
     ${!L.food.length && yesterdayFood() ? `<button class="klink kday" data-repeatday>Samma mat som igår<span class="muted"> · hela dagen, ${tnum(sumKcal(yesterdayFood()))} kcal</span></button>` : ""}
-    <section class="card kdaycard" aria-label="Måltider">${MEALS.map((_, i) => mealCard(i, L)).join("")}${mealCard(-1, L)}</section>
+    <section class="card kdaycard" aria-label="Måltider">${MEALS.map((_, i) => mealCard(i, L, m)).join("")}${mealCard(-1, L, m)}</section>
     <button class="card homerow krecept" data-rlist><span class="kmic">${icon("kost", 18)}</span><span class="grow col"><b>Dina recept</b>
       <span class="muted small">${recipes().length ? `${recipes().length} recept` : "Bygg en rätt en gång, logga en portion med ett tryck"}</span></span><span class="chev">${icon("right", 18)}</span></button>
     <div class="muted small credit">Näringsvärden: Livsmedelsverkets livsmedelsdatabas (CC BY 4.0) och egna uppskattningar.</div>
     <div class="kadd"><button class="primary grow kaddmain" data-addto="${mealByClock()}" data-focusname>${icon("plus", 20)}Lägg till mat</button>
-      ${CAN_SCAN ? `<button class="kscan" data-scan aria-label="Skanna streckkod">${icon("barcode", 22)}</button>` : ""}</div>
-    ${foodSheet ? addSheet(m) : foodItem != null ? itemSheet() : ""}`;
+      ${CAN_SCAN ? `<button class="kscan" data-scan aria-label="Skanna streckkod">${icon("barcode", 22)}</button>` : ""}</div>`;
 }
 
 document.addEventListener("click", ev => {
-  const t = ev.target.closest("[data-addfood],[data-addto],[data-kmeal],[data-kday],[data-fsclose],[data-quick],[data-mstep],[data-mdel],[data-repeat],[data-savegroup],[data-sheetmeal],[data-usemeal],[data-repeatday],[data-quickmore],[data-fpanel],[data-fpick],[data-fvar],[data-amtopen],[data-fooditem],[data-itemclose],[data-qty],[data-itemfav]");
+  const t = ev.target.closest("[data-addfood],[data-addto],[data-kmeal],[data-kday],[data-fsclose],[data-quick],[data-mstep],[data-mdel],[data-repeat],[data-savegroup],[data-sheetmeal],[data-usemeal],[data-repeatday],[data-quickmore],[data-fpanel],[data-fpick],[data-fvar],[data-amtopen],[data-fooditem],[data-itemclose],[data-qty],[data-itemfav],[data-mealpage],[data-mealback]");
   if (!t || t.disabled) return;
   if (t.classList.contains("overlay") && ev.target !== t) return;   // klick inne i fönstret
-  const ds = t.dataset;
+  const ds = t.dataset, page = kostPageKey();
   if (ds.addfood !== undefined) {
-    // Knappen längst ned: lägger till det som står i fältet (eller bara kcal) och stänger bladet
+    // Knappen längst ned: lägger till det som står i fältet (eller bara kcal) och visar måltiden
     if (!foodSheet) return;
     const meal = foodSheet.meal, p = foodPending(), text = ($("fname").value || "").trim();
-    if (!p.ready) { foodSheet = null; render(); return; }
+    if (!p.ready) { foodSheet = null; mealPage = meal; render(); window.scrollTo(0, 0); return; }
     if (p.claude) { askClaude(true); return; }
     if (foodPanel === "kcal" && +$("fkcal").value) {
       const prot = Math.round(+$("fprot").value || 0), mm = macros();
@@ -699,19 +728,22 @@ document.addEventListener("click", ev => {
     else foodDraft.filter(d => d.amt).forEach(d => logFood({ name: d.name, amt: d.amt }, meal));
     foodDraft = [];
     foodSheet = null;
-    kostOpen = meal;
+    mealPage = meal;
   }
   else if (ds.fpanel) { foodPanel = foodPanel === ds.fpanel && ds.fpanel === "kcal" ? "senaste" : ds.fpanel; }
   else if (ds.fpick) { const [j, k] = ds.fpick.split(":").map(Number); pickFood(j, k); return; }
   else if (ds.fvar) { const [j, k] = ds.fvar.split(":").map(Number); pickVariant(j, k); return; }
   else if (ds.amtopen !== undefined) { const e = t.closest("[data-drow]").querySelector(".famtedit"); e.hidden = !e.hidden; return; }
-  else if (ds.addto) { foodSheet = { meal: +ds.addto }; quickMore = false; foodPanel = "senaste"; foodDraft = []; }
-  else if (ds.fsclose !== undefined) foodSheet = null;
-  else if (ds.kmeal !== undefined) kostOpen = kostOpen === +ds.kmeal ? -9 : +ds.kmeal;
-  else if (ds.kday) { const d = ds.kday; editDate = d === TODAY ? null : d; kostDay = !!editDate; kostOpen = null; }
+  else if (ds.addto) { foodSheet = { meal: +ds.addto, from: ds.from || "kost" }; quickMore = false; foodPanel = "senaste"; foodDraft = []; }
+  else if (ds.fsclose !== undefined) { mealPage = ds.tomeal != null || foodSheet.from === "meal" ? foodSheet.meal : null; foodSheet = null; }
+  else if (ds.mealpage) mealPage = +ds.mealpage;
+  else if (ds.mealback !== undefined) mealPage = null;
+  else if (ds.kday) { const d = ds.kday; editDate = d === TODAY ? null : d; kostDay = !!editDate; mealPage = null; }
   else if (ds.itemclose !== undefined) {
+    const f = day().food[foodItem];
+    if (f) mealPage = f.meal ?? -1;
     foodItem = null;
-    if (ds.delfood !== undefined) return;   // själva borttagningen sköts av data-delfood
+    if (ds.delfood !== undefined) { window.scrollTo(0, 0); return; }   // själva borttagningen sköts av data-delfood
   }
   else if (ds.fooditem) foodItem = +ds.fooditem;
   else if (ds.quickmore !== undefined) quickMore = !quickMore;
@@ -748,6 +780,7 @@ document.addEventListener("click", ev => {
   const keep = $("fname") ? $("fname").value : "", kcalKeep = $("fkcal") ? $("fkcal").value : "";
   save();
   render();
+  if (kostPageKey() !== page) window.scrollTo(0, 0);
   // Det man skrivit ligger kvar när man byter måltid eller val i bladet
   if (foodSheet && $("fname") && !ds.addto) { $("fname").value = keep; if ($("fkcal")) $("fkcal").value = kcalKeep; }
   if (foodSheet) foodPreview();

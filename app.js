@@ -547,7 +547,7 @@ const logDate = () => editDate || TODAY;
 function refreshToday() {
   const now = iso(new Date());
   if (now === TODAY) return false;
-  TODAY = now; chosenDay = null; editing = false; foodSheet = null; foodItem = null;
+  TODAY = now; chosenDay = null; editing = false; foodSheet = null; foodItem = null; mealPage = null;
   if (focus) endFocus();
   restoreOldSwaps(); save();
   return true;
@@ -797,7 +797,7 @@ function render() {
   const banner = editDate && (tab === "kost" || (tab === "pass" && focus && !editing))
     ? `<div class="editbar">Du ändrar <b>${dateLabel(editDate)}</b><button class="small" data-editdone>Klar</button></div>` : "";
   // Kugghjulet behövs inte i upplägget eller i fokusläget, där det skulle ligga över texten
-  const gear = passDone || tab === "upplagg" || tab === "idag" || tab === "profil" || tab === "vanner" || tab === "pass" || tab === "recept" ? "" : `<button class="gear ${tab === "profil" ? "on" : ""}" data-tab="profil" aria-label="Profil och inställningar">${icon("profil", 20)}</button>`;
+  const gear = passDone || (tab === "kost" && kostPageKey() !== "kost") || tab === "upplagg" || tab === "idag" || tab === "profil" || tab === "vanner" || tab === "pass" || tab === "recept" ? "" : `<button class="gear ${tab === "profil" ? "on" : ""}" data-tab="profil" aria-label="Profil och inställningar">${icon("profil", 20)}</button>`;
   document.getElementById("app").innerHTML = passDone ? passDoneView()
     : gear + banner + VIEWS[tab]() + (modal ? renderModal() : "") + (actSheet ? actSheetView() : "");
   if (modal && modal.pick) filterPicker();
@@ -1682,14 +1682,14 @@ document.addEventListener("click", ev => {
     if (ds.tab === "vanner" && tab !== "vanner") vannerBack = tab;
     passDone = null;
     tab = ds.tab; editing = false; dailyEditing = false; draft = null; editDate = null; histDay = null;
-    chosenDay = null; passOpen = false; kostDay = false; kostOpen = null; recipeOpen = null; recipeEdit = null;
+    chosenDay = null; passOpen = false; kostDay = false; mealPage = null; foodSheet = null; foodItem = null; recipeOpen = null; recipeEdit = null;
     editSnap = null; exSheet = null; ordna = false; trSheet = null;
     if (ds.popen) profOpen = ds.popen;
     if (tab === "upplagg") setupFrom = prevTab;
   }
   else if (ds.themeSet) setTheme(ds.themeSet);
   else if (ds.psec) profOpen = profOpen === ds.psec ? null : ds.psec;
-  else if (ds.go) { tab = ds.go; if (ds.day) chosenDay = ds.day; }
+  else if (ds.go) { tab = ds.go; if (ds.day) chosenDay = ds.day; if (tab === "kost") { mealPage = null; foodSheet = null; foodItem = null; } }
   else if (ds.pick) { chosenDay = ds.pick; passOpen = true; if (!editDate) window.scrollTo(0, 0); }
   else if (ds.edit !== undefined) {
     editing = !editing;
@@ -1851,7 +1851,7 @@ document.addEventListener("click", ev => {
   else if (ds.cancelsetup !== undefined) { draft = null; tab = setupFrom || "profil"; }
   else if (ds.week) weekOffset = Math.min(0, weekOffset + +ds.week);
   // Klar: tillbaka till Historik, eller till idag om dagen valdes i Kosts veckoremsa
-  else if (ds.editdone !== undefined && kostDay && tab === "kost") { editDate = null; kostDay = false; kostOpen = null; }
+  else if (ds.editdone !== undefined && kostDay && tab === "kost") { editDate = null; kostDay = false; mealPage = null; }
   else if (ds.editdone !== undefined) { histDay = editDate; editDate = null; tab = "historik"; chosenDay = null; if (focus) endFocus(); }
   else if (ds.export !== undefined) { exportData(); return; }
   else if (ds.import !== undefined) { document.getElementById("importfile").click(); return; }
@@ -1947,8 +1947,9 @@ async function askClaude(logAfter = false) {
     S.learned[norm(text)] = { kcal: Math.round(+r.kcal || 0), protein: Math.round(+r.protein || 0) };
     save();
     if (logAfter) {
-      logFood({ name: text, kcal: +r.kcal || 0, protein: +r.protein || 0 });
-      foodSheet = null;
+      const meal = foodSheet ? foodSheet.meal : currentMeal();
+      logFood({ name: text, kcal: +r.kcal || 0, protein: +r.protein || 0 }, meal);
+      foodSheet = null; mealPage = meal;
       save();
       render();
     } else updateFoodBtn();
