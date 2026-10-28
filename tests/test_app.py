@@ -1996,3 +1996,24 @@ def test_kost_far_plats_utan_att_scrolla(page):
     for w, h in [(390, 844), (412, 840)]:
         page.set_viewport_size({"width": w, "height": h})
         assert page.evaluate("document.documentElement.scrollHeight - innerHeight") <= 0
+
+
+def test_menyn_gols_nar_man_skriver_pa_telefon(browser, base_url):
+    ctx = browser.new_context(viewport={"width": 412, "height": 520}, has_touch=True, is_mobile=True)
+    ctx.route("**/config.js", lambda r: r.fulfill(body="window.DRIV_CONFIG = {};", content_type="application/javascript"))
+    page = ctx.new_page()
+    page.errors = []
+    page.on("pageerror", lambda e: page.errors.append(str(e)))
+    page.base_url = base_url
+    start(page)
+    go(page, "kost")
+    page.click("[data-rlist]")
+    page.click("[data-rnew]")
+    assert page.locator("#nav").is_visible()
+    # Tangentbordet uppe: menyn ligger inte i vägen
+    page.focus("input")
+    assert not page.locator("#nav").is_visible()
+    page.evaluate("document.activeElement.blur()")
+    page.wait_for_function("!document.body.classList.contains('typing')")
+    assert page.locator("#nav").is_visible() and not page.errors
+    ctx.close()
