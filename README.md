@@ -24,6 +24,8 @@ På mobilen kan du lägga den på hemskärmen: *Dela → Lägg till på hemskär
 
 Utan konto sparas allt bara i webbläsaren på den enhet du använder. Under *Profil → Data* kan du exportera en säkerhetskopia och importera den på en annan enhet.
 
+Vid utloggning stängs den aktiva loggen. En lokal säkerhetskopia sparas separat för kontot och öppnas vid nästa inloggning med samma konto, så att ett annat konto på enheten inte får dina loggar.
+
 Med konto (*Profil → Konto*, inloggning med e-post utan lösenord) sparas inställningar och logg även i en Supabase-databas, så att inget försvinner och samma data finns på alla dina enheter. Varje användare kan bara läsa och ändra sina egna rader. E-postadressen används bara för att logga in, aldrig för reklam eller utskick.
 
 Streckkodsskannern hämtar produktdata från [Open Food Facts](https://world.openfoodfacts.org) (ODbL). Kameran används bara medan skannern är öppen.
@@ -69,7 +71,7 @@ Webbläsartesterna i [`tests/`](tests) går igenom upplägg, pass och veckojämf
 ```bash
 pip install -r tests/requirements.txt
 python -m playwright install chromium
-python -m pytest tests
+PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS=1 python -m pytest tests
 ```
 
 ## Ny version

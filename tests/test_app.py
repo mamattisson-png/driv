@@ -455,7 +455,7 @@ def test_aktivitet_loggas_och_raknas_som_pass(page):
     page.click('[data-actmin="15"]')   # 75 min
     page.click('[data-actint="3"]')
     page.click("[data-actsave]")
-    assert page.evaluate("S.log[TODAY].acts") == [{"name": "Padel", "min": 75, "int": 3}]
+    assert page.evaluate("S.log[TODAY].acts.map(({name,min,int}) => ({name,min,int}))") == [{"name": "Padel", "min": 75, "int": 3}]
     assert page.evaluate("weekSummary(weekStart(TODAY)).passes") == 1
     # En egen aktivitet, och dagens aktiviteter syns under rutorna i Träna
     page.click('.ttile[data-actnew]')
@@ -772,7 +772,7 @@ def test_uppskattningar_raknas_inte_dubbelt(page):
     page.fill("#fkcal", "300")
     assert page.inner_text("#faddbtn") == "Lägg till i mellanmål · 300 kcal"
     page.click("#faddbtn")
-    assert page.evaluate("day().food.at(-1)") == {"name": "Uppskattning", "kcal": 300, "protein": 17, "meal": 2, "est": True}
+    assert page.evaluate("(({_id,_ts,...f}) => f)(day().food.at(-1))") == {"name": "Uppskattning", "kcal": 300, "protein": 17, "meal": 2, "est": True}
     page.click(".pagefoot [data-addto]")
     # Uppskattningen är aldrig ett förslag eller en favorit
     assert page.locator('.qadd:has-text("Uppskattning")').count() == 0
@@ -959,16 +959,42 @@ window.supabase = { createClient: () => ({
     }
     return fail("okänd funktion " + name);
   },
-  from: () => ({
+  from: tableName => ({
     select: () => {
       const all = Object.entries(window.__db).map(([id, data]) => ({ id, data: JSON.parse(JSON.stringify(data)) }));
       const res = Promise.resolve({ data: all, error: null });
-      res.in = async (k, ids) => ({ data: all.filter(r => ids.includes(r.id)), error: null });
+      res.in = (k, ids) => { const next = Promise.resolve({ data: all.filter(r => ids.includes(r.id)), error: null }); next.eq = () => next; return next; };
+      res.eq = () => res;
       return res;
     },
     upsert: async row => { window.__db[row.id] = JSON.parse(JSON.stringify(row.data)); keep(); return { error: null }; },
-    insert: async row => { if (window.__fbFail) return { error: { message: 'nere' } }; window.__fb = row; return { error: null }; },
-    delete: () => ({ eq: async (k, id) => { delete window.__db[id]; keep(); return { error: null }; } }),
+    update: row => {
+      const filters = [];
+      const q = { eq(k, v) { filters.push([k, v]); return q; }, is(k, v) { filters.push([k,v]); return q; }, async select() {
+        const id = filters.find(([k]) => k === 'id')[1];
+        const expected = filters.find(([k]) => k === 'data->>_rev');
+        if (!(id in window.__db) || (expected && (window.__db[id]._rev || null) !== expected[1])) return { data: [], error: null };
+        window.__db[id] = JSON.parse(JSON.stringify(row.data)); keep();
+        return { data: [{ id }], error: null };
+      } };
+      return q;
+    },
+    insert: async row => {
+      if (tableName === 'driv_docs') {
+        if (row.id in window.__db) return { error: { code: '23505' } };
+        window.__db[row.id] = JSON.parse(JSON.stringify(row.data)); keep(); return { error: null };
+      }
+      if (window.__fbFail) return { error: { message: 'nere' } }; window.__fb = row; return { error: null }; },
+    delete: () => {
+      const filters = [];
+      const q = { eq(k,v) { filters.push([k,v]); return q; }, is(k,v) { filters.push([k,v]); return q; },
+        then(resolve) {
+          const id = filters.find(([k]) => k === 'id')[1], rev = filters.find(([k]) => k === 'data->>_rev');
+          if (id in window.__db && (!rev || (window.__db[id]._rev || null) === rev[1])) delete window.__db[id];
+          keep(); return Promise.resolve({error:null}).then(resolve);
+        } };
+      return q;
+    },
   }),
 }) };
 """
