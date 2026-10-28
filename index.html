@@ -1213,7 +1213,10 @@
   .overlay { padding-bottom: var(--kb, 0px); }
   .sheet { max-height: calc(100dvh - var(--kb, 0px) - 24px); }
   /* Lägg till mat: måltiden som rubrik, ett fält, två små val och förslagen som en lista */
-  .foodsheet { padding-top: 14px; }
+  /* Fast höjd: sökrutan står still oavsett hur många förslag som visas; Klar ligger längst ned */
+  .foodsheet { padding-top: 14px; height: calc(100dvh - var(--kb, 0px) - 24px); display: flex; flex-direction: column; }
+  .foodsheet > * { flex: none; }
+  .foodsheet .sheet-foot { margin-top: auto; }
   .fshead h2 { font: 800 22px/1.2 "Unbounded", sans-serif; margin: 2px 0 0; }
   .foodsheet .mealseg { display: flex; gap: 6px; margin: 12px 0 12px; overflow-x: auto; scrollbar-width: none; }
   .foodsheet .mealseg button { flex: none; min-height: 36px; padding: 0 14px; border-radius: 99px; border: 1.5px solid transparent; background: var(--card-2); color: var(--muted); font-size: 14px; }

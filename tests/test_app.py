@@ -1975,3 +1975,15 @@ def test_annan_sort_och_kryddor(page):
     assert all(k <= 30 for _, k in names)
     # "ris" föreslår inte sparris
     assert "Sparris" not in page.evaluate("(() => { const i = parseFood('ris').items[0]; return variantFoods(i.typed, i.food).map(x => x.label); })()")
+
+
+def test_sokrutan_i_matbladet_star_still(page):
+    page.set_viewport_size({"width": 412, "height": 500})
+    start(page)
+    go(page, "kost")
+    page.click(".kaddmain")
+    tops = []
+    for q in ["", "Farmo", "ägg", "2 ägg och 1 banan och kaffe"]:
+        page.fill("#fname", q)
+        tops.append(page.evaluate("Math.round(document.getElementById('fname').getBoundingClientRect().top)"))
+    assert len(set(tops)) == 1
