@@ -894,7 +894,7 @@ const VIEWS = {
       <b class="small">${passes} av ${S.plan.count} pass</b></section>`;
 
     // Övrigt idag: rader som öppnar det man vill göra
-    const row = (ic, title, sub, attrs) => `<button class="hrow" ${attrs}><span class="hricon">${icon(ic, 22)}</span>
+    const row = (ic, title, sub, attrs) => `<button class="hrow" ${attrs}><span class="hricon">${icon(ic, 20)}</span>
       <span class="grow"><b>${title}</b><span class="muted small">${sub}</span></span>${icon("right", 18)}</button>`;
     const ws = weekStart(TODAY), weighed = weekDates(ws).some(x => x <= TODAY && weights()[x] > 0);
     const weighDue = !weighed && weekdayOf(TODAY) >= weighDay();
@@ -909,7 +909,7 @@ const VIEWS = {
     const friendSub = !inFriends ? "Logga in och träna med vänner" : !social.friends.length ? "Bjud in en kompis och peppa varandra"
       : others.length ? `${esc(others[0].name)} körde ${esc(others[0].pass)}${others.length > 1 ? ` · ${others.length - 1} pass till` : ""}`
       : mine ? `${mine.kudos} ${mine.kudos === 1 ? "vän" : "vänner"} peppade ditt ${esc(mine.pass)}-pass` : "Se aktivitet och ge kudos";
-    const friends = !sbEnabled ? "" : row("vanner", "Vänner", friendSub, inFriends && !social.friends.length ? "data-gofriends" : `data-tab="vanner"`);
+    const friends = row("vanner", "Vänner", friendSub, inFriends && !social.friends.length ? "data-gofriends" : `data-tab="vanner"`);
     const other = `<h3 class="klabel hsec">Övrigt idag</h3><section class="card hlist" aria-label="Övrigt idag">
       ${row("aktivitet", "Annan aktivitet", acts.length ? esc(acts.map(a => `${a.name} ${+a.min} min`).join(", ")) : "Logga löpning, padel, promenad m.m.", `data-actnew="" data-actdate="${TODAY}"`)}
       ${weigh}${friends}</section>`;

@@ -418,9 +418,12 @@
   .sheet > .wrow { border: 0; background: none; padding: 0; margin: 12px 0 0; box-shadow: none; }
   .hprot { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .hrow { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; color: var(--text); font: inherit;
-    background: none; border: 0; border-radius: 0; padding: 12px 0; min-height: 60px; }
+    background: none; border: 0; border-radius: 0; padding: 9px 0; min-height: 48px; }
+  .hrow b { font-size: 15px; font-weight: 600; }
+  .hrow .small { font-size: 12.5px; }
   .hrow + .hrow { border-top: 1px solid var(--line); }
-  .hrow .grow { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .hrow .grow { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+  .hrow .hricon { width: 26px; }
   .hrow > .ic { color: var(--muted); flex: none; }
   .homerow .grow { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
   .hricon { width: 30px; flex: none; display: grid; place-items: center; color: var(--muted); }
