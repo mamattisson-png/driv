@@ -894,7 +894,7 @@ const VIEWS = {
       <b class="small">${passes} av ${S.plan.count} pass</b></section>`;
 
     // Övrigt idag: rader som öppnar det man vill göra
-    const row = (ic, title, sub, attrs) => `<button class="hrow" ${attrs}><span class="hricon">${icon(ic, 20)}</span>
+    const row = (ic, title, sub, attrs) => `<button class="hrow" ${attrs}><span class="hricon">${icon(ic, 18)}</span>
       <span class="grow"><b>${title}</b><span class="muted small">${sub}</span></span>${icon("right", 18)}</button>`;
     const ws = weekStart(TODAY), weighed = weekDates(ws).some(x => x <= TODAY && weights()[x] > 0);
     const weighDue = !weighed && weekdayOf(TODAY) >= weighDay();

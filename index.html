@@ -413,17 +413,18 @@
   .pushopts { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); }
   .homerow { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; color: var(--text); font: inherit; padding: 14px 16px; }
   button.homerow { border: 1px solid var(--line); }
-  .hlist { padding: 4px 16px; }
+  .hlist { padding: 2px 14px; }
   .hsec { margin: 18px 4px 8px; }
   .sheet > .wrow { border: 0; background: none; padding: 0; margin: 12px 0 0; box-shadow: none; }
   .hprot { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .hrow { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; color: var(--text); font: inherit;
-    background: none; border: 0; border-radius: 0; padding: 9px 0; min-height: 48px; }
-  .hrow b { font-size: 15px; font-weight: 600; }
-  .hrow .small { font-size: 12.5px; }
+    background: none; border: 0; border-radius: 0; padding: 6px 0; min-height: 42px; gap: 10px; }
+  .hrow b { font-size: 14px; font-weight: 600; line-height: 1.25; }
+  .hrow .small { font-size: 12px; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .hrow + .hrow { border-top: 1px solid var(--line); }
   .hrow .grow { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
-  .hrow .hricon { width: 26px; }
+  .hrow .hricon { width: 22px; }
+  .hrow > .ic { width: 16px; height: 16px; }
   .hrow > .ic { color: var(--muted); flex: none; }
   .homerow .grow { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
   .hricon { width: 30px; flex: none; display: grid; place-items: center; color: var(--muted); }
