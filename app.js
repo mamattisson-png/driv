@@ -715,19 +715,19 @@ function weighCardDue() {
   const ws = weekStart(TODAY), weighed = weekDates(ws).some(d => d <= TODAY && weights()[d] > 0);
   return weighed && !weightEditing ? "" : weightCard();
 }
-function weightCard() {
+function weightCard(force = false) {
   const ws = weekStart(TODAY), last = latestWeight();
   const weighed = weekDates(ws).filter(d => d <= TODAY && weights()[d] > 0).pop();
   const prev = weekAvgWeight(shift(ws, -7)), now = weekAvgWeight(ws);
-  if (weighed && !weightEditing) {
+  if (weighed && !weightEditing && !force) {
     return `<section class="card wrow" aria-label="Veckans vikt"><div class="grow"><b>Veckans vikt · ${fmtNum(now)} kg</b>
       <span class="muted small">${prev != null ? `${weightBadge(now - prev)} mot förra veckan` : "Första vägningen"}</span></div>
       <button class="small" data-wedit>Ändra</button></section>`;
   }
-  if (!weighed && !weightEditing && weekdayOf(TODAY) < weighDay()) return "";
+  if (!weighed && !weightEditing && !force && weekdayOf(TODAY) < weighDay()) return "";
   const date = weighed || TODAY;
   // Kompakt rad: dölja vikten görs under Profil → Vikt
-  return `<section class="card wrow" aria-label="Veckans vägning"><div class="grow"><b>Veckans vägning</b>
+  return `<section class="card wrow" aria-label="Veckans vägning"><div class="grow"><b>${force ? "Din vikt" : "Veckans vägning"}</b>
       ${last ? `<span class="muted small">Senast ${fmtNum(last.kg)} kg · ${dateLabel(last.date)}</span>` : ""}</div>
     <input id="wkg" type="number" inputmode="decimal" step="0.1" placeholder="kg" aria-label="Vikt i kg" value="${weights()[date] ?? ""}">
     <button class="small" data-wsave data-wdate="${date}">Spara</button></section>`;
@@ -872,7 +872,7 @@ const VIEWS = {
     const passes = weekSummary(weekStart(TODAY)).passes, acts = actsOn(TODAY);
     const greet = done ? "Bra jobbat idag." : started ? "Fortsätt där du var." : t.rest ? (acts.length ? "Snyggt, aktiv vilodag." : "Vilodag idag.") : "Dags att köra.";
     // Dagen i tre rutor i tur och ordning: passet, maten och dailys. Det som är gjort får en bock i stället för siffran.
-    const no = (n, ok) => `<span class="hno ${ok ? "ok" : ""}" aria-hidden="true">${ok ? icon("check", 12) : n}</span>`;
+    const no = (n, ok) => `<span class="hno ${ok ? "ok" : ""}" aria-hidden="true">${n}</span>${ok ? `<span class="hdone" aria-hidden="true">${icon("check", 18)}</span>` : ""}`;
     const nDone = d.ex.filter(x => exDone(w, x)).length;
     const status = done ? `<span class="oktext">${icon("check", 14)}Klart</span>` : started ? `${nDone} av ${d.ex.length} övningar` : t.rest ? `Vila · nästa ${WD_LONG[weekdayOf(t.next)]}` : `${esc(passMuscles(d))} · ${d.ex.length} övningar`;
     const passTile = `<button class="htile passtile ${done ? "ok" : t.rest ? "" : "go"}" data-tab="pass" aria-label="1. Dagens pass: ${esc(d.name)}, ${done ? "klart" : started ? "påbörjat" : t.rest ? "vilodag" : "inte gjort än"}. Till Träna">
@@ -899,10 +899,10 @@ const VIEWS = {
     const ws = weekStart(TODAY), weighed = weekDates(ws).some(x => x <= TODAY && weights()[x] > 0);
     const weighDue = !weighed && weekdayOf(TODAY) >= weighDay();
     const avg = weekAvgWeight(ws), prevAvg = weekAvgWeight(shift(ws, -7));
+    // Vägningen öppnas i ett eget blad; raden visar bara läget
     const weigh = S.hideWeight ? ""
-      : weightEditing || weighDue ? `<div class="hrow hweigh">${weightCard()}</div>`
-      : weighed ? row("vikt", "Veckans vikt", `${fmtNum(avg)} kg${prevAvg != null ? ` · ${avg - prevAvg > 0 ? "+" : avg < prevAvg ? "−" : "±"}${fmtNum(Math.abs(Math.round((avg - prevAvg) * 10) / 10))} kg mot förra veckan` : ""}`, "data-wedit")
-      : row("vikt", "Veckans vägning", `Väg dig ${WD_LONG[weighDay()]}`, "data-wedit");
+      : weighed ? row("vikt", "Veckans vikt", `${fmtNum(avg)} kg${prevAvg != null ? ` · ${avg - prevAvg > 0 ? "+" : avg < prevAvg ? "−" : "±"}${fmtNum(Math.abs(Math.round((avg - prevAvg) * 10) / 10))} kg mot förra veckan` : ""}`, "data-weighopen")
+      : row("vikt", "Veckans vägning", weighDue ? "Dags att väga dig" : `Väg dig ${WD_LONG[weighDay()]}`, "data-weighopen");
     const inFriends = account.step === "in";
     const others = inFriends && social.loaded ? social.feed.filter(a => !a.mine) : [];
     const mine = inFriends && social.loaded ? social.feed.find(a => a.mine && a.kudos > 0) : null;
@@ -1398,6 +1398,10 @@ function renderModal() {
     return `<div class="overlay" data-close><div class="sheet"><div class="row between"><h2>${esc(EX[modal.chart].name)}</h2><button class="small ghost" data-close>${icon("close", 18)}</button></div>
       <div class="muted">Bästa set per vecka, senaste 12 veckorna</div>${chartModal(modal.chart)}</div></div>`;
   }
+  if (modal.weigh) {
+    return `<div class="overlay" data-close><div class="sheet"><div class="row between"><h2>Veckans vägning</h2><button class="small ghost iconbtn" data-close aria-label="Stäng">${icon("close", 18)}</button></div>
+      ${weightCard(true)}<div class="muted small" style="margin-top:8px">Väg dig gärna samma tid och dag varje vecka, till exempel på morgonen.</div></div></div>`;
+  }
   if (modal.prof) {
     // Ändra profilen i en ruta i stället för att hoppa ned i listan
     return `<div class="overlay" data-close><div class="sheet profsheet"><div class="row between"><h2>Din profil</h2><button class="small ghost iconbtn" data-close aria-label="Stäng">${icon("close", 18)}</button></div>
@@ -1783,9 +1787,11 @@ document.addEventListener("click", ev => {
     const date = ds.wdate || logDate();
     if (!logWeight(+String($("wkg").value).replace(",", "."), date)) { fieldError($("wkg"), "Skriv vikten i kg, till exempel 80,5"); return; }
     weightEditing = false;
+    if (modal && modal.weigh) modal = null;
     toast(`Vikt sparad: ${fmtNum(weights()[date])} kg`);
   }
   else if (ds.wedit !== undefined) weightEditing = true;
+  else if (ds.weighopen !== undefined) modal = { weigh: true };
   // Löpning bockas av genom att fylla i km eller minuter; bocken leder dit
   else if (ds.runcheck) {
     if (!dailyDone(logDate(), ds.runcheck)) { const k = document.querySelector(`[data-run="${ds.runcheck}"][data-f="km"]`); if (k) k.focus(); }

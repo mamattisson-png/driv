@@ -415,7 +415,7 @@
   button.homerow { border: 1px solid var(--line); }
   .hlist { padding: 4px 16px; }
   .hsec { margin: 18px 4px 8px; }
-  .hweigh .card { border: 0; background: none; padding: 0; margin: 0; box-shadow: none; width: 100%; }
+  .sheet > .wrow { border: 0; background: none; padding: 0; margin: 12px 0 0; box-shadow: none; }
   .hprot { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .hrow { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; color: var(--text); font: inherit;
     background: none; border: 0; border-radius: 0; padding: 12px 0; min-height: 60px; }
@@ -956,7 +956,11 @@
   .htile .klabel { display: inline-flex; align-items: center; gap: 8px; }
   .hno { width: 22px; height: 22px; border-radius: 99px; display: inline-grid; place-items: center; flex: none;
     background: var(--accent-strong); color: var(--on-accent); font: 700 12px/1 "Unbounded", sans-serif; letter-spacing: 0; }
-  .hno.ok { background: var(--ok-strong); color: var(--on-color); }
+  .hno.ok { background: var(--line-strong); color: var(--muted); }
+  .htile { position: relative; }
+  .hdone { position: absolute; top: 12px; right: 12px; width: 30px; height: 30px; border-radius: 99px; display: grid; place-items: center;
+    background: var(--ok-strong); color: var(--on-color); }
+  .htile.ok { background: color-mix(in srgb, var(--ok) 9%, var(--card)); }
   .htile { display: flex; flex-direction: column; justify-content: space-between; align-items: flex-start; gap: 8px; text-align: left; min-height: 168px;
     padding: 16px; border-radius: 24px; background: var(--card); border: 1.5px solid var(--line); color: var(--text); box-shadow: var(--shadow-card); }
   .htile.go { border-color: var(--accent); }

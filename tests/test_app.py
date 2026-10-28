@@ -615,13 +615,14 @@ def test_kroppsvikt_en_gang_i_veckan_och_kalorimal(page):
     page.click('[data-goalpick="cut"]')
     page.click("[data-savesetup]")
     seed(page, "S.weights['2026-10-15'] = 82; S.weights['2026-10-16'] = 81.8")
-    # Ingen vägning den här veckan: rutan ber om en
-    assert "VECKANS VÄGNING" in page.inner_text("#app").upper()
+    # Ingen vägning den här veckan: raden ber om en och öppnar vägningen i ett blad
+    assert "Dags att väga dig" in page.inner_text("#app") and page.locator("#wkg").count() == 0
+    page.click("[data-weighopen]")
     page.fill("#wkg", "70")
     page.click("[data-wsave]")
     assert page.evaluate("S.weights['2026-10-22']") == 70 and page.evaluate("S.profile.weight") == 70
     assert page.evaluate("kcalGoal()") < 2360
-    # Därefter blir rutan en rad med veckans vikt; vikten över tid finns under Historik
+    # Därefter visar raden veckans vikt; vikten över tid finns under Historik
     assert page.locator("#wkg").count() == 0 and "Veckans vikt" in page.inner_text("#app")
     # Före vägningsdagen syns ingen ruta
     prof(page, "vikt")
@@ -634,13 +635,13 @@ def test_kroppsvikt_en_gang_i_veckan_och_kalorimal(page):
     page.select_option("[data-weighday]", "0")
     page.click("[data-showweight]")
     go(page, "idag")
-    assert page.locator("#wkg").count() == 0
+    assert page.locator("[data-weighopen]").count() == 0
     go(page, "historik")
     assert page.locator('.card:has(h2:text-is("Vikt"))').count() == 0
     prof(page, "vikt")
     page.click("[data-showweight]")
     go(page, "idag")
-    assert page.locator("#wkg").count() == 1
+    assert page.locator("[data-weighopen]").count() == 1
 
 
 def test_paminnelse_i_kalendern(page):
