@@ -11,7 +11,7 @@ På mobilen kan du lägga den på hemskärmen: *Dela → Lägg till på hemskär
 ## Funktioner
 
 - **Upplägg:** elva program att söka bland, bland annat Push/Pull/Legs, Helkropp, Över/Underkropp, Calisthenics, Styrka 5×5, Styrkelyft, Arnold split, Hemma med hantlar och Rumpa & ben. Välj 1–7 pass i veckan, i ordning valfria dagar eller på fasta veckodagar.
-- **Övningar:** 210 övningar, var och en med en illustration och tips (animerad när du öppnar övningen). Förifyllt per upplägg, sökbart och utbytbart, med egna set och reps.
+- **Övningar:** 533 övningar, inklusive 109 stretch- och rörlighetsövningar. Alla har illustrationer och svenska instruktioner; många har animerade rörelser. Förifyllt per upplägg, sökbart och utbytbart, med egna set och reps.
 - **Under passet:** Träna visar passet med en rad per övning (mål och set klara); ett tryck öppnar fokusläget på den övningen. Fokusläget har en övning i taget, stora − och +-knappar för vikt och reps, förra gångens resultat på varje set och skärmen tänd så länge passet pågår. Bocka av ett set så startar vilotimern, och när övningen är klar visas nästa. Kroppsviktsövningar loggas i reps eller sekunder med valfri extra vikt. Flera pass samma dag går bra.
 - **Utveckling:** förslag på vikt och reps för varje övning utifrån förra gången, besked när du slår PB och en graf per övning.
 - **Historik:** en kalender med alla pass och dagar då alla dailys gjorts. Tryck på en dag för att ändra den: bocka dailys och väg dig i efterhand, eller öppna Träna eller Kost för den dagen och logga ett pass eller mat du glömt. Under kalendern jämförs veckan med veckan innan: bästa set per övning med + eller −, samt pass, dailys, löpning, kalorier och veckobrevet.
@@ -38,6 +38,12 @@ Katalogen innehåller 180 produkter och storlekar från McDonald’s Sverige, h�
 
 Källa och kontrolldatum sparas med loggningen. Restaurangdata ligger separat i `restauranger.json` och uppdateras med `python tools/mcdonalds.py`. Den lokala katalogen fungerar även utan nät.
 
+### Utökat träningsbibliotek
+
+Övningarna i de två tilläggskatalogerna använder samma väljare, dailys och träningslogg som de befintliga övningarna. Hållna stretchpositioner loggas i sekunder och dynamisk rörlighet i repetitioner. Små nack-, handleds-, fot- och vridrörelser kan visas med en start-/stödposition i stället för en detaljerad animation. MuscleWiki-länkar till övningslistor märks som liknande övningar.
+
+Den separata funktionen **Stretch guiden** och dess design lämnas till Claude; den byggs inte som del av katalogutökningen. Underlag finns i `docs/claude-stretch-guide.md`.
+
 ## Data och integritet
 
 Utan konto sparas allt bara i webbläsaren på den enhet du använder. Under *Profil → Data* kan du exportera en säkerhetskopia och importera den på en annan enhet.
@@ -63,6 +69,7 @@ Näringsvärden kommer delvis från [Livsmedelsverkets livsmedelsdatabas](https:
 | `konto.js`, `vila.js`, `skanner.js` | Konto via Supabase och Tyck till, vilotimern, streckkodsskannern |
 | `ovningar.js` | Övningsbiblioteket med instruktioner och poser |
 | `figur.js` | Ritar de animerade övningsbilderna som SVG |
+| `styrka-extra.js`, `stretch-extra.js` | Utökat övningsbibliotek: 240 styrkeövningar och 83 stretch-/rörlighetsövningar. Laddas efter `ovningar.js`. |
 | `produkter.js`, `produkter.json` | Märkesvaror: normalisering, lokal ODbL-katalog och uttrycklig nätsökning. Import: `tools/produkter.py`. |
 | `mat.js` | Egna livsmedel med portionsstorlekar, tolkning av fritext, förslag och felstavning |
 | `livsmedel.js` | Livsmedelsverkets livsmedelsdatabas (namn, kcal, protein, fett och fibrer per 100 g); laddas efter appen. Byggs om med `python3 tools/livsmedel.py` |
