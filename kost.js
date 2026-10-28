@@ -501,11 +501,12 @@ function mealCard(meal, L, m) {
   if (meal < 0 && !items.length) return "";
   const name = meal < 0 ? "Övrigt" : MEALS[meal][0], sum = sumKcal(items.map(x => x.f));
   const added = sumKcal(items.filter(x => fresh.has(x.f)).map(x => x.f));
-  const sub = items.length ? items.map(x => isEst(x.f) ? "≈ Uppskattning" : x.f.name).join(", ") : `Förslag ca ${tnum(mealTarget(meal, m))} kcal`;
+  // Bara summan här; maträtterna visas på måltidens sida
+  const prot = Math.round(sumOf(items.map(x => x.f), "protein"));
+  const sub = items.length ? `${tnum(sum)} kcal · ${prot} g protein` : `Förslag ca ${tnum(mealTarget(meal, m))} kcal`;
   return `<div class="kmcard kmrow ${items.length ? "" : "empty"} ${items.some(x => fresh.has(x.f)) ? "fresh" : ""}">
       <button class="kmopen" data-mealpage="${meal}" aria-label="${name}: ${items.length ? `${tnum(sum)} kcal` : "inget än"}"><span class="kmic">${mealIcon(meal)}</span>
-        <span class="grow col"><b>${name}</b><span class="muted small kprev">${esc(sub)}</span>
-        ${items.length ? `<span class="small kmsum">${tnum(sum)} kcal${added ? ` <span class="kplus">+${tnum(added)}</span>` : ""}</span>` : ""}</span></button>
+        <span class="grow col"><b>${name}</b><span class="small kprev ${items.length ? "kmsum" : "muted"}">${sub}${added ? ` <span class="kplus">+${tnum(added)}</span>` : ""}</span></span></button>
       ${meal < 0 ? "" : `<button class="kmadd" data-addto="${meal}" aria-label="Lägg till i ${name.toLowerCase()}">${icon("plus", 20)}</button>`}</div>`;
 }
 // Sidan för en måltid: det man ätit (ett tryck öppnar livsmedlet), summan mot förslaget och näringen

@@ -1835,9 +1835,11 @@ def test_kost_veckan_maltider_och_recept_med_uppskattade_mangder(page):
     # Ringen: ätit, kvar och målet
     assert "KVAR IDAG" in page.inner_text(".ksum").upper() and "310" in page.inner_text(".kside") and "av 2" in page.inner_text(".kringc")
     # Måltiderna är rader; ett tryck öppnar måltidens sida
-    assert "Gröt, Kaffe" in page.inner_text('[data-mealpage="0"]') and page.locator("[data-fooditem]").count() == 0
+    # Måltidskortet visar bara summan; maträtterna syns på måltidens sida
+    card = page.inner_text('[data-mealpage="0"]')
+    assert "310 kcal · 11 g protein" in card and "Gröt" not in card and page.locator("[data-fooditem]").count() == 0
     page.click('[data-mealpage="0"]')
-    assert page.locator("[data-fooditem]").count() == 2
+    assert page.locator("[data-fooditem]").count() == 2 and "Gröt" in page.inner_text(".kitems")
     page.click("[data-mealback]")
     # En enda knapp lägger till; recept utan mängder får uppskattade mängder för antalet portioner
     page.click(".kmadd >> nth=0")
