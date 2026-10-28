@@ -259,7 +259,9 @@
     pointer-events: none; background: linear-gradient(to bottom, transparent, var(--bg) 16px); }
   body:has(nav.hidden)::after, body.infocus::after { display: none; }
   /* Medan man skriver på en telefon behövs inte menyn; den skulle annars ligga ovanpå tangentbordet */
-  @media (pointer: coarse) { body.typing nav, body.typing::after { display: none; } }
+  @media (pointer: coarse) { body.typing nav, body.typing::after { display: none; }
+    /* Knappar som annars ligger fast i nederkanten följer sidan, så att de inte täcker fältet */
+    body.typing .pagefoot, body.typing .kadd { position: static; } }
   nav button { border: 0; border-radius: 18px; background: transparent; padding: 0; min-height: 0; font-size: 12px; color: var(--muted);
     display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; }
   nav button.on { background: var(--text); color: var(--bg); font-weight: 600; }
@@ -1336,7 +1338,8 @@
   .receditpage .rtotal2 { margin: 0 4px; }
   .receditpage .ksec { margin-top: 18px; }
   .ringlist.kmeals { background: none; padding: 0; margin-top: 4px; }
-  .ringlist .kmcard.krow.ing { border-top: 0; padding: 8px 8px 8px 14px; gap: 10px; }
+  .ringlist .kmcard.krow.ing { border-top: 0; padding: 8px 2px 8px 14px; gap: 6px; }
+  .ringlist .kmcard .kidel { width: 36px; }
   .ringlist .kmcard .fstep { background: var(--card-2); }
   /* Kosts sidor: en måltid, Lägg till och ett livsmedel */
   .kpage { display: flex; flex-direction: column; }

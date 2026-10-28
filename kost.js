@@ -408,7 +408,7 @@ function recipeEditPage() {
     <div class="muted small rhint">Skriv bara vad som ingår. Utan mängd uppskattar vi en vanlig mängd för ${portionsText(r.portions).replace("1 portion", "en portion")}.</div>
     ${r.msg ? `<div class="muted small warntext rhint">${esc(r.msg)}</div>` : ""}
     ${r.items.length ? `<div class="kmeals ringlist">${r.items.map((it, k) => `<div class="kmcard krow ing"><span class="grow col"><b>${esc(ingText(it))}</b><span class="muted small">${tnum(it.kcal)} kcal · ${it.est ? `<span class="esttag">uppskattad mängd</span>` : it.amt ? "som du skrev" : `${fmtNum(+it.protein || 0)} g protein`}</span></span>
-        ${it.amt ? stepper(`data-ristep="${k}"`, amtText(it.amt), it.name) : `<button class="small ghost iconbtn" data-rdel="${k}" aria-label="Ta bort ${esc(it.name)}">${icon("close", 18)}</button>`}</div>`).join("")}</div>` : ""}
+        ${it.amt ? stepper(`data-ristep="${k}"`, amtText(it.amt), it.name) : ""}<button class="kidel" data-rdel="${k}" aria-label="Ta bort ${esc(it.name)}">${icon("close", 18)}</button></div>`).join("")}</div>` : ""}
     <div class="pagefoot row">${r.idx != null ? `<button class="ghost dangertext" data-rremove>Ta bort</button>` : ""}
       <button class="primary grow bigbtn" data-rsave ${r.items.length ? "" : "disabled"}>Spara recept</button></div></div>`;
 }

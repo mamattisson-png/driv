@@ -2017,3 +2017,12 @@ def test_menyn_gols_nar_man_skriver_pa_telefon(browser, base_url):
     page.wait_for_function("!document.body.classList.contains('typing')")
     assert page.locator("#nav").is_visible() and not page.errors
     ctx.close()
+
+
+def test_ingrediens_kan_tas_bort(page):
+    start(page)
+    page.evaluate("tab = 'recept'; recipeEdit = { idx: null, name: 'Mitt recept', portions: 4, items: [], msg: '' }; render()")
+    page.fill("#ring", "ägg, lök, banan")
+    page.click("[data-ringadd]")
+    page.click('[data-rdel="2"]')
+    assert page.evaluate("recipeEdit.items.map(i => i.name)") == ["Ägg", "Lök"]
