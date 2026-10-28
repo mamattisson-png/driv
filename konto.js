@@ -22,43 +22,127 @@ async function supabaseClient() {
 function supabaseCollection(sb, uid) {
   const table = () => sb.from("driv_docs");
   const fail = error => { if (error) throw error; };
+  const versions = {};
+  const decode = row => {
+    const { _rev, ...body } = row.data;
+    versions[row.id] = _rev || null;
+    return { id: row.id, data: () => body };
+  };
+  const matchVersion = (query, id, version) => {
+    query = query.eq("user_id", uid).eq("id", id);
+    return version ? query.eq("data->>_rev", version) : query.is("data->>_rev", null);
+  };
+  const read = async id => {
+    const { data, error } = await table().select("id, data").eq("user_id", uid).in("id", [id]);
+    fail(error);
+    if (!data.length) { delete versions[id]; return undefined; }
+    return decode(data[0]).data();
+  };
   return {
     async get() {
-      const { data, error } = await table().select("id, data");
+      const { data, error } = await table().select("id, data").eq("user_id", uid);
       fail(error);
-      return { empty: !data.length, docs: data.map(r => ({ id: r.id, data: () => r.data })) };
+      return { empty: !data.length, docs: data.map(decode) };
     },
     async getMany(ids) {
-      const { data, error } = await table().select("id, data").in("id", ids);
+      const { data, error } = await table().select("id, data").eq("user_id", uid).in("id", ids);
       fail(error);
-      return data.map(r => ({ id: r.id, data: () => r.data }));
+      return data.map(decode);
     },
     doc: id => ({
-      set: async body => fail((await table().upsert({ user_id: uid, id, data: body, updated_at: new Date().toISOString() })).error),
-      delete: async () => fail((await table().delete().eq("id", id)).error),
+      async set(body, expected) {
+        // Jämförelsen görs av PostgreSQL i samma UPDATE som skrivningen. Två enheter
+        // kan därför inte båda ersätta samma gamla version. Ingen ny SQL behövs.
+        let next = body;
+        for (let attempt = 0; attempt < 8; attempt++) {
+          const revision = crypto.randomUUID();
+          const payload = { ...next, _rev: revision };
+          if (expected === undefined) {
+            const { error } = await table().insert({ user_id: uid, id, data: payload });
+            if (!error) { versions[id] = revision; return next; }
+            if (error.code !== "23505") fail(error);
+          } else {
+            // Bara den korta revisionsnyckeln går i URL:en, aldrig en hel månads logg.
+            const version = versions[id];
+            const { data, error } = await matchVersion(table().update({ data: payload, updated_at: new Date().toISOString() }), id, version).select("id");
+            fail(error);
+            if (data.length) { versions[id] = revision; return next; }
+          }
+          expected = await read(id);
+          if (expected !== undefined) next = mergeDoc(id, next, expected);
+        }
+        throw new Error("Dokumentet ändrades under synk. Försök igen.");
+      },
+      async delete(expected) {
+        // En gammal lokal import får aldrig ta bort en annan enhets nyare månad.
+        if (expected === undefined) return;
+        if (!(id in versions)) return;
+        const { error } = await matchVersion(table().delete(), id, versions[id]);
+        fail(error);
+      },
     }),
   };
 }
 
+// Behåll en lokal reserv per konto; en annan användare får aldrig ärva loggen.
+// Den gamla driv-synced-markören känns igen vid uppgradering.
+function localOwner() {
+  if ("localUid" in account) return account.localUid;
+  return localStorage.getItem("driv-owner") || localStorage.getItem("driv-synced");
+}
+function switchLocalAccount(uid) {
+  const owner = localOwner();
+  let next = S;
+  if (owner && owner !== uid) {
+    localStorage.setItem(`${KEY}:account:${owner}`, JSON.stringify(S));
+    const saved = uid && localStorage.getItem(`${KEY}:account:${uid}`);
+    next = saved ? normalize(Object.assign(freshState(), JSON.parse(saved))) : freshState();
+  } else if (!owner && uid) {
+    const saved = localStorage.getItem(`${KEY}:account:${uid}`);
+    if (saved) next = mergeState(S, normalize(Object.assign(freshState(), JSON.parse(saved))));
+  }
+  // Ägare och aktiv logg skrivs atomiskt i samma localStorage-post. Om detta
+  // misslyckas avbryts anslutningen innan en annan användares konto kan synkas.
+  localStorage.setItem(KEY, JSON.stringify({ ...next, _localOwner: uid }));
+  const changedState = next !== S;
+  S = next; account.localUid = uid;
+  if (changedState) {
+    endFocus(); stopRest(); editing = false; passOpen = false; profOpen = null; onb = 0; editDate = null; draft = null; modal = null;
+    foodSheet = null; foodItem = null; mealPage = null; actSheet = null;
+    chosenDay = null; passDone = null;
+    tab = S.setupDone ? "idag" : "upplagg";
+    Object.assign(social, { profile: null, friends: [], feed: [], loaded: false, msg: "" });
+  }
+  stamp(true);
+  if (owner !== uid) localStorage.removeItem("driv-synced");
+}
+
 async function connectSupabase() {
   if (!sbEnabled) return;
-  try {
-    const sb = await supabaseClient();
-    const { data } = await sb.auth.getSession();
-    const user = data.session && data.session.user;
-    if (!user) return;
-    account.email = user.email || "";
-    account.step = "in";
-    // Första gången den här enheten kopplas till kontot vinner kontots upplägg
-    let synced = null;
-    try { synced = localStorage.getItem("driv-synced"); } catch (e) { /* blockerad lagring */ }
-    await attachCollection(supabaseCollection(sb, user.id), true, synced !== user.id);
-    try { localStorage.setItem("driv-synced", user.id); } catch (e) { /* blockerad lagring */ }
-    loadSocial();
-  } catch (e) {
-    cloud.status = "error";
-  }
-  render();
+  if (account.connecting) return account.connecting;
+  const epoch = account.epoch || 0;
+  const task = (async () => {
+    try {
+      const sb = await supabaseClient();
+      const { data, error } = await sb.auth.getSession();
+      if (error) throw error;
+      const user = data.session && data.session.user;
+      if (!user || epoch !== (account.epoch || 0)) return;
+      const synced = localStorage.getItem("driv-synced");
+      switchLocalAccount(user.id);
+      account.email = user.email || "";
+      account.step = "in";
+      await attachCollection(supabaseCollection(sb, user.id), true, synced !== user.id);
+      if (epoch !== (account.epoch || 0)) return;
+      localStorage.setItem("driv-synced", user.id);
+      loadSocial();
+    } catch (e) {
+      if (epoch === (account.epoch || 0)) cloud.status = "error";
+    }
+    render();
+  })();
+  account.connecting = task;
+  try { await task; } finally { if (account.connecting === task) account.connecting = null; }
 }
 
 async function sendLoginCode() {
@@ -94,10 +178,16 @@ async function verifyLoginCode() {
 }
 
 async function signOut() {
+  account.epoch = (account.epoch || 0) + 1;
+  account.connecting = null;
+  clearTimeout(cloud.timer);
+  cloud.col = null; cloud.sent = {}; cloud.again = false; cloud.status = "local";
+  // Om lagringen är full lämnas loggen på skärmen; ingen annans konto ansluts då.
+  try { switchLocalAccount(null); } catch (e) { /* behåll den befintliga lokala datan */ }
   try { await (await supabaseClient()).auth.signOut(); } catch (e) { /* redan utloggad */ }
-  cloud.col = null; cloud.sent = {}; cloud.status = "local";
   Object.assign(social, { profile: null, friends: [], feed: [], loaded: false, msg: "" });
-  account.step = "email"; account.msg = "Utloggad. Det du loggat finns kvar på den här enheten.";
+  account.step = "email"; account.email = "";
+  account.msg = "Utloggad. Logga in igen för att öppna dina sparade loggar.";
   render();
 }
 
@@ -187,7 +277,7 @@ function accountBody(mode) {
       <div class="muted small" style="margin-top:4px">Allt du loggar sparas på ditt konto och följer med till alla enheter där du loggar in.</div>
       <div class="row wrap" style="margin-top:10px"><button class="small" data-signout>Logga ut</button>
         <button class="small ${a.confirmDelete ? "primary" : "ghost"}" data-delacct>${a.confirmDelete ? "Tryck igen för att radera kontot" : "Radera konto"}</button></div>
-      ${a.confirmDelete ? `<div class="muted small" style="margin-top:6px">Kontot, molnkopian, vänner och delade pass raderas. Det som finns på den här enheten ligger kvar.</div>` : ""}`;
+      ${a.confirmDelete ? `<div class="muted small" style="margin-top:6px">Kontot, molnkopian, vänner och delade pass raderas. En lokal säkerhetskopia ligger kvar på den här enheten.</div>` : ""}`;
   } else if (a.step === "code") {
     body = `<div class="muted">Vi har skickat en kod till <b>${esc(a.email)}</b>. Skriv in den här, eller tryck på länken i mejlet.</div>
       <div class="row" style="margin-top:8px"><input id="acctcode" inputmode="numeric" autocomplete="one-time-code" placeholder="Kod från mejlet">

@@ -275,7 +275,12 @@ const normalize = s => upgradeFood(upgradeWorkouts(upgradeDailies(s)));
 function load() {
   try {
     const raw = localStorage.getItem(KEY);
-    if (raw) return normalize(Object.assign(freshState(), JSON.parse(raw)));
+    if (raw) {
+      const { _localOwner, ...state } = JSON.parse(raw);
+      account.localUid = _localOwner === undefined ? localOwner() : _localOwner;
+      return normalize(Object.assign(freshState(), state));
+    }
+    account.localUid = localOwner();
     const v1 = localStorage.getItem(KEY_V1);
     if (v1) return migrateV1(JSON.parse(v1));
   } catch (e) { /* tom eller blockerad lagring: börja om */ }
@@ -284,7 +289,7 @@ function load() {
 
 let S = load();
 function saveLocal() {
-  try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* ignoreras */ }
+  try { localStorage.setItem(KEY, JSON.stringify({ ...S, _localOwner: account.localUid || null })); } catch (e) { /* ignoreras */ }
 }
 function save() {
   stamp();
@@ -298,6 +303,57 @@ function save() {
 // ändras. Vid synk vinner den nyaste versionen av varje del, så att två enheter inte skriver över
 // varandras loggning. Saknas stämpel räknas den som 0, och vid lika vinner kontots version.
 const stampSnap = {};
+// Varje matpost/pass har egen identitet. Borttagningar sparas som gravstenar så att
+// en gammal offlinekopia inte kan återuppliva en post som redan tagits bort.
+const listSnap = {};
+const syncLists = ["food", "workouts", "acts"];
+function stableJson(value) {
+  return JSON.stringify(value, (key, v) => v && typeof v === "object" && !Array.isArray(v)
+    ? Object.fromEntries(Object.keys(v).sort().map(k => [k, v[k]])) : v);
+}
+const itemBody = item => { const { _id, _ts, ...body } = item; return stableJson(body); };
+function legacyItemId(item, occurrence) {
+  const text = itemBody(item);
+  let a = 2166136261, b = 5381;
+  for (let i = 0; i < text.length; i++) { a = Math.imul(a ^ text.charCodeAt(i), 16777619); b = Math.imul(b, 33) ^ text.charCodeAt(i); }
+  return `old-${occurrence}-${(a >>> 0).toString(36)}-${(b >>> 0).toString(36)}`;
+}
+function listItems(L, key) {
+  const seen = new Map();
+  return (L[key] || []).map(item => {
+    const body = itemBody(item), occurrence = seen.get(body) || 0;
+    seen.set(body, occurrence + 1);
+    return { ...item, _id: item._id || legacyItemId(item, occurrence),
+      _ts: item._ts ?? ((L._t || {})[key] || 0) };
+  });
+}
+function stampList(L, key, prefix, now, initial) {
+  const snapKey = prefix + key;
+  if (!Array.isArray(L[key]) && !listSnap[snapKey]) return;
+  const old = listSnap[snapKey] || {}, next = {};
+  const deleted = ((L._deleted || (L._deleted = {}))[key] ||= {});
+  const migrated = initial ? listItems(L, key) : null;
+  (L[key] || []).forEach((item, i) => {
+    if (!item._id) item._id = initial ? migrated[i]._id : crypto.randomUUID();
+    const body = itemBody(item);
+    if (!initial && (!old[item._id] || old[item._id].body !== body)) item._ts = Math.max(now, (item._ts || 0) + 1, (deleted[item._id] || 0) + 1);
+    else item._ts ??= (L._t || {})[key] || 0;
+    next[item._id] = { body, ts: item._ts };
+  });
+  if (!initial) for (const id of Object.keys(old)) if (!(id in next)) deleted[id] = Math.max(now, (deleted[id] || 0) + 1, old[id].ts + 1);
+  listSnap[snapKey] = next;
+}
+function mergeList(a, b, key, out) {
+  const deleted = {};
+  for (const L of [a, b]) for (const [id, ts] of Object.entries((L._deleted || {})[key] || {})) deleted[id] = Math.max(deleted[id] || 0, ts);
+  const items = new Map();
+  for (const L of [a, b]) for (const item of listItems(L, key)) {
+    const prev = items.get(item._id);
+    if (!prev || item._ts >= prev._ts) items.set(item._id, item);
+  }
+  out[key] = [...items.values()].filter(item => !(item._id in deleted) || item._ts > deleted[item._id]);
+  (out._deleted || (out._deleted = {}))[key] = deleted;
+}
 // En tom dag som bara skapats när appen visades får aldrig vinna över riktig loggning
 const isEmpty = v => v == null || v === false || v === "" ||
   (typeof v === "object" && !Object.keys(v).length);
@@ -316,9 +372,22 @@ function stampParts(obj, prefix, now, initial) {
   }
 }
 function stamp(initial = false) {
+  if (initial) {
+    for (const key of Object.keys(stampSnap)) delete stampSnap[key];
+    for (const key of Object.keys(listSnap)) delete listSnap[key];
+  }
   const now = Date.now();
   stampParts(S, "s:", now, initial);
-  for (const [date, L] of Object.entries(S.log)) stampParts(L, date + ":", now, initial);
+  for (const [date, L] of Object.entries(S.log)) {
+    for (const key of syncLists) stampList(L, key, date + ":", now, initial);
+    if (L.dailies) {
+      L._dailyBase ??= L._dailyT ? 0 : ((L._t || {}).dailies || 0);
+      const daily = { ...L.dailies, _t: L._dailyT || Object.fromEntries(Object.keys(L.dailies).map(k => [k, L._dailyBase])) };
+      stampParts(daily, date + ":daily:", now, initial);
+      L._dailyT = daily._t;
+    }
+    stampParts(L, date + ":", now, initial);
+  }
 }
 // Väljer del för del den version som ändrats senast. b är kontots version.
 function mergeParts(a, b) {
@@ -330,6 +399,19 @@ function mergeParts(a, b) {
     const src = x > y ? a : y > x ? b : k in b ? b : a;
     if (k in src) out[k] = src[k];
     if ((src === a ? x : y)) out._t[k] = src === a ? x : y;
+  }
+  if (a.dailies || b.dailies) {
+    const keys = new Set([...Object.keys(a.dailies || {}), ...Object.keys(b.dailies || {}), ...Object.keys(a._dailyT || {}), ...Object.keys(b._dailyT || {})]);
+    const dailyPart = L => ({ ...L.dailies, _t: Object.fromEntries([...keys].map(k => [k,
+      (L._dailyT || {})[k] ?? L._dailyBase ?? ((L._t || {}).dailies || 0)])) });
+    const { _t, ...daily } = mergeParts(dailyPart(a), dailyPart(b));
+    out.dailies = daily; out._dailyT = _t;
+    out._dailyBase = Math.max(a._dailyBase ?? (ta.dailies || 0), b._dailyBase ?? (tb.dailies || 0));
+  }
+  for (const key of syncLists) {
+    const arrays = [a[key], b[key]].filter(Array.isArray);
+    // Äldre primitiva värden (t.ex. gamla importer) använder delens tidsstämpel.
+    if (arrays.length && arrays.every(xs => xs.every(x => x && typeof x === "object"))) mergeList(a, b, key, out);
   }
   return out;
 }
@@ -365,65 +447,69 @@ function joinDocs(docs) {
   return normalize(s);
 }
 
+function mergeDoc(id, local, remote) {
+  return id === "settings" ? mergeParts(local, remote) : { days: mergeLog(local.days || {}, remote.days || {}) };
+}
+function applyCloudDoc(id, body) {
+  if (id === "settings") {
+    const { log, ...cur } = S;
+    S = normalize(Object.assign(mergeParts(cur, body), { log }));
+  } else {
+    const days = upgradeWorkouts({ log: body.days || {} }).log;
+    S.log = mergeLog(S.log, days);
+  }
+}
+
 // Skriver bara dokument som ändrats. Har någon annan enhet ändrat samma dokument sedan sist
 // slås deras version ihop med vår först, så att inget skrivs över.
 function pushCloud() {
-  if (!cloud.col) return;
+  const col = cloud.col;
+  if (!col) return;
   if (cloud.pushing) { cloud.again = true; return; }
-  cloud.pushing = pullChanged().catch(() => {}).then(writeDocs).finally(() => {
+  cloud.pushing = pullChanged(col).then(() => writeDocs(col)).catch(() => {
+    if (cloud.col === col) { cloud.status = "error"; render(); }
+  }).finally(() => {
     cloud.pushing = null;
     if (cloud.again) { cloud.again = false; pushCloud(); }
   });
 }
-async function pullChanged() {
-  const col = cloud.col;
-  if (!col || !col.getMany) return;
+async function pullChanged(col = cloud.col) {
+  if (!col || !col.getMany || cloud.col !== col) return;
   const docs = splitDocs(S);
   const ids = Object.keys(docs).filter(id => cloud.sent[id] !== JSON.stringify(docs[id]));
   if (!ids.length) return;
+  const rows = await col.getMany(ids);
+  if (cloud.col !== col) return;
   let pulled = false;
-  for (const d of await col.getMany(ids)) {
+  for (const d of rows) {
     const json = JSON.stringify(d.data());
     if (cloud.sent[d.id] === json) continue;
-    const body = JSON.parse(json);
-    if (d.id === "settings") {
-      const { log, ...cur } = S;
-      S = normalize(Object.assign(mergeParts(cur, body), { log }));
-    } else {
-      const days = upgradeWorkouts({ log: body.days || {} }).log;
-      for (const [date, L] of Object.entries(days)) S.log[date] = S.log[date] ? mergeParts(S.log[date], L) : L;
-    }
+    applyCloudDoc(d.id, JSON.parse(json));
     cloud.sent[d.id] = json;
     pulled = true;
   }
   if (pulled) { stamp(true); saveLocal(); render(); }
 }
-function writeDocs() {
-  if (!cloud.col) return;
+async function writeDocs(col = cloud.col) {
+  if (!col || cloud.col !== col) return;
   const docs = splitDocs(S);
-  const write = (id, op) => {
-    cloud.queue[id] = (cloud.queue[id] || Promise.resolve()).then(op).catch(e => {
-      delete cloud.sent[id];
-      // Saknar man skrivrätt (t.ex. via en delad länk) sparas allt bara i webbläsaren
-      if (e && e.code === "invalid_argument") { cloud.col = null; cloud.status = "local"; }
-      else cloud.status = "error";
-      render();
-    });
-    return cloud.queue[id];
-  };
-  const writes = [];
   for (const [id, body] of Object.entries(docs)) {
-    const json = JSON.stringify(body);
-    if (cloud.sent[id] === json) continue;
-    cloud.sent[id] = json;
-    writes.push(write(id, () => cloud.col.doc(id).set(JSON.parse(json))));
+    if (cloud.col !== col) return;
+    const json = JSON.stringify(body), prev = cloud.sent[id];
+    if (prev === json) continue;
+    const saved = await col.doc(id).set(JSON.parse(json), prev === undefined ? undefined : JSON.parse(prev));
+    if (cloud.col !== col) return;
+    cloud.sent[id] = JSON.stringify(saved || JSON.parse(json));
+    if (saved) { applyCloudDoc(id, saved); stamp(true); saveLocal(); render(); }
   }
+  // Saknade månader raderas bara om de fortfarande är exakt den lästa versionen.
   for (const id of Object.keys(cloud.sent)) {
+    if (cloud.col !== col) return;
     if (docs[id]) continue;
-    delete cloud.sent[id];
-    writes.push(write(id, () => cloud.col.doc(id).delete()));
+    await col.doc(id).delete(JSON.parse(cloud.sent[id]));
+    if (cloud.col === col) delete cloud.sent[id];
   }
-  return Promise.all(writes);
+  if (cloud.col === col) cloud.status = "cloud";
 }
 
 async function connectCloud() {
@@ -444,8 +530,9 @@ async function connectCloud() {
 // med kontot, del för del efter tidsstämpel. Första gången enheten kopplas till kontot vinner
 // kontots upplägg, så att en ny telefon inte skriver över det man redan har.
 async function attachCollection(col, merge, firstSync = false) {
-  const snap = await col.get();
   cloud.col = col;
+  const snap = await col.get();
+  if (cloud.col !== col) return;
   cloud.sent = {};
   cloud.status = "cloud";
   if (snap.empty) {
@@ -1786,9 +1873,8 @@ document.addEventListener("click", ev => {
     if (!account.confirmDelete) { account.confirmDelete = true; render(); return; }
     account.confirmDelete = false;
     socialRpc("driv_delete_me").then(async () => {
-      try { localStorage.removeItem("driv-synced"); } catch (e) { /* blockerad lagring */ }
       await signOut();
-      account.msg = "Kontot är raderat. Det du loggat finns kvar på den här enheten.";
+      account.msg = "Kontot är raderat. En lokal säkerhetskopia finns kvar på den här enheten.";
       render();
     }, () => { account.msg = "Kunde inte radera kontot just nu. Försök igen."; render(); });
     return;

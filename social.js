@@ -20,11 +20,15 @@ async function socialRpc(name, args) {
 }
 async function loadSocial() {
   if (!sbEnabled || account.step !== "in") return;
+  const epoch = account.epoch || 0, uid = account.localUid;
+  const active = () => account.step === "in" && epoch === (account.epoch || 0) && uid === account.localUid;
   try {
-    social.profile = await socialRpc("driv_profile_get");
-    if (social.profile) [social.friends, social.feed] = await Promise.all([socialRpc("driv_friends"), socialRpc("driv_feed")]);
-    social.loaded = true; social.error = false;
-  } catch (e) { social.loaded = true; social.error = true; }
+    const profile = await socialRpc("driv_profile_get");
+    if (!active()) return;
+    const [friends, feed] = profile ? await Promise.all([socialRpc("driv_friends"), socialRpc("driv_feed")]) : [[], []];
+    if (!active()) return;
+    Object.assign(social, { profile, friends, feed, loaded: true, error: false });
+  } catch (e) { if (!active()) return; social.loaded = true; social.error = true; }
   render();
 }
 
