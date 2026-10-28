@@ -959,9 +959,9 @@ const VIEWS = {
     const passes = weekSummary(weekStart(TODAY)).passes, acts = actsOn(TODAY);
     const greet = done ? "Bra jobbat idag." : started ? "Fortsätt där du var." : t.rest ? (acts.length ? "Snyggt, aktiv vilodag." : "Vilodag idag.") : "Dags att köra.";
     const nDone = d.ex.filter(x => exDone(w, x)).length;
-    const status = done ? `<span class="oktext">${icon("check", 14)}Klart</span>` : started ? `${nDone} av ${d.ex.length} övningar` : t.rest ? `Vila · nästa ${WD_LONG[weekdayOf(t.next)]}` : "Inte gjort än";
-    const passTile = `<button class="htile passtile ${done ? "ok" : t.rest ? "" : "go"}" data-tab="pass" aria-label="Dagens pass: ${esc(d.name)}, ${done ? "klart" : started ? "påbörjat" : t.rest ? "vilodag" : "inte gjort än"}. Till Träna">
-        <span class="klabel ${done ? "oktext" : "accent"}">${t.rest ? "Nästa pass" : "Dagens pass"}</span>
+    const status = done ? `<span class="oktext">${icon("check", 14)}Genomfört idag</span>` : started ? `${nDone} av ${d.ex.length} övningar` : t.rest ? `Vila · nästa ${WD_LONG[weekdayOf(t.next)]}` : "Inte gjort än";
+    const passTile = `<button class="htile passtile ${done ? "ok" : t.rest ? "" : "go"}" data-tab="pass" aria-label="${passLabel(t)}: ${esc(d.name)}, ${done ? "genomfört" : started ? "påbörjat" : t.rest ? "vilodag" : "inte gjort än"}. Till Träna">
+        <span class="klabel ${done ? "oktext" : "accent"}">${passLabel(t)}</span>
         <span class="col"><b class="hname">${esc(d.name)}</b><span class="muted small">${status}</span>${acts.length ? `<span class="muted small">+ ${esc(acts.map(a => a.name).join(", "))}</span>` : ""}</span>
         <span class="hlink">Till Träna${icon("right", 14)}</span></button>`;
     const pct = m.kcal ? e.kcal / m.kcal : 0;
