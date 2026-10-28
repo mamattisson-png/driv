@@ -471,6 +471,14 @@
   .chev { color: var(--muted); transition: transform .15s; display: grid; place-items: center; }
   .prow.open .chev { transform: rotate(90deg); }
   .prow-body { padding: 0 14px 16px; }
+  .upcoming-intro { margin: 0 0 14px; }
+  .upcoming-list { list-style: none; margin: 0; padding: 0; }
+  .upcoming-list li { margin: 0; padding: 14px 0; border-top: 1px solid var(--line); }
+  .upcoming-list li:last-child { padding-bottom: 0; }
+  .upcoming-list h2 { margin: 8px 0 4px; font-size: 15px; font-weight: 600; }
+  .upcoming-list p { margin: 0; }
+  .upcoming-status { display: inline-block; padding: 3px 8px; border-radius: 99px; background: var(--card-2);
+    color: var(--accent-text); font-size: 12px; font-weight: 500; }
   .prow { scroll-margin: 12px 0 calc(124px + env(safe-area-inset-bottom, 0px)); }
   .prow-body .card { border: 0; padding: 0; margin: 0; background: none; box-shadow: none; }
   .prow-body .card > h2:first-child { display: none; }
@@ -1539,6 +1547,7 @@
 <script src="aktivitet.js"></script>
 <script src="vila.js"></script>
 <script src="skanner.js"></script>
+<script src="kommande.js"></script>
 <script src="app.js"></script>
 <script src="livsmedel.js" async></script>
 <script>
