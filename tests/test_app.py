@@ -785,8 +785,8 @@ def test_uppskattningar_raknas_inte_dubbelt(page):
     page.click("[data-mealback]")
     # En uppskattning visas som just det och kan inte bli favorit
     page.evaluate("day().food.push({name: 'Uppskattning', kcal: 600, protein: 30, meal: 3, est: true}); render()")
-    assert "≈ Uppskattning" in page.inner_text("#app")
     page.click('[data-mealpage="3"]')
+    assert "≈ Uppskattning" in page.inner_text(".kitems")
     page.click(f'[data-fooditem="{page.evaluate("day().food.length - 1")}"]')
     assert page.locator("[data-itemfav]").count() == 0
 
