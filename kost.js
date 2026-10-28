@@ -393,19 +393,22 @@ function recipeOpenPage() {
 }
 function recipeEditPage() {
   const r = recipeEdit, t = recipeTotal(r), p = perPortion(r);
-  return `<div class="recpage foodsheet"><button class="backbtn" data-rcancel>${icon("left", 18)}Avbryt</button>
+  const tile = (v, l) => `<div><b>${v}</b><span>${l}</span></div>`;
+  return `<div class="recpage foodsheet receditpage"><button class="backbtn" data-rcancel>${icon("left", 18)}Avbryt</button>
     <span class="klabel">${r.idx == null ? "Nytt recept" : "Ändra recept"}</span>
     <input id="rname" class="rnamein" value="${esc(r.name)}" placeholder="Namn, t.ex. Lasagne" autocomplete="off" aria-label="Namn på receptet">
-    <div class="row between rport"><span class="col"><span>Portioner</span><span class="muted small">Mängderna räknas för så många</span></span>
+    <div class="kmcard rport"><span class="grow col"><b>Portioner</b><span class="muted small">Mängderna räknas för så många</span></span>
       <div class="fstep"><button data-rport="-1" ${r.portions <= 1 ? "disabled" : ""} aria-label="Färre portioner">−</button><b class="famt qcount">${r.portions}</b>
       <button data-rport="1" aria-label="Fler portioner">+</button></div></div>
+    ${r.items.length ? `<div class="rstats four">${tile(tnum(p.kcal), "kcal/portion")}${tile(`${fmtNum(Math.round(p.protein))} g`, "protein")}
+      ${tile(p.fat != null ? `${fmtNum(Math.round(p.fat))} g` : "–", "fett")}${tile(p.fat != null ? `${fmtNum(Math.round(p.fiber))} g` : "–", "fibrer")}</div>
+      <div class="muted small rtotal2">Hela receptet: ${tnum(t.kcal)} kcal</div>` : ""}
+    <h2 class="ksec">Ingredienser${r.items.length ? ` · ${r.items.length}` : ""}</h2>
     <div class="finput ringin"><input id="ring" placeholder="t.ex. nötfärs, ägg, lök, 2 dl grädde" autocomplete="off" aria-label="Ingredienser"><button class="primary small" data-ringadd>Lägg till</button></div>
     <div class="muted small rhint">Skriv bara vad som ingår. Utan mängd uppskattar vi en vanlig mängd för ${portionsText(r.portions).replace("1 portion", "en portion")}.</div>
     ${r.msg ? `<div class="muted small warntext rhint">${esc(r.msg)}</div>` : ""}
-    ${r.items.length ? `<div class="klabel fsub">Ingredienser · ${r.items.length}</div>
-      <div class="ringlist">${r.items.map((it, k) => `<div class="krow ing"><span class="grow"><b>${esc(ingText(it))}</b><span class="muted small">${tnum(it.kcal)} kcal · ${it.est ? `<span class="esttag">uppskattad mängd</span>` : it.amt ? "som du skrev" : `${fmtNum(+it.protein || 0)} g protein`}</span></span>
-        ${it.amt ? stepper(`data-ristep="${k}"`, amtText(it.amt), it.name) : `<button class="small ghost iconbtn" data-rdel="${k}" aria-label="Ta bort ${esc(it.name)}">${icon("close", 18)}</button>`}</div>`).join("")}</div>
-      <div class="rstats two"><div><b>${tnum(p.kcal)}</b><span>kcal per portion · ${fmtNum(Math.round(p.protein))} g protein${p.fat != null ? ` · ${fmtNum(Math.round(p.fat))} g fett · ${fmtNum(Math.round(p.fiber))} g fibrer` : ""}</span></div><div><b>${tnum(t.kcal)}</b><span>kcal i hela receptet</span></div></div>` : ""}
+    ${r.items.length ? `<div class="kmeals ringlist">${r.items.map((it, k) => `<div class="kmcard krow ing"><span class="grow col"><b>${esc(ingText(it))}</b><span class="muted small">${tnum(it.kcal)} kcal · ${it.est ? `<span class="esttag">uppskattad mängd</span>` : it.amt ? "som du skrev" : `${fmtNum(+it.protein || 0)} g protein`}</span></span>
+        ${it.amt ? stepper(`data-ristep="${k}"`, amtText(it.amt), it.name) : `<button class="small ghost iconbtn" data-rdel="${k}" aria-label="Ta bort ${esc(it.name)}">${icon("close", 18)}</button>`}</div>`).join("")}</div>` : ""}
     <div class="pagefoot row">${r.idx != null ? `<button class="ghost dangertext" data-rremove>Ta bort</button>` : ""}
       <button class="primary grow bigbtn" data-rsave ${r.items.length ? "" : "disabled"}>Spara recept</button></div></div>`;
 }
@@ -513,28 +516,31 @@ function mealCard(meal, L, m) {
 function mealPageView(m) {
   const meal = mealPage, L = day(), name = meal < 0 ? "Övrigt" : MEALS[meal][0];
   const list = L.food.map((f, i) => ({ f, i })).filter(x => (x.f.meal ?? -1) === meal), items = list.map(x => x.f);
-  const sum = sumKcal(items), target = meal < 0 ? 0 : mealTarget(meal, m);
+  const sum = sumKcal(items), target = meal < 0 ? 0 : mealTarget(meal, m), share = meal < 0 ? 0 : MEALS[meal][1];
   const known = items.filter(f => f.fat != null);
-  const tile = (v, l) => `<div><b>${v}</b><span>${l}</span></div>`;
   const last = !items.length && meal >= 0 ? lastSlot(meal) : null, saved = !items.length && meal >= 0 ? savedFor(meal).slice(0, 3) : [];
-  const rows = list.map(({ f, i }) => `<div class="kirow ${isEst(f) ? "est" : ""} ${fresh.has(f) ? "fresh" : ""}">
+  // Samma uppbyggnad som översikten: ring överst, tre rutor för näringen (mot måltidens del av dagen) och ett kort per sak
+  const tile = (cls, label, v, goal, reach) => `<div class="kmac ${cls}"><span class="small">${label}</span><span class="small"><b>${tnum(v)}</b>${goal ? ` / ${tnum(goal)}` : ""} g</span>${goal ? bar(v, goal, reach, cls) : ""}</div>`;
+  const rows = list.map(({ f, i }) => `<div class="kmcard kirow ${isEst(f) ? "est" : ""} ${fresh.has(f) ? "fresh" : ""}">
       <button class="grow col" data-fooditem="${i}"><b>${itemName(f)}</b><span class="muted small">${tnum(f.kcal)} kcal${amountText(f) ? ` · ${amountText(f)}` : ""}${isEst(f) && items.length > 1 ? ` · <span class="warntext">kan räknas dubbelt</span>` : ` · ${fmtNum(Math.round(f.protein))} g protein`}</span></button>
       <button class="kidel" data-mdel="${i}" aria-label="Ta bort ${esc(isEst(f) ? "uppskattningen" : f.name)}">${icon("close", 18)}</button></div>`).join("");
   const wd = cap(parse(logDate()).toLocaleDateString("sv-SE", { weekday: "long", day: "numeric", month: "long" }));
-  return `<div class="kpage foodsheet"><button class="backbtn" data-mealback>${icon("left", 18)}Kost</button>
-    <span class="klabel">${wd}</span><h1>${name}</h1>
-    ${items.length ? `<section class="card kitems" aria-label="I ${name.toLowerCase()}en">${rows}</section>`
-      : `<div class="card kempty muted">Inget i ${name.toLowerCase()}en än.</div>`}
+  return `<div class="kpage foodsheet mealpage"><button class="backbtn" data-mealback>${icon("left", 18)}Kost</button>
+    <div class="kmhead"><span class="kmic">${mealIcon(meal)}</span><span class="col"><h1>${name}</h1><span class="muted small">${wd}</span></span></div>
+    <section class="kringbox" aria-label="${name}: ${tnum(sum)} kcal">
+      <div class="kringrow"><div class="kside"><span class="muted small">Förslag</span><b>${target ? tnum(target) : "–"}</b></div>
+        <div class="kring">${ring(target ? sum / target : 0, 128, target && sum > target * 1.15 ? "over" : "")}<div class="kringc"><span class="small">${name}</span>
+          <b class="kleft">${tnum(sum)}</b><span class="muted small">kcal</span></div></div>
+        <div class="kside"><span class="muted small">${target && sum > target ? "Över" : "Kvar"}</span><b>${target ? tnum(Math.abs(target - sum)) : "–"}</b></div></div>
+      <div class="kmacros">${tile("prot", "Protein", sumOf(items, "protein"), Math.round(m.protein * share), true)}${tile("fat", "Fett", sumOf(known, "fat"), Math.round(m.fat * share), false)}${tile("fib", "Fibrer", sumOf(known, "fiber"), Math.round(m.fiber * share), true)}</div>
+      ${known.length < items.length ? `<div class="muted small kmiss">Fett och fibrer saknas för ${items.length - known.length} av ${items.length}.</div>` : ""}</section>
+    <h2 class="ksec">I ${name.toLowerCase()}en${items.length ? ` · ${items.length}` : ""}</h2>
+    ${items.length ? `<div class="kmeals kitems" aria-label="I ${name.toLowerCase()}en">${rows}</div>`
+      : `<div class="kmcard kempty muted">Inget i ${name.toLowerCase()}en än.</div>`}
     ${!items.length && (last || saved.length) ? `<div class="kshort card">
       ${saved.map(({ m: sm, idx }) => `<button class="klink" data-usemeal="${idx}" data-meal="${meal}">${esc(sm.name)}<span class="muted"> · ${sm.kcal} kcal</span></button>`).join("")}
       ${last ? `<button class="klink" data-repeat="${meal}">↻ Samma som ${whenText(last.date)}<span class="muted"> · ${esc(last.items.map(f => isEst(f) ? "uppskattning" : f.name).join(", "))}</span></button>` : ""}</div>` : ""}
-    ${items.length ? `<section class="card kmtotal"><div class="row between"><b class="kmbig">${tnum(sum)} <small>kcal</small></b>
-        ${target ? `<span class="muted small">Förslag ca ${tnum(target)} kcal</span>` : ""}</div>
-      ${target ? bar(sum, target) : ""}
-      <div class="rstats ${known.length ? "three" : "two"}">${tile(`${fmtNum(Math.round(sumOf(items, "protein")))} g`, "protein")}
-        ${known.length ? `${tile(`${fmtNum(Math.round(sumOf(known, "fat")))} g`, "fett")}${tile(`${fmtNum(Math.round(sumOf(known, "fiber")))} g`, "fibrer")}` : tile(`${items.length}`, items.length === 1 ? "sak" : "saker")}</div>
-      ${known.length && known.length < items.length ? `<div class="muted small">Fett och fibrer saknas för ${items.length - known.length} av ${items.length}.</div>` : ""}
-      ${meal >= 0 && items.filter(f => !isEst(f)).length > 1 ? `<button class="linkbtn2 small ksave" data-savegroup="${meal}">Spara som måltid</button>` : ""}</section>` : ""}
+    ${meal >= 0 && items.filter(f => !isEst(f)).length > 1 ? `<button class="linkbtn2 small ksave" data-savegroup="${meal}">${icon("plus", 14)}Spara som måltid</button>` : ""}
     ${meal >= 0 ? `<div class="pagefoot"><button class="primary wide bigbtn" data-addto="${meal}" data-from="meal" data-focusname>${icon("plus", 18)}Lägg till mat</button></div>` : ""}</div>`;
 }
 // Veckan: en stapel per dag mot kalorimålet. Ett tryck visar den dagen.

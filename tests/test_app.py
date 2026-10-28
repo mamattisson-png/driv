@@ -1890,7 +1890,8 @@ def test_fett_och_fibrer_raknas(page):
     page.click("#faddbtn")
     f = page.evaluate("day().food.map(x => [x.name, x.fat, x.fiber])")
     assert f[0][0] == "Havregryn" and f[0][1] > 0 and f[0][2] > 5 and f[1][2] > 1
-    assert "fett" in page.inner_text(".kmtotal") and "fibrer" in page.inner_text(".kmtotal")
+    meal = page.inner_text(".mealpage .kmacros")
+    assert "Fett" in meal and "Fibrer" in meal
     page.click("[data-mealback]")
     text = page.inner_text(".kmacros")
     assert "Fett" in text and "Fibrer" in text
