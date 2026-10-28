@@ -1986,3 +1986,12 @@ def test_annan_sort_och_kryddor(page):
     assert all(k <= 30 for _, k in names)
     # "ris" föreslår inte sparris
     assert "Sparris" not in page.evaluate("(() => { const i = parseFood('ris').items[0]; return variantFoods(i.typed, i.food).map(x => x.label); })()")
+
+
+def test_kost_far_plats_utan_att_scrolla(page):
+    start(page)
+    seed(page, "logFood({name:'Gröt', kcal: 300, protein: 10, fat: 6, fiber: 5}, 0); logFood({name:'Pyttipanna', kcal: 560, protein: 20}, 1); S.profileSet = true")
+    go(page, "kost")
+    for w, h in [(390, 844), (412, 840)]:
+        page.set_viewport_size({"width": w, "height": h})
+        assert page.evaluate("document.documentElement.scrollHeight - innerHeight") <= 0

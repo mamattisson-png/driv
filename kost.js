@@ -552,11 +552,11 @@ function kostRing(e, m) {
   const tile = (cls, label, v, goal, reach) => `<div class="kmac ${cls}"><span class="small">${label}</span><span class="small"><b>${tnum(v)}</b> / ${tnum(goal)} g</span>${bar(v, goal, reach, cls)}</div>`;
   return `<section class="kringbox dayring ksum" aria-label="${editDate ? dateLabel(editDate) : "Dagens intag"}">
     <div class="kringrow"><div class="kside"><span class="muted small">Ätit</span><b>${tnum(e.kcal)}</b></div>
-      <div class="kring">${ring(pct, 168, left < -m.kcal * 0.05 ? "over" : "")}<div class="kringc"><span class="small">${left >= 0 ? (editDate ? "Kvar den dagen" : "Kvar idag") : "Över målet"}</span>
+      <div class="kring">${ring(pct, 128, left < -m.kcal * 0.05 ? "over" : "")}<div class="kringc"><span class="small">${left >= 0 ? (editDate ? "Kvar den dagen" : "Kvar idag") : "Över målet"}</span>
         <b class="kleft">${tnum(Math.abs(left))}</b><span class="muted small">av ${tnum(m.kcal)} kcal</span></div></div>
       <div class="kside"><span class="muted small">Bränt</span><b>${tnum(burned)}</b></div></div>
     <div class="kmacros">${tile("prot", "Protein", e.protein, m.protein, true)}${tile("fat", "Fett", e.fat, m.fat, false)}${tile("fib", "Fibrer", e.fiber, m.fiber, true)}</div>
-    ${e.n > e.known ? `<div class="muted small kmiss">Fett och fibrer saknas för ${e.n - e.known} av ${e.n} saker idag.</div>` : ""}
+    ${e.n > e.known ? `<div class="muted small kmiss">Fett och fibrer saknas för ${e.n - e.known} av ${e.n} saker.</div>` : ""}
     ${S.profileSet === false ? `<button class="link small" data-tab="profil" data-popen="kalori">Målet bygger på standardvärden – ställ in ditt</button>` : ""}</section>`;
 }
 // Kvar idag: kcal som en stapel och protein under
@@ -628,6 +628,7 @@ function addPage(m) {
     ${q.length ? `<h3 class="klabel fsub">Senaste</h3><div class="qgrid">${quick}</div>
       ${q.length > 6 ? `<button class="small ghost qmore" data-quickmore>${quickMore ? "Visa färre" : `Visa fler (${q.length - 6})`}</button>` : ""}` : ""}` : ""}
     </div>
+    <div class="muted small credit">Näringsvärden: Livsmedelsverkets livsmedelsdatabas (CC BY 4.0) och egna uppskattningar.</div>
     <div class="pagefoot"><button class="primary wide bigbtn" id="faddbtn" data-addfood>Klar</button></div>
   </div>`;
 }
@@ -722,8 +723,7 @@ function kostView() {
     <h2 class="ksec">Måltider</h2>
     <div class="kmeals" aria-label="Måltider">${MEALS.map((_, i) => mealCard(i, L, m)).join("")}${mealCard(-1, L, m)}</div>
     <button class="kmcard krecept" data-rlist><span class="kmic">${icon("kost", 22)}</span><span class="grow col"><b>Dina recept</b>
-      <span class="muted small">${recipes().length ? `${recipes().length} recept` : "Bygg en rätt en gång, logga en portion med ett tryck"}</span></span><span class="chev">${icon("right", 18)}</span></button>
-    <div class="muted small credit">Näringsvärden: Livsmedelsverkets livsmedelsdatabas (CC BY 4.0) och egna uppskattningar.</div>`;
+      <span class="muted small">${recipes().length ? `${recipes().length} recept` : "Bygg en rätt, logga en portion"}</span></span><span class="chev">${icon("right", 18)}</span></button>`;
 }
 
 document.addEventListener("click", ev => {
