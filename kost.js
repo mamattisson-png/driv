@@ -43,7 +43,7 @@ function logFood(item, meal = currentMeal()) {
 // ---------- Mängd ----------
 // amt = { n, unit, k, p, fa, fi, u }: mängd i en enhet, kcal, protein, fett och fibrer per 100 g och gram per enhet.
 // Det är mängden man ändrar; kcal och protein räknas fram.
-const UNIT_NAMES = { g: "g", dl: "dl", st: "st", msk: "msk", tsk: "tsk", skiva: "skivor", portion: "portion", bit: "bitar",
+const UNIT_NAMES = { g: "g", dl: "dl", st: "st", msk: "msk", tsk: "tsk", krm: "krm", skiva: "skivor", portion: "portion", bit: "bitar",
   burk: "burk", glas: "glas", kopp: "kopp", skopa: "skopor", nave: "nävar", pase: "påse", klyfta: "klyftor" };
 const unitGrams = (a, unit) => unit === "g" ? 1 : a.u[unit] || UNIT_DEFAULT[unit] || 100;
 const amtGrams = a => a.n * unitGrams(a, a.unit);
@@ -63,7 +63,7 @@ function amtFromItem(i) {
   for (const k of UNIT_KEYS) if (food[k]) u[k] = food[k];
   let n, unit = i.unit;
   if (!unit && i.qty == null) {
-    unit = food.portion ? "portion" : food.st ? "st" : food.msk ? "msk" : "g";
+    unit = food.def || (food.portion ? "portion" : food.st ? "st" : food.msk ? "msk" : "g");
     n = unit === "g" ? 100 : unit === "msk" ? 2 : 1;
   } else if (!unit) { unit = food.st ? "st" : food.portion ? "portion" : "g"; n = unit === "g" ? Math.round(i.grams) : i.qty; }
   else if (["g", "hg", "kg"].includes(unit)) { unit = "g"; n = Math.round(i.grams); }
@@ -96,7 +96,7 @@ function amtInputs(a, attr) {
 // Ord som inte går att tolka blir en fråga med högst fyra förslag.
 let foodDraft = [];
 function draftRows(items) {
-  foodDraft = items.map(i => i.known ? { name: i.name, corrected: i.corrected, amt: amtFromItem(i) }
+  foodDraft = items.map(i => i.known ? { name: i.name, corrected: i.corrected, amt: amtFromItem(i), text: i.text, typed: i.typed, alts: variantFoods(i.typed, i.food) }
     : (() => { const { prefix, rest } = splitAmount(i.text); return { text: i.text, prefix, rest, sugg: suggestFoods(rest, 4) }; })());
   return foodDraft.map((d, j) => d.amt ? draftRow(d, j) : askRow(d, j)).join("");
 }
@@ -115,7 +115,18 @@ function draftRow(d, j) {
       <button class="famt" data-amtopen aria-label="Ändra mängd och enhet för ${esc(d.name)}">${amtText(d.amt)}</button>
       <button data-astep="1" aria-label="Mer ${esc(d.name)}">+</button></div>
     <div class="famtedit" hidden><input class="amt-n" type="number" inputmode="decimal" min="0" step="any" value="${d.amt.n}" data-d${j}="n" aria-label="Mängd">
-      <select class="amt-u" data-d${j}="u" aria-label="Enhet">${unitChoices(d.amt).map(k => `<option value="${k}" ${k === d.amt.unit ? "selected" : ""}>${UNIT_NAMES[k] || k}</option>`).join("")}</select></div></div>`;
+      <select class="amt-u" data-d${j}="u" aria-label="Enhet">${unitChoices(d.amt).map(k => `<option value="${k}" ${k === d.amt.unit ? "selected" : ""}>${UNIT_NAMES[k] || k}</option>`).join("")}</select></div></div>
+    ${d.alts && d.alts.length ? `<div class="fvars"><span class="muted small">Annan sort?</span>${d.alts.map((x, k) => `<button data-fvar="${j}:${k}">${esc(x.label)}</button>`).join("")}</div>` : ""}`;
+}
+// En annan sort ersätter namnet i fältet och behåller mängden: "2 msk grädde" → "2 msk matlagningsgrädde"
+function pickVariant(j, k) {
+  const d = foodDraft[j], x = d && d.alts && d.alts[k], input = $("fname");
+  if (!x || !input) return;
+  const at = d.text.toLowerCase().lastIndexOf(d.typed);
+  const seg = at < 0 ? x.name : d.text.slice(0, at) + x.name + d.text.slice(at + d.typed.length);
+  input.value = input.value.replace(d.text, seg);
+  foodPreview();
+  input.focus();
 }
 // Ändrad mängd i ett utkast: bara den raden ritas om, så att tangentbordet stannar kvar
 function updateDraft(el) {
@@ -669,7 +680,7 @@ function kostView() {
 }
 
 document.addEventListener("click", ev => {
-  const t = ev.target.closest("[data-addfood],[data-addto],[data-kmeal],[data-kday],[data-fsclose],[data-quick],[data-mstep],[data-mdel],[data-repeat],[data-savegroup],[data-sheetmeal],[data-usemeal],[data-repeatday],[data-quickmore],[data-fpanel],[data-fpick],[data-amtopen],[data-fooditem],[data-itemclose],[data-qty],[data-itemfav]");
+  const t = ev.target.closest("[data-addfood],[data-addto],[data-kmeal],[data-kday],[data-fsclose],[data-quick],[data-mstep],[data-mdel],[data-repeat],[data-savegroup],[data-sheetmeal],[data-usemeal],[data-repeatday],[data-quickmore],[data-fpanel],[data-fpick],[data-fvar],[data-amtopen],[data-fooditem],[data-itemclose],[data-qty],[data-itemfav]");
   if (!t || t.disabled) return;
   if (t.classList.contains("overlay") && ev.target !== t) return;   // klick inne i fönstret
   const ds = t.dataset;
@@ -692,6 +703,7 @@ document.addEventListener("click", ev => {
   }
   else if (ds.fpanel) { foodPanel = foodPanel === ds.fpanel && ds.fpanel === "kcal" ? "senaste" : ds.fpanel; }
   else if (ds.fpick) { const [j, k] = ds.fpick.split(":").map(Number); pickFood(j, k); return; }
+  else if (ds.fvar) { const [j, k] = ds.fvar.split(":").map(Number); pickVariant(j, k); return; }
   else if (ds.amtopen !== undefined) { const e = t.closest("[data-drow]").querySelector(".famtedit"); e.hidden = !e.hidden; return; }
   else if (ds.addto) { foodSheet = { meal: +ds.addto }; quickMore = false; foodPanel = "senaste"; foodDraft = []; }
   else if (ds.fsclose !== undefined) foodSheet = null;

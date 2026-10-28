@@ -3,6 +3,8 @@
 // Värden per 100 g. Enhetsvikter i gram: dl, st, msk, tsk, skiva, portion, bit, burk, glas, skopa, nave, pase.
 // Ungefärliga värden för vanliga livsmedel i Sverige.
 
+// En grupp kryddor med samma värden, men var och en med sitt eget namn
+function spices(names, v) { return names.map(n => ({ n: [n], ...v })); }
 const FOODS = [
   // Mejeri
   { n: ["lättmjölk"], kcal: 37, p: 3.5, dl: 100, glas: 200 },
@@ -302,6 +304,22 @@ const FOODS = [
   { n: ["latte", "caffe latte", "lattemacchiato"], kcal: 50, p: 3.3, st: 250, kopp: 250 },
   { n: ["cappuccino"], kcal: 45, p: 3, st: 180, kopp: 180 },
   { n: ["kaffe", "te"], kcal: 1, p: 0.1, kopp: 150, st: 150 },
+  // Kryddor och buljong: små mängder. Utan mängd räknas en tesked (salt och peppar en krydda).
+  // Varje krydda heter sitt eget namn; värdena delas inom gruppen.
+  ...spices(["salt", "havssalt", "flingsalt", "örtsalt"], { def: "krm", kcal: 0, p: 0, fat: 0, fib: 0, tsk: 6, msk: 18, krm: 1 }),
+  ...spices(["svartpeppar", "vitpeppar", "citronpeppar", "rosépeppar"], { def: "krm", kcal: 250, p: 10, fat: 3, fib: 25, tsk: 2, msk: 6, krm: 0.5 }),
+  { n: ["peppar"], label: "Svartpeppar", def: "krm", kcal: 250, p: 10, fat: 3, fib: 25, tsk: 2, msk: 6, krm: 0.5 },
+  ...spices(["kryddor", "kryddblandning", "örtkryddor", "allkrydda", "italiensk salladskrydda"], { def: "tsk", kcal: 270, p: 10, fat: 6, fib: 30, tsk: 2, msk: 6, krm: 0.5 }),
+  { n: ["krydda"], label: "Kryddor", def: "tsk", kcal: 270, p: 10, fat: 6, fib: 30, tsk: 2, msk: 6, krm: 0.5 },
+  ...spices(["paprikapulver", "rökt paprikapulver"], { def: "tsk", kcal: 280, p: 14, fat: 13, fib: 35, tsk: 2, msk: 6, krm: 0.5 }),
+  ...spices(["chilipulver", "chiliflakes", "cayennepeppar"], { def: "krm", kcal: 280, p: 13, fat: 14, fib: 35, tsk: 2, msk: 6, krm: 0.5 }),
+  ...spices(["curry", "garam masala", "gurkmeja"], { def: "tsk", kcal: 320, p: 13, fat: 14, fib: 40, tsk: 2, msk: 6, krm: 0.5 }),
+  ...spices(["oregano", "basilika torkad", "timjan", "rosmarin", "dragon", "persilja torkad", "dill torkad"], { def: "tsk", kcal: 260, p: 9, fat: 4, fib: 40, tsk: 1, msk: 3, krm: 0.3 }),
+  ...spices(["vitlökspulver", "lökpulver"], { def: "tsk", kcal: 335, p: 15, fat: 1, fib: 10, tsk: 3, msk: 9, krm: 0.7 }),
+  ...spices(["ingefära malen", "kardemumma", "muskot", "spiskummin", "koriander malen", "nejlika", "kanel"], { def: "tsk", kcal: 300, p: 8, fat: 8, fib: 30, tsk: 2, msk: 6, krm: 0.5 }),
+  ...spices(["tacokrydda", "grillkrydda", "kycklingkrydda", "fiskkrydda"], { def: "tsk", kcal: 280, p: 8, fat: 5, fib: 15, tsk: 3, msk: 9, krm: 0.7 }),
+  { n: ["buljongtärning", "buljong tärning", "fond"], label: "Buljongtärning", def: "st", kcal: 250, p: 8, fat: 18, fib: 0, st: 10, tsk: 4, msk: 12, portion: 10 },
+  ...spices(["buljong", "hönsbuljong", "köttbuljong", "grönsaksbuljong", "fiskbuljong"], { kcal: 5, p: 0.5, fat: 0.2, fib: 0, dl: 100, portion: 250 }),
 ];
 
 const UNITS = [
@@ -379,11 +397,11 @@ function parseItem(raw) {
   if (!food) return { text: raw.trim(), known: false };
   // Utan mängd: en portion, en styck, eller två matskedar för såser och pålägg
   const g = qty == null && !unit
-    ? food.portion || food.st || (food.msk ? 2 * food.msk : 100)
+    ? (food.def ? food[food.def] : food.portion || food.st || (food.msk ? 2 * food.msk : 100))
     : grams(food, qty == null ? 1 : qty, unit);
   return { text: raw.trim(), known: true, corrected, grams: Math.round(g), kcal: Math.round(food.kcal * g / 100), protein: Math.round(food.p * g / 10) / 10,
     fat: food.fat == null ? null : Math.round(food.fat * g / 10) / 10, fiber: food.fib == null ? null : Math.round(food.fib * g / 10) / 10,
-    food, qty, unit, name: cap(corrected || food.label || food.n[0]) };
+    food, qty, unit, typed: s, name: cap(corrected || food.label || food.n[0]) };
 }
 
 // Delar på komma (inte decimalkomma), "och", "+" och radbrytning
@@ -413,7 +431,7 @@ function parseFood(text) {
 // Ett livsmedel ärver styck- och portionsvikter från det egna livsmedel namnet börjar med ("Ägg stekt" → ägg).
 
 const CURATED = FOODS.length;
-const UNIT_KEYS = ["dl", "st", "msk", "tsk", "skiva", "portion", "bit", "burk", "glas", "kopp", "skopa", "nave", "pase", "klyfta"];
+const UNIT_KEYS = ["dl", "st", "msk", "tsk", "krm", "skiva", "portion", "bit", "burk", "glas", "kopp", "skopa", "nave", "pase", "klyfta"];
 // Det längsta egna namn som hela namnet börjar med
 function baseFood(name, list) {
   let best = null, len = 0;
@@ -548,6 +566,31 @@ function fuzzyFood(text) {
     if (d < bestD || (d === bestD && best && best.lmv && !e.lmv)) { best = e; bestD = d; }
   }
   return best && bestD <= max ? { food: FOODS[best.i], label: best.label } : null;
+}
+
+// Andra sorter av samma sak när man skrivit ett allmänt ord: "grädde" → matlagningsgrädde, kaffegrädde …
+// Sammansatta ord som slutar på ordet, eller ordet följt av en sort ("ägg stekt"). Inga rätter.
+function variantFoods(text, chosen, limit = 3) {
+  const q = fold((text || "").trim());
+  if (q.length < 3 || q.includes(" ")) return [];
+  const own = new Set(chosen.n.map(fold));
+  const hits = [];
+  for (const e of searchIndex()) {
+    const f = FOODS[e.i], w0 = e.words[0];
+    if (f === chosen || own.has(e.key) || e.label === (chosen.label || cap(chosen.n[0])) || / (m|u)\. |,/.test(e.key)) continue;
+    const compound = q.length >= 4 && w0 !== q && !own.has(w0) && w0.endsWith(q) && e.words.length <= 3;   // "ris" ska inte ge sparris
+    const kind = w0 === q && e.words.length > 1 && e.words.length <= 4;
+    if (compound || kind) hits.push({ e, f, group: compound ? w0 : e.key });
+  }
+  hits.sort((a, b) => a.e.lmv - b.e.lmv || a.e.key.length - b.e.key.length);
+  const seen = new Set(), out = [];
+  for (const { e, f, group } of hits) {
+    if (seen.has(group) || seen.has(f)) continue;
+    seen.add(group); seen.add(f);
+    out.push({ food: f, name: e.name, label: e.label });
+    if (out.length >= limit) break;
+  }
+  return out;
 }
 
 // Delar upp början av en del i mängd och namn: "150 g ryggb" → { prefix: "150 g ", rest: "ryggb" }

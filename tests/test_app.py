@@ -1957,3 +1957,21 @@ def test_manga_vanner(page):
     page.click("[data-unfriend]")
     page.wait_for_function("social.friends.length === 29")
     assert page.locator(".fsheet").count() == 0
+
+
+def test_annan_sort_och_kryddor(page):
+    start(page)
+    go(page, "kost")
+    add_to(page, 0)
+    # Ett allmänt ord ger en vanlig sort och förslag på andra sorter; mängden står kvar vid byte
+    page.fill("#fname", "2 msk grädde")
+    assert "Vispgrädde" in page.inner_text("#fpreview")
+    page.click('.fvars button:has-text("Matlagningsgrädde")')
+    assert page.input_value("#fname") == "2 msk matlagningsgrädde"
+    assert "Matlagningsgrädde" in page.inner_text("#fpreview") and "45 kcal" in page.inner_text("#fpreview")
+    # Kryddor och salt känns igen, i små mängder
+    names = page.evaluate("['1 tsk salt', 'peppar', 'oregano', 'kryddor', 'chilipulver', 'buljongtärning'].map(w => { const i = parseFood(w).items[0]; return [i.known && i.name, i.kcal]; })")
+    assert [n for n, _ in names] == ["Salt", "Svartpeppar", "Oregano", "Kryddor", "Chilipulver", "Buljongtärning"]
+    assert all(k <= 30 for _, k in names)
+    # "ris" föreslår inte sparris
+    assert "Sparris" not in page.evaluate("(() => { const i = parseFood('ris').items[0]; return variantFoods(i.typed, i.food).map(x => x.label); })()")
