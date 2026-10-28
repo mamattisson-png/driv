@@ -1065,6 +1065,7 @@ const VIEWS = {
       ${group("Appen", `${profRow("utseende", "utseende", "Utseende", "", null, themeSeg)}
         ${profRow("konto", "data", sbEnabled ? "Konto och data" : "Data", account.step === "in" ? esc(account.email) : sbEnabled ? "Inloggning, exportera, importera" : "Exportera, importera",
           `${accountCard()}${data}`)}
+        ${profRow("kommande", "idea", "Kommande funktioner", "Se vad som är på gång i Driv", upcomingFeaturesView())}
         ${sbEnabled ? profRow("tyck", "chat", "Tyck till", "Vad saknas, vad är krångligt?", feedbackCard()) : ""}
         ${isDevAccount() ? `<div class="prow"><div class="prow-line"><button class="prow-head" data-opentest><span class="pic">${icon("test", 20)}</span><span class="grow"><b>Testläge</b>
           <span class="muted small">Egen data som inte rör ditt konto</span></span><span class="chev">${icon("right", 18)}</span></button></div></div>` : ""}`)}
