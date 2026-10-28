@@ -20,6 +20,18 @@ På mobilen kan du lägga den på hemskärmen: *Dela → Lägg till på hemskär
 - **Fyra flikar:** Hem, Träna (med kommande pass), Kost och Historik. Profil och inställningar nås via kugghjulet.
 - **Kost:** kalorimål och makron från ålder, längd, vikt, aktivitet och mål. Skriv vad du åt i fritext, till exempel "2 dl mjölk och 1 banan", så räknas kalorier, protein, fett och fibrer ut från drygt 2 800 livsmedel och rätter. Medan du skriver föreslår appen träffar, och felstavningar som "kottbullar" hittar rätt. Sidan visar en ruta per måltid (frukost, lunch, mellanmål, middag); *+ Lägg till* öppnar sök och snabbval för just den måltiden. Mängden styr: varje livsmedel får antal, gram, dl eller portioner som går att ändra, och kalorier och protein räknas fram. Favoriter, egna måltider och det du ätit nyligen ligger som snabbval, och samma snabbval två gånger blir två stycken. En måltid kan upprepas från förra gången med ett tryck, och flera saker kan sparas som en måltid. Logga även en måltid med ungefärliga kalorier eller skanna streckkoden på en vara.
 
+### Märkesvaror
+
+Matsökningen innehåller även en lokal startkatalog med 273 märkesvaror från 121 märken, inklusive 85 från Felix. Urvalet omfattar flera matkategorier: färdigrätter, mejeri, bröd, drycker, snacks, proteinprodukter och skafferivaror. Det är ett starturval, inte alla produkter på den svenska marknaden.
+
+Skriv exempelvis `Felix paj` och välj en produkt. Namn, märke och förpackningsstorlek hjälper till att skilja träffarna åt. Ange gram eller ml, eller välj **förpackning** när vikten/volymen är känd. En förpackning antas inte vara en portion, och okänd fetthalt eller fiberhalt anges inte som noll.
+
+Knappen **Sök märkesvaror på nätet** söker efter fler produkter hos Open Food Facts. Sökningen görs först när man trycker på knappen. Om tjänsten eller webbläsaren stoppar hämtningen finns en länk som öppnar samma sökning hos Open Food Facts. Den lokala katalogen, favoriter och loggning fungerar även utan nät.
+
+Produktdata kommer från Open Food Facts och är användarbidrag som kan vara äldre än förpackningen. Kontrollera etiketten vid behov. Streckkod, näringsvärden och källans ändringstid sparas med en loggad produkt; en senare kataloguppdatering ändrar inte gamla loggars näringsvärden.
+
+Katalogen kan uppdateras med `python tools/produkter.py --refresh` (ett litet starturval) eller `python tools/produkter.py --input FIL [FIL ...]` för sparade söksvar, JSONL eller Open Food Facts TSV-export. Stora datamängder ska hämtas som export. Importören skriver först en temporär fil och ersätter inte katalogen med ett tomt eller felaktigt svar.
+
 ## Data och integritet
 
 Utan konto sparas allt bara i webbläsaren på den enhet du använder. Under *Profil → Data* kan du exportera en säkerhetskopia och importera den på en annan enhet.
@@ -28,7 +40,7 @@ Vid utloggning stängs den aktiva loggen. En lokal säkerhetskopia sparas separa
 
 Med konto (*Profil → Konto*, inloggning med e-post utan lösenord) sparas inställningar och logg även i en Supabase-databas, så att inget försvinner och samma data finns på alla dina enheter. Varje användare kan bara läsa och ändra sina egna rader. E-postadressen används bara för att logga in, aldrig för reklam eller utskick.
 
-Streckkodsskannern hämtar produktdata från [Open Food Facts](https://world.openfoodfacts.org) (ODbL). Kameran används bara medan skannern är öppen.
+Streckkodsskannern och märkesvarusökningen hämtar produktdata från [Open Food Facts](https://world.openfoodfacts.org). Den separata [produktkatalogen](produkter.json) och ändringar av dess data delas under [ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/). Den innehåller inte privata loggar. Kameran används bara medan skannern är öppen.
 
 Kalorivärden och kalorimål är uppskattningar och ersätter inte råd från vården.
 
@@ -45,6 +57,7 @@ Näringsvärden kommer delvis från [Livsmedelsverkets livsmedelsdatabas](https:
 | `konto.js`, `vila.js`, `skanner.js` | Konto via Supabase och Tyck till, vilotimern, streckkodsskannern |
 | `ovningar.js` | Övningsbiblioteket med instruktioner och poser |
 | `figur.js` | Ritar de animerade övningsbilderna som SVG |
+| `produkter.js`, `produkter.json` | Märkesvaror: normalisering, lokal ODbL-katalog och uttrycklig nätsökning. Import: `tools/produkter.py`. |
 | `mat.js` | Egna livsmedel med portionsstorlekar, tolkning av fritext, förslag och felstavning |
 | `livsmedel.js` | Livsmedelsverkets livsmedelsdatabas (namn, kcal, protein, fett och fibrer per 100 g); laddas efter appen. Byggs om med `python3 tools/livsmedel.py` |
 | `config.js` | Supabase-projektets adress, publika nyckel och publika nyckel för notiser |

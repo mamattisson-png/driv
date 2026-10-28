@@ -1369,7 +1369,7 @@
   .kintake3 { display: flex; justify-content: space-between; gap: 8px; color: var(--muted); }
   .kintake3 b { color: var(--text); }
   .kiamt { padding: 12px 16px; }
-  .kiamt .qtyrow { margin: 0; }
+  .kiamt .qtyrow { margin: 0; flex-wrap: wrap; }
   .kinote { margin: -2px 2px 10px; }
   .kiacts { gap: 8px; margin: 4px 0 12px; }
   .kmitems { margin: -4px 0 6px; }
@@ -1511,6 +1511,10 @@
   .stickcta { box-shadow: 0 14px 0 var(--bg); }
   body::after { background: var(--bg); height: calc(90px + env(safe-area-inset-bottom, 0px)); }
   .credit { margin-bottom: 0; }
+/* Märkesvaror: raderna får brytas även på små telefoner. */
+.productsearch { margin:12px 0; display:grid; gap:8px; }
+.credit a, .productsearch a, .itempage a { color: var(--accent-text); }
+.productsearch .fask-opts button { display:grid; text-align:left; white-space:normal; overflow-wrap:anywhere; }
 </style>
 </head>
 <body>
@@ -1520,6 +1524,7 @@
 <script src="figur.js"></script>
 <script src="ikoner.js"></script>
 <script src="mat.js"></script>
+<script src="produkter.js"></script>
 <script src="config.js"></script>
 <script src="konto.js"></script>
 <script src="fokus.js"></script>

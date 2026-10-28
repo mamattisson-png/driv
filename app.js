@@ -694,7 +694,7 @@ function macros() {
 // Fett och fibrer finns bara på mat från de vanliga livsmedlen och recept; known räknar hur många som har dem
 function eaten(date = logDate()) {
   return (S.log[date] ? S.log[date].food : []).reduce((a, f) => ({ kcal: a.kcal + (+f.kcal || 0), protein: a.protein + (+f.protein || 0),
-    fat: a.fat + (+f.fat || 0), fiber: a.fiber + (+f.fiber || 0), known: a.known + (f.fat != null ? 1 : 0), n: a.n + 1 }),
+    fat: a.fat + (+f.fat || 0), fiber: a.fiber + (+f.fiber || 0), known: a.known + (f.fat != null && f.fiber != null ? 1 : 0), n: a.n + 1 }),
     { kcal: 0, protein: 0, fat: 0, fiber: 0, known: 0, n: 0 });
 }
 

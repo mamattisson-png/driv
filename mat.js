@@ -329,7 +329,7 @@ const UNITS = [
   [["skivor", "skiva"], "skiva"], [["portioner", "portion", "port"], "portion"],
   [["bitar", "bit"], "bit"], [["burkar", "burk"], "burk"], [["glas"], "glas"],
   [["koppar", "kopp"], "kopp"], [["skopor", "skopa", "scoop"], "skopa"],
-  [["nävar", "näve"], "nave"], [["klyftor", "klyfta"], "klyfta"], [["påsar", "påse"], "pase"], [["styck", "st"], "st"],
+  [["nävar", "näve"], "nave"], [["klyftor", "klyfta"], "klyfta"], [["påsar", "påse"], "pase"], [["styck", "st"], "st"], [["förpackningar", "förpackning", "förp", "forp"], "forp"],
 ];
 const NUM_WORDS = { en: 1, ett: 1, två: 2, tre: 3, fyra: 4, fem: 5, sex: 6, halv: 0.5, halva: 0.5 };
 // Standardvikt per enhet när livsmedlet saknar egen (volym räknas som vatten)
@@ -352,6 +352,9 @@ function findFood(text, list = FOODS) {
 }
 
 function grams(food, qty, unit) {
+  if (food.code && ((food.basis === "ml" && ["g", "hg", "kg"].includes(unit)) ||
+    (food.basis !== "ml" && ["ml", "cl", "dl", "l"].includes(unit)))) return null;
+  if (food.code && unit && !["g", "hg", "kg", "ml", "cl", "dl", "l"].includes(unit) && !food[unit]) return null;
   const vol = ml => ml / 100 * (food.dl || 100);
   switch (unit) {
     case "g": return qty;
@@ -366,7 +369,7 @@ function grams(food, qty, unit) {
   }
 }
 
-function parseItem(raw) {
+function parseItem(raw, index = 0) {
   let s = raw.trim().toLowerCase().replace(/\s+/g, " ");
   if (!s) return null;
   // "laxfilé 125 g" → "125 g laxfilé"
@@ -389,16 +392,19 @@ function parseItem(raw) {
     const m = names.find(n => s === n || s.startsWith(n + " ") || s.startsWith(n + "."));
     if (m) { unit = key; s = s.slice(m.length).replace(/^\.?\s*/, ""); break; }
   }
-  let food = findFood(s), corrected = null;
+  const selected = typeof chosenProduct === "function" ? chosenProduct(s, index) : null;
+  if (!selected && typeof ambiguousProduct === "function" && ambiguousProduct(s)) return { text: raw.trim(), known: false };
+  let food = selected || findFood(s), corrected = null;
   if (!food) {
     const fz = fuzzyFood(s);
     if (fz) { food = fz.food; corrected = fz.label; }
   }
-  if (!food) return { text: raw.trim(), known: false };
+  if (!food || (!food.code && !food.n.some(n => fold(n) === fold(s)) && typeof brandedQuery === "function" && brandedQuery(s))) return { text: raw.trim(), known: false };
   // Utan mängd: en portion, en styck, eller två matskedar för såser och pålägg
   const g = qty == null && !unit
     ? (food.def ? food[food.def] : food.portion || food.st || (food.msk ? 2 * food.msk : 100))
     : grams(food, qty == null ? 1 : qty, unit);
+  if (g === null) return { text: raw.trim(), known: false };
   return { text: raw.trim(), known: true, corrected, grams: Math.round(g), kcal: Math.round(food.kcal * g / 100), protein: Math.round(food.p * g / 10) / 10,
     fat: food.fat == null ? null : Math.round(food.fat * g / 10) / 10, fiber: food.fib == null ? null : Math.round(food.fib * g / 10) / 10,
     food, qty, unit, typed: s, name: cap(corrected || food.label || food.n[0]) };
@@ -431,7 +437,7 @@ function parseFood(text) {
 // Ett livsmedel ärver styck- och portionsvikter från det egna livsmedel namnet börjar med ("Ägg stekt" → ägg).
 
 const CURATED = FOODS.length;
-const UNIT_KEYS = ["dl", "st", "msk", "tsk", "krm", "skiva", "portion", "bit", "burk", "glas", "kopp", "skopa", "nave", "pase", "klyfta"];
+const UNIT_KEYS = ["dl", "st", "msk", "tsk", "krm", "skiva", "portion", "bit", "burk", "glas", "kopp", "skopa", "nave", "pase", "klyfta", "forp"];
 // Det längsta egna namn som hela namnet börjar med
 function baseFood(name, list) {
   let best = null, len = 0;
@@ -525,6 +531,8 @@ function matchScore(q, e) {
   if (e.key.startsWith(q)) return 0;
   if (e.words.some(w => w.startsWith(q))) return 1;
   if (q.length >= 3 && e.key.includes(q)) return 2;
+  const terms = q.split(/\s+/).filter(Boolean);
+  if (terms.length > 1 && terms.every(t => e.words.some(w => w.startsWith(t)))) return 1;
   const max = allowedErrors(q.length);
   if (!max) return null;
   for (const w of [e.key, ...e.words]) {
@@ -547,7 +555,7 @@ function suggestFoods(query, limit = 8) {
   hits.sort((a, b) => a.sc - b.sc || a.e.lmv - b.e.lmv || a.e.name.length - b.e.name.length);
   const seen = new Set(), out = [];
   for (const { e, sc } of hits) {
-    if (seen.has(e.i) || seen.has(e.label)) continue;
+    if (seen.has(e.i) || (!FOODS[e.i].code && seen.has(e.label))) continue;
     seen.add(e.i); seen.add(e.label);
     out.push({ food: FOODS[e.i], name: e.name, label: e.label, fuzzy: sc === 3 });
     if (out.length >= limit) break;
