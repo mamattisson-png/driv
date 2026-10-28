@@ -54,7 +54,7 @@ function frontJoints(p) {
   const sy = hy - BODY.torso;
   const mirror = q => [2 * cx - q[0], q[1]];
   const eb = p.eb ?? -1;
-  const legR = [[cx + 5, hy], [cx + 6, hy + BODY.th], [cx + 7, FLOOR], [cx + 11, FLOOR]];
+  const legR = p.leg ? [[cx + 5, hy], ...p.leg] : [[cx + 5, hy], [cx + 6, hy + BODY.th], [cx + 7, FLOOR], [cx + 11, FLOOR]];
   return {
     head: [cx, sy - BODY.neck],
     torso: [[cx, hy], [cx, sy], [cx, sy - BODY.neck + BODY.head]],
@@ -62,7 +62,7 @@ function frontJoints(p) {
     hips: [[cx - 5, hy], [cx + 5, hy]],
     arm: ik([cx + 9, sy], p.a, BODY.ua, BODY.fa, eb),
     arm2: ik([cx - 9, sy], mirror(p.a), BODY.ua, BODY.fa, -eb),
-    leg: legR, leg2: legR.map(mirror),
+    leg: legR, leg2: p.leg2 ? [[cx - 5, hy], ...p.leg2] : legR.map(mirror),
   };
 }
 
