@@ -1472,7 +1472,7 @@ function renderModal() {
       ${figure(modal.info, "big", true)}<div class="muted">${esc(e.muscles)}</div>
       ${gearOf(modal.info) ? `<div class="gearbox"><b>${GEAR[gearOf(modal.info)][0]}</b><div>${GEAR[gearOf(modal.info)][1]}</div></div>` : ""}
       <ol>${e.cues.map(c => `<li>${esc(c)}</li>`).join("")}</ol>
-      ${mwUrl(modal.info) ? `<a class="mwlink" href="${mwUrl(modal.info)}" target="_blank" rel="noopener">Mer om övningen på MuscleWiki <span aria-hidden="true">↗</span></a>` : ""}</div></div>`;
+      ${mwUrl(modal.info) ? `<a class="mwlink" href="${mwUrl(modal.info)}" target="_blank" rel="noopener">${MW[modal.info].startsWith("exercises/") ? "Liknande övningar på MuscleWiki" : "Mer om övningen på MuscleWiki"} <span aria-hidden="true">↗</span></a>` : ""}</div></div>`;
   }
   const list = exList(modal.pick);
   const replacing = modal.replace != null ? list[modal.replace] : null;

@@ -1032,6 +1032,82 @@ Object.assign(EX, {
     cues: ["Ligg på rygg med böjda knän.", "Dra knäna mot bröstet.", "Sänk tills fötterna nästan nuddar golvet."] }),
 });
 
+// ---------- Fler alternativ för gym och hemma ----------
+Object.assign(EX, {
+  broststodd_rodd: SAME("hantelrodd_bada", { name: "Bröststödd hantelrodd", cat: "pull", hold: "db", muscles: "Rygg, biceps", sets: 3, reps: "8–12",
+    cues: ["Ligg med bröstet mot en lutande bänk och fötterna stadigt i golvet.", "Dra hantlarna mot höfterna utan att lyfta bröstet från dynan.", "Sträck armarna långsamt tillbaka."],
+    scene: [["line",32,48,65,74],["line",48,66,48,95]],
+    A: {h:[60,70],s:[36,52],a:[36,82],f:[83,95],kb:-1}, B: {h:[60,70],s:[36,52],a:[55,59],f:[83,95],kb:-1} }),
+  enarms_kabelrodd: SAME("kabelrodd", { name: "Enarmsrodd i kabel", cat: "pull", gear: "cable", cable: [108,45], muscles: "Rygg, biceps", sets: 3, reps: "10–12/sida",
+    cues: ["Stå vänd mot kabeln med ett handtag i brösthöjd och fötterna i en stabil position.", "Dra handtaget mot sidan av magen utan att vrida överkroppen.", "Sträck armen kontrollerat och byt sedan sida."],
+    scene: [], A: P(STAND,{a:[88,43],a2:[52,83]}), B: P(STAND,{a:[65,53],a2:[52,83]}) }),
+  spidercurl: SAME("ezcurl", { name: "Spidercurl med EZ-stång", cat: "pull", hold: "bar", muscles: "Biceps", sets: 3, reps: "10–12",
+    cues: ["Ligg med bröstet mot en lutande bänk och låt armarna hänga ned.", "Böj armbågarna utan att svänga överarmarna framåt.", "Sänk stången långsamt tills armarna är utsträckta."],
+    scene: [["line",32,48,65,74],["line",48,66,48,95]],
+    A: {h:[60,70],s:[36,52],a:[36,82],f:[83,95],kb:-1}, B: {h:[60,70],s:[36,52],a:[48,57],f:[83,95],kb:-1} }),
+  omvand_handledscurl: SAME("handledscurl", { name: "Omvänd handledscurl", cat: "pull", hold: "db", muscles: "Underarmarnas sträckmuskler", sets: 3, reps: "12–20",
+    cues: ["Vila underarmarna mot låren eller en bänk med handflatorna nedåt.", "Lyft handryggarna genom att sträcka handlederna med lätta hantlar.", "Sänk långsamt och håll underarmarna stilla."] }),
+  smith_knaboj: SAME("knaboj", { name: "Knäböj i smithmaskin", cat: "legs", gear: "machine", hold: "bar", muscles: "Framsida lår, säte", sets: 3, reps: "8–12",
+    cues: ["Placera stången på övre ryggen och ställ säkerhetsstoppen för ditt rörelseomfång.", "Böj knän och höfter med hela fötterna i underlaget.", "Pressa upp till stående och haka fast stången efter sista repetitionen."] }),
+  smith_hip_thrust: SAME("hip_thrust", { name: "Hip thrust i smithmaskin", cat: "legs", gear: "machine", hold: "bar", muscles: "Säte, baksida lår", sets: 3, reps: "8–12",
+    cues: ["Stöd övre ryggen mot bänken och placera en dyna mellan stången och höften.", "Pressa genom fötterna tills höften är sträckt utan att överdriva svanken.", "Sänk höften kontrollerat och använd maskinens säkerhetsstopp."] }),
+  enbens_rumansk: SAME("hantel_rumansk", { name: "Enbensmarklyft med hantlar", cat: "legs", hold: "db", muscles: "Baksida lår, säte", sets: 3, reps: "8–10/ben",
+    cues: ["Stå på ett ben med lätt böjt knä och hantlarna framför låren.", "Fäll i höften medan det fria benet förs bakåt och höfterna hålls parallella.", "Res dig med kontroll och byt ben. Håll i ett stöd vid behov."],
+    A: P(STAND,{a:[62,84],f2:[47,90]}), B: {h:[55,58],s:[82,66],a:[80,95],f:[56,95],f2:[18,50],kb:-1,kb2:1} }),
+  kabel_pullthrough: SAME("rumansk_marklyft", { name: "Pull-through i kabel", cat: "legs", gear: "cable", cable: [10,90], muscles: "Säte, baksida lår", sets: 3, reps: "10–15",
+    cues: ["Vänd ryggen mot en låg kabel och håll repet mellan benen.", "För höften bakåt med lätt böjda knän och neutral rygg.", "Sträck höften till upprätt läge utan att luta bakåt."],
+    A: {h:[50,60],s:[78,50],a:[55,80],f:[54,95],kb:-1}, B: P(STAND,{a:[58,84]}) }),
+  kabel_kickback: { name: "Säteskickback i kabel", cat: "legs", gear: "cable", muscles: "Säte", sets: 3, reps: "12–15/ben",
+    cues: ["Fäst en fotmanschett i en låg kabel och håll lätt i maskinen.", "För benet bakåt med stilla bäcken och lätt böjt knä.", "För tillbaka benet långsamt och byt sida."],
+    scene: [["line",104,15,104,95]], A: {h:[52,56],t:160,a:[96,42],f:[52,95],f2:[60,93],kb:-1}, B: {h:[52,56],t:160,a:[96,42],f:[52,95],f2:[17,76],kb:-1,kb2:1} },
+  hoftabduktion_maskin: { name: "Höftabduktion i maskin", cat: "legs", gear: "machine", view: "front", muscles: "Sidan av sätet", sets: 3, reps: "12–20",
+    cues: ["Ställ in sätet och sitt med ryggen mot stödet och dynorna mot utsidan av knäna.", "Pressa knäna utåt utan att gunga med överkroppen.", "För ihop benen kontrollerat och håll viktmagasinet i rörelse."],
+    scene: [["rect",39,64,42,4],["line",60,68,60,96]],
+    A: {h:[60,62],a:[78,63],leg:[[68,79],[68,95],[73,95]]}, B: {h:[60,62],a:[78,63],leg:[[90,72],[96,93],[101,93]]} },
+  enbens_benspark: SAME("benspark", { name: "Benspark ett ben i taget", cat: "legs", gear: "machine", pad: true, muscles: "Framsida lår", sets: 3, reps: "10–15/ben",
+    cues: ["Ställ in dynan ovanför fotleden och placera knäleden i linje med maskinens led.", "Sträck ett ben i taget utan att lyfta höfterna från sätet.", "Sänk långsamt och byt ben efter setet."] }),
+  vadpress_benpress: SAME("benpress", { plate: [6,8], name: "Vadpress i benpress", cat: "legs", gear: "machine", muscles: "Vader", sets: 3, reps: "12–20",
+    cues: ["Placera framfötterna stadigt på plattans kant med hälarna fria.", "Håll knäna stilla och pressa genom trampdynorna.", "Sänk hälarna långsamt inom ett bekvämt rörelseomfång."],
+    A: {h:[34,77],t:218,a:[35,79],f:[76,59],kb:-1}, B: {h:[34,77],t:218,a:[35,79],f:[81,54],kb:-1} }),
+  armhavningar_kna: SAME("armhavningar", { name: "Armhävningar på knä", cat: "push", bw: true, muscles: "Bröst, triceps, axlar", sets: 3, reps: "8–15",
+    cues: ["Sätt händerna något bredare än axlarna och vila knäna på en matta.", "Håll kroppen rak från knäna till huvudet när du sänker bröstet.", "Pressa upp utan att tappa spänningen i magen."],
+    A: {h:[51,82.7505],s:[75.3,65.25],a:[80,95],f:[14,95],kb:-1}, B: {h:[54,88.5969],s:[82.57,79.45],a:[80,95],f:[14,95],kb:-1} }),
+  skulder_armhavningar: SAME("hand_planka", { name: "Skulderbladsarmhävningar", cat: "push", bw: true, muscles: "Skulderbladens stabilisatorer, bröst", sets: 3, reps: "10–15",
+    cues: ["Stå i en hög planka med raka armbågar.", "Låt bröstkorgen sjunka något mellan skulderbladen utan att böja armarna.", "Pressa golvet ifrån dig och för skulderbladen isär."],
+    A: {h:[43,82],s:[72,64],a:[73,95],f:[7,95],eb:1}, B: {h:[43,78],s:[72,64],a:[73,95],f:[7,95],eb:1} }),
+  armhavningar_vagg: { name: "Armhävningar mot vägg", cat: "push", bw: true, muscles: "Bröst, triceps, axlar", sets: 3, reps: "10–15",
+    cues: ["Stå en bit från väggen med händerna i axelhöjd.", "Böj armarna och låt hela den raka kroppen luta mot väggen.", "Pressa tillbaka. Ett större avstånd till väggen gör övningen tyngre."],
+    scene: [["line",102,8,102,97]], A: {h:[55,56],t:168,a:[100,31],f:[48,95],eb:1}, B: {h:[66,59],s:[87,37],a:[100,31],f:[48,95],eb:1} },
+  sidoutfall: { name: "Sidoutfall", cat: "legs", bw: true, view: "front", muscles: "Framsida lår, säte, insida lår", sets: 3, reps: "8–12/sida",
+    cues: ["Stå upprätt och ta ett brett steg åt sidan.", "Sätt höften bakåt över det böjda benet medan andra benet är utsträckt.", "Pressa tillbaka till mitten och byt sida."],
+    A: {h:[60,54],a:[75,34],leg:[[68,75],[72,95],[77,95]]},
+    B: {h:[73,72],a:[86,49],leg:[[99,78],[99,95],[105,95]],leg2:[[42,84],[19,95],[14,95]]} },
+  rygglyft_golv: SAME("superman", { name: "Rygglyft på golv", cat: "pull", bw: true, muscles: "Ryggsträckare, säte", sets: 3, reps: "10–15",
+    cues: ["Ligg på mage med händerna vid tinningarna och blicken mot golvet.", "Lyft bröstet en liten bit med stilla ben och lång nacke.", "Sänk tillbaka långsamt utan att kasta överkroppen uppåt."],
+    A: {h:[47,90],s:[76,89],a:[85,85],f:[8,94],eb:-1}, B: {h:[47,90],s:[74,77],a:[82,73],f:[8,94],eb:-1} }),
+  omvand_planka: { name: "Omvänd planka", cat: "core", bw: true, muscles: "Bål, säte, baksida lår", sets: 3, reps: "20–30 s",
+    cues: ["Sitt med raka ben och händerna bakom höfterna.", "Pressa genom händer och hälar tills kroppen bildar en rak linje.", "Håll höften uppe och andas lugnt. Avsluta om du tappar positionen."],
+    A: {h:[53,75],s:[80,62],a:[94,92],f:[15,95],kb:1,eb:-1} },
+  bjornplanka: { name: "Björnplanka", cat: "core", bw: true, muscles: "Mage, axlar", sets: 3, reps: "20–30 s",
+    cues: ["Stå på alla fyra med händerna under axlarna och knäna under höfterna.", "Lyft knäna några centimeter från golvet utan att höja höften.", "Håll ryggen stilla och andas lugnt."],
+    A: {h:[43,72],s:[73,70],a:[75,95],f:[22,95],kb:-1,eb:1} },
+  planka_axelklapp: { name: "Plankan med axelklapp", cat: "core", bw: true, muscles: "Mage, axlar", sets: 3, reps: "10/sida",
+    cues: ["Stå i en hög planka med fötterna något bredare än höfterna.", "Lyft ena handen till motsatt axel utan att vrida höfterna.", "Sätt ned handen och växla sida. Räkna en klapp som en repetition."],
+    A: {h:[43,80],s:[72,73],a:[73,95],a2:[77,95],f:[7,95],eb:1}, B: {h:[43,80],s:[72,73],a:[73,95],a2:[70,74],f:[7,95],eb:1,eb2:-1} },
+  sidoplanka_kna: SAME("sidoplanka", { name: "Sidoplanka på knä", cat: "core", bw: true, muscles: "Sneda magmuskler, säte", sets: 3, reps: "20–30 s/sida",
+    cues: ["Ligg på sidan med böjda knän och armbågen under axeln.", "Lyft höften och håll kroppen rak från knä till huvud.", "Håll positionen med lugn andning och byt sida."],
+    A: {h:[46,79],s:[74,69],a:[83,95],a2:[49,67],f:[13,95],kb:-1,eb:-1} }),
+  enbens_tahavning: SAME("tahavningar", { name: "Tåhävning på ett ben", cat: "legs", bw: true, hold: null, muscles: "Vader", sets: 3, reps: "12–20/ben",
+    cues: ["Stå på ett ben och håll lätt i ett stöd för balansen.", "Lyft hälen så högt du kan utan att fotleden faller åt sidan.", "Sänk kontrollerat och byt ben."],
+    A: P(STAND,{a:[84,49],f2:[42,82],kb2:1}), B: {h:[58,49],t:180,a:[84,45],f:[58,91],f2:[42,77],kb2:1} }),
+  sidliggande_benlyft: { name: "Sidliggande benlyft", cat: "legs", bw: true, muscles: "Sidan av sätet", sets: 3, reps: "12–20/sida",
+    cues: ["Ligg på sidan med raka ben och höfterna ovanpå varandra.", "Lyft det övre benet med tårna riktade framåt.", "Sänk långsamt utan att rulla överkroppen bakåt och byt sida."],
+    A: {h:[51,89],s:[80,85],a:[95,93],f:[12,94],f2:[13,91],kb:-1}, B: {h:[51,89],s:[80,85],a:[95,93],f:[12,94],f2:[23,60],kb:-1} },
+  hamstring_walkout: { name: "Hamstring walkout", cat: "legs", bw: true, muscles: "Baksida lår, säte", sets: 3, reps: "6–10",
+    cues: ["Starta i en höftlyftposition med hälarna i golvet.", "Ta små steg utåt med hälarna medan höften hålls uppe.", "Gå tillbaka med små steg. Ut och tillbaka räknas som en repetition."],
+    A: {h:[50,73],s:[24,90],a:[45,94],f:[72,95],kb:-1}, B: {h:[54,80],s:[24,90],a:[45,94],f:[91,95],kb:-1} },
+});
+
 const GEAR = {
   bar: ["Skivstång", "Skriv in den totala vikten: stången (oftast 20 kg) plus alla skivor.", "kg totalt"],
   db: ["Hantlar", "Skriv in vikten på en hantel.", "kg per hantel"],
@@ -1052,9 +1128,9 @@ const CATS = { push: "Push", pull: "Pull", legs: "Ben", core: "Mage" };
 // Område i väljaren: efter kroppsdel, inte efter passtyp. Push och pull delas upp per muskel.
 const AREAS = { brost: "Bröst", rygg: "Rygg", axlar: "Axlar", armar: "Armar", ben: "Ben", mage: "Mage", stretch: "Stretch", kondition: "Kondition" };
 const AREA_IDS = {
-  brost: "bankpress hantelpress lutande_hantelpress dips armhavningar lutande_bankpress hantelflyes brostpress_maskin kabelflyes armhavningar_bank nedlutande_bankpress flyes_maskin lutande_flyes smith_bankpress smith_lutande kabelpress lutande_brostpress_maskin golvpress hoga_armhavningar viktade_dips",
-  axlar: "militarpress sittande_axelpress sidolyft pike_pushups arnoldpress framlyft face_pulls omvanda_flyes shrugs upprakt_rodd push_press axelpress_maskin kabel_sidolyft staende_hantelpress omvanda_flyes_maskin framlyft_stang landminepress hoga_pike_pushups upprakt_rodd_kabel kb_sidolyft",
-  armar: "triceps_pushdown fransk_press diamant_armhavningar smal_bankpress skullcrushers bicepscurl hammercurl scottcurl kabelcurl hantelcurl koncentrationscurl kickbacks bankdips ezcurl omvand_curl lutande_curl bayesian_curl overhead_triceps hantel_skullcrushers kb_triceps handledscurl knadiamant",
+  brost: "armhavningar_kna armhavningar_vagg bankpress hantelpress lutande_hantelpress dips armhavningar lutande_bankpress hantelflyes brostpress_maskin kabelflyes armhavningar_bank nedlutande_bankpress flyes_maskin lutande_flyes smith_bankpress smith_lutande kabelpress lutande_brostpress_maskin golvpress hoga_armhavningar viktade_dips",
+  axlar: "skulder_armhavningar militarpress sittande_axelpress sidolyft pike_pushups arnoldpress framlyft face_pulls omvanda_flyes shrugs upprakt_rodd push_press axelpress_maskin kabel_sidolyft staende_hantelpress omvanda_flyes_maskin framlyft_stang landminepress hoga_pike_pushups upprakt_rodd_kabel kb_sidolyft",
+  armar: "spidercurl omvand_handledscurl triceps_pushdown fransk_press diamant_armhavningar smal_bankpress skullcrushers bicepscurl hammercurl scottcurl kabelcurl hantelcurl koncentrationscurl kickbacks bankdips ezcurl omvand_curl lutande_curl bayesian_curl overhead_triceps hantel_skullcrushers kb_triceps handledscurl knadiamant",
 };
 function areaOf(id) {
   for (const [a, ids] of Object.entries(AREA_IDS)) if (ids.split(" ").includes(id)) return a;
@@ -1065,7 +1141,7 @@ const GEAR_FILTER = { bw: "Kroppsvikt", db: "Hantlar", bar: "Skivstång", machin
 const gearGroup = id => { const g = gearOf(id); return g === "cable" ? "machine" : g || "bw"; };
 
 // Länk till en utförligare beskrivning på MuscleWiki (musclewiki.com/…). Adresserna är hämtade från sökträffar på
-// MuscleWiki. "exercises/…" är en lista med liknande stretchar där det inte finns en sida för just den övningen.
+// MuscleWiki. "exercises/…" är en lista med liknande övningar när en separat sida för varianten saknas.
 // Kondition saknar sidor där och får ingen länk.
 const MW = {
   bankpress: "exercise/barbell-bench-press", hantelpress: "exercise/dumbbell-bench-press",
@@ -1140,6 +1216,18 @@ const MW = {
   kabelcrunch_staende: "exercise/cable-rope-standing-crunch", pallof_rotation: "exercise/cable-pallof-press-rotation",
   russian_twist_vikt: "exercise/dumbbell-russian-twist", planka_pullthrough: "exercise/dumbbell-plank-pullthrough",
   bojda_benlyft: "exercise/laying-bent-leg-raise",
+  broststodd_rodd: "exercise/dumbbell-laying-row", enarms_kabelrodd: "exercise/cable-single-arm-neutral-grip-row",
+  spidercurl: "exercise/ez-bar-spider-curl", omvand_handledscurl: "exercises/forearms/dumbbells",
+  smith_knaboj: "exercise/smith-machine-squat", smith_hip_thrust: "exercise/smith-machine-hip-thrust",
+  enbens_rumansk: "exercise/dumbbell-single-leg-stiff-leg-deadlift", kabel_pullthrough: "exercise/cable-pull-through",
+  kabel_kickback: "exercises/glutes/cables", hoftabduktion_maskin: "exercise/machine-hip-abduction",
+  enbens_benspark: "exercise/machine-leg-extension", vadpress_benpress: "exercise/machine-horizontal-leg-press-calf-raise",
+  armhavningar_kna: "exercise/bodyweight-knee-push-ups", skulder_armhavningar: "exercises/chest/bodyweight",
+  armhavningar_vagg: "exercises/chest/bodyweight", sidoutfall: "exercise/lateral-lunge",
+  rygglyft_golv: "exercises/lowerback/bodyweight", omvand_planka: "exercises/abdominals/bodyweight",
+  bjornplanka: "exercises/abdominals/bodyweight", planka_axelklapp: "exercise/bodyweight-shoulder-taps",
+  sidoplanka_kna: "exercises/obliques/bodyweight", enbens_tahavning: "exercise/calf-raises",
+  sidliggande_benlyft: "exercises/glutes/bodyweight", hamstring_walkout: "exercises/hamstrings/bodyweight",
 };
 const mwUrl = id => MW[id] ? `https://musclewiki.com/${MW[id]}` : null;
 
@@ -1188,6 +1276,14 @@ const PRIM_SEC = {
   smith_split_squat: "framsida_lar|sate", hantel_frontboj: "framsida_lar|sate", kb_stegupp: "framsida_lar|sate",
   situps_vikt: "mage|", omvand_crunch: "mage|", hand_planka: "mage|axlar", sidoplanka_upp: "mage|", kabelcrunch_staende: "mage|",
   pallof_rotation: "mage|", russian_twist_vikt: "mage|", planka_pullthrough: "mage|axlar", bojda_benlyft: "mage|",
+  broststodd_rodd: "rygg|biceps axlar", enarms_kabelrodd: "rygg|biceps", spidercurl: "biceps|underarmar",
+  omvand_handledscurl: "underarmar|", smith_knaboj: "framsida_lar|sate", smith_hip_thrust: "sate|baksida_lar",
+  enbens_rumansk: "baksida_lar sate|rygg", kabel_pullthrough: "sate baksida_lar|", kabel_kickback: "sate|",
+  hoftabduktion_maskin: "sate|", enbens_benspark: "framsida_lar|", vadpress_benpress: "vader|",
+  armhavningar_kna: "brost|triceps axlar mage", skulder_armhavningar: "brost|axlar mage", armhavningar_vagg: "brost|triceps axlar",
+  sidoutfall: "framsida_lar sate|baksida_lar", rygglyft_golv: "rygg|sate", omvand_planka: "mage sate|baksida_lar axlar",
+  bjornplanka: "mage|axlar", planka_axelklapp: "mage|axlar", sidoplanka_kna: "mage|sate", enbens_tahavning: "vader|",
+  sidliggande_benlyft: "sate|", hamstring_walkout: "baksida_lar|sate",
 };
 for (const [id, s] of Object.entries(PRIM_SEC)) {
   const [p, q] = s.split("|");
