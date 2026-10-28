@@ -34,7 +34,13 @@ function todaysPass() {
   const d = suggestedDay();
   return { d, w: workoutOn(TODAY, d.id), rest: false };
 }
-const doneThisWeek = d => weekDates(weekStart(TODAY)).some(x => x <= TODAY && (workoutOn(x, d.id) || {}).done);
+// Senaste faktiska träningsdagen denna vecka, även när den avviker från schemat.
+const completedPassDate = d => weekDates(weekStart(TODAY)).reverse().find(x => x <= TODAY && (workoutOn(x, d.id) || {}).done);
+function passLabel(t) {
+  if (t.w && t.w.done) return "Genomfört idag";
+  if (t.w && Object.values(t.w.sets).some(a => a.some(x => x && x.ok))) return "Pågående pass";
+  return isFixed() && !t.rest ? "Dagens pass" : "Nästa pass";
+}
 const passMuscles = d => d.type === "custom" || !TYPES[d.type] ? "Dina egna övningar" : TYPES[d.type].muscles.replace(/, ([^,]*)$/, " & $1");
 
 function ring(pct, size = 64, cls = "") {
@@ -46,16 +52,21 @@ function ring(pct, size = 64, cls = "") {
 function traningView() {
   const t = todaysPass(), d = t.d, w = t.w, done = w && w.done, started = w && !done && Object.values(w.sets).some(a => a.some(x => x && x.ok));
   const passes = weekSummary(weekStart(TODAY)).passes, n = S.plan.days.length;
-  const dayCard = `<section class="card daypass" aria-label="Dagens pass">
-      <div class="row between"><span class="klabel accent">${t.rest ? `Vilodag · nästa ${WD_LONG[weekdayOf(t.next)]}` : "Dagens pass"}</span>
+  const dayCard = `<section class="card daypass" aria-label="${passLabel(t)}">
+      <div class="row between"><span class="klabel accent">${t.rest ? `Vilodag · nästa ${WD_LONG[weekdayOf(t.next)]}` : passLabel(t)}</span>
         <button class="linkbtn2" data-seepass="${d.id}">Se övningar${icon("right", 14)}</button></div>
       <div><h2 class="passname">${esc(d.name)}</h2><div class="muted">${esc(passMuscles(d))} · ${d.ex.length} ${d.ex.length === 1 ? "övning" : "övningar"}</div></div>
-      ${done ? `<div class="row between"><span class="passok">${icon("check", 16)}Klart idag</span><button class="small" data-seepass="${d.id}">Öppna passet</button></div>`
+      ${done ? `<div class="row between"><span class="passok">${icon("check", 16)}Genomfört idag</span><button class="small" data-seepass="${d.id}">Öppna passet</button></div>`
         : d.ex.length ? `<button class="primary wide bigbtn" data-focusstart="${d.id}">${icon("play", 18)}${started ? "Fortsätt" : t.rest ? "Kör ändå:" : "Starta"} ${esc(d.name)}</button>`
         : `<button class="wide" data-seepass="${d.id}">Lägg till övningar</button>`}</section>`;
-  const status = (p, i) => doneThisWeek(p) ? `<span class="pst ok">${icon("check", 12)}Klart</span>`
-    : p === d && !t.rest ? `<span class="pst accent">Idag</span>`
-    : `<span class="pst">${isFixed() ? cap(WD_LONG[S.plan.weekdays[i]]) : `Pass ${i + 1}`}</span>`;
+  const status = (p, i) => {
+    const completed = completedPassDate(p);
+    if (completed) return `<span class="pst ok">${completed === TODAY ? "Genomfört idag" : `Genomfört · ${WD_LONG[weekdayOf(completed)]}`}</span>`;
+    if (p === d && started) return `<span class="pst accent">Pågående</span>`;
+    if (isFixed() && S.plan.weekdays[i] === weekdayOf(TODAY)) return `<span class="pst accent">Idag</span>`;
+    if (!isFixed() && p === d) return `<span class="pst accent">På tur</span>`;
+    return `<span class="pst">${isFixed() ? cap(WD_LONG[S.plan.weekdays[i]]) : `Pass ${i + 1}`}</span>`;
+  };
   const cols = n <= 3 ? n : n === 4 ? 2 : 3;
   const tiles = `<div class="ptiles" style="grid-template-columns:repeat(${cols},minmax(0,1fr))">${S.plan.days.map((p, i) =>
     `<button class="ptile ${p === d && !t.rest ? "today" : ""}" data-pick="${p.id}" aria-label="${esc(p.name)}">${status(p, i)}<b>${esc(p.name)}</b></button>`).join("")}</div>`;
