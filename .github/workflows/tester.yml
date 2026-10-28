@@ -18,6 +18,11 @@ jobs:
         run: |
           pip install -r tests/requirements.txt
           python -m playwright install --with-deps chromium
+      - name: Kontrollera utökade övningskataloger
+        run: |
+          node tests/test_strength_extra.cjs
+          node tests/test_stretch_extra.cjs
+          node tests/test_catalog_review.cjs
       - name: Kör testerna
         env:
           PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS: "1"
