@@ -403,7 +403,7 @@ function mergeParts(a, b) {
   if (a.dailies || b.dailies) {
     const keys = new Set([...Object.keys(a.dailies || {}), ...Object.keys(b.dailies || {}), ...Object.keys(a._dailyT || {}), ...Object.keys(b._dailyT || {})]);
     const dailyPart = L => ({ ...L.dailies, _t: Object.fromEntries([...keys].map(k => [k,
-      (L._dailyT || {})[k] ?? L._dailyBase ?? ((L._t || {}).dailies || 0)])) });
+      (L._dailyT || {})[k] ?? (Object.prototype.hasOwnProperty.call(L.dailies || {}, k) ? (L._dailyBase ?? ((L._t || {}).dailies || 0)) : undefined)]).filter(([, ts]) => ts !== undefined)) });
     const { _t, ...daily } = mergeParts(dailyPart(a), dailyPart(b));
     out.dailies = daily; out._dailyT = _t;
     out._dailyBase = Math.max(a._dailyBase ?? (ta.dailies || 0), b._dailyBase ?? (tb.dailies || 0));
