@@ -202,6 +202,14 @@
   .ff { opacity: .38; }
   .fh { fill: var(--text); }
   .fe { fill: none; stroke: var(--equip); stroke-width: 3; stroke-linecap: round; }
+  .completed-sets { border-bottom: 1px solid var(--line); }
+  .completed-sets summary { display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 4px 2px; color: var(--muted); font-size: 14px; cursor: pointer; list-style: none; }
+  .completed-sets summary::-webkit-details-marker { display: none; }
+  .completed-sets summary > .ic:first-child { color: var(--ok-text); }
+  .completed-sets[open] summary > .ic:last-child { transform: rotate(90deg); }
+  .completed-sets > .fsets { margin: 4px 0 12px; }
+  .completed-sets .fset.done:not(.active) { min-height: 44px; padding-top: 0; padding-bottom: 0; }
+  .completed-sets .fsel { min-height: 44px; }
   .fbar { stroke-width: 3.5; }
   .fplate { stroke-width: 4; }
   .fw { fill: var(--accent); }
@@ -796,7 +804,9 @@
   .fsetcount { gap: 4px; margin-top: -8px; }
   .fsave { margin-left: auto; }
   .fdaily { align-self: center; display: inline-flex; align-items: center; gap: 6px; font-size: 13px; margin-top: auto; }
-  .fbar-row { display: flex; gap: 10px; }
+  .fbar-row { display: flex; gap: 10px; align-items: stretch; }
+  .fbar-action { min-width: 0; }
+  .fbar .fdone { margin: 0; height: 100%; }
   .fbar { position: sticky; bottom: calc(96px + env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; gap: 8px; padding: 10px 0 12px; background: var(--bg); z-index: 4; }
   .fbar .primary { min-height: 60px; border-radius: 20px; font-size: 17px; }
   .frest { height: 60px; padding: 0 16px; border-radius: 20px; background: var(--card); border: 1px solid var(--line); display: flex; align-items: center; gap: 8px; color: var(--muted); flex: none; }
@@ -810,6 +820,14 @@
   body.resting .frestctl { display: flex; }
   body.infocus.resting .overlay { padding-bottom: 0; }
   body.infocus.resting .sheet { max-height: 88vh; }
+
+  body.infocus, body.infocus.resting { height: 100dvh; overflow: hidden; padding-bottom: 0; }
+  body.infocus main { height: calc(100dvh - 96px - env(safe-area-inset-bottom, 0px)); padding-top: 12px; padding-bottom: 0; }
+  body.infocus .focus { height: 100%; min-height: 0; display: grid; grid-template-rows: minmax(0, 1fr) auto; gap: 0; }
+  .focus-scroll { min-height: 0; overflow-y: auto; overscroll-behavior: contain; display: flex; flex-direction: column; gap: 14px; padding-bottom: 12px; }
+  .focus-controls { min-width: 0; padding-top: 8px; background: var(--bg); }
+  body.infocus .fbar { position: static; margin-top: 0; }
+  @media (pointer: coarse) { body.infocus.typing main { height: 100dvh; } }
 
   /* ---------- Muskelkartan ---------- */
   .mcard { display: flex; flex-direction: column; gap: 12px; }
@@ -1104,7 +1122,7 @@
   .bignum input { border: 1px solid var(--line-strong); border-radius: 12px; padding: 4px 10px; min-width: 88px; min-height: 52px; }
   .bignum input:focus { border-color: var(--accent); outline: 2px solid var(--accent-soft); outline-offset: 1px; }
   .fdone { margin: 4px 0 0; min-height: 56px; border-radius: 16px; font-size: 17px; font-weight: 700; }
-  .fset.warm .fdone.primary { background: var(--m-part); border-color: var(--m-part); color: #141518; }
+  .fset.warm .fdone.primary, .fbar .fdone.primary[data-w] { background: var(--m-part); border-color: var(--m-part); color: #141518; }
   .fall { display: flex; align-items: center; justify-content: center; gap: 6px; color: var(--ok-text); font-weight: 600; font-size: 14px; }
   .ftools { display: flex; flex-wrap: wrap; gap: 6px; }
   .chipbtn { min-height: 38px; padding: 0 12px; border-radius: 99px; font-size: 13px; color: var(--muted); background: var(--card); display: inline-flex; align-items: center; gap: 4px; }

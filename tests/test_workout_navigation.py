@@ -10,7 +10,7 @@ def active_workout(page):
     start(page)
     go(page, 'pass')
     page.click('[data-focusstart]')
-    page.click('.fset.active .fdone')
+    page.click('.fbar .fdone')
 
 
 def test_can_navigate_and_resume_same_exercise_with_saved_sets(page):
@@ -32,7 +32,7 @@ def test_finish_completed_workout_is_an_action_and_does_not_reopen_it(page):
     page.evaluate('S.plan.days[0].ex = [{id:"bankpress",sets:1,reps:"8"}]; render()')
     go(page, 'pass')
     page.click('[data-focusstart]')
-    page.click('.fset.active .fdone')
+    page.click('.fbar .fdone')
     assert page.evaluate('workoutsOn(TODAY)[0].done') is True
     button = page.locator('.fbar .primary')
     assert button.inner_text() == 'Avsluta pass'

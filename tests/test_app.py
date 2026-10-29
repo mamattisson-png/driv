@@ -1638,7 +1638,7 @@ def test_vilotimern_lagger_sig_inte_over_fokuslistan(page):
     go(page, "pass")
     page.click(f'[data-pick="{page.evaluate("S.plan.days[0].id")}"]')
     page.click("[data-focusstart]")
-    page.click(".fset.active .fdone")
+    page.click(".fbar .fdone")
     assert page.evaluate("document.body.classList.contains('resting')") is True
     # Den vanliga timerlisten är dold; knapparna ligger i fokuslistan ovanför Klart set
     assert not page.locator(".rest").is_visible()
@@ -1799,9 +1799,9 @@ def test_uppvarmning_fore_arbetsseten(page):
     page.click("[data-focusstart]")
     # Uppvärmningen kommer först, med ett förslag under arbetsvikten (82,5 kg idag)
     assert "Uppvärmning 1" in page.inner_text(".fset.active") and "Förslag: 32,5 kg · 8 reps" in page.inner_text(".fset.active")
-    page.click(".fset.active .fdone")
+    page.click(".fbar .fdone")
     page.click('.fset.active [data-step=kg][data-w][data-dir="1"]')
-    page.click(".fset.active .fdone")
+    page.click(".fbar .fdone")
     assert "Set 1" in page.inner_text(".fset.active")
     w = page.evaluate("workoutsOn(TODAY)[0]")
     assert w["warm"]["bankpress"] == [{"ok": True, "reps": 8, "kg": 32.5}, {"kg": 67.5, "ok": True, "reps": 5}]

@@ -54,8 +54,12 @@ function afterFocusRender() {
   if (!focus || !focus.scroll || tab !== "pass" || editDate || focus.suspended) return;
   const where = focus.scroll;
   focus.scroll = null;
-  if (where === "top") window.scrollTo(0, 0);
-  else { const a = document.querySelector(".fset.active"); if (a && a.scrollIntoView) a.scrollIntoView({ block: "nearest" }); }
+  const pane = document.querySelector(".focus-scroll");
+  if (where === "top") { if (pane) pane.scrollTop = 0; }
+  else {
+    const a = document.querySelector(".fset.active");
+    if (a && a.scrollIntoView) a.scrollIntoView({ block: "nearest" });
+  }
 }
 
 // Stegstorlek: hantlar 2 kg, annars 2,5 kg; reps 1; sekunder 5
@@ -132,6 +136,7 @@ function focusView() {
   const fmt = v => fmtSet2({ kg: +v.kg || 0, reps: +v.reps || 0 }, ex.id);
   const badge = s => s.w ? `U${s.i + 1}` : `${s.i + 1}`;
   const okAttrs = s => `data-ok="${ex.id}" data-i="${s.i}"${s.w ? ' data-w="1"' : ""}`;
+  let setAction = "";
   const rows = all.map((s, k) => {
     const v = stOf(s), h = s.w ? warmHint(d, ex, s.i) : liveHint(d, ex, s.i), p = !s.w && prev ? hintSet(prev, s.i) : null;
     const cls = `fset ${v.ok ? "done" : ""} ${s.w ? "warm" : ""} ${k === sel ? "active" : ""}`;
@@ -145,14 +150,18 @@ function focusView() {
       const btn = v.ok
         ? (active >= 0 ? `<button class="wide fdone ghostbtn" data-fsel="${active}">Till ${all[active].w ? "uppvärmning" : "set"} ${badge(all[active])}</button>` : "")
         : `<button class="primary wide fdone" ${okAttrs(s)}>${doneTxt}</button>`;
+      setAction = btn;
       return `<li class="${cls}"><div class="fsethead"><button class="fcheck ${v.ok ? "on" : ""}" ${okAttrs(s)} aria-pressed="${!!v.ok}" aria-label="${s.w ? "Uppvärmning" : "Set"} ${s.i + 1} klart">${v.ok ? icon("check", 14) : `<span class="fb">${badge(s)}</span>`}</button>
         <b class="grow">${s.w ? `Uppvärmning ${s.i + 1}` : `Set ${s.i + 1}`}</b>${note ? `<span class="muted small">${note}</span>` : ""}</div>
-        ${fields}${btn}</li>`;
+        ${fields}</li>`;
     }
     const val = v.ok && hasData(v) ? fmt(v) : hasData(h) ? fmt(h) : "";
     return `<li class="${cls}"><button class="fcheck ${v.ok ? "on" : ""}" ${okAttrs(s)} aria-pressed="${!!v.ok}" aria-label="${s.w ? "Uppvärmning" : "Set"} ${s.i + 1} klart">${v.ok ? icon("check", 14) : `<span class="fb">${badge(s)}</span>`}</button>
       <button class="fsel" data-fsel="${k}" aria-label="Välj ${s.w ? "uppvärmning" : "set"} ${s.i + 1}"><span>${val}</span>${v.ok ? `<span class="fstate">${s.w ? "Uppvärmd" : "Klart"}</span>` : ""}</button></li>`;
-  }).join("");
+  });
+  const completed = rows.filter((_, k) => stOf(all[k]).ok && k !== sel);
+  const currentRows = rows.filter((_, k) => !stOf(all[k]).ok || k === sel).join("");
+  const completedView = completed.length ? `<details class="completed-sets"><summary>${icon("check", 16)}<span class="grow">${completed.length} ${completed.length === 1 ? "genomfört set" : "genomförda set"}</span>${icon("right", 16)}</summary><ol class="fsets">${completed.join("")}</ol></details>` : "";
   // Superset: varvet man är på och övningarna i gruppen
   const round = g ? Math.min(...d.ex.slice(g[0], g[1] + 1).map(x => ((w && w.sets[x.id]) || []).filter(z => z && z.ok).length)) + 1 : 0;
   const rounds = g ? Math.max(...d.ex.slice(g[0], g[1] + 1).map(x => x.sets)) : 0;
@@ -174,8 +183,7 @@ function focusView() {
   const restBox = restSettings().on ? `<div class="frest ${resting ? "on" : ""}" aria-label="Vilotimer">${icon("timer", 18)}<span class="frest-time">${restText(resting ? Math.ceil((rest.end - Date.now()) / 1000) : restFor(ex.id))}</span></div>` : "";
   const nextIdx = g ? g[1] + 1 : focus.idx + 1, next = d.ex[nextIdx];
   const main = !allDone
-    ? next ? `<button class="fnext grow" data-focusgo="${nextIdx}"><span class="klabel">Nästa</span><b>${esc(EX[next.id].name)} · ${repsText(next)}</b></button>`
-      : `<button class="fnext grow" data-fend><span class="klabel">Sista övningen</span><b>Avsluta passet</b></button>`
+    ? `<div class="fbar-action grow">${setAction}</div>`
     : next ? `<button class="primary grow" data-focusgo="${nextIdx}">Nästa: ${esc(EX[next.id].name)}</button>`
     : w && w.done ? `<button class="primary grow" data-finish="${d.id}" data-focusend>Avsluta pass</button>`
     : `<button class="primary grow" data-finish="${d.id}" data-focusend>Spara och avsluta</button>`;
@@ -187,7 +195,7 @@ function focusView() {
     ${!g && d.ex.length > 1 ? `<button class="chipbtn ${focus.ssPick ? "on" : ""}" data-sspick>${icon("plus", 14)}Superset</button>` : ""}
     ${d.ex.length > 1 ? `<button class="chipbtn" data-forder>Ordning</button>` : ""}
     ${S.daily.length ? `<button class="chipbtn" data-fdopen aria-label="Dailys, ${dDone} av ${S.daily.length} klara">Dailys ${dDone} av ${S.daily.length}</button>` : ""}</div>`;
-  return `<div class="focus">
+  return `<div class="focus"><div class="focus-scroll">
     <header class="fhead"><button class="fhbtn" data-fend>Avsluta</button>
       <span class="fclock"><span class="klabel">${esc(d.name)}</span><b class="ftimer" data-start="${start}">${clockText(Date.now() - start)}</b></span>
       <button class="fhbtn" data-fswap="${focus.idx}">Byt övning</button></header>
@@ -197,12 +205,14 @@ function focusView() {
       <div class="grow"><span class="muted small">Övning ${focus.idx + 1} av ${d.ex.length} · ${repsText(ex)}${nW ? ` · +${nW} uppv.` : ""}</span>
       <h2>${esc(EX[ex.id].name)}</h2></div></div>
     <div class="ftip">${icon("trend", 16)}<span>${tip}</span></div>
-    <ol class="fsets" aria-label="Set">${rows}</ol>
+    ${completedView}
+    ${currentRows ? `<ol class="fsets" aria-label="Set">${currentRows}</ol>` : ""}
     ${allDone ? `<div class="fall">${icon("check", 16)}Alla set klara</div>` : ""}
-    ${tools}${ssPick}
+    ${ssPick}</div>
+    <div class="focus-controls">${tools}
     <div class="fbar">${restBox ? `<div class="frestctl" role="group" aria-label="Vila"><button class="small" data-restadd="-15">−15</button>
       <button class="small" data-restadd="15">+15</button><button class="small" data-restskip>Klar</button></div>` : ""}
-      <div class="fbar-row">${main}${restBox}</div></div>
+      <div class="fbar-row">${main}${restBox}</div></div></div>
   </div>${focusDailies ? `<div class="overlay" data-fdclose><div class="sheet">
     <div class="row between"><span class="muted small">Fläta in i passet</span><button class="small ghost iconbtn" data-fdclose aria-label="Stäng">${icon("close", 18)}</button></div>
     ${dailiesCard(true)}<button class="wide" data-fdclose style="margin-top:14px">Tillbaka till passet</button></div></div>` : ""}${focusOrder ? orderSheet(d, w) : ""}${focusEnd ? endSheet(d, w) : ""}`;
@@ -383,5 +393,9 @@ document.addEventListener("click", ev => {
   else if (ds.step) stepSet(currentPassDay(), ds.ex, +ds.i, ds.step, +ds.dir, ds.w !== undefined);
   save();
   render();
-  if (ds.focusgo !== undefined || ds.focusstart || ds.focusex !== undefined) window.scrollTo(0, 0);
+  if (ds.focusgo !== undefined || ds.focusstart || ds.focusex !== undefined) {
+    const pane = document.querySelector(".focus-scroll");
+    if (pane) pane.scrollTop = 0;
+    window.scrollTo(0, 0);
+  }
 });

@@ -872,6 +872,8 @@ let confirmReset = false;
 let importMsg = "";
 
 function render() {
+  const oldFocusScroll = document.querySelector(".focus-scroll");
+  if (focus && oldFocusScroll) focus.scrollTop = oldFocusScroll.scrollTop;
   if (TABS.some(([id]) => id === tab)) profBack = tab;
   const nav = document.getElementById("nav");
   // Menyn är tillgänglig även under ett pågående pass.
@@ -889,6 +891,8 @@ function render() {
     : gear + banner + VIEWS[tab]() + (modal ? renderModal() : "") + (actSheet ? actSheetView() : "");
   if (modal && modal.pick) filterPicker();
   if (tab === "recept" && typeof filterRecipes === "function") filterRecipes();
+  const focusScroll = document.querySelector(".focus-scroll");
+  if (focusScroll && focus) focusScroll.scrollTop = focus.scrollTop || 0;
   afterFocusRender();
   updateBadge();
 }
