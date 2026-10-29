@@ -1,0 +1,30 @@
+name: DRIV staging bundle
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build-staging:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run sync tests
+        run: node --test tests/sync.test.cjs
+      - name: Run release safety tests
+        run: python -m unittest discover -s tests -p 'test_release_safety.py' -v
+      - name: Build isolated staging bundle
+        env:
+          DRIV_TEST_PUBLISHABLE_KEY: ${{ secrets.DRIV_TEST_PUBLISHABLE_KEY }}
+        run: node tools/build-staging.cjs
+      - name: Check staging configuration
+        run: |
+          grep -q 'ujnfbjisrhudvnzvmniq' dist-staging/config.js
+          if grep -q 'zepugwoostphckstyrqf' dist-staging/config.js; then exit 1; fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: driv-staging
+          path: dist-staging/
+          retention-days: 7
