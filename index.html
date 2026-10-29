@@ -1377,8 +1377,23 @@
   .addpage .fshead h1 { margin-bottom: 4px; }
   .kinnow { display: flex; align-items: center; gap: 6px; margin: 10px 0 0; padding: 10px 14px; border-radius: 14px; background: var(--card-2); }
   .current-meal { display: block; padding: 0; background: none; }
-  .current-meal > h2 { font: inherit; font-size: 14px; margin: 14px 2px 8px; }
-  .current-meal .kmacros { margin: 12px 0 4px; }
+  .meal-summary-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin: 16px 2px 10px; }
+  .meal-summary-head h2, .meal-summary-head > b { font: 600 17px/1.4 "Lexend", sans-serif; margin: 0; }
+  .meal-summary-head > b { white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .meal-summary-card { background: var(--card); border-radius: 22px; padding: 4px 14px 14px; }
+  .meal-summary-card .kitems { gap: 0; }
+  .meal-summary-card .kirow { padding: 0; border-radius: 0; background: none; }
+  .meal-summary-card .kirow + .kirow { border-top: 1px solid var(--line); }
+  .meal-summary-card .kirow > .col { padding: 14px 0; }
+  .meal-summary-card .kirow.fresh { margin: 0; padding-left: 0; border-radius: 12px; }
+  .meal-summary-card .meal-guideline { border-top: 1px solid var(--line); padding-top: 14px; margin: 0; line-height: 1.5; }
+  .meal-summary-card .meal-guideline b { font-weight: 500; }
+  .meal-summary-card .kmacros { gap: 0; margin: 16px 0 0; }
+  .meal-summary-card .kmac { padding: 0 10px; border-radius: 0; background: none; }
+  .meal-summary-card .kmac:first-child { padding-left: 0; }
+  .meal-summary-card .kmac:last-child { padding-right: 0; }
+  .meal-summary-card .kmac + .kmac { border-left: 1px solid var(--line); }
+  .meal-summary-card .ksave { margin: 14px 0 0; text-align: left; }
   .kintake { margin: 12px 0 4px; padding: 12px 14px; }
   .kintake .bar { margin: 8px 0; }
   .kintake3 { display: flex; justify-content: space-between; gap: 8px; color: var(--muted); }
