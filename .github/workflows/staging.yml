@@ -1,4 +1,5 @@
 name: DRIV staging bundle
+# Recheck after test publishable key was updated
 on:
   push:
     branches: [main]
