@@ -207,6 +207,7 @@ const restaurantsReady = window.claude ? Promise.resolve([]) : fetch("restaurang
   }).catch(() => []);
 function productSourceHtml(amount) {
   if (!amount) return "";
+  if (amount.customNutrition) return `<div class="muted small">Egna näringsvärden för den här posten.</div>`;
   if (amount.source && /^mcd-se-\d{6}$/.test(amount.code || "") &&
     /^https:\/\/www\.mcdonalds\.com\/se\/sv-se\/(?:product\/[\w-]+\.html|naringskalkylatorn\.html)$/.test(amount.source.url || "")) {
     return `<div class="muted small">Standardportion enligt <a href="${esc(amount.source.url)}" target="_blank" rel="noopener">McDonald's Sverige</a>. Avser produkten, inte en hel meny.</div>`;
