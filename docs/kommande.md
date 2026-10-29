@@ -1,6 +1,6 @@
 # DRIV – Kommande förbättringar
 
-Senast uppdaterad: 2026-10-29. Källa: gemensam förbättringslista i ChatGPT. Denna fil är en planeringslista, inte en bekräftelse på att funktioner har implementerats. Status 1–3 har markerats klara av användaren.
+Senast uppdaterad: 2026-10-29. Källa: gemensam förbättringslista i ChatGPT. Denna fil är en planeringslista, inte en bekräftelse på att funktioner har implementerats. Status 1–3 har markerats klara av användaren. Punkt 17 är färdigställd och godkänd för publicering.
 
 | Nr | Förbättring | Kategori | Prioritet | Status |
 |---|---|---|---|---|
@@ -20,6 +20,7 @@ Senast uppdaterad: 2026-10-29. Källa: gemensam förbättringslista i ChatGPT. D
 | 14 | Lägg till övning under pågående pass | Träning | Hög | Ej påbörjad |
 | 15 | Tydligare Historik och Utveckling | Historik | Hög | Ej påbörjad |
 | 16 | Numeriskt tangentbord för alla sifferfält | UX | Hög | Ej påbörjad |
+| 17 | Ingen inloggningsblinkning vid uppdatering | Bugg | Hög | Klar |
 
 ## Detaljer och acceptanskriterier
 
@@ -42,9 +43,11 @@ Senast uppdaterad: 2026-10-29. Källa: gemensam förbättringslista i ChatGPT. D
 
 16. **Numeriskt tangentbord för alla sifferfält:** Gå igenom samtliga fält där användaren anger tal, exempelvis set, reps, sekunder, vikt, kalorier, portioner, kroppsvikt och mål. Visa numeriskt tangentbord på mobil med korrekt `inputmode` (`numeric` för heltal, `decimal` för decimaltal) och lämplig `type`, `step` och validering. Behåll möjlighet att skriva decimaler där det behövs och hantera svensk decimalavskiljare. Undvik att ändra fält för fritext, datum eller annan icke-numerisk information. Testa på Android och iPhone, även i modaler och redigeringsvyer. Bildexempel: redigering av Dailys i Historik öppnar felaktigt ett tangentbord med bokstäver och symboler.
 
+17. **Ingen inloggningsblinkning vid uppdatering**: Appen väntar tills den sparade sessionen och profilen har lästs innan kontoläget visas. Inloggade ska inte tillfälligt få uppmaningen att skapa konto. Vid nätfel behålls lokala loggar utan påstående om utloggning.
+
 ## Arbetsregler
 
 - Ändra inte appens implementation utan användarens uttryckliga godkännande.
 - Bevara befintlig design, DRIV-logga och övningsfigurer om inte annan ändring godkänns.
 - Undvik dubbla funktioner: kontrollera befintlig kod innan nyutveckling.
-- Uppdatera status här när användaren bekräftar framsteg.
+- Uppdatera alltid listan när en ändring är klar och publiceras. Markera bara verifierat färdiga punkter som Klar; lägg till en avslutad punkt om ändringen saknas i listan.

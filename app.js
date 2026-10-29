@@ -985,7 +985,7 @@ const VIEWS = {
     })();
     const today = new Date().toLocaleDateString("sv-SE", { weekday: "long", day: "numeric", month: "long" });
     return `<header class="homehead"><div class="brand"><img src="icons/icon-192-v2.png" alt=""><div class="ordbild"><span class="wordmark">DRIV</span><span class="slogan">Ditt mål. <em>Ditt driv.</em></span></div></div>
-        <button class="gear avbtn" data-tab="profil" aria-label="Inställningar">${esc(profName().slice(0, 1).toUpperCase())}</button></header>
+        <button class="gear avbtn" data-tab="profil" aria-label="Inställningar">${account.ready ? esc(profName().slice(0, 1).toUpperCase()) : icon("profil", 20)}</button></header>
       <div class="muted homedate">${cap(today)}</div>
       <h1 class="greet">${greet}</h1>
       <div class="htiles">${passTile}${kcalTile}</div>

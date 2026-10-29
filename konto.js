@@ -6,7 +6,7 @@ const SUPABASE_JS = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/d
 const sbConf = window.DRIV_CONFIG || {};
 // I testläget används aldrig kontot: ingen inloggning, synk, vänner eller notiser
 const sbEnabled = !window.claude && !window.DRIV_TEST && !!(sbConf.supabaseUrl && sbConf.supabaseAnonKey);
-const account = { sb: null, email: "", step: "email", msg: "", busy: false };
+const account = { sb: null, email: "", step: "email", msg: "", busy: false, ready: !sbEnabled, restoreError: false };
 
 async function supabaseClient() {
   if (!account.sb) {
@@ -126,6 +126,7 @@ async function connectSupabase() {
       const sb = await supabaseClient();
       const { data, error } = await sb.auth.getSession();
       if (error) throw error;
+      account.restoreError = false;
       const user = data.session && data.session.user;
       if (!user || epoch !== (account.epoch || 0)) return;
       const synced = localStorage.getItem("driv-synced");
@@ -135,11 +136,12 @@ async function connectSupabase() {
       await attachCollection(supabaseCollection(sb, user.id), true, synced !== user.id);
       if (epoch !== (account.epoch || 0)) return;
       localStorage.setItem("driv-synced", user.id);
-      loadSocial();
+      await loadSocial();
     } catch (e) {
-      if (epoch === (account.epoch || 0)) cloud.status = "error";
+      if (epoch === (account.epoch || 0)) { cloud.status = "error"; account.restoreError = true; }
+    } finally {
+      if (epoch === (account.epoch || 0)) { account.ready = true; render(); }
     }
-    render();
   })();
   account.connecting = task;
   try { await task; } finally { if (account.connecting === task) account.connecting = null; }
@@ -186,7 +188,7 @@ async function signOut() {
   try { switchLocalAccount(null); } catch (e) { /* behåll den befintliga lokala datan */ }
   try { await (await supabaseClient()).auth.signOut(); } catch (e) { /* redan utloggad */ }
   Object.assign(social, { profile: null, friends: [], feed: [], loaded: false, msg: "" });
-  account.step = "email"; account.email = "";
+  account.step = "email"; account.email = ""; account.ready = true; account.restoreError = false;
   account.msg = "Utloggad. Logga in igen för att öppna dina sparade loggar.";
   render();
 }
@@ -236,7 +238,7 @@ const IOS_STEPS = "Tryck på Dela-knappen (fyrkanten med pilen) i Safari och vä
 
 // Utan konto finns allt bara i webbläsaren. Efter några dagars loggning föreslås ett konto.
 function accountNudge() {
-  if (!sbEnabled || account.step === "in" || (S.nudgeUntil && S.nudgeUntil > TODAY)) return "";
+  if (!sbEnabled || !account.ready || account.restoreError || account.step === "in" || (S.nudgeUntil && S.nudgeUntil > TODAY)) return "";
   if (loggedDays() < 3) return "";
   return `<div class="card nudge"><h2>Spara dina loggar</h2>
     <div class="muted">Just nu finns allt bara på den här enheten. Med ett konto sparas det i molnet – bara e-post, klart på en minut.
@@ -248,7 +250,7 @@ function accountNudge() {
 // Lägg Driv på hemskärmen: då öppnas den som en app, notiser fungerar på iPhone och datan rensas inte.
 // Visas när man börjat logga och kontokortet inte redan syns.
 function installNudge() {
-  if (!canInstall() || (S.installUntil && S.installUntil > TODAY) || loggedDays() < 1 || accountNudge()) return "";
+  if (!account.ready || !canInstall() || (S.installUntil && S.installUntil > TODAY) || loggedDays() < 1 || accountNudge()) return "";
   return `<div class="card nudge"><h2>Lägg Driv på hemskärmen</h2>
     <div class="muted">Då öppnas Driv som en vanlig app${isIOS() ? ", notiser fungerar och iPhone rensar inte dina loggar" : ""}.
       ${installEvt ? "" : IOS_STEPS}</div>
