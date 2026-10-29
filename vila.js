@@ -6,10 +6,11 @@ const ISOLATION = new Set(["sidolyft", "triceps_pushdown", "fransk_press", "bice
   "benspark", "bencurl", "vadpress", "glute_bridge"]);
 const restSettings = () => Object.assign({ on: true, compound: 90, iso: 60 }, S.rest);
 const restFor = id => ISOLATION.has(id) || EX[id].cat === "core" || EX[id].cat === "stretch" ? restSettings().iso : restSettings().compound;
-const rest = { el: null, end: 0, total: 0, timer: 0, name: "" };
+const rest = { el: null, end: 0, total: 0, timer: 0, cleanup: 0, name: "" };
 
 function startRest(exId) {
   if (!restSettings().on) return;
+  clearTimeout(rest.cleanup); rest.cleanup = 0;
   unlockAudio();
   rest.total = restFor(exId);
   rest.end = Date.now() + rest.total * 1000;
@@ -36,6 +37,7 @@ function startRest(exId) {
 }
 
 function tickRest() {
+  if (!rest.el) return;
   const left = Math.max(0, Math.ceil((rest.end - Date.now()) / 1000));
   const txt = `${Math.floor(left / 60)}:${String(left % 60).padStart(2, "0")}`;
   rest.el.querySelector(".rest-time").textContent = txt;
@@ -48,11 +50,13 @@ function tickRest() {
   rest.el.classList.add("ding");
   if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
   beep();
-  setTimeout(stopRest, 6000);
+  rest.cleanup = setTimeout(stopRest, 6000);
 }
 
 function stopRest() {
   clearInterval(rest.timer);
+  clearTimeout(rest.cleanup);
+  rest.timer = 0; rest.cleanup = 0; rest.end = 0; rest.total = 0; rest.name = '';
   if (rest.el) rest.el.remove();
   rest.el = null;
   document.body.classList.remove("resting");
@@ -87,6 +91,7 @@ document.addEventListener("click", ev => {
   if (!t) return;
   ev.stopImmediatePropagation();
   if (t.dataset.restskip !== undefined) return stopRest();
+  clearTimeout(rest.cleanup); rest.cleanup = 0;
   rest.end = Math.max(Date.now(), rest.end + +t.dataset.restadd * 1000);
   rest.total = Math.max(rest.total, Math.ceil((rest.end - Date.now()) / 1000));
   if (!rest.timer || rest.el.classList.contains("ding")) { rest.el.classList.remove("ding"); clearInterval(rest.timer); rest.timer = setInterval(tickRest, 250); }

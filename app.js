@@ -1452,6 +1452,7 @@ function passDoneView() {
 }
 
 function renderModal() {
+  if (modal.cancelPass) return cancelPassSheet(modal.cancelPass);
   if (modal.letter) {
     return `<div class="overlay" data-close><div class="sheet"><div class="row between"><h2>Din vecka</h2><button class="small ghost" data-close>${icon("close", 18)}</button></div>
       ${weekLetter(modal.letter)}</div></div>`;

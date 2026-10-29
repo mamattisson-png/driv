@@ -23,6 +23,15 @@ function endFocus() {
   keepAwake(false);
 }
 
+function cancelPassSheet(target) {
+  const d = dayById(target.dayId);
+  return `<div class="overlay" data-passcancelclose><div class="sheet endsheet" role="dialog" aria-label="Avbryt passet">
+    <h2>Avbryt ${esc(d ? d.name : 'passet')}?</h2>
+    <p>${target.workoutId ? 'Passets loggade set tas bort.' : 'Passet avbryts utan att sparas.'} Det räknas inte som ett genomfört pass.</p>
+    <div class="col endbtns"><button class="wide dangertext" data-passcancelconfirm>Ja, avbryt passet</button>
+      <button class="primary wide" data-passcancelclose>Behåll passet</button></div></div></div>`;
+}
+
 // Efter ett avbockat set: är övningen klar går fokus vidare till nästa medan vilan räknar ned
 // I ett superset växlar fokus till nästa övning i varvet, och efter varvet tillbaka till gruppens början
 function focusAfterSet(d, idx = focus && focus.idx, i = 0) {
@@ -206,7 +215,8 @@ function endSheet(d, w) {
     <h2>Avsluta passet?</h2>
     <div class="muted">${logged ? `${done} av ${d.ex.length} övningar klara · ${sets} set` : "Inget set är loggat än."}</div>
     <div class="col endbtns">${logged ? `<button class="primary wide bigbtn" data-finish="${d.id}" data-focusend>${w && w.done ? "Avsluta pass" : "Spara och avsluta"}</button>` : ""}
-      <button class="wide" data-focusexit>${logged ? "Pausa och fortsätt senare" : "Avbryt passet"}</button>
+      <button class="wide" data-focusexit>Pausa och fortsätt senare</button>
+      ${!w || !w.end ? `<button class="ghost wide dangertext" data-passcancel="${d.id}">Avbryt passet utan att spara</button>` : ''}
       <button class="ghost wide" data-fendclose>Fortsätt träna</button></div></div></div>`;
 }
 // Övningarna som rutor överst: klara med bock, den aktuella markerad, superset sammanlänkade.
@@ -308,6 +318,33 @@ document.addEventListener("visibilitychange", () => {
 });
 
 document.addEventListener("click", ev => {
+  const cancel = ev.target.closest('[data-passcancel],[data-passcancelconfirm],[data-passcancelclose]');
+  if (cancel) {
+    if (cancel.classList.contains('overlay') && ev.target !== cancel) return;
+    if (cancel.dataset.passcancel !== undefined) {
+      const w = workoutOn(logDate(), cancel.dataset.passcancel);
+      if (editDate || w && w.end) return;
+      if (w && !w._id) save();
+      modal = {cancelPass:{dayId:cancel.dataset.passcancel,date:TODAY,workoutId:w ? w._id : null}};
+      focusEnd = false;
+    } else if (cancel.dataset.passcancelclose !== undefined) modal = null;
+    else {
+      const target = modal && modal.cancelPass;
+      const w = target && workoutOn(target.date,target.dayId);
+      const same = target && (w ? !w.end && w._id === target.workoutId : target.workoutId === null);
+      if (target && !editDate && target.date === TODAY && same) {
+        if (w) {
+          restoreSwaps(dayById(target.dayId), w);
+          day(target.date).workouts = workoutsOn(target.date).filter(x => x !== w);
+        }
+        if (!focus || focus.dayId === target.dayId) { endFocus(); stopRest(); }
+        chosenDay = target.dayId; passOpen = true;
+        save();
+      }
+      modal = null;
+    }
+    render(); return;
+  }
   const t = ev.target.closest("[data-step],[data-focusgo],[data-focusexit],[data-focusend],[data-focusstart],[data-focusex],[data-fdopen],[data-fdclose],[data-fsel],[data-sspick],[data-sspair],[data-forder],[data-forderclose],[data-fmove],[data-fstepsall],[data-fswap],[data-fend],[data-fendclose]");
   if (!t || t.disabled) return;
   if (t.classList.contains("overlay") && ev.target !== t) return;   // klick inne i fönstret
@@ -330,7 +367,7 @@ document.addEventListener("click", ev => {
   if (ds.focusend !== undefined) { endFocus(); return; }   // själva sparandet sköts av data-finish
   if (ds.focusstart) { tab = "pass"; editing = false; startFocus(ds.focusstart); }
   else if (ds.focusex !== undefined) { if (startFocus(currentPassDay().id)) focus.idx = +ds.focusex; }
-  else if (ds.focusexit !== undefined) endFocus();
+  else if (ds.focusexit !== undefined) { stopRest(); endFocus(); passOpen = true; }
   else if (ds.focusgo !== undefined) { focus.idx = Math.max(0, +ds.focusgo); focus.sel = null; focus.ssPick = false; }
   else if (ds.fsel !== undefined) { focus.sel = +ds.fsel; focus.scroll = "active"; }
   else if (ds.sspick !== undefined) focus.ssPick = !focus.ssPick;
