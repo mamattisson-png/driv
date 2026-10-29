@@ -28,6 +28,8 @@ function fmtSet2(b, id) {
 
 // Dagens pass: det man redan loggat idag, annars det som står på tur. En vilodag med fasta dagar visar nästa pass.
 function todaysPass() {
+  const active = focus && dayById(focus.dayId);
+  if (active) return { d: active, w: workoutOn(TODAY, active.id), rest: false, active: true };
   const todays = workoutsOn(TODAY);
   if (todays.length) { const d = dayById(todays[todays.length - 1].dayId); if (d) return { d, w: workoutOn(TODAY, d.id), rest: false }; }
   if (isFixed() && !scheduledDay(TODAY)) { const nx = nextScheduled(TODAY); return { d: nx.day, w: null, rest: true, next: nx.date }; }
@@ -38,7 +40,7 @@ function todaysPass() {
 const completedPassDate = d => weekDates(weekStart(TODAY)).reverse().find(x => x <= TODAY && (workoutOn(x, d.id) || {}).done);
 function passLabel(t) {
   if (t.w && t.w.done) return "Genomfört idag";
-  if (t.w && Object.values(t.w.sets).some(a => a.some(x => x && x.ok))) return "Pågående pass";
+  if (t.active || (t.w && Object.values(t.w.sets).some(a => a.some(x => x && x.ok)))) return "Pågående pass";
   return isFixed() && !t.rest ? "Dagens pass" : "Nästa pass";
 }
 const passMuscles = d => d.type === "custom" || !TYPES[d.type] ? "Dina egna övningar" : TYPES[d.type].muscles.replace(/, ([^,]*)$/, " & $1");
@@ -50,7 +52,7 @@ function ring(pct, size = 64, cls = "") {
 }
 
 function traningView() {
-  const t = todaysPass(), d = t.d, w = t.w, done = w && w.done, started = w && !done && Object.values(w.sets).some(a => a.some(x => x && x.ok));
+  const t = todaysPass(), d = t.d, w = t.w, done = w && w.done, started = !done && (t.active || (w && Object.values(w.sets).some(a => a.some(x => x && x.ok))));
   const passes = weekSummary(weekStart(TODAY)).passes, n = S.plan.days.length;
   const dayCard = `<section class="card daypass" aria-label="${passLabel(t)}">
       <div class="row between"><span class="klabel accent">${t.rest ? `Vilodag · nästa ${WD_LONG[weekdayOf(t.next)]}` : passLabel(t)}</span>

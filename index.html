@@ -257,7 +257,7 @@
   /* Botten bakom menyn: inget innehåll syns under eller bredvid den när man scrollar */
   body::after { content: ""; position: fixed; left: 0; right: 0; bottom: 0; height: calc(104px + env(safe-area-inset-bottom, 0px)); z-index: 4;
     pointer-events: none; background: linear-gradient(to bottom, transparent, var(--bg) 16px); }
-  body:has(nav.hidden)::after, body.infocus::after { display: none; }
+  body:has(nav.hidden)::after { display: none; }
   /* Medan man skriver på en telefon behövs inte menyn; den skulle annars ligga ovanpå tangentbordet */
   @media (pointer: coarse) { body.typing nav, body.typing::after { display: none; }
     /* Knappar som annars ligger fast i nederkanten följer sidan, så att de inte täcker fältet */
@@ -733,8 +733,8 @@
   .actcard .krow { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 10px 14px; margin-top: 8px; }
   .actcard .krow + .krow { border-top: 1px solid var(--line); }
   /* ---------- Fokusläge ---------- */
-  body.infocus { padding-bottom: env(safe-area-inset-bottom); }
-  .focus { display: flex; flex-direction: column; gap: 16px; min-height: calc(100vh - 32px); }
+  body.infocus { padding-bottom: calc(116px + env(safe-area-inset-bottom, 0px)); }
+  .focus { display: flex; flex-direction: column; gap: 16px; min-height: calc(100vh - 148px - env(safe-area-inset-bottom, 0px)); min-height: calc(100dvh - 148px - env(safe-area-inset-bottom, 0px)); }
   .fhead { display: flex; align-items: center; gap: 12px; }
   .roundbtn { width: 44px; height: 44px; padding: 0; border-radius: 22px; flex: none; display: grid; place-items: center; }
   .fsteps { display: flex; flex-wrap: wrap; gap: 6px; margin-top: -6px; }
@@ -793,7 +793,7 @@
   .fsave { margin-left: auto; }
   .fdaily { align-self: center; display: inline-flex; align-items: center; gap: 6px; font-size: 13px; margin-top: auto; }
   .fbar-row { display: flex; gap: 10px; }
-  .fbar { position: sticky; bottom: 0; display: flex; flex-direction: column; gap: 8px; padding: 10px 0 calc(12px + env(safe-area-inset-bottom, 0px)); background: var(--bg); z-index: 4; }
+  .fbar { position: sticky; bottom: calc(96px + env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; gap: 8px; padding: 10px 0 12px; background: var(--bg); z-index: 4; }
   .fbar .primary { min-height: 60px; border-radius: 20px; font-size: 17px; }
   .frest { height: 60px; padding: 0 16px; border-radius: 20px; background: var(--card); border: 1px solid var(--line); display: flex; align-items: center; gap: 8px; color: var(--muted); flex: none; }
   .frest-time { font: 400 16px "Unbounded", sans-serif; font-variant-numeric: tabular-nums; }
@@ -801,7 +801,7 @@
   .frest.on .ic { color: var(--accent-text); }
   /* I fokusläget ligger vilans knappar i samma list som Klart set, så att inget lägger sig över den */
   body.infocus .rest { display: none; }
-  body.infocus.resting { padding-bottom: env(safe-area-inset-bottom); }
+  body.infocus.resting { padding-bottom: calc(116px + env(safe-area-inset-bottom, 0px)); }
   .frestctl { display: none; justify-content: flex-end; gap: 8px; }
   body.resting .frestctl { display: flex; }
   body.infocus.resting .overlay { padding-bottom: 0; }
@@ -1372,6 +1372,9 @@
   .kshort.card { padding: 0 16px; }
   .addpage .fshead h1 { margin-bottom: 4px; }
   .kinnow { display: flex; align-items: center; gap: 6px; margin: 10px 0 0; padding: 10px 14px; border-radius: 14px; background: var(--card-2); }
+  .current-meal { display: block; padding: 0; background: none; }
+  .current-meal > h2 { font: inherit; font-size: 14px; margin: 14px 2px 8px; }
+  .current-meal .kmacros { margin: 12px 0 4px; }
   .kintake { margin: 12px 0 4px; padding: 12px 14px; }
   .kintake .bar { margin: 8px 0; }
   .kintake3 { display: flex; justify-content: space-between; gap: 8px; color: var(--muted); }
@@ -1515,6 +1518,8 @@
   .fletters button { min-width: 32px; min-height: 32px; padding: 0 6px; border: 0; border-radius: 10px; background: var(--card-2); color: var(--muted); font-size: 13px; font-weight: 600; }
   /* Knappar längst ned: en tät botten bakom dem ända ned till menyn, så att inget skymtar under */
   .kadd, .pagefoot { bottom: calc(88px + env(safe-area-inset-bottom, 0px)); }
+  body.resting:not(.infocus) .pagefoot { bottom: calc(104px + env(safe-area-inset-bottom, 0px) + var(--rest-h, 72px)); }
+  body.resting:has(.pagefoot) { padding-bottom: calc(116px + env(safe-area-inset-bottom, 0px) + var(--rest-h, 72px)); }
   .kadd, .pagefoot { padding: 12px 0; margin-top: 4px; background: var(--bg); }
   .stickcta { box-shadow: 0 14px 0 var(--bg); }
   body::after { background: var(--bg); height: calc(90px + env(safe-area-inset-bottom, 0px)); }

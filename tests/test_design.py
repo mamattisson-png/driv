@@ -131,7 +131,8 @@ def views(page):
     page.evaluate("recipeOpen = { idx: 0, n: 1 }; render()")
     yield "Ett recept", "#app"
     page.evaluate("recipeOpen = null; tab = 'kost'; render()")
-    page.click("#faddbtn")
+    page.click("#faddbtn")   # Klar går till översikten
+    page.click('[data-mealpage="1"]')
     yield "En måltid", "#app"
     page.click('[data-fooditem="0"]')
     yield "Ändra mat", "#app"
