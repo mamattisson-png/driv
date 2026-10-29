@@ -19,6 +19,7 @@ Senast uppdaterad: 2026-10-29. Källa: gemensam förbättringslista i ChatGPT. D
 | 13 | Färdigställ uppvärmningsset | Träning | Medel | Ej påbörjad |
 | 14 | Lägg till övning under pågående pass | Träning | Hög | Ej påbörjad |
 | 15 | Tydligare Historik och Utveckling | Historik | Hög | Ej påbörjad |
+| 16 | Numeriskt tangentbord för alla sifferfält | UX | Hög | Ej påbörjad |
 
 ## Detaljer och acceptanskriterier
 
@@ -38,6 +39,8 @@ Senast uppdaterad: 2026-10-29. Källa: gemensam förbättringslista i ChatGPT. D
 14. **Lägg till övning under pågående pass:** Visa diskret '+ Övning' i befintlig knapprad. Välj befintlig eller skapa egen, ange set/reps och lägg till i passet och övningsikonerna. Välj om ändringen endast gäller dagens session (standard) eller sparas i programmet. Pågående set, vila och loggar får inte störas.
 
 15. **Tydligare Historik och Utveckling:** Utveckla befintliga vyer i `historik.js`, utan att skapa parallella system. **Historik:** kalenderdagar ska ge en tydlig, lättläst sammanfattning av genomförda pass (övningar, set, vikter, reps, passlängd när data finns), Dailys och kost; visa personbästa och jämförelse med föregående motsvarande pass, med detaljer vid tryck. **Utveckling:** visa relevanta och begripliga nyckeltal och grafer över styrkeutveckling per övning, träningsfrekvens och kontinuitet, med valbar tidsperiod. Lyft fram verifierade framsteg, till exempel +5 kg i bänkpress eller antal pass under månaden. Bevara kalender, veckojämförelse, befintliga grafer och möjligheten att redigera tidigare dagar. Gör mobilvyn luftig, lätt att skanna och utan onödigt många kort. Hantera saknade data och nya användare korrekt. Granska aktuell implementation och föreslå design innan kodändring.
+
+16. **Numeriskt tangentbord för alla sifferfält:** Gå igenom samtliga fält där användaren anger tal, exempelvis set, reps, sekunder, vikt, kalorier, portioner, kroppsvikt och mål. Visa numeriskt tangentbord på mobil med korrekt `inputmode` (`numeric` för heltal, `decimal` för decimaltal) och lämplig `type`, `step` och validering. Behåll möjlighet att skriva decimaler där det behövs och hantera svensk decimalavskiljare. Undvik att ändra fält för fritext, datum eller annan icke-numerisk information. Testa på Android och iPhone, även i modaler och redigeringsvyer. Bildexempel: redigering av Dailys i Historik öppnar felaktigt ett tangentbord med bokstäver och symboler.
 
 ## Arbetsregler
 
