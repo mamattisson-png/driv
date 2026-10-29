@@ -58,10 +58,8 @@ function afterFocusRender() {
   else { const a = document.querySelector(".fset.active"); if (a && a.scrollIntoView) a.scrollIntoView({ block: "nearest" }); }
 }
 
-// Viktsteget sparas per övning. Utan eget val gäller tidigare standardsteg.
-const WEIGHT_STEPS = [0.5, 1, 1.5, 2, 2.5, 5];
-const customWeightStep = id => WEIGHT_STEPS.includes(S.weightSteps && S.weightSteps[id]) ? S.weightSteps[id] : null;
-const stepFor = (exId, f) => f === "kg" ? customWeightStep(exId) || (EX[exId].hold === "db" ? 2 : 2.5) : isTimed(exId) ? 5 : 1;
+// Stegstorlek: hantlar 2 kg, annars 2,5 kg; reps 1; sekunder 5
+const stepFor = (exId, f) => f === "kg" ? (EX[exId].hold === "db" ? 2 : 2.5) : isTimed(exId) ? 5 : 1;
 
 // ---------- Uppvärmning ----------
 // Lättare set före arbetsseten (ex.warm st). De loggas i w.warm och räknas inte i statistiken eller i om passet är klart.
@@ -97,12 +95,11 @@ function bigStepper(exId, i, f, val, hint, label, unit, warm = false) {
     <div class="bigrow">${btn(-1, "Minska")}
       <label class="bignum"><input type="number" inputmode="${f === "kg" ? "decimal" : "numeric"}" step="${f === "kg" ? 0.25 : 1}" min="0" max="${setMax(exId, f)}"
         value="${val ?? ""}" placeholder="${hint ?? ""}" data-set="${exId}" data-i="${i}"${w} data-f="${f}" aria-label="${label}, ${warm ? "uppvärmning" : "set"} ${i + 1}"><span class="klabel">${unit || label}</span></label>
-      ${btn(1, "Öka")}</div>
-    ${f === "kg" ? `<label class="weight-step">Viktsteg <select data-weightstep="${exId}" aria-label="Viktsteg för ${esc(EX[exId].name)}">${WEIGHT_STEPS.map(n => `<option value="${n}" ${stepFor(exId, "kg") === n ? "selected" : ""}>${fmtNum(n)} kg</option>`).join("")}</select></label>` : ""}</section>`;
+      ${btn(1, "Öka")}</div></section>`;
 }
 
 function fitBigNums() {
-  for (const el of document.querySelectorAll(".bignum input")) el.style.width = `${Math.max(1, String(el.value || el.placeholder).length) + 0.4}ch`;
+  for (const el of document.querySelectorAll(".bignum input")) el.style.width = `calc(${Math.max(1, String(el.value || el.placeholder).length) + 0.4}ch + 24px)`;
 }
 document.addEventListener("input", ev => { if (ev.target.closest && ev.target.closest(".bignum")) fitBigNums(); });
 

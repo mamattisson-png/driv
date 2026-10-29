@@ -177,7 +177,6 @@ function freshState() {
     profile: { sex: "m", age: 30, height: 180, weight: 80, activity: 1.55, goal: "keep" },
     kcalOverride: null,
     meals: [],
-    weightSteps: {},        // övning → eget steg för viktknappar och progression
     weights: {},           // datum → kg
     learned: {},           // rätter som Claude räknat ut, så att de känns igen nästa gång
     plan: { program: "ppl", count: 3, mode: "flex", weekdays: DEFAULT_WEEKDAYS[3].slice(), days: makeDays("ppl", 3) },
@@ -1562,7 +1561,7 @@ function repRange(r) {
   const lo = +nums[0] || 0;
   return { lo, hi: +(nums[1] || nums[0]) || lo };
 }
-const weightStep = id => customWeightStep(id) || (EX[id].hold === "db" ? 2 : EX[id].cat === "legs" || id === "marklyft" ? 5 : 2.5);
+const weightStep = id => EX[id].hold === "db" ? 2 : EX[id].cat === "legs" || id === "marklyft" ? 5 : 2.5;
 // Bättre set: högre vikt, eller samma vikt och fler reps/sekunder
 const betterSet = (a, b) => !b || (+a.kg || 0) > (+b.kg || 0) || ((+a.kg || 0) === (+b.kg || 0) && (+a.reps || 0) > (+b.reps || 0));
 const topSet = sets => sets.filter(hasData).reduce((best, x) => betterSet(x, best) ? x : best, null);
@@ -1976,14 +1975,6 @@ document.addEventListener("change", ev => {
     render(); filterPicker();
     const s = document.querySelector(".picksheet");
     if (s && ds.areasel !== undefined) s.scrollTop = 0;
-    return;
-  }
-  if (ds.weightstep !== undefined) {
-    const value = +t.value;
-    if (EX[ds.weightstep] && WEIGHT_STEPS.includes(value)) {
-      S.weightSteps = { ...S.weightSteps, [ds.weightstep]: value };
-      save(); render();
-    }
     return;
   }
   if (ds.set) {
