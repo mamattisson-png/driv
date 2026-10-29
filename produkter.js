@@ -3,8 +3,11 @@
 // Katalogen och importerade produktdata är ODbL-1.0; se produkter.json och README.
 const productCodes = new Map(), productBrands = new Set(), productAliases = new Map(), productChoices = new Map();
 let productChoiceContext = null;
-const OFF_SEARCH = "https://search.openfoodfacts.org/search";
-const OFF_FIELDS = "code,product_name,product_name_sv,brands,quantity,product_quantity,product_quantity_unit,serving_quantity,serving_quantity_unit,nutriments,last_modified_t,obsolete,data_quality_errors_tags";
+function productSearchConfig() {
+  const cfg = window.DRIV_CONFIG || {};
+  if (!cfg.supabaseUrl || !cfg.supabaseAnonKey) return null;
+  return {url:cfg.supabaseUrl.replace(/\/$/, '') + '/functions/v1/driv-food-search',key:cfg.supabaseAnonKey};
+}
 const productText = value => String(value || "").replace(/\s+och\s+|\s*\+\s*/gi, " & ").replace(/[,;\n]/g, " ").replace(/\s+/g, " ").trim();
 function productNumber(value, max = 100) {
   if (value === null || value === undefined || value === "" || typeof value === "boolean") return null;
@@ -98,7 +101,7 @@ const productSearch = { query: "", id: 0, hits: [], status: "idle", cache: new M
 function productQuery(text) {
   const { rest } = splitAmount(text);
   const words = (rest.slice(0, 120).match(/[\p{L}\p{N}]+/gu) || []).slice(0, 12);
-  return words.length ? `countries_tags:"en:sweden" AND ${words.map(w => `(${w} OR brands_tags:${w})`).join(" AND ")}` : "";
+  return words.length ? `countries_tags:"en:sweden" ${words.join(" ").toLocaleLowerCase('sv-SE')}` : "";
 }
 function updateProductSearch(text) {
   if (!text || (typeof foodSheet !== "undefined" && foodSheet !== productChoiceContext)) {
@@ -114,9 +117,9 @@ function drawProductSearch() {
   const out = document.getElementById("productresults");
   if (!out) return;
   const p = productSearch;
-  if (window.claude || !p.query || p.query.length < 2 || foodPanel === "kcal") { out.innerHTML = ""; return; }
+  if (window.claude || !productSearchConfig() || !p.query || p.query.length < 2 || foodPanel === "kcal") { out.innerHTML = ""; return; }
   const msg = { loading: "Söker märkesvaror…", empty: "Inga produkter med användbara näringsvärden hittades. Prova ett annat namn eller skanna streckkoden.",
-    error: "Kunde inte söka på nätet. Dina lokala livsmedel fungerar fortfarande.", cooldown: "Vänta några sekunder innan du söker igen." }[p.status];
+    error: "Kunde inte söka på nätet. Dina lokala livsmedel fungerar fortfarande.", cooldown: `Sökningen är tillfälligt begränsad. Försök igen om ${Math.max(1, Math.ceil((p.nextRequest - Date.now()) / 1000))} sekunder.` }[p.status];
   out.innerHTML = `<div class="productsearch"><button class="small" data-productsearch ${p.status === "loading" ? "disabled" : ""}>Sök märkesvaror på nätet</button>
     ${msg ? `<div class="muted small" role="status">${esc(msg)}</div>` : ""}
     ${p.status === "error" ? `<a class="small" target="_blank" rel="noopener" href="https://search.openfoodfacts.org/?q=${encodeURIComponent(productQuery(p.query))}">Öppna sökningen hos Open Food Facts</a>` : ""}
@@ -126,7 +129,8 @@ function drawProductSearch() {
 async function searchProducts(text) {
   updateProductSearch(text);
   const p = productSearch, id = ++p.id, key = fold(text.trim()), query = productQuery(text);
-  if (!query || text.trim().length < 2) return;
+  const cfg = productSearchConfig();
+  if (!cfg || !query || text.trim().length < 2) return;
   const cached = p.cache.get(key);
   if (cached && Date.now() - cached.time < 300000) {
     p.hits = cached.hits; p.status = p.hits.length ? "done" : "empty"; drawProductSearch(); return;
@@ -135,10 +139,17 @@ async function searchProducts(text) {
   p.nextRequest = Date.now() + 6000;
   p.status = "loading"; p.hits = []; drawProductSearch();
   const controller = new AbortController(); p.controller = controller;
-  const timer = setTimeout(() => controller.abort(), 15000);
+  const timer = setTimeout(() => controller.abort(), 25000);
   try {
-    const params = new URLSearchParams({ q: query, langs: "sv,en", fields: OFF_FIELDS, page_size: "15" });
-    const res = await fetch(`${OFF_SEARCH}?${params}`, { signal: controller.signal });
+    const res = await fetch(cfg.url, {method:'POST',headers:{apikey:cfg.key,'Content-Type':'application/json'},
+      body:JSON.stringify({q:splitAmount(text).rest.trim()}),signal:controller.signal});
+    if (res.status === 429) {
+      if (id === p.id) {
+        p.nextRequest = Date.now() + Math.min(3600, Math.max(6, Number(res.headers.get('Retry-After')) || 6)) * 1000;
+        p.status = 'cooldown'; p.hits = [];
+      }
+      return;
+    }
     if (!res.ok) throw Error("Söktjänsten svarar inte");
     const data = await res.json();
     if (!Array.isArray(data.hits)) throw Error("Ogiltigt svar");
