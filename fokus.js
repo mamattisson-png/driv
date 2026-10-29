@@ -58,8 +58,10 @@ function afterFocusRender() {
   else { const a = document.querySelector(".fset.active"); if (a && a.scrollIntoView) a.scrollIntoView({ block: "nearest" }); }
 }
 
-// Stegstorlek: hantlar 2 kg, annars 2,5 kg; reps 1; sekunder 5
-const stepFor = (exId, f) => f === "kg" ? (EX[exId].hold === "db" ? 2 : 2.5) : isTimed(exId) ? 5 : 1;
+// Viktsteget sparas per övning. Utan eget val gäller tidigare standardsteg.
+const WEIGHT_STEPS = [0.5, 1, 1.5, 2, 2.5, 5];
+const customWeightStep = id => WEIGHT_STEPS.includes(S.weightSteps && S.weightSteps[id]) ? S.weightSteps[id] : null;
+const stepFor = (exId, f) => f === "kg" ? customWeightStep(exId) || (EX[exId].hold === "db" ? 2 : 2.5) : isTimed(exId) ? 5 : 1;
 
 // ---------- Uppvärmning ----------
 // Lättare set före arbetsseten (ex.warm st). De loggas i w.warm och räknas inte i statistiken eller i om passet är klart.
@@ -81,7 +83,8 @@ function stepSet(d, exId, i, f, dir, warm = false) {
   const ex = d.ex.find(x => x.id === exId);
   const s = warm ? warmAt(d, exId, i) : setAt(d, exId, i), hint = warm ? warmHint(d, ex, i) : liveHint(d, ex, i);
   // Ett tomt fält visar förslaget (dagens mål eller förra gången); stegen utgår från det
-  const cur = s[f] === undefined || s[f] === "" ? +hint[f] || 0 : +s[f];
+  const shown = +hint[f] || (f === "reps" ? repRange(ex.reps).lo : 0);
+  const cur = s[f] === undefined || s[f] === "" ? shown : +s[f];
   const next = cur + dir * stepFor(exId, f);
   s[f] = clampSet(exId, f, f === "kg" ? Math.round(next * 4) / 4 : Math.round(next));
 }
@@ -94,7 +97,8 @@ function bigStepper(exId, i, f, val, hint, label, unit, warm = false) {
     <div class="bigrow">${btn(-1, "Minska")}
       <label class="bignum"><input type="number" inputmode="${f === "kg" ? "decimal" : "numeric"}" step="${f === "kg" ? 0.25 : 1}" min="0" max="${setMax(exId, f)}"
         value="${val ?? ""}" placeholder="${hint ?? ""}" data-set="${exId}" data-i="${i}"${w} data-f="${f}" aria-label="${label}, ${warm ? "uppvärmning" : "set"} ${i + 1}"><span class="klabel">${unit || label}</span></label>
-      ${btn(1, "Öka")}</div></section>`;
+      ${btn(1, "Öka")}</div>
+    ${f === "kg" ? `<label class="weight-step">Viktsteg <select data-weightstep="${exId}" aria-label="Viktsteg för ${esc(EX[exId].name)}">${WEIGHT_STEPS.map(n => `<option value="${n}" ${stepFor(exId, "kg") === n ? "selected" : ""}>${fmtNum(n)} kg</option>`).join("")}</select></label>` : ""}</section>`;
 }
 
 function fitBigNums() {
