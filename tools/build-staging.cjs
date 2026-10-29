@@ -9,7 +9,6 @@ const testProject = 'ujnfbjisrhudvnzvmniq';
 const testKey = process.env.DRIV_TEST_PUBLISHABLE_KEY;
 if (!testKey || !testKey.startsWith('sb_publishable_')) throw new Error('Provide DRIV_TEST_PUBLISHABLE_KEY');
 fs.rmSync(output, { recursive: true, force: true });
-fs.rmSync(output, { recursive: true, force: true });
 fs.mkdirSync(output, { recursive: true });
 const tracked = cp.execFileSync('git', ['ls-files']).toString().trim().split('\n');
 for (const name of tracked) {
@@ -21,7 +20,11 @@ for (const name of tracked) {
 const config = { supabaseUrl: 'https://' + testProject + '.supabase.co', supabaseAnonKey: testKey, vapidPublicKey: '' };
 fs.writeFileSync(path.join(output, 'config.js'), 'window.DRIV_CONFIG = ' + JSON.stringify(config) + ';\n');
 const index = path.join(output, 'index.html');
-fs.writeFileSync(index, fs.readFileSync(index, 'utf8').replace('<title>Driv</title>', '<title>DRIV TEST</title>'));
+const stagingHtml = fs.readFileSync(index, 'utf8')
+  .replace('<title>Driv</title>', '<title>DRIV TEST</title>')
+  // Temporarily disable offline worker only on staging while diagnosing reload failures.
+  .replace('if (!window.claude && "serviceWorker" in navigator', 'if (false && !window.claude && "serviceWorker" in navigator');
+fs.writeFileSync(index, stagingHtml);
 const worker = path.join(output, 'sw.js');
 fs.writeFileSync(worker, fs.readFileSync(worker, 'utf8').replace(/const CACHE = "[^"]+";/, 'const CACHE = "driv-test-' + Date.now() + '";'));
 console.log('Test build created in ' + output + '. Deploy only on a separate domain.');
