@@ -4,9 +4,11 @@ const fs = require('node:fs');
 const path = require('node:path');
 const cp = require('node:child_process');
 const output = 'dist-staging';
+// Cloudflare Pages serves this directory as a static site.
 const testProject = 'ujnfbjisrhudvnzvmniq';
 const testKey = process.env.DRIV_TEST_PUBLISHABLE_KEY;
 if (!testKey || !testKey.startsWith('sb_publishable_')) throw new Error('Provide DRIV_TEST_PUBLISHABLE_KEY');
+fs.rmSync(output, { recursive: true, force: true });
 fs.rmSync(output, { recursive: true, force: true });
 fs.mkdirSync(output, { recursive: true });
 const tracked = cp.execFileSync('git', ['ls-files']).toString().trim().split('\n');
