@@ -1,0 +1,1 @@
+DRIV staging should use a separate domain and test database. Do not use production credentials.
