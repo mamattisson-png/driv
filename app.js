@@ -1151,7 +1151,7 @@ function recentFoods() {
 
 function profileFields(p, noGoal) {
   const sel = (f, opts) => `<select data-prof="${f}">${opts.map(([v, l]) => `<option value="${v}" ${String(p[f]) === String(v) ? "selected" : ""}>${l}</option>`).join("")}</select>`;
-  const num = (f, l) => `<label class="field">${l}<input type="number" inputmode="decimal" data-prof="${f}" value="${p[f]}"></label>`;
+  const num = (f, l) => `<label class="field">${l}<input type="number" inputmode="${f === "age" ? "numeric" : "decimal"}" step="${f === "age" ? 1 : 0.1}" data-prof="${f}" value="${p[f]}"></label>`;
   return `<div class="grid2"><label class="field">Kön${sel("sex", [["m", "Man"], ["f", "Kvinna"]])}</label>${num("age", "Ålder")}
     ${num("height", "Längd (cm)")}${num("weight", "Vikt (kg)")}</div>
     <label class="field" style="margin-top:10px">Aktivitet${sel("activity", ACTIVITY)}</label>
@@ -1216,7 +1216,7 @@ function exRows(target, list, withOrder) {
       <div class="grow"><b>${esc(EX[e.id].name)}</b>${target === "daily" ? "" : muscleLine(e.id)}${EX[e.id].cat === "cardio" ? `<div class="muted">${esc(e.reps || EX[e.id].muscles)}</div>`
         : `<div class="row" style="margin-top:4px">
         <input type="number" inputmode="numeric" min="1" style="width:52px" value="${e.sets}" data-ed="${i}" data-t="${target}" data-f="sets" aria-label="Antal set"><span class="muted">×</span>
-        <input style="width:76px" value="${esc(e.reps)}" data-ed="${i}" data-t="${target}" data-f="reps" aria-label="Reps"></div>`}</div>
+        <input type="text" inputmode="numeric" style="width:76px" value="${esc(e.reps)}" data-ed="${i}" data-t="${target}" data-f="reps" aria-label="Reps"></div>`}</div>
       ${withOrder ? `<div class="col"><button class="small ghost" data-mv="-1" data-t="${target}" data-idx="${i}" ${i ? "" : "disabled"} aria-label="Flytta upp">↑</button>
         <button class="small ghost" data-mv="1" data-t="${target}" data-idx="${i}" ${i < list.length - 1 ? "" : "disabled"} aria-label="Flytta ned">↓</button></div>` : ""}
       <button class="small" data-swap="${target}" data-idx="${i}">Byt</button>

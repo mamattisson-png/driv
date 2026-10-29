@@ -1,6 +1,6 @@
 # DRIV – Kommande förbättringar
 
-Senast uppdaterad: 2026-10-29. Källa: gemensam förbättringslista i ChatGPT. Denna fil är en planeringslista, inte en bekräftelse på att funktioner har implementerats. Status 1–3 har markerats klara av användaren. Punkt 17 är färdigställd och godkänd för publicering.
+Senast uppdaterad: 2026-10-30. Källa: gemensam förbättringslista i ChatGPT. Denna fil är en planeringslista, inte en bekräftelse på att funktioner har implementerats. Status 1–3 har markerats klara av användaren. Punkt 17 är färdigställd och godkänd för publicering.
 
 | Nr | Förbättring | Kategori | Prioritet | Status |
 |---|---|---|---|---|
@@ -19,10 +19,10 @@ Senast uppdaterad: 2026-10-29. Källa: gemensam förbättringslista i ChatGPT. D
 | 13 | Färdigställ uppvärmningsset | Träning | Medel | Ej påbörjad |
 | 14 | Lägg till övning under pågående pass | Träning | Hög | Ej påbörjad |
 | 15 | Tydligare Historik och Utveckling | Historik | Hög | Ej påbörjad |
-| 16 | Numeriskt tangentbord för alla sifferfält | UX | Hög | Ej påbörjad |
+| 16 | Numeriskt tangentbord för alla sifferfält | UX | Hög | Under arbete |
 | 17 | Ingen inloggningsblinkning vid uppdatering | Bugg | Hög | Klar |
 | 18 | Sista steget i Kom igång: konto eller fortsätt utan | Onboarding | Hög | Ej påbörjad |
-| 19 | Tydligare e-postadress när inloggningskod inväntas | Konto | Medel | Ej påbörjad |
+| 19 | Tydligare e-postadress när inloggningskod inväntas | Konto | Medel | Under arbete |
 
 ## Detaljer och acceptanskriterier
 

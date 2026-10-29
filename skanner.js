@@ -114,7 +114,7 @@ async function lookupBarcode(code) {
     scanStatus("Hittad! Ange hur mycket du åt.");
     out.innerHTML = `<div class="card scan-product"><b>${esc(name)}</b>
       <div class="muted">${Math.round(kcal)} kcal · ${fmtNum(+(n.proteins_100g || 0))} g protein per 100 g</div>
-      <div class="row" style="margin-top:10px"><label class="field grow">Mängd (g)<input id="scangrams" type="number" inputmode="decimal" value="${portion}"></label>
+      <div class="row" style="margin-top:10px"><label class="field grow">Mängd (g)<input id="scangrams" type="number" inputmode="decimal" min="0" step="any" value="${portion}"></label>
         <div class="grow" id="scancalc"></div></div>
       <button class="primary wide" style="margin-top:10px" data-scanlog>Logga</button>
       <button class="small" data-scanagain>Skanna en annan vara</button></div>`;

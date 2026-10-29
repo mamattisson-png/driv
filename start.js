@@ -43,7 +43,8 @@ function loginView() {
     return `<div class="login"><button class="backbtn" data-changeemail>${icon("left", 18)}Byt e-post</button>
       <span class="loginic">${icon("mail", 26)}</span>
       <h1>Kolla din mejl</h1>
-      <div class="muted lead">Vi har skickat en kod till <b class="strong">${esc(a.email)}</b>. Skriv in den här, eller tryck på länken i mejlet.</div>
+      <div class="muted lead">Skriv in koden här, eller tryck på länken i mejlet.</div>
+      ${codeDestination()}
       <input id="acctcode" class="codefield" inputmode="numeric" autocomplete="one-time-code" maxlength="10" placeholder="Kod från mejlet" aria-label="Kod från mejlet">
       <div class="row between muted small"><span>Ingen kod? Kolla skräpposten.</span><button class="linkbtn2" data-sendcode ${a.busy ? "disabled" : ""}>Skicka igen</button></div>
       ${msg}
