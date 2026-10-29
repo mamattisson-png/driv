@@ -7,6 +7,7 @@ const output = 'dist-staging';
 const testProject = 'ujnfbjisrhudvnzvmniq';
 const testKey = process.env.DRIV_TEST_PUBLISHABLE_KEY;
 if (!testKey || !testKey.startsWith('sb_publishable_')) throw new Error('Provide DRIV_TEST_PUBLISHABLE_KEY');
+fs.rmSync(output, { recursive: true, force: true });
 fs.mkdirSync(output, { recursive: true });
 const tracked = cp.execFileSync('git', ['ls-files']).toString().trim().split('\n');
 for (const name of tracked) {
@@ -20,5 +21,5 @@ fs.writeFileSync(path.join(output, 'config.js'), 'window.DRIV_CONFIG = ' + JSON.
 const index = path.join(output, 'index.html');
 fs.writeFileSync(index, fs.readFileSync(index, 'utf8').replace('<title>Driv</title>', '<title>DRIV TEST</title>'));
 const worker = path.join(output, 'sw.js');
-fs.writeFileSync(worker, fs.readFileSync(worker, 'utf8').replace('const CACHE = "driv-', 'const CACHE = "driv-test-'));
+fs.writeFileSync(worker, fs.readFileSync(worker, 'utf8').replace(/const CACHE = "[^"]+";/, 'const CACHE = "driv-test-' + Date.now() + '";'));
 console.log('Test build created in ' + output + '. Deploy only on a separate domain.');
