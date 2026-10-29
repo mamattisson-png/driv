@@ -1374,6 +1374,12 @@
   .rstats.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .ksave { margin-top: 8px; }
   .kshort.card { padding: 0 16px; }
+  .saved-meals { margin: 8px 0; }
+  .saved-meals > p { margin: 4px 4px 10px; }
+  .saved-meal-row { display: flex; align-items: center; gap: 8px; }
+  .saved-meal-row + .saved-meal-row { border-top: 1px solid var(--line); }
+  .saved-meal-row .klink { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; min-width: 0; border: 0; overflow-wrap: anywhere; }
+  .saved-meal-row .kidel { flex-shrink: 0; }
   .addpage .fshead h1 { margin-bottom: 4px; }
   .kinnow { display: flex; align-items: center; gap: 6px; margin: 10px 0 0; padding: 10px 14px; border-radius: 14px; background: var(--card-2); }
   .current-meal { display: block; padding: 0; background: none; }
