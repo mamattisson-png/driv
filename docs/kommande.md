@@ -18,6 +18,7 @@ Senast uppdaterad: 2026-10-29. Källa: gemensam förbättringslista i ChatGPT. D
 | 12 | Enhetlig profil- och inställningsikon | Design | Medel | Ej påbörjad |
 | 13 | Färdigställ uppvärmningsset | Träning | Medel | Ej påbörjad |
 | 14 | Lägg till övning under pågående pass | Träning | Hög | Ej påbörjad |
+| 15 | Tydligare Historik och Utveckling | Historik | Hög | Ej påbörjad |
 
 ## Detaljer och acceptanskriterier
 
@@ -35,6 +36,8 @@ Senast uppdaterad: 2026-10-29. Källa: gemensam förbättringslista i ChatGPT. D
 12. **Enhetlig profil- och inställningsikon:** Samma ikon, placering och beteende på Hem och Historik; föredra initialavatar.
 13. **Färdigställ uppvärmningsset:** Det finns delar av kod/styling men ingen verifierad väg att lägga till dem. Lägg till valfria uppvärmningsset per övning, egna kg/reps, separerade från arbetsset, rekord och träningsvolym. Testa hela flödet innan markering som klar.
 14. **Lägg till övning under pågående pass:** Visa diskret '+ Övning' i befintlig knapprad. Välj befintlig eller skapa egen, ange set/reps och lägg till i passet och övningsikonerna. Välj om ändringen endast gäller dagens session (standard) eller sparas i programmet. Pågående set, vila och loggar får inte störas.
+
+15. **Tydligare Historik och Utveckling:** Utveckla befintliga vyer i `historik.js`, utan att skapa parallella system. **Historik:** kalenderdagar ska ge en tydlig, lättläst sammanfattning av genomförda pass (övningar, set, vikter, reps, passlängd när data finns), Dailys och kost; visa personbästa och jämförelse med föregående motsvarande pass, med detaljer vid tryck. **Utveckling:** visa relevanta och begripliga nyckeltal och grafer över styrkeutveckling per övning, träningsfrekvens och kontinuitet, med valbar tidsperiod. Lyft fram verifierade framsteg, till exempel +5 kg i bänkpress eller antal pass under månaden. Bevara kalender, veckojämförelse, befintliga grafer och möjligheten att redigera tidigare dagar. Gör mobilvyn luftig, lätt att skanna och utan onödigt många kort. Hantera saknade data och nya användare korrekt. Granska aktuell implementation och föreslå design innan kodändring.
 
 ## Arbetsregler
 
