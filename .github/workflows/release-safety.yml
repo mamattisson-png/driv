@@ -1,0 +1,30 @@
+name: DRIV cache version and smoke checks
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  validate-and-refresh-cache:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Check project invariants
+        run: python -m unittest discover -s tests -p 'test_release_safety.py' -v
+      - name: Generate correct offline cache version
+        run: python tools/sw-version.py
+      - name: Commit cache version if needed
+        run: |
+          if ! git diff --quiet -- sw.js; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add sw.js
+            git commit -m "chore: refresh service worker asset hash [skip ci]"
+            git push
+          fi
