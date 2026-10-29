@@ -799,14 +799,11 @@
   .fbar-row { display: flex; gap: 10px; align-items: stretch; }
   .fbar-action { min-width: 0; }
   .fbar .fdone { margin: 0; height: 100%; }
-  .completed-sets { border-bottom: 1px solid var(--line); }
-  .completed-sets summary { display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 4px 2px; color: var(--muted); font-size: 14px; cursor: pointer; list-style: none; }
-  .completed-sets summary::-webkit-details-marker { display: none; }
-  .completed-sets summary > .ic:first-child { color: var(--ok-text); }
-  .completed-sets[open] summary > .ic:last-child { transform: rotate(90deg); }
-  .completed-sets > .fsets { margin: 4px 0 12px; }
-  .completed-sets .fset.done:not(.active) { min-height: 44px; padding-top: 0; padding-bottom: 0; }
-  .completed-sets .fsel { min-height: 44px; }
+  .set-icons { display: flex; flex-wrap: wrap; gap: 6px; }
+  .set-icon { width: 40px; min-height: 40px; padding: 0; border-radius: 12px; background: var(--card-2); border: 1px solid var(--line); color: var(--muted); font-size: 13px; font-weight: 600; }
+  .set-icon.done { background: var(--ok-soft); color: var(--ok-text); border-color: var(--ok-text); }
+  .set-icon.warm:not(.done):not(.on) { border-color: var(--m-part); }
+  .set-icon.on { background: var(--accent-strong); border-color: var(--accent-strong); color: var(--on-accent); }
   .fbar { position: sticky; bottom: calc(96px + env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; gap: 8px; padding: 10px 0 12px; background: var(--bg); z-index: 4; }
   .fbar .primary { min-height: 60px; border-radius: 20px; font-size: 17px; }
   .frest { height: 60px; padding: 0 16px; border-radius: 20px; background: var(--card); border: 1px solid var(--line); display: flex; align-items: center; gap: 8px; color: var(--muted); flex: none; }
@@ -820,6 +817,14 @@
   body.resting .frestctl { display: flex; }
   body.infocus.resting .overlay { padding-bottom: 0; }
   body.infocus.resting .sheet { max-height: 88vh; }
+
+  body.infocus, body.infocus.resting { height: 100dvh; overflow: hidden; padding-bottom: 0; }
+  body.infocus main { height: calc(100dvh - 96px - env(safe-area-inset-bottom, 0px)); padding-top: 12px; padding-bottom: 0; }
+  body.infocus .focus { height: 100%; min-height: 0; display: grid; grid-template-rows: minmax(0, 1fr) auto; gap: 0; }
+  .focus-scroll { min-height: 0; overflow-y: auto; overscroll-behavior: contain; display: flex; flex-direction: column; gap: 14px; padding-bottom: 12px; }
+  .focus-controls { min-width: 0; padding-top: 8px; background: var(--bg); }
+  body.infocus .fbar { position: static; margin-top: 0; }
+  @media (pointer: coarse) { body.infocus.typing main { height: 100dvh; } }
 
   /* ---------- Muskelkartan ---------- */
   .mcard { display: flex; flex-direction: column; gap: 12px; }

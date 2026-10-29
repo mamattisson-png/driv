@@ -54,16 +54,11 @@ function afterFocusRender() {
   if (!focus || !focus.scroll || tab !== "pass" || editDate || focus.suspended) return;
   const where = focus.scroll;
   focus.scroll = null;
-  if (where === "top") window.scrollTo(0, 0);
+  const pane = document.querySelector(".focus-scroll");
+  if (where === "top") { if (pane) pane.scrollTop = 0; }
   else {
-    const a = document.querySelector(".fset.active"), footer = document.querySelector(".fbar");
-    if (a && a.scrollIntoView) {
-      a.scrollIntoView({ block: "nearest" });
-      if (footer) {
-        const bottom = a.getBoundingClientRect().bottom, top = footer.getBoundingClientRect().top;
-        if (bottom > top - 12) window.scrollBy(0, bottom - top + 12);
-      }
-    }
+    const a = document.querySelector(".fset.active");
+    if (a && a.scrollIntoView) a.scrollIntoView({ block: "nearest" });
   }
 }
 
@@ -164,9 +159,8 @@ function focusView() {
     return `<li class="${cls}"><button class="fcheck ${v.ok ? "on" : ""}" ${okAttrs(s)} aria-pressed="${!!v.ok}" aria-label="${s.w ? "Uppvärmning" : "Set"} ${s.i + 1} klart">${v.ok ? icon("check", 14) : `<span class="fb">${badge(s)}</span>`}</button>
       <button class="fsel" data-fsel="${k}" aria-label="Välj ${s.w ? "uppvärmning" : "set"} ${s.i + 1}"><span>${val}</span>${v.ok ? `<span class="fstate">${s.w ? "Uppvärmd" : "Klart"}</span>` : ""}</button></li>`;
   });
-  const completed = rows.filter((_, k) => stOf(all[k]).ok && k !== sel);
-  const currentRows = rows.filter((_, k) => !stOf(all[k]).ok || k === sel).join("");
-  const completedView = completed.length ? `<details class="completed-sets"><summary>${icon("check", 16)}<span class="grow">${completed.length} ${completed.length === 1 ? "genomfört set" : "genomförda set"}</span>${icon("right", 16)}</summary><ol class="fsets">${completed.join("")}</ol></details>` : "";
+  const currentRows = rows.filter((_, k) => k === sel).join("");
+  const setNav = `<div class="set-icons" role="group" aria-label="Set">${all.map((s, k) => `<button class="set-icon ${stOf(s).ok ? "done" : ""} ${s.w ? "warm" : ""} ${k === sel ? "on" : ""}" data-fsel="${k}" aria-pressed="${k === sel}" aria-label="${s.w ? "Uppvärmning" : "Set"} ${s.i + 1}${stOf(s).ok ? ", genomfört" : ""}">${badge(s)}</button>`).join("")}</div>`;
   // Superset: varvet man är på och övningarna i gruppen
   const round = g ? Math.min(...d.ex.slice(g[0], g[1] + 1).map(x => ((w && w.sets[x.id]) || []).filter(z => z && z.ok).length)) + 1 : 0;
   const rounds = g ? Math.max(...d.ex.slice(g[0], g[1] + 1).map(x => x.sets)) : 0;
@@ -200,7 +194,7 @@ function focusView() {
     ${!g && d.ex.length > 1 ? `<button class="chipbtn ${focus.ssPick ? "on" : ""}" data-sspick>${icon("plus", 14)}Superset</button>` : ""}
     ${d.ex.length > 1 ? `<button class="chipbtn" data-forder>Ordning</button>` : ""}
     ${S.daily.length ? `<button class="chipbtn" data-fdopen aria-label="Dailys, ${dDone} av ${S.daily.length} klara">Dailys ${dDone} av ${S.daily.length}</button>` : ""}</div>`;
-  return `<div class="focus">
+  return `<div class="focus"><div class="focus-scroll">
     <header class="fhead"><button class="fhbtn" data-fend>Avsluta</button>
       <span class="fclock"><span class="klabel">${esc(d.name)}</span><b class="ftimer" data-start="${start}">${clockText(Date.now() - start)}</b></span>
       <button class="fhbtn" data-fswap="${focus.idx}">Byt övning</button></header>
@@ -210,13 +204,14 @@ function focusView() {
       <div class="grow"><span class="muted small">Övning ${focus.idx + 1} av ${d.ex.length} · ${repsText(ex)}${nW ? ` · +${nW} uppv.` : ""}</span>
       <h2>${esc(EX[ex.id].name)}</h2></div></div>
     <div class="ftip">${icon("trend", 16)}<span>${tip}</span></div>
-    ${completedView}
-    <ol class="fsets" aria-label="Set">${currentRows}</ol>
+    ${setNav}
+    ${currentRows ? `<ol class="fsets" aria-label="Valt set">${currentRows}</ol>` : ""}
     ${allDone ? `<div class="fall">${icon("check", 16)}Alla set klara</div>` : ""}
-    ${tools}${ssPick}
+    ${ssPick}</div>
+    <div class="focus-controls">${tools}
     <div class="fbar">${restBox ? `<div class="frestctl" role="group" aria-label="Vila"><button class="small" data-restadd="-15">−15</button>
       <button class="small" data-restadd="15">+15</button><button class="small" data-restskip>Klar</button></div>` : ""}
-      <div class="fbar-row">${main}${restBox}</div></div>
+      <div class="fbar-row">${main}${restBox}</div></div></div>
   </div>${focusDailies ? `<div class="overlay" data-fdclose><div class="sheet">
     <div class="row between"><span class="muted small">Fläta in i passet</span><button class="small ghost iconbtn" data-fdclose aria-label="Stäng">${icon("close", 18)}</button></div>
     ${dailiesCard(true)}<button class="wide" data-fdclose style="margin-top:14px">Tillbaka till passet</button></div></div>` : ""}${focusOrder ? orderSheet(d, w) : ""}${focusEnd ? endSheet(d, w) : ""}`;
@@ -397,5 +392,9 @@ document.addEventListener("click", ev => {
   else if (ds.step) stepSet(currentPassDay(), ds.ex, +ds.i, ds.step, +ds.dir, ds.w !== undefined);
   save();
   render();
-  if (ds.focusgo !== undefined || ds.focusstart || ds.focusex !== undefined) window.scrollTo(0, 0);
+  if (ds.focusgo !== undefined || ds.focusstart || ds.focusex !== undefined) {
+    const pane = document.querySelector(".focus-scroll");
+    if (pane) pane.scrollTop = 0;
+    window.scrollTo(0, 0);
+  }
 });

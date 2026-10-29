@@ -24,7 +24,7 @@ def test_set_action_is_uncovered_at_every_scroll_position(page,size,resting,supe
     assert page.locator('.fbar .fdone').count()==1
     assert page.locator('.fset.active .fdone').count()==0
     for position in [0,0.5,1]:
-        page.evaluate('p=>window.scrollTo(0,(document.documentElement.scrollHeight-innerHeight)*p)',position)
+        page.locator('.focus-scroll').evaluate('(e,p)=>e.scrollTop=(e.scrollHeight-e.clientHeight)*p',position)
         button=page.locator('.fbar .fdone')
         box=button.bounding_box();nav=page.locator('#nav').bounding_box()
         assert box['y']>=0 and box['y']+box['height']<=nav['y']
@@ -35,19 +35,42 @@ def test_set_action_is_uncovered_at_every_scroll_position(page,size,resting,supe
     assert page.locator('body').evaluate('e=>e.scrollWidth<=innerWidth')
 
 
-def test_completed_warmup_and_work_sets_can_be_expanded_and_edited(page):
+def test_all_sets_are_visible_as_small_selectable_icons(page):
     many_sets(page)
-    assert '11 genomförda set' in page.inner_text('.completed-sets summary')
-    assert page.locator('.completed-sets').get_attribute('open') is None
-    assert page.locator('.completed-sets .fset:visible').count()==0
-    page.click('.completed-sets summary')
-    assert page.locator('.completed-sets .fset:visible').count()==11
-    page.click('.completed-sets [data-fsel="0"]')
+    icons=page.locator('.set-icons button')
+    assert icons.count()==12
+    assert page.locator('.set-icons button.done').count()==11
+    assert page.locator('.completed-sets').count()==0
+    assert icons.all_text_contents()==['U1','U2','1','2','3','4','5','6','7','8','9','10']
+    page.locator('.set-icons').scroll_into_view_if_needed()
+    for icon in icons.all():
+        assert icon.is_visible()
+        r=icon.bounding_box();assert 0<=r['x'] and r['x']+r['width']<=390
+    page.click('.set-icons [data-fsel="0"]')
     assert page.locator('.fset.active.warm').count()==1
     assert page.input_value('.fset.active [data-f="kg"]')=='5'
     page.click('.fbar .fdone')
     assert page.locator('.fset.active [data-f="kg"]').get_attribute('data-i')=='9'
     assert page.evaluate('workoutsOn(TODAY)[0].warm.bankpress[0].kg')==5
+
+
+@pytest.mark.parametrize('size',[(320,568),(390,844)])
+def test_all_workout_tools_can_be_reached_without_any_overlay(page,size):
+    page.set_viewport_size({'width':size[0],'height':size[1]});many_sets(page)
+    for button in page.locator('.ftools button').all():
+        button.scroll_into_view_if_needed()
+        box=button.bounding_box();footer=page.locator('.fbar').bounding_box()
+        assert box['y']>=0 and box['y']+box['height']<=footer['y']
+        assert button.evaluate('e=>{const r=e.getBoundingClientRect();return e.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2));}')
+
+
+def test_adjusting_values_preserves_the_workout_scroll_position(page):
+    many_sets(page)
+    page.locator('.fset.active').scroll_into_view_if_needed()
+    before=page.locator('.focus-scroll').evaluate('e=>e.scrollTop')
+    page.click('.fset.active [data-step="kg"][data-dir="1"]')
+    after=page.locator('.focus-scroll').evaluate('e=>e.scrollTop')
+    assert abs(after-before)<2
 
 
 def test_sticky_set_action_records_the_right_set_and_advances(page):
