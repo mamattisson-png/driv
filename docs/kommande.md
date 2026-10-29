@@ -21,6 +21,7 @@ Senast uppdaterad: 2026-10-29. Källa: gemensam förbättringslista i ChatGPT. D
 | 15 | Tydligare Historik och Utveckling | Historik | Hög | Ej påbörjad |
 | 16 | Numeriskt tangentbord för alla sifferfält | UX | Hög | Ej påbörjad |
 | 17 | Ingen inloggningsblinkning vid uppdatering | Bugg | Hög | Klar |
+| 18 | Sista steget i Kom igång: konto eller fortsätt utan | Onboarding | Hög | Ej påbörjad |
 
 ## Detaljer och acceptanskriterier
 
@@ -45,7 +46,7 @@ Senast uppdaterad: 2026-10-29. Källa: gemensam förbättringslista i ChatGPT. D
 
 17. **Ingen inloggningsblinkning vid uppdatering**: Appen väntar tills den sparade sessionen och profilen har lästs innan kontoläget visas. Inloggade ska inte tillfälligt få uppmaningen att skapa konto. Vid nätfel behålls lokala loggar utan påstående om utloggning.
 
-## Arbetsregler
+18. **Sista steget i Kom igång: konto eller fortsätt utan:** Efter nuvarande steg 3 (Ditt mål), visa ett avslutande steg 4 med två tydliga val: **Skapa konto / Logga in** och **Fortsätt utan konto**. Förklara kort att träningsdata som bara lagras lokalt kan gå förlorad om användaren rensar webbläsardata, byter enhet eller avinstallerar appen. Konto möjliggör säkerhetskopiering/synkronisering när den fungerar. Inloggning ska vara frivillig och inte hindra direkt användning av appen. Bevara ifyllda onboardingval vid båda vägarna. Undvik att lova att data alltid är skyddade och ändra inte befintliga konto- eller synkflöden utan test.\n\n## Arbetsregler
 
 - Ändra inte appens implementation utan användarens uttryckliga godkännande.
 - Bevara befintlig design, DRIV-logga och övningsfigurer om inte annan ändring godkänns.
