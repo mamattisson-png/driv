@@ -159,8 +159,9 @@ function focusView() {
     return `<li class="${cls}"><button class="fcheck ${v.ok ? "on" : ""}" ${okAttrs(s)} aria-pressed="${!!v.ok}" aria-label="${s.w ? "Uppvärmning" : "Set"} ${s.i + 1} klart">${v.ok ? icon("check", 14) : `<span class="fb">${badge(s)}</span>`}</button>
       <button class="fsel" data-fsel="${k}" aria-label="Välj ${s.w ? "uppvärmning" : "set"} ${s.i + 1}"><span>${val}</span>${v.ok ? `<span class="fstate">${s.w ? "Uppvärmd" : "Klart"}</span>` : ""}</button></li>`;
   });
-  const currentRows = rows.filter((_, k) => k === sel).join("");
-  const setNav = `<div class="set-icons" role="group" aria-label="Set">${all.map((s, k) => `<button class="set-icon ${stOf(s).ok ? "done" : ""} ${s.w ? "warm" : ""} ${k === sel ? "on" : ""}" data-fsel="${k}" aria-pressed="${k === sel}" aria-label="${s.w ? "Uppvärmning" : "Set"} ${s.i + 1}${stOf(s).ok ? ", genomfört" : ""}">${badge(s)}</button>`).join("")}</div>`;
+  const completed = rows.filter((_, k) => stOf(all[k]).ok && k !== sel);
+  const currentRows = rows.filter((_, k) => !stOf(all[k]).ok || k === sel).join("");
+  const completedView = completed.length ? `<details class="completed-sets"><summary>${icon("check", 16)}<span class="grow">${completed.length} ${completed.length === 1 ? "genomfört set" : "genomförda set"}</span>${icon("right", 16)}</summary><ol class="fsets">${completed.join("")}</ol></details>` : "";
   // Superset: varvet man är på och övningarna i gruppen
   const round = g ? Math.min(...d.ex.slice(g[0], g[1] + 1).map(x => ((w && w.sets[x.id]) || []).filter(z => z && z.ok).length)) + 1 : 0;
   const rounds = g ? Math.max(...d.ex.slice(g[0], g[1] + 1).map(x => x.sets)) : 0;
@@ -204,8 +205,8 @@ function focusView() {
       <div class="grow"><span class="muted small">Övning ${focus.idx + 1} av ${d.ex.length} · ${repsText(ex)}${nW ? ` · +${nW} uppv.` : ""}</span>
       <h2>${esc(EX[ex.id].name)}</h2></div></div>
     <div class="ftip">${icon("trend", 16)}<span>${tip}</span></div>
-    ${setNav}
-    ${currentRows ? `<ol class="fsets" aria-label="Valt set">${currentRows}</ol>` : ""}
+    ${completedView}
+    ${currentRows ? `<ol class="fsets" aria-label="Set">${currentRows}</ol>` : ""}
     ${allDone ? `<div class="fall">${icon("check", 16)}Alla set klara</div>` : ""}
     ${ssPick}</div>
     <div class="focus-controls">${tools}

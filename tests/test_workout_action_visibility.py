@@ -35,18 +35,15 @@ def test_set_action_is_uncovered_at_every_scroll_position(page,size,resting,supe
     assert page.locator('body').evaluate('e=>e.scrollWidth<=innerWidth')
 
 
-def test_all_sets_are_visible_as_small_selectable_icons(page):
+def test_original_set_rows_and_exercise_navigation_are_preserved(page):
     many_sets(page)
-    icons=page.locator('.set-icons button')
-    assert icons.count()==12
-    assert page.locator('.set-icons button.done').count()==11
-    assert page.locator('.completed-sets').count()==0
-    assert icons.all_text_contents()==['U1','U2','1','2','3','4','5','6','7','8','9','10']
-    page.locator('.set-icons').scroll_into_view_if_needed()
-    for icon in icons.all():
-        assert icon.is_visible()
-        r=icon.bounding_box();assert 0<=r['x'] and r['x']+r['width']<=390
-    page.click('.set-icons [data-fsel="0"]')
+    assert page.locator('.set-icons, .set-icon').count()==0
+    assert page.locator('.fsets > .fset').count()==12
+    assert page.locator('.fsets > .fset.done').count()==11
+    assert page.locator('[data-focusgo="0"]').count()>=1
+    assert page.locator('[data-focusgo="1"]').count()>=1
+    page.locator('.completed-sets summary').click()
+    page.click('.fsets [data-fsel="0"]')
     assert page.locator('.fset.active.warm').count()==1
     assert page.input_value('.fset.active [data-f="kg"]')=='5'
     page.click('.fbar .fdone')
