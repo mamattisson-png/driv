@@ -55,3 +55,20 @@ test('independent daily habits survive merge', () => {
   assert.equal(result.days['2026-10-29'].dailies.water, true);
   assert.equal(result.days['2026-10-29'].dailies.creatine, true);
 });
+
+test('daily merge is independent of client order', () => {
+  const a = { days: { '2026-10-29': { dailies: { water: true }, _dailyT: { water: 200 }, _t: { dailies: 200 } } } };
+  const b = { days: { '2026-10-29': { dailies: { creatine: true }, _dailyT: { creatine: 300 }, _t: { dailies: 300 } } } };
+  for (const [left, right] of [[a, b], [b, a]]) {
+    const result = merge('m-2026-10', left, right).days['2026-10-29'].dailies;
+    assert.equal(result.water, true);
+    assert.equal(result.creatine, true);
+  }
+});
+
+test('explicitly deleted daily does not reappear', () => {
+  const deleted = { dailies: {}, _dailyT: { water: 300 }, _t: { dailies: 300 } };
+  const old = { dailies: { water: true }, _dailyT: { water: 200 }, _t: { dailies: 200 } };
+  const result = merge('m-2026-10', { days: { '2026-10-29': deleted } }, { days: { '2026-10-29': old } });
+  assert.equal('water' in result.days['2026-10-29'].dailies, false);
+});
