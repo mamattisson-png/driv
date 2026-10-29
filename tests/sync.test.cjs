@@ -5,14 +5,13 @@ const assert = require('node:assert/strict');
 const { test } = require('node:test');
 
 const source = fs.readFileSync('app.js', 'utf8');
-const start = source.indexOf('function stableJson(');
-const end = source.indexOf('stamp(true);', start);
+const start = source.indexOf('const stampSnap =');
+const end = source.indexOf('function mergeDoc(', start);
 assert.ok(start >= 0 && end > start, 'Could not locate sync functions');
 const ctx = vm.createContext({ normalize: x => x, crypto: require('node:crypto').webcrypto, S: { log: {} } });
-const mergeStart = source.indexOf('function mergeDoc(');
-const mergeEnd = source.indexOf('function applyCloudDoc(', mergeStart);
-assert.ok(mergeStart > end && mergeEnd > mergeStart, 'Could not locate mergeDoc');
-vm.runInContext(source.slice(start, end) + '\n' + source.slice(mergeStart, mergeEnd), ctx);
+const mergeEnd = source.indexOf('function applyCloudDoc(', end);
+assert.ok(mergeEnd > end, 'Could not locate mergeDoc');
+vm.runInContext(source.slice(start, mergeEnd), ctx);
 const merge = (id, a, b) => vm.runInContext('mergeDoc', ctx)(id, a, b);
 const plain = x => JSON.parse(JSON.stringify(x));
 const day = (workouts, deleted = {}) => ({
