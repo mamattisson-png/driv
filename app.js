@@ -1948,8 +1948,8 @@ document.addEventListener("click", ev => {
   else if (ds.cancelsetup !== undefined) { draft = null; tab = setupFrom || "profil"; }
   else if (ds.week) weekOffset = Math.min(0, weekOffset + +ds.week);
   // Klar: tillbaka till Historik, eller till idag om dagen valdes i Kosts veckoremsa
-  else if (ds.editdone !== undefined && kostDay && tab === "kost") { editDate = null; kostDay = false; mealPage = null; }
-  else if (ds.editdone !== undefined) { histDay = editDate; editDate = null; tab = "historik"; chosenDay = null; }
+  else if (ds.editdone !== undefined && kostDay && tab === "kost") { editDate = null; kostDay = false; closeMealEditor(); }
+  else if (ds.editdone !== undefined) { if (tab === "kost") closeMealEditor(); histDay = editDate; editDate = null; tab = "historik"; chosenDay = null; }
   else if (ds.export !== undefined) { exportData(); return; }
   else if (ds.import !== undefined) { document.getElementById("importfile").click(); return; }
   else if (ds.reset !== undefined) {

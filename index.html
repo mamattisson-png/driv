@@ -1372,6 +1372,9 @@
   .kshort.card { padding: 0 16px; }
   .addpage .fshead h1 { margin-bottom: 4px; }
   .kinnow { display: flex; align-items: center; gap: 6px; margin: 10px 0 0; padding: 10px 14px; border-radius: 14px; background: var(--card-2); }
+  .current-meal { display: block; padding: 0; background: none; }
+  .current-meal > h2 { font: inherit; font-size: 14px; margin: 14px 2px 8px; }
+  .current-meal .kmacros { margin: 12px 0 4px; }
   .kintake { margin: 12px 0 4px; padding: 12px 14px; }
   .kintake .bar { margin: 8px 0; }
   .kintake3 { display: flex; justify-content: space-between; gap: 8px; color: var(--muted); }
@@ -1515,6 +1518,8 @@
   .fletters button { min-width: 32px; min-height: 32px; padding: 0 6px; border: 0; border-radius: 10px; background: var(--card-2); color: var(--muted); font-size: 13px; font-weight: 600; }
   /* Knappar längst ned: en tät botten bakom dem ända ned till menyn, så att inget skymtar under */
   .kadd, .pagefoot { bottom: calc(88px + env(safe-area-inset-bottom, 0px)); }
+  body.resting:not(.infocus) .pagefoot { bottom: calc(104px + env(safe-area-inset-bottom, 0px) + var(--rest-h, 72px)); }
+  body.resting:has(.pagefoot) { padding-bottom: calc(116px + env(safe-area-inset-bottom, 0px) + var(--rest-h, 72px)); }
   .kadd, .pagefoot { padding: 12px 0; margin-top: 4px; background: var(--bg); }
   .stickcta { box-shadow: 0 14px 0 var(--bg); }
   body::after { background: var(--bg); height: calc(90px + env(safe-area-inset-bottom, 0px)); }

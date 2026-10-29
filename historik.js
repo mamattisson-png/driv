@@ -203,7 +203,7 @@ document.addEventListener("click", ev => {
     if (focus) focus.suspended = true;
     passOpen = true;
   }
-  else if (ds.hfood !== undefined) { editDate = histDay === TODAY ? null : histDay; histDay = null; tab = "kost"; }
+  else if (ds.hfood !== undefined) { editDate = histDay === TODAY ? null : histDay; histDay = null; kostDay = false; closeMealEditor(); tab = "kost"; }
   save();
   render();
   if (ds.hpass !== undefined || ds.hfood !== undefined) window.scrollTo(0, 0);

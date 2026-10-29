@@ -397,7 +397,6 @@ def test_recept_byggs_och_loggas_per_portion(page):
     assert "Tillagt i middag" in page.inner_text('[data-ruse="0"].flashed') and page.locator(".toast").count() == 0
     page.wait_for_function("tab === 'kost' && mealPage === 3")
     assert "Lasagne" in page.inner_text(".kitems")
-    page.click(".pagefoot [data-addto]")
     page.click('[data-sheetmeal="1"]')
     assert page.locator('.qadd:has-text("Lasagne")').count() == 1
 
@@ -674,7 +673,7 @@ def test_fritext_forslag_och_felstavning(page):
     page.click('.fask [data-fpick$=":0"]')
     assert "Lägg till i lunch ·" in page.inner_text("#faddbtn")
     page.click("[data-addfood]")
-    assert page.evaluate("day().food.length") == 2 and page.evaluate("mealPage") == 1 and page.locator(".addpage").count() == 0
+    assert page.evaluate("day().food.length") == 2 and page.evaluate("mealPage") == 1 and page.locator(".addpage").count() == 1
 
 
 def test_kost_maltider_forslag_mangd_och_upprepa(page):
@@ -690,8 +689,7 @@ def test_kost_maltider_forslag_mangd_och_upprepa(page):
     add_to(page, 0)
     page.click('[data-repeat="0"]')
     page.click('#faddbtn')
-    assert page.evaluate("mealPage") == 0
-    page.click("[data-mealback]")
+    assert page.evaluate("mealPage") is None
     assert amounts(0) == [["Gröt", 300, ""], ["Ägg", 154, "2 st"]]
     # Fritext i lunch
     add_to(page, 1)
@@ -699,8 +697,7 @@ def test_kost_maltider_forslag_mangd_och_upprepa(page):
     assert page.inner_text("#faddbtn") == "Lägg till i lunch · 108 kcal"
     page.click("[data-addfood]")
     assert page.evaluate("day().food.at(-1).meal") == 1
-    # Från måltidens sida till Lägg till; ett förslag läggs till med sin senaste mängd
-    page.click(".pagefoot [data-addto]")
+    # Sökning, tillägg och borttagning finns på samma måltidssida; senaste mängden används
     page.click('.qadd:has-text("Ägg")')
     assert amounts(1)[-1] == ["Ägg", 154, "2 st"]
     assert page.locator('.qadd:has-text("Ägg")').count() == 0
@@ -712,7 +709,8 @@ def test_kost_maltider_forslag_mangd_och_upprepa(page):
     assert klar["y"] + klar["height"] <= 500
     page.set_viewport_size({"width": 390, "height": 844})
     page.click('#faddbtn')
-    assert page.evaluate("mealPage") == 1 and page.locator(".addpage").count() == 0
+    assert page.evaluate("mealPage") is None and page.locator(".addpage").count() == 0
+    page.click('[data-mealpage="1"]')
     assert "Ägg" in page.inner_text(".kitems") and "2 st" in page.inner_text(".kitems")
     # Livsmedlets sida: mängd, favorit med sin mängd, ta bort
     i = page.evaluate("day().food.findIndex(f => f.meal === 1 && f.name === 'Ägg')")
@@ -756,7 +754,7 @@ def test_hela_garadagen_och_sparad_maltid_med_ett_tryck(page):
     page.click('[data-usemeal][data-meal="0"]')
     page.click('#faddbtn')
     assert page.evaluate("day().food.map(f => [f.name, f.meal])") == [["Gröt", 0], ["Kaffe", 0]]
-    page.click("[data-mealback]")
+    assert page.locator('.kdnav').count() == 1
     assert page.locator("[data-repeatday]").count() == 0   # dagen är inte tom längre
     page.evaluate("day().food = []; save(); render()")
     page.click("[data-repeatday]")
@@ -773,12 +771,12 @@ def test_uppskattningar_raknas_inte_dubbelt(page):
     assert page.inner_text("#faddbtn") == "Lägg till i mellanmål · 300 kcal"
     page.click("#faddbtn")
     assert page.evaluate("(({_id,_ts,...f}) => f)(day().food.at(-1))") == {"name": "Uppskattning", "kcal": 300, "protein": 17, "meal": 2, "est": True}
-    page.click(".pagefoot [data-addto]")
     # Uppskattningen är aldrig ett förslag eller en favorit
     assert page.locator('.qadd:has-text("Uppskattning")').count() == 0
     # Riktig mat i samma måltid: varning på måltidens sida och ett tryck för att ta bort uppskattningen
     page.click('.qadd:has-text("Pasta")')
     page.click('#faddbtn')
+    page.click('[data-mealpage="2"]')
     assert "räknas dubbelt" in page.inner_text(".kitems")
     page.click(".kirow.est [data-mdel]")
     assert page.evaluate("day().food.filter(f => f.meal === 2).map(f => f.name)") == ["Pasta"]
@@ -1842,7 +1840,7 @@ def test_fett_och_fibrer_fran_livsmedelsverket(page):
     assert f["fat"] > 3 and f["fiber"] > 5
     page.evaluate("const f = day().food[0]; f.amt.n = 200; applyAmt(f)")
     assert round(page.evaluate("day().food[0].fiber"), 1) == round(f["fiber"] * 2, 1)
-    page.evaluate("mealPage = null; render()")
+    page.evaluate("closeMealEditor(); render()")
     text = page.inner_text(".dayring")
     assert "Fett" in text and "Fibrer" in text and "/ 35 g" in text
     assert page.evaluate("eaten().fiber") > 0
