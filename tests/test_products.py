@@ -16,6 +16,7 @@ PRODUCT = {
 def ready(page):
     start(page)
     page.wait_for_function("typeof offFood === 'function'")
+    page.evaluate("window.DRIV_CONFIG={supabaseUrl:'https://proxy.test',supabaseAnonKey:'public-test'}")
     page.evaluate('addProducts([%s])' % json.dumps(PRODUCT))
 
 
@@ -90,19 +91,19 @@ def test_hel_forpackning_loggas_och_kallan_foljer_med(page):
 
 def test_ingen_natsokning_for_varje_tangenttryckning(page):
     calls = []
-    page.context.route('https://search.openfoodfacts.org/**', lambda r: (calls.append(r.request.url), r.fulfill(json={'hits': [PRODUCT]})))
+    page.context.route('https://proxy.test/functions/v1/driv-food-search', lambda r: (calls.append(r.request.url), r.fulfill(json={'hits': [PRODUCT]})))
     ready(page); go(page, 'kost'); add_to(page, 0)
     page.fill('#fname', 'testfelix lasagne')
     assert calls == []
     page.click('[data-productsearch]')
     page.wait_for_selector('[data-productpick]')
-    assert len(calls) == 1 and 'countries_tags' in calls[0]
+    assert len(calls) == 1 and calls[0] == 'https://proxy.test/functions/v1/driv-food-search'
     page.click('[data-productpick="0"]')
     assert page.locator('[data-drow]').count() == 1
 
 
 def test_natsokning_visar_fel_utan_att_forlora_inmatningen(page):
-    page.context.route('https://search.openfoodfacts.org/**', lambda r: r.abort('failed'))
+    page.context.route('https://proxy.test/functions/v1/driv-food-search', lambda r: r.abort('failed'))
     ready(page); go(page, 'kost'); add_to(page, 0)
     page.fill('#fname', 'okänt märke')
     page.click('[data-productsearch]')
@@ -131,7 +132,7 @@ def test_startdatabasen_har_flera_marken_och_kategorier(page):
 
 def test_ny_produkt_med_med_i_namnet_blir_en_rad(page):
     p = {**PRODUCT, 'code':'7310000000003', 'product_name_sv':'Pasta med kyckling', 'brands':['Testmärke']}
-    page.context.route('https://search.openfoodfacts.org/**', lambda r: r.fulfill(json={'hits':[p]}))
+    page.context.route('https://proxy.test/functions/v1/driv-food-search', lambda r: r.fulfill(json={'hits':[p]}))
     ready(page); go(page, 'kost'); add_to(page, 0)
     page.fill('#fname', 'testmärke kyckling'); page.click('[data-productsearch]')
     page.wait_for_selector('[data-productpick]'); page.click('[data-productpick="0"]')
@@ -141,7 +142,7 @@ def test_ny_produkt_med_med_i_namnet_blir_en_rad(page):
 
 def test_nyare_natdata_uppdaterar_valet_men_inte_gammal_logg(page):
     p = {**PRODUCT, 'last_modified_t':1800000000, 'nutriments':{'energy-kcal_100g':160,'proteins_100g':8}}
-    page.context.route('https://search.openfoodfacts.org/**', lambda r: r.fulfill(json={'hits':[p]}))
+    page.context.route('https://proxy.test/functions/v1/driv-food-search', lambda r: r.fulfill(json={'hits':[p]}))
     ready(page)
     page.evaluate("day().food.push({name:'Gammal',kcal:580,protein:30,amt:{n:1,unit:'forp',k:145,p:7.5,u:{forp:400},code:'7310000000001'}});save()")
     go(page, 'kost'); add_to(page, 0)
@@ -167,7 +168,7 @@ def test_sent_svar_ersatter_inte_en_andrad_sokning(page):
     ready(page); go(page, 'kost'); add_to(page, 0)
     page.evaluate('''() => {
       const original=window.fetch;
-      window.fetch=(url,opts)=>String(url).startsWith('https://search.openfoodfacts.org/')
+      window.fetch=(url,opts)=>String(url).startsWith('https://proxy.test/functions/v1/driv-food-search')
         ? new Promise(resolve=>window.__late=()=>resolve(new Response(JSON.stringify({hits:[]})))) : original(url,opts);
     }''')
     page.fill('#fname', 'testfelix lasagne'); page.click('[data-productsearch]')
@@ -181,7 +182,7 @@ def test_sent_svar_ersatter_inte_en_andrad_sokning(page):
 
 def test_samma_sokning_anvander_cache(page):
     calls=[]
-    page.context.route('https://search.openfoodfacts.org/**',lambda r:(calls.append(r.request.url),r.fulfill(json={'hits':[PRODUCT]})))
+    page.context.route('https://proxy.test/functions/v1/driv-food-search',lambda r:(calls.append(r.request.url),r.fulfill(json={'hits':[PRODUCT]})))
     ready(page); go(page, 'kost'); add_to(page, 0)
     page.fill('#fname', 'testfelix lasagne'); page.click('[data-productsearch]')
     page.wait_for_selector('[data-productpick]')
@@ -196,7 +197,7 @@ def test_produktsokning_far_plats_och_har_kontrast(page,mode,width,tmp_path):
     page.set_viewport_size({'width':width,'height':844})
     page.emulate_media(color_scheme=mode)
     p={**PRODUCT,'product_name_sv':'Krämig pastagratäng med kyckling & soltorkade tomater','brands':['Testmärke']}
-    page.context.route('https://search.openfoodfacts.org/**',lambda r:r.fulfill(json={'hits':[p]}))
+    page.context.route('https://proxy.test/functions/v1/driv-food-search',lambda r:r.fulfill(json={'hits':[p]}))
     ready(page); page.evaluate("setTheme('auto')"); go(page, 'kost'); add_to(page,0)
     page.fill('#fname','testmärke gratäng'); page.click('[data-productsearch]')
     page.wait_for_selector('[data-productpick]')
@@ -213,7 +214,7 @@ def test_produktsokning_far_plats_och_har_kontrast(page,mode,width,tmp_path):
 def test_tva_lika_produktnamn_bevarar_vald_streckkod(page):
     ready(page)
     p={**PRODUCT,'code':'7310000000009','nutriments':{'energy-kcal_100g':200,'proteins_100g':9}}
-    page.context.route('https://search.openfoodfacts.org/**',lambda r:r.fulfill(json={'hits':[p]}))
+    page.context.route('https://proxy.test/functions/v1/driv-food-search',lambda r:r.fulfill(json={'hits':[p]}))
     go(page,'kost'); add_to(page,0)
     page.fill('#fname','testfelix lasagne'); page.click('[data-productsearch]')
     page.wait_for_selector('[data-productpick]'); page.click('[data-productpick="0"]')
@@ -250,7 +251,7 @@ def test_andrad_forpackning_tar_bort_gamla_enheter(page):
 
 def test_soktraff_med_nytt_marke_far_inte_logga_generisk_gissning(page):
     p={**PRODUCT,'code':'7310000000011','product_name_sv':'Potatisgratäng','brands':['Nytttestmärke']}
-    page.context.route('https://search.openfoodfacts.org/**',lambda r:r.fulfill(json={'hits':[p]}))
+    page.context.route('https://proxy.test/functions/v1/driv-food-search',lambda r:r.fulfill(json={'hits':[p]}))
     ready(page); go(page,'kost'); add_to(page,0)
     page.fill('#fname','nytttestmärke gratäng'); page.click('[data-productsearch]')
     page.wait_for_selector('[data-productpick]')

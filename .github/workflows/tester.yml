@@ -23,6 +23,7 @@ jobs:
           node tests/test_strength_extra.cjs
           node tests/test_stretch_extra.cjs
           node tests/test_catalog_review.cjs
+          node tests/test_search_proxy.cjs
       - name: Kör testerna
         env:
           PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS: "1"
