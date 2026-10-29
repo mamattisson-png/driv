@@ -646,7 +646,7 @@ function addPage(m) {
     <div id="fpreview" class="fpreview"></div>
     <div id="productresults" aria-live="polite"></div>
     <div class="fidle">
-    <section class="kinnow current-meal ${items.some(x => fresh.has(x.f)) ? "fresh" : ""}" aria-label="Tillagt i ${mealName}">
+    <section class="kinnow current-meal" aria-label="Tillagt i ${mealName}">
       <h2 class="small">I ${mealName}en: <b>${items.length} ${items.length === 1 ? "sak" : "saker"} · ${tnum(sumKcal(mealItems))} kcal</b></h2>
       ${items.length ? `<div class="kmeals kitems">${rows}</div>` : `<p class="muted small">Inget tillagt än.</p>`}
       <p class="muted small">Förslag: ${tnum(target)} kcal · ${sumKcal(mealItems) > target ? "Över" : "Kvar"}: ${tnum(Math.abs(target - sumKcal(mealItems)))} kcal</p>

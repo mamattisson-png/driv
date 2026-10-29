@@ -1936,10 +1936,11 @@ def test_bekraftelse_dar_man_tittar_utan_besked(page):
     assert page.locator(".kirow.fresh").count() == 1
     page.click("[data-mealback]")
     assert page.locator('.kmrow.fresh [data-mealpage="1"]').count() == 1 and "+108" in page.inner_text(".kmrow.fresh")
-    # På Lägg till lyser raden till måltiden till när ett förslag lagts till
+    # På måltidssidan markeras bara den tillagda maten när ett förslag används
     add_to(page, 1)
     page.click('.qadd:has-text("Gröt")')
-    page.wait_for_selector(".kinnow.fresh")
+    page.wait_for_selector('.kirow.fresh:has-text("Gröt")')
+    assert page.locator('.current-meal.fresh').count() == 0
     assert page.locator(".toast").count() == 0
     # Fel visas vid fältet
     page.evaluate("modal = { prof: true }; render()")
