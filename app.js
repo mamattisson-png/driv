@@ -2061,7 +2061,7 @@ document.addEventListener("input", ev => {
   const t = ev.target;
   if (t.id === "exsearch") { modal.q = t.value; filterPicker(); }
   else if (t.id === "fname") foodPreview();
-  else if (t.id === "fkcal") updateFoodBtn();
+  else if (["fkcal", "fprot", "ffat", "ffiber"].includes(t.id)) updateFoodBtn();
 });
 
 restoreOldSwaps();

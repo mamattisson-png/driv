@@ -108,9 +108,46 @@ function amtInputs(a, attr) {
 // Det man skrivit i sökrutan, tolkat till rader med mängd som går att ändra innan man lägger till.
 // Ord som inte går att tolka blir en fråga med högst fyra förslag.
 let foodDraft = [];
+const NUTRIENT_FIELDS = [["k", "kcal"], ["p", "Protein (g)"], ["fa", "Fett (g)"], ["fi", "Fibrer (g)"]];
+function nutritionFields(values, disabled = false) {
+  return `<div class="nutrition-fields">${NUTRIENT_FIELDS.map(([key, label]) => `<label class="field">${label}<input type="number" inputmode="decimal" min="0" step="any" data-nutrient="${key}" value="${values[key] == null ? "" : g1(values[key])}" placeholder="Okänt" ${disabled ? "disabled" : ""}></label>`).join("")}</div>`;
+}
+function amountNutrition(a) {
+  const scale = amtGrams(a) / 100;
+  return Object.fromEntries(NUTRIENT_FIELDS.map(([k]) => [k, a[k] == null ? null : a[k] * scale]));
+}
+function readNutrition(root, showError = true) {
+  const values = {};
+  for (const [key] of NUTRIENT_FIELDS) {
+    const input = root.querySelector(`[data-nutrient="${key}"]`);
+    if (!input.checkValidity()) { if (showError) input.reportValidity(); return null; }
+    values[key] = input.value.trim() === "" ? null : +input.value;
+  }
+  if (values.k == null || values.p == null) {
+    const input = root.querySelector(`[data-nutrient="${values.k == null ? "k" : "p"}"]`);
+    input.setCustomValidity("Fyll i ett värde, även om det är 0."); if (showError) input.reportValidity();
+    input.setCustomValidity(""); return null;
+  }
+  return values;
+}
+function setAmountNutrition(a, values) {
+  const scale = amtGrams(a) / 100;
+  if (!(scale > 0)) return false;
+  for (const [key] of NUTRIENT_FIELDS) {
+    if (values[key] == null) delete a[key];
+    else a[key] = values[key] / scale;
+  }
+  a.customNutrition = true;
+  return true;
+}
 function draftRows(items) {
+  const previous = foodDraft;
   foodDraft = items.map(i => i.known ? { name: i.name, corrected: i.corrected, amt: amtFromItem(i), text: i.text, typed: i.typed, alts: variantFoods(i.typed, i.food) }
     : (() => { const { prefix, rest } = splitAmount(i.text); return { text: i.text, prefix, rest, note: i.note, sugg: suggestFoods(rest, 4) }; })());
+  foodDraft.forEach((d, j) => {
+    const old = previous[j];
+    if (d.amt && old?.amt?.customNutrition && d.text === old.text && d.name === old.name) d.amt = old.amt;
+  });
   return foodDraft.map((d, j) => d.amt ? draftRow(d, j) : askRow(d, j)).join("");
 }
 // Ungefär vad ett förslag ger: per styck eller portion om det finns, annars per 100 g
@@ -119,7 +156,7 @@ function askRow(d, j) {
   return `<div class="fask"><div class="fask-q"><span class="fdot" aria-hidden="true"></span><span>${d.sugg.length ? "Vilken menade du med" : "Känner inte igen"} <b>${esc(d.rest || d.text)}</b>${d.sugg.length ? "?" : ""}</span></div>
     ${d.note ? `<div class="muted small">${esc(d.note)}</div>` : ""}
     ${d.sugg.length ? `<div class="fask-opts">${d.sugg.map((x, k) => `<button data-fpick="${j}:${k}">${esc(x.label)} · ${suggKcal(x.food)} kcal</button>`).join("")}</div>`
-      : `<div class="muted small">Skriv mängd och livsmedel, t.ex. "150 g kyckling", eller välj Bara kcal.</div>`}</div>`;
+      : `<div class="muted small">Skriv mängd och livsmedel, t.ex. "150 g kyckling", eller välj Egen mat / kcal.</div>`}</div>`;
 }
 const draftKcal = d => { const g = amtGrams(d.amt); return `${Math.round(d.amt.k * g / 100)} kcal · ${Math.round(d.amt.p * g / 100)} g protein`; };
 // Mängden är en ihopsatt stegare; ett tryck på mängden visar fält för antal och enhet
@@ -130,6 +167,9 @@ function draftRow(d, j) {
       <button data-astep="1" aria-label="Mer ${esc(d.name)}">+</button></div>
     <div class="famtedit" hidden><input class="amt-n" type="number" inputmode="decimal" min="0" step="any" value="${d.amt.n}" data-d${j}="n" aria-label="Mängd">
       <select class="amt-u" data-d${j}="u" aria-label="Enhet">${unitChoices(d.amt).map(k => `<option value="${k}" ${k === d.amt.unit ? "selected" : ""}>${UNIT_NAMES[k] || k}</option>`).join("")}</select></div></div>
+    <details class="nutrition-edit" data-dnutrition="${j}"><summary>Ändra näringsvärden</summary>
+      <p class="muted small">Näring för <b class="nutrition-amount">${amtText(d.amt)}</b>. Dina värden används när du lägger till produkten.</p>
+      ${nutritionFields(amountNutrition(d.amt), !(amtGrams(d.amt) > 0))}</details>
     ${d.alts && d.alts.length ? `<div class="fvars"><span class="muted small">Annan sort?</span>${d.alts.map((x, k) => `<button data-fvar="${j}:${k}">${esc(x.label)}</button>`).join("")}</div>` : ""}`;
 }
 // En annan sort ersätter namnet i fältet och behåller mängden: "2 msk grädde" → "2 msk matlagningsgrädde"
@@ -150,9 +190,26 @@ function updateDraft(el) {
   row.querySelector(".dk").textContent = draftKcal(d);
   row.querySelector(".famt").textContent = amtText(d.amt);
   row.querySelector('[data-astep="-1"]').disabled = d.amt.n <= (d.amt.unit === "g" ? 10 : 0.5);
+  const fields = document.querySelector(`[data-dnutrition="${j}"]`), values = amountNutrition(d.amt);
+  if (fields) {
+    fields.querySelector('.nutrition-amount').textContent = amtText(d.amt);
+    for (const [key] of NUTRIENT_FIELDS) {
+      const input = fields.querySelector(`[data-nutrient="${key}"]`);
+      input.value = values[key] == null ? "" : g1(values[key]); input.disabled = !(amtGrams(d.amt) > 0);
+    }
+  }
   updateFoodBtn();
 }
 document.addEventListener("input", ev => {
+  const edit = ev.target.closest && ev.target.closest('[data-dnutrition]');
+  if (edit) {
+    const values = readNutrition(edit, false), j = +edit.dataset.dnutrition, d = foodDraft[j];
+    if (values && setAmountNutrition(d.amt, values)) {
+      document.querySelector(`[data-drow="${j}"] .dk`).textContent = draftKcal(d);
+    }
+    updateFoodBtn();
+    return;
+  }
   if (ev.target.closest && ev.target.closest("[data-drow]")) updateDraft(ev.target);
   if (ev.target.id === "rname" && recipeEdit) recipeEdit.name = ev.target.value;
 });
@@ -309,7 +366,11 @@ function setQty(f, q) {
   if (u.fat != null) f.fat = g1(u.fat * q);
   if (u.fiber != null) f.fiber = g1(u.fiber * q);
   if (q === 1) { delete f.qty; delete f.per; }
-  else { f.qty = q; f.per = { kcal: u.kcal, protein: u.protein }; if (u.fat != null) { f.per.fat = u.fat; f.per.fiber = u.fiber; } }
+  else {
+    f.qty = q; f.per = { kcal: u.kcal, protein: u.protein };
+    if (u.fat != null) f.per.fat = u.fat;
+    if (u.fiber != null) f.per.fiber = u.fiber;
+  }
 }
 const qtyText = f => f.amt ? ` · ${amtText(f.amt)}` : f.qty ? ` × ${fmtNum(f.qty)}` : "";
 
@@ -635,24 +696,27 @@ function addPage(m) {
   return `<div class="kpage foodsheet addpage mealpage" aria-label="${MEALS[meal][0]}"><button class="backbtn" data-fsclose data-mealback>${icon("left", 18)}Kost</button>
     <div class="kmhead fshead"><span class="kmic">${mealIcon(meal)}</span><span class="col"><h1>${MEALS[meal][0]}</h1><span class="muted small">${wd}</span></span></div>
     <div class="mealseg" role="radiogroup" aria-label="Måltid">${MEALS.map(([n], i) => `<button role="radio" data-sheetmeal="${i}" class="${i === meal ? "on" : ""}" aria-checked="${i === meal}">${n}</button>`).join("")}</div>
-    <div class="finput">${icon("search", 18)}<input id="fname" placeholder="${items.length ? "Lägg till mer …" : "t.ex. 2 ägg och 1 banan"}" autocomplete="off" aria-label="Vad åt du?">
-      ${CAN_SCAN ? `<button class="fscan" data-scan aria-label="Skanna streckkod">${icon("barcode", 22)}</button>` : ""}</div>
-    <div class="fopts"><button class="flink ${foodPanel === "kcal" ? "on" : ""}" data-fpanel="${foodPanel === "kcal" ? "senaste" : "kcal"}" aria-pressed="${foodPanel === "kcal"}">Bara kcal</button>
+    ${foodPanel === "kcal" ? `<p class="small">Namn på maten</p>` : ""}
+    <div class="finput">${foodPanel === "kcal" ? "" : icon("search", 18)}<input id="fname" placeholder="${foodPanel === "kcal" ? "t.ex. Min maträtt" : items.length ? "Lägg till mer …" : "t.ex. 2 ägg och 1 banan"}" autocomplete="off" aria-label="${foodPanel === "kcal" ? "Namn på maten" : "Vad åt du?"}">
+      ${CAN_SCAN && foodPanel !== "kcal" ? `<button class="fscan" data-scan aria-label="Skanna streckkod">${icon("barcode", 22)}</button>` : ""}</div>
+    <div class="fopts"><button class="flink ${foodPanel === "kcal" ? "on" : ""}" data-fpanel="${foodPanel === "kcal" ? "senaste" : "kcal"}" aria-pressed="${foodPanel === "kcal"}">${foodPanel === "kcal" ? "Tillbaka till sökning" : "Egen mat / kcal"}</button>
       <button class="flink" data-rlist>Recept${recipes().length ? ` (${recipes().length})` : ""}</button></div>
-    <div class="manual" ${foodPanel === "kcal" ? "" : "hidden"}><div class="row">
-      <label class="field grow">kcal<input id="fkcal" type="number" inputmode="numeric" placeholder="ca ${mealTarget(meal, m)}"></label>
-      <label class="field grow">Protein (g)<input id="fprot" type="number" inputmode="numeric" placeholder="valfritt"></label></div>
-      <div class="muted small">Med text i fältet sparas den som namn, annars blir det en uppskattning.</div></div>
+    <div class="manual" ${foodPanel === "kcal" ? "" : "hidden"}><h2>Egen mat</h2><p class="muted small">Ange näringen för hela mängden du vill lägga till. Namnet ovan används som namn på din egen mat.</p><div class="row">
+      <label class="field grow">kcal<input id="fkcal" type="number" inputmode="decimal" min="0" step="any" placeholder="ca ${mealTarget(meal, m)}"></label>
+      <label class="field grow">Protein (g)<input id="fprot" type="number" inputmode="decimal" min="0" step="any" placeholder="valfritt"></label></div>
+      <div class="row"><label class="field grow">Fett (g)<input id="ffat" type="number" inputmode="decimal" min="0" step="any" placeholder="valfritt"></label>
+      <label class="field grow">Fibrer (g)<input id="ffiber" type="number" inputmode="decimal" min="0" step="any" placeholder="valfritt"></label></div>
+      <div class="muted small">Utan namn sparas posten som en uppskattning.</div></div>
     <div id="fpreview" class="fpreview"></div>
     <div id="productresults" aria-live="polite"></div>
     <div class="fidle">
-    <section class="kinnow current-meal ${items.some(x => fresh.has(x.f)) ? "fresh" : ""}" aria-label="Tillagt i ${mealName}">
+    <section class="kinnow current-meal" aria-label="Tillagt i ${mealName}">
       <h2 class="small">I ${mealName}en: <b>${items.length} ${items.length === 1 ? "sak" : "saker"} · ${tnum(sumKcal(mealItems))} kcal</b></h2>
       ${items.length ? `<div class="kmeals kitems">${rows}</div>` : `<p class="muted small">Inget tillagt än.</p>`}
       <p class="muted small">Förslag: ${tnum(target)} kcal · ${sumKcal(mealItems) > target ? "Över" : "Kvar"}: ${tnum(Math.abs(target - sumKcal(mealItems)))} kcal</p>
       <div class="kmacros">${nutrients}</div>
       ${mealItems.some(f => f.fat == null || f.fiber == null) ? `<p class="muted small kmiss">Fett eller fibrer saknas för ${mealItems.filter(f => f.fat == null || f.fiber == null).length} av ${items.length}.</p>` : ""}
-      ${mealItems.filter(f => !isEst(f)).length > 1 ? `<button class="linkbtn2 small ksave" data-savegroup="${meal}">${icon("plus", 14)}Spara som måltid</button>` : ""}
+      ${mealItems.filter(f => !isEst(f)).length > 1 ? `<button class="linkbtn2 small ksave" data-savegroup="${meal}">${icon("plus", 14)}Spara kombination som snabbval</button>` : ""}
     </section>
     <section class="card kintake" aria-label="Dagens intag"><div class="row between"><span class="small">Dagens intag</span><b class="small">${tnum(e.kcal)} / ${tnum(m.kcal)} kcal</b></div>
       <div class="bar"><div style="width:${pct(e.kcal)}%"></div></div>
@@ -669,8 +733,14 @@ function addPage(m) {
 }
 // Vad knappen längst ned gör just nu: lägga till det som står i fältet (med summa) eller stänga
 function foodPending() {
-  const text = ($("fname") && $("fname").value || "").trim(), manual = foodPanel === "kcal" ? Math.round(+($("fkcal") || {}).value || 0) : 0;
-  if (manual) return { kcal: manual, ready: true };
+  if (foodPanel === "kcal") {
+    const fields = ['fkcal','fprot','ffat','ffiber'].map(id => $(id));
+    if (fields.some(el => el && !el.validity.valid)) return {ready:false,invalidNutrition:true};
+    const value = $('fkcal')?.value || '';
+    return value === '' ? {ready:false} : {ready:true,kcal:Math.round(+value)};
+  }
+  if (foodPanel !== "kcal" && [...document.querySelectorAll('[data-dnutrition]')].some(el => !readNutrition(el, false))) return { ready: false, invalidNutrition: true };
+  const text = ($("fname") && $("fname").value || "").trim();
   if (!text) return { ready: false };
   const known = (S.learned || {})[norm(text)];
   if (known) return { kcal: known.kcal, ready: true, learned: known };
@@ -684,15 +754,21 @@ function updateFoodBtn() {
   if (!b || !foodSheet) return;
   const meal = foodSheet.meal, name = MEALS[meal][0].toLowerCase(), p = foodPending();
   const inMeal = sumKcal(day().food.filter(f => f.meal === meal));
-  b.disabled = !!p.unknown;
+  b.disabled = !!p.unknown || !!p.invalidNutrition;
   b.textContent = p.ready ? `Lägg till i ${name}${p.claude ? "" : ` · ${tnum(p.kcal)} kcal`}`
-    : p.unknown ? "Välj vad du menade ovan" : inMeal ? `Klar · ${tnum(inMeal)} kcal i ${name}en` : "Klar";
+    : p.invalidNutrition ? "Kontrollera näringsvärden" : p.unknown ? "Välj vad du menade ovan" : inMeal ? `Klar · ${tnum(inMeal)} kcal i ${name}en` : "Klar";
 }
 // Fältet styr vad som visas: tolkade rader när man skrivit något, annars det som redan finns och förslagen
 function foodPreview() {
   const input = $("fname"), out = $("fpreview");
   if (!input || !out) return;
   const text = input.value.trim(), idle = document.querySelector(".fidle");
+  if (foodPanel === "kcal") {
+    out.innerHTML = ""; foodDraft = [];
+    if (typeof updateProductSearch === "function") updateProductSearch("");
+    if (idle) idle.hidden = true;
+    updateFoodBtn(); return;
+  }
   if (typeof updateProductSearch === "function") updateProductSearch(text);
   if (idle) idle.hidden = !!text;
   if (!text) { out.innerHTML = ""; foodDraft = []; updateFoodBtn(); return; }
@@ -734,6 +810,10 @@ function itemPage() {
       <button class="step" data-qty="1" aria-label="Fler">+</button></div>`}</section>
     <div class="rstats four">${tile(tnum(f.kcal), "kcal")}${tile(`${fmtNum(f.protein)} g`, "protein")}
       ${tile(f.fat != null ? `${fmtNum(f.fat)} g` : "–", "fett")}${tile(f.fiber != null ? `${fmtNum(f.fiber)} g` : "–", "fibrer")}</div>
+    <details class="nutrition-edit item-nutrition"><summary>Ändra näringsvärden</summary>
+      <p class="muted small">Näring för ${f.amt ? amtText(f.amt) : "hela den loggade mängden"}. Ändringen gäller den här posten i din dagbok.</p>
+      ${nutritionFields({k:f.kcal,p:f.protein,fa:f.fat,fi:f.fiber}, !!f.amt && !(amtGrams(f.amt) > 0))}
+      <button class="primary wide" data-savenutrition>Spara näringsvärden</button></details>
     ${(f.fat == null || f.fiber == null) && !isEst(f) ? `<div class="muted small kinote">Fett eller fibrer saknas för det här livsmedlet.</div>` : ""}
     <div class="row kiacts">${isEst(f) ? `<span class="grow muted small">En uppskattning blir aldrig favorit eller förslag.</span>`
       : `<button class="grow" data-itemfav>${isFav(f) ? "★ Favorit" : "☆ Gör till favorit"}</button>`}
@@ -766,6 +846,25 @@ function kostView() {
 }
 
 document.addEventListener("click", ev => {
+  const nutritionSave = ev.target.closest && ev.target.closest('[data-savenutrition]');
+  if (nutritionSave && foodItem != null) {
+    const values = readNutrition(nutritionSave.closest('.nutrition-edit')), f = day().food[foodItem];
+    if (!values || !f) return;
+    if (f.amt) {
+      if (!setAmountNutrition(f.amt, values)) return;
+      if (values.fa == null) delete f.fat;
+      if (values.fi == null) delete f.fiber;
+      applyAmt(f);
+    } else {
+      f.kcal = Math.round(values.k); f.protein = Math.round(values.p);
+      for (const [key, field] of [['fa','fat'],['fi','fiber']]) {
+        if (values[key] == null) delete f[field]; else f[field] = g1(values[key]);
+      }
+      const q = f.qty || 1;
+      if (q !== 1) f.per = {kcal:f.kcal/q,protein:f.protein/q,...(f.fat != null ? {fat:f.fat/q} : {}),...(f.fiber != null ? {fiber:f.fiber/q} : {})};
+    }
+    save(); render(); return;
+  }
   const t = ev.target.closest("[data-addfood],[data-addto],[data-kmeal],[data-kday],[data-fsclose],[data-quick],[data-mstep],[data-mdel],[data-repeat],[data-savegroup],[data-sheetmeal],[data-usemeal],[data-repeatday],[data-quickmore],[data-fpanel],[data-fpick],[data-fvar],[data-amtopen],[data-fooditem],[data-itemclose],[data-qty],[data-itemfav],[data-mealpage],[data-mealback],[data-kweekopen]");
   if (!t || t.disabled) return;
   if (t.classList.contains("overlay") && ev.target !== t) return;   // klick inne i fönstret
@@ -776,10 +875,14 @@ document.addEventListener("click", ev => {
     const meal = foodSheet.meal, p = foodPending(), text = ($("fname").value || "").trim();
     if (!p.ready) { closeMealEditor(); render(); window.scrollTo(0, 0); return; }
     if (p.claude) { askClaude(true); return; }
-    if (foodPanel === "kcal" && +$("fkcal").value) {
+    if (foodPanel === "kcal") {
+      for (const id of ['fkcal','fprot','ffat','ffiber']) if (!$(id).reportValidity()) return;
       const prot = Math.round(+$("fprot").value || 0), mm = macros();
-      logFood(text ? { name: text, kcal: p.kcal, protein: prot }
-        : { name: "Uppskattning", kcal: p.kcal, protein: prot || Math.round(p.kcal * mm.protein / mm.kcal), est: true }, meal);
+      const nutrients = {};
+      if ($('ffat').value !== '') nutrients.fat = +$('ffat').value;
+      if ($('ffiber').value !== '') nutrients.fiber = +$('ffiber').value;
+      logFood(text ? { name: text, kcal: p.kcal, protein: prot, ...nutrients }
+        : { name: "Uppskattning", kcal: p.kcal, protein: prot || Math.round(p.kcal * mm.protein / mm.kcal), est: true, ...nutrients }, meal);
     }
     else if (p.learned) logFood({ name: text, kcal: p.learned.kcal, protein: p.learned.protein }, meal);
     else foodDraft.filter(d => d.amt).forEach(d => logFood({ name: d.name, amt: d.amt }, meal));
@@ -834,12 +937,13 @@ document.addEventListener("click", ev => {
     save(); render(); flashSel(`[data-savegroup="${meal}"]`, "Sparad bland snabbvalen");
     return;
   }
-  const keep = ds.addfood !== undefined ? "" : $("fname") ? $("fname").value : "", kcalKeep = ds.addfood !== undefined ? "" : $("fkcal") ? $("fkcal").value : "";
+  const keep = ds.addfood !== undefined ? "" : $("fname") ? $("fname").value : "";
+  const manualKeep = Object.fromEntries(['fkcal','fprot','ffat','ffiber'].map(id => [id, ds.addfood !== undefined ? '' : $(id)?.value || '']));
   save();
   render();
   if (kostPageKey() !== page) window.scrollTo(0, 0);
   // Det man skrivit ligger kvar när man byter måltid eller val i bladet
-  if (foodSheet && $("fname") && !ds.addto) { $("fname").value = keep; if ($("fkcal")) $("fkcal").value = kcalKeep; }
+  if (foodSheet && $("fname") && !ds.addto) { $("fname").value = keep; for (const [id,value] of Object.entries(manualKeep)) if ($(id)) $(id).value = value; }
   if (foodSheet) foodPreview();
   if (ds.focusname !== undefined && $("fname")) $("fname").focus();
 });

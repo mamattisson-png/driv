@@ -43,6 +43,31 @@ def test_add_and_remove_stay_on_meal_then_done_opens_overview(page):
     assert page.evaluate('eaten().kcal')==108
 
 
+@pytest.mark.parametrize('theme',['light','dark'])
+def test_added_food_highlight_does_not_cover_meal_summary(page,theme):
+    meals(page)
+    page.evaluate('setTheme',theme)
+    page.click('[data-mealpage="1"]')
+    page.fill('#fname','1 banan')
+    page.click('#faddbtn')
+    # Freeze the actual confirmation animation while it is visible.
+    page.locator('.current-meal').evaluate('''el => {
+        for (const a of el.getAnimations({subtree:true})) {
+            a.pause(); a.currentTime=200;
+        }
+    }''')
+    summary=page.locator('.current-meal').evaluate('''el => {
+        const s=getComputedStyle(el);
+        return {background:s.backgroundColor, shadow:s.boxShadow};
+    }''')
+    assert summary=={'background':'rgba(0, 0, 0, 0)','shadow':'none'}
+    banana=page.locator('.kirow',has_text='Banan')
+    assert banana.evaluate('el=>getComputedStyle(el).boxShadow')!='none'
+    assert page.locator('.kirow',has_text='Pyttipanna').evaluate(
+        'el=>getComputedStyle(el).boxShadow')=='none'
+    assert page.locator('.kitems .kirow').count()==2
+
+
 def test_done_keeps_selected_historical_date_and_other_days_unchanged(page):
     meals(page)
     date=page.evaluate('shift(TODAY,-1)')
