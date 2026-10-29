@@ -172,7 +172,7 @@ function exSheetView(d) {
     ${step("sets", "Set", e.sets, 1, 10)}
     <div class="exset"><span class="grow">${isTimed(e.id) ? "Sekunder per set" : "Reps per set"}</span>
       <button class="stp" data-exstep="reps" data-dir="-1" aria-label="Färre reps">${icon("minus", 20)}</button>
-      <input class="exval exreps" value="${esc(String(e.reps).replace(/(\d)\s*-\s*(\d)/g, "$1–$2"))}" data-ed="${i}" data-t="${d.id}" data-f="reps" aria-label="Reps per set">
+      <input class="exval exreps" type="text" inputmode="numeric" value="${esc(String(e.reps).replace(/(\d)\s*-\s*(\d)/g, "$1–$2"))}" data-ed="${i}" data-t="${d.id}" data-f="reps" aria-label="Reps per set">
       <button class="stp" data-exstep="reps" data-dir="1" aria-label="Fler reps">${icon("plus", 20)}</button></div>
     ${step("warm", "Uppvärmning", warmCount(e), 0, 5, "Lättare set före", true)}
     ${next ? `<div class="exset"><span class="grow col"><span>Superset med nästa</span><span class="muted small">${esc(EX[next.id].name)}, växelvis utan vila</span></span>

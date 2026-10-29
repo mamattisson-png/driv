@@ -270,6 +270,10 @@ function accountCard() {
   if (!sbEnabled) return "";
   return `<div class="card" id="konto"><h2>${account.step === "in" ? "Konto" : "Skapa konto eller logga in"}</h2>${accountBody()}</div>`;
 }
+function codeDestination() {
+  return `<label class="code-destination" for="acctcode">Kod skickad till:<strong>${esc(account.email)}</strong></label>`;
+}
+
 // mode: "create" eller "login" ger en kortare text på startsidan
 function accountBody(mode) {
   const a = account;
@@ -281,7 +285,8 @@ function accountBody(mode) {
         <button class="small ${a.confirmDelete ? "primary" : "ghost"}" data-delacct>${a.confirmDelete ? "Tryck igen för att radera kontot" : "Radera konto"}</button></div>
       ${a.confirmDelete ? `<div class="muted small" style="margin-top:6px">Kontot, molnkopian, vänner och delade pass raderas. En lokal säkerhetskopia ligger kvar på den här enheten.</div>` : ""}`;
   } else if (a.step === "code") {
-    body = `<div class="muted">Vi har skickat en kod till <b>${esc(a.email)}</b>. Skriv in den här, eller tryck på länken i mejlet.</div>
+    body = `<div class="muted">Skriv in koden här, eller tryck på länken i mejlet.</div>
+      ${codeDestination()}
       <div class="row" style="margin-top:8px"><input id="acctcode" inputmode="numeric" autocomplete="one-time-code" placeholder="Kod från mejlet">
         <button class="primary small" data-verifycode ${a.busy ? "disabled" : ""}>Fortsätt</button></div>
       <button class="small ghost" style="margin-top:6px" data-changeemail>Byt e-postadress</button>`;
