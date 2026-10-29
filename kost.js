@@ -561,6 +561,8 @@ const whenText = date => date === shift(logDate(), -1) ? "igår" : `i ${WD[weekd
 const sumKcal = items => items.reduce((a, f) => a + (+f.kcal || 0), 0);
 // Måltidens riktmärke: dess andel av dagens kalorimål, avrundat till tiotal.
 const mealTarget = (meal, m) => Math.round(m.kcal * MEALS[meal][1] / 10) * 10;
+const mealReached = (meal, food, m) => meal >= 0 && mealTarget(meal, m) > 0 &&
+  sumKcal(food.filter(f => f.meal === meal)) >= mealTarget(meal, m);
 
 // En måltid i översikten: rubrik med summa och en rad per sak (namn och mängd till vänster, kcal
 // till höger). Tomma måltider visas inte; allt läggs till med en enda knapp.
@@ -578,12 +580,13 @@ function mealCard(meal, L, m) {
   if (meal < 0 && !items.length) return "";
   const name = meal < 0 ? "Övrigt" : MEALS[meal][0], sum = sumKcal(items.map(x => x.f));
   const added = sumKcal(items.filter(x => fresh.has(x.f)).map(x => x.f));
+  const reached = mealReached(meal, L.food, m);
   // Bara summan här; maträtterna visas på måltidens sida
   const prot = Math.round(sumOf(items.map(x => x.f), "protein"));
   const sub = items.length ? `${tnum(sum)} kcal · ${prot} g protein` : `Riktmärke: ca ${tnum(mealTarget(meal, m))} kcal`;
-  return `<div class="kmcard kmrow ${items.length ? "" : "empty"} ${items.some(x => fresh.has(x.f)) ? "fresh" : ""}">
-      <button class="kmopen" data-mealpage="${meal}" aria-label="${name}: ${items.length ? `${tnum(sum)} kcal` : "inget än"}"><span class="kmic">${mealIcon(meal)}</span>
-        <span class="grow col"><b>${name}</b><span class="small kprev ${items.length ? "kmsum" : "muted"}">${sub}${added ? ` <span class="kplus">+${tnum(added)}</span>` : ""}</span></span></button>
+  return `<div class="kmcard kmrow ${items.length ? "" : "empty"} ${reached ? "meal-reached" : items.some(x => fresh.has(x.f)) ? "fresh" : ""}">
+      <button class="kmopen" data-mealpage="${meal}" aria-label="${name}: ${items.length ? `${tnum(sum)} kcal` : "inget än"}${reached ? ', riktmärket uppnått' : ''}"><span class="kmic">${mealIcon(meal)}</span>
+        <span class="grow col"><b>${name}${reached ? `<span class="meal-check">${icon('check',14)}</span>` : ''}</b><span class="small kprev ${items.length ? "kmsum" : "muted"}">${sub}${added ? ` <span class="kplus">+${tnum(added)}</span>` : ""}</span></span></button>
       ${meal < 0 ? "" : `<button class="kmadd" data-addto="${meal}" aria-label="Lägg till i ${name.toLowerCase()}">${icon("plus", 20)}</button>`}</div>`;
 }
 // Sidan för en måltid: det man ätit (ett tryck öppnar livsmedlet), summan mot förslaget och näringen
@@ -695,7 +698,10 @@ function addPage(m) {
   const wd = cap(parse(logDate()).toLocaleDateString("sv-SE", { weekday: "long", day: "numeric", month: "long" }));
   return `<div class="kpage foodsheet addpage mealpage" aria-label="${MEALS[meal][0]}"><button class="backbtn" data-fsclose data-mealback>${icon("left", 18)}Kost</button>
     <div class="kmhead fshead"><span class="kmic">${mealIcon(meal)}</span><span class="col"><h1>${MEALS[meal][0]}</h1><span class="muted small">${wd}</span></span></div>
-    <div class="mealseg" role="radiogroup" aria-label="Måltid">${MEALS.map(([n], i) => `<button role="radio" data-sheetmeal="${i}" class="${i === meal ? "on" : ""}" aria-checked="${i === meal}">${n}</button>`).join("")}</div>
+    <div class="mealseg" role="radiogroup" aria-label="Måltid">${MEALS.map(([n], i) => {
+      const reached = mealReached(i, food, m);
+      return `<button role="radio" data-sheetmeal="${i}" class="${i === meal ? "on" : ""} ${reached ? 'meal-reached' : ''}" aria-checked="${i === meal}" aria-label="${n}${reached ? ', riktmärket uppnått' : ''}">${n}${reached ? `<span class="meal-check">${icon('check',12)}</span>` : ''}</button>`;
+    }).join("")}</div>
     ${foodPanel === "kcal" ? `<p class="small">Namn på maten</p>` : ""}
     <div class="finput">${foodPanel === "kcal" ? "" : icon("search", 18)}<input id="fname" placeholder="${foodPanel === "kcal" ? "t.ex. Min maträtt" : items.length ? "Lägg till mer …" : "t.ex. 2 ägg och 1 banan"}" autocomplete="off" aria-label="${foodPanel === "kcal" ? "Namn på maten" : "Vad åt du?"}">
       ${CAN_SCAN && foodPanel !== "kcal" ? `<button class="fscan" data-scan aria-label="Skanna streckkod">${icon("barcode", 22)}</button>` : ""}</div>
