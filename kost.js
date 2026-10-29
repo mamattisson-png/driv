@@ -559,7 +559,7 @@ function lastSlot(meal) {
 }
 const whenText = date => date === shift(logDate(), -1) ? "igår" : `i ${WD[weekdayOf(date)].toLowerCase()}s`;
 const sumKcal = items => items.reduce((a, f) => a + (+f.kcal || 0), 0);
-// Används bara som förslag i fältet för en ungefärlig måltid
+// Måltidens riktmärke: dess andel av dagens kalorimål, avrundat till tiotal.
 const mealTarget = (meal, m) => Math.round(m.kcal * MEALS[meal][1] / 10) * 10;
 
 // En måltid i översikten: rubrik med summa och en rad per sak (namn och mängd till vänster, kcal
@@ -580,7 +580,7 @@ function mealCard(meal, L, m) {
   const added = sumKcal(items.filter(x => fresh.has(x.f)).map(x => x.f));
   // Bara summan här; maträtterna visas på måltidens sida
   const prot = Math.round(sumOf(items.map(x => x.f), "protein"));
-  const sub = items.length ? `${tnum(sum)} kcal · ${prot} g protein` : `Förslag ca ${tnum(mealTarget(meal, m))} kcal`;
+  const sub = items.length ? `${tnum(sum)} kcal · ${prot} g protein` : `Riktmärke: ca ${tnum(mealTarget(meal, m))} kcal`;
   return `<div class="kmcard kmrow ${items.length ? "" : "empty"} ${items.some(x => fresh.has(x.f)) ? "fresh" : ""}">
       <button class="kmopen" data-mealpage="${meal}" aria-label="${name}: ${items.length ? `${tnum(sum)} kcal` : "inget än"}"><span class="kmic">${mealIcon(meal)}</span>
         <span class="grow col"><b>${name}</b><span class="small kprev ${items.length ? "kmsum" : "muted"}">${sub}${added ? ` <span class="kplus">+${tnum(added)}</span>` : ""}</span></span></button>
@@ -713,7 +713,8 @@ function addPage(m) {
     <section class="kinnow current-meal" aria-label="Tillagt i ${mealName}">
       <h2 class="small">I ${mealName}en: <b>${items.length} ${items.length === 1 ? "sak" : "saker"} · ${tnum(sumKcal(mealItems))} kcal</b></h2>
       ${items.length ? `<div class="kmeals kitems">${rows}</div>` : `<p class="muted small">Inget tillagt än.</p>`}
-      <p class="muted small">Förslag: ${tnum(target)} kcal · ${sumKcal(mealItems) > target ? "Över" : "Kvar"}: ${tnum(Math.abs(target - sumKcal(mealItems)))} kcal</p>
+      <p class="small"><b>Riktmärke för ${mealName}: cirka ${tnum(target)} kcal</b><br>
+        <span class="muted">Beräknat som ${Math.round(share * 100)} % av ditt kalorimål för dagen.</span></p>
       <div class="kmacros">${nutrients}</div>
       ${mealItems.some(f => f.fat == null || f.fiber == null) ? `<p class="muted small kmiss">Fett eller fibrer saknas för ${mealItems.filter(f => f.fat == null || f.fiber == null).length} av ${items.length}.</p>` : ""}
       ${mealItems.filter(f => !isEst(f)).length > 1 ? `<button class="linkbtn2 small ksave" data-savegroup="${meal}">${icon("plus", 14)}Spara kombination som snabbval</button>` : ""}
