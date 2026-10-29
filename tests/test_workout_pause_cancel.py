@@ -13,7 +13,7 @@ def test_pause_removes_rest_timer_and_keeps_sets_for_resume(page):
     assert page.evaluate('JSON.stringify(workoutsOn(TODAY)[0].sets)')==before
     page.click('[data-focusstart]')
     assert page.locator('.focus').count()==1
-    page.click('.fset.active .fdone')
+    page.click('.fbar .fdone')
     assert page.locator('.rest').count()==1
 
 
@@ -68,7 +68,7 @@ def test_extending_finished_rest_cancels_its_old_cleanup(page):
 def test_paused_last_set_can_cancel_before_final_save(page):
     start(page)
     page.evaluate('S.plan.days[0].ex=[{id:"bankpress",sets:1,reps:"8"}];render()')
-    go(page,'pass');page.click('[data-focusstart]');page.click('.fset.active .fdone')
+    go(page,'pass');page.click('[data-focusstart]');page.click('.fbar .fdone')
     page.click('[data-fend]');page.click('[data-focusexit]')
     page.click('[data-passcancel]');page.click('[data-passcancelconfirm]')
     assert page.evaluate('workoutsOn(TODAY).length')==0

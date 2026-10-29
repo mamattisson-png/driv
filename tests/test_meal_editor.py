@@ -107,7 +107,7 @@ def test_meal_editor_layout_and_contrast(page,theme,width):
 def test_meal_done_stays_above_rest_timer_during_workout(page):
     meals(page)
     page.click('#nav [data-tab="pass"]');page.click('[data-focusstart]')
-    page.click('.fset.active .fdone')
+    page.click('.fbar .fdone')
     page.click('#nav [data-tab="kost"]');page.click('[data-mealpage="1"]')
     page.evaluate('window.scrollTo(0,document.documentElement.scrollHeight)')
     done=page.locator('#faddbtn').bounding_box();timer=page.locator('.rest').bounding_box()
