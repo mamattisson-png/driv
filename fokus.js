@@ -81,7 +81,8 @@ function stepSet(d, exId, i, f, dir, warm = false) {
   const ex = d.ex.find(x => x.id === exId);
   const s = warm ? warmAt(d, exId, i) : setAt(d, exId, i), hint = warm ? warmHint(d, ex, i) : liveHint(d, ex, i);
   // Ett tomt fält visar förslaget (dagens mål eller förra gången); stegen utgår från det
-  const cur = s[f] === undefined || s[f] === "" ? +hint[f] || 0 : +s[f];
+  const shown = +hint[f] || (f === "reps" ? repRange(ex.reps).lo : 0);
+  const cur = s[f] === undefined || s[f] === "" ? shown : +s[f];
   const next = cur + dir * stepFor(exId, f);
   s[f] = clampSet(exId, f, f === "kg" ? Math.round(next * 4) / 4 : Math.round(next));
 }
@@ -98,7 +99,7 @@ function bigStepper(exId, i, f, val, hint, label, unit, warm = false) {
 }
 
 function fitBigNums() {
-  for (const el of document.querySelectorAll(".bignum input")) el.style.width = `${Math.max(1, String(el.value || el.placeholder).length) + 0.4}ch`;
+  for (const el of document.querySelectorAll(".bignum input")) el.style.width = `calc(${Math.max(1, String(el.value || el.placeholder).length) + 0.4}ch + 24px)`;
 }
 document.addEventListener("input", ev => { if (ev.target.closest && ev.target.closest(".bignum")) fitBigNums(); });
 
