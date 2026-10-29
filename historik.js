@@ -199,7 +199,9 @@ document.addEventListener("click", ev => {
   else if (ds.hpass !== undefined) {
     editDate = histDay === TODAY ? null : histDay;
     histDay = null; tab = "pass"; chosenDay = ds.hpass || null; editing = false;
-    if (focus) endFocus();
+    // Historiken får visas utan att det pågående passet avslutas.
+    if (focus) focus.suspended = true;
+    passOpen = true;
   }
   else if (ds.hfood !== undefined) { editDate = histDay === TODAY ? null : histDay; histDay = null; tab = "kost"; }
   save();

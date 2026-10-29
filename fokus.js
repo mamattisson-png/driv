@@ -4,7 +4,7 @@
 // att trycka på för att skriva. Skärmen hålls tänd så länge fokusläget är öppet.
 // Laddas före app.js; funktionerna härifrån anropas först när appen ritas.
 
-let focus = null;   // { dayId, idx } medan fokusläget är öppet
+let focus = null;   // { dayId, idx, start, suspended? }; passet finns kvar även när man byter flik
 let focusDailies = false;   // dailys visas i ett fönster ovanpå passet
 let focusOrder = false;     // fönstret där övningarnas ordning ändras
 
@@ -26,7 +26,7 @@ function endFocus() {
 // Efter ett avbockat set: är övningen klar går fokus vidare till nästa medan vilan räknar ned
 // I ett superset växlar fokus till nästa övning i varvet, och efter varvet tillbaka till gruppens början
 function focusAfterSet(d, idx = focus && focus.idx, i = 0) {
-  if (!focus || focus.dayId !== d.id) return;
+  if (editDate || !focus || focus.suspended || focus.dayId !== d.id) return;
   const w = workoutOn(logDate(), d.id), g = ssGroup(d, focus.idx), from = focus.idx;
   if (g) {
     const next = ssNext(d, idx, i);
@@ -42,7 +42,7 @@ function focusAfterSet(d, idx = focus && focus.idx, i = 0) {
 // Anropas efter varje ritning: nästa set (eller nästa övning) hamnar i bild
 function afterFocusRender() {
   fitBigNums();
-  if (!focus || !focus.scroll) return;
+  if (!focus || !focus.scroll || tab !== "pass" || editDate || focus.suspended) return;
   const where = focus.scroll;
   focus.scroll = null;
   if (where === "top") window.scrollTo(0, 0);
@@ -167,8 +167,8 @@ function focusView() {
     ? next ? `<button class="fnext grow" data-focusgo="${nextIdx}"><span class="klabel">Nästa</span><b>${esc(EX[next.id].name)} · ${repsText(next)}</b></button>`
       : `<button class="fnext grow" data-fend><span class="klabel">Sista övningen</span><b>Avsluta passet</b></button>`
     : next ? `<button class="primary grow" data-focusgo="${nextIdx}">Nästa: ${esc(EX[next.id].name)}</button>`
-    : w && w.done ? `<button class="primary grow" data-focusexit>Passet är sparat</button>`
-    : `<button class="primary grow" data-finish="${d.id}" data-focusend>Spara passet</button>`;
+    : w && w.done ? `<button class="primary grow" data-finish="${d.id}" data-focusend>Avsluta pass</button>`
+    : `<button class="primary grow" data-finish="${d.id}" data-focusend>Spara och avsluta</button>`;
   const dDone = S.daily.filter(e => dailyDone(logDate(), e.id)).length;
   const start = focus.start || Date.now();
   const tools = `<div class="ftools">
@@ -205,7 +205,7 @@ function endSheet(d, w) {
   return `<div class="overlay" data-fendclose><div class="sheet endsheet" role="dialog" aria-label="Avsluta passet">
     <h2>Avsluta passet?</h2>
     <div class="muted">${logged ? `${done} av ${d.ex.length} övningar klara · ${sets} set` : "Inget set är loggat än."}</div>
-    <div class="col endbtns">${logged ? `<button class="primary wide bigbtn" data-finish="${d.id}" data-focusend>Spara passet</button>` : ""}
+    <div class="col endbtns">${logged ? `<button class="primary wide bigbtn" data-finish="${d.id}" data-focusend>${w && w.done ? "Avsluta pass" : "Spara och avsluta"}</button>` : ""}
       <button class="wide" data-focusexit>${logged ? "Pausa och fortsätt senare" : "Avbryt passet"}</button>
       <button class="ghost wide" data-fendclose>Fortsätt träna</button></div></div></div>`;
 }

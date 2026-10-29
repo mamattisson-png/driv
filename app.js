@@ -874,9 +874,9 @@ let importMsg = "";
 function render() {
   if (TABS.some(([id]) => id === tab)) profBack = tab;
   const nav = document.getElementById("nav");
-  // Fokusläget tar hela skärmen; menyn kommer tillbaka när man lämnar det
-  const inFocus = tab === "pass" && !!focus && !editing;
-  nav.classList.toggle("hidden", tab === "upplagg" || inFocus || !!passDone);
+  // Menyn är tillgänglig även under ett pågående pass.
+  const inFocus = tab === "pass" && !!focus && !editing && !editDate && !focus.suspended;
+  nav.classList.toggle("hidden", tab === "upplagg" || !!passDone);
   document.body.classList.toggle("onboard", tab === "upplagg" && !S.setupDone);
   document.body.classList.toggle("infocus", inFocus);
   nav.innerHTML = TABS.map(([id, ic, lbl]) =>
@@ -905,7 +905,7 @@ const tag = t => `<span class="tag ${TYPES[t].color || t}">${TYPES[t].label}</sp
 function currentPassDay() {
   const L = S.log[TODAY];
   const todays = workoutsOn(logDate());
-  const id = (focus && focus.dayId) || chosenDay || (todays.length ? todays[todays.length - 1].dayId : suggestedDay().id);
+  const id = (focus && !editDate && !focus.suspended && focus.dayId) || chosenDay || (todays.length ? todays[todays.length - 1].dayId : suggestedDay().id);
   return dayById(id) || S.plan.days[0];
 }
 
@@ -955,7 +955,7 @@ const VIEWS = {
     const m = macros(), e = eaten();
     m.kcal += burnedOn(TODAY);
     const t = todaysPass(), d = t.d, w = t.w, done = w && w.done;
-    const started = w && !done && d.ex.some(x => ((w.sets[x.id]) || []).some(s => s && s.ok));
+    const started = !done && (t.active || (w && d.ex.some(x => ((w.sets[x.id]) || []).some(s => s && s.ok))));
     const passes = weekSummary(weekStart(TODAY)).passes, acts = actsOn(TODAY);
     const greet = done ? "Bra jobbat idag." : started ? "Fortsätt där du var." : t.rest ? (acts.length ? "Snyggt, aktiv vilodag." : "Vilodag idag.") : "Dags att köra.";
     const nDone = d.ex.filter(x => exDone(w, x)).length;
@@ -994,8 +994,8 @@ const VIEWS = {
   },
 
   pass() {
-    if (focus && !editing) return focusView();
     if (editDate) return pastView();
+    if (focus && !editing && !focus.suspended) return focusView();
     const d = currentPassDay();
     if (editing) return editView(d) + (exSheet != null && d.ex[exSheet] ? exSheetView(d) : "");
     if (passOpen && chosenDay) return passetView(d);
@@ -1772,6 +1772,7 @@ document.addEventListener("click", ev => {
   if (ds.tab) {
     if (ds.tab === "vanner" && tab !== "vanner") vannerBack = tab;
     passDone = null;
+    if (ds.tab === "pass" && focus) focus.suspended = false;
     tab = ds.tab; editing = false; dailyEditing = false; draft = null; editDate = null; histDay = null;
     chosenDay = null; passOpen = false; kostDay = false; mealPage = null; foodSheet = null; foodItem = null; recipeOpen = null; recipeEdit = null;
     editSnap = null; exSheet = null; ordna = false; trSheet = null;
@@ -1794,7 +1795,7 @@ document.addEventListener("click", ev => {
     const d = currentPassDay(), ex = d.ex.find(x => x.id === ds.ok), s = warmAt(d, ds.ok, +ds.i);
     s.ok = !s.ok;
     if (s.ok && ex) { const h = warmHint(d, ex, +ds.i); if (s.reps === undefined || s.reps === "") s.reps = h.reps; if ((s.kg === undefined || s.kg === "") && +h.kg) s.kg = h.kg; }
-    if (focus) focus.sel = null;
+    if (focus && !editDate && !focus.suspended) focus.sel = null;
   }
   else if (ds.ok) {
     const d = currentPassDay(), s = setAt(d, ds.ok, +ds.i);
@@ -1825,8 +1826,14 @@ document.addEventListener("click", ev => {
     const w = workoutFor(dayById(ds.finish));
     // I efterhand räknas set med ifyllda värden som gjorda när passet sparas
     if (editDate && !w.done) for (const arr of Object.values(w.sets)) for (const st of arr) if (st && hasData(st)) st.ok = true;
-    w.done = !w.done;
-    if (w.done) { restoreSwaps(dayById(ds.finish), w); if (w.start && !editDate) w.end = Date.now(); stopRest(); }
+    // Avsluta från fokusläget ska aldrig öppna ett redan automatiskt sparat pass igen.
+    w.done = ds.focusend !== undefined ? true : !w.done;
+    if (w.done) {
+      restoreSwaps(dayById(ds.finish), w);
+      if (w.start && !editDate) w.end = Date.now();
+      // Historiska loggar ska inte avbryta vilan i ett pågående pass.
+      if (!focus || (!editDate && focus.dayId === ds.finish)) stopRest();
+    }
     shareWorkout(dayById(ds.finish), logDate(), w.done);
     // Ett sparat pass visar skärmen Pass klart; i efterhand går man tillbaka till dagen i Historik
     if (w.done && editDate) { histDay = editDate; editDate = null; tab = "historik"; }
@@ -1942,7 +1949,7 @@ document.addEventListener("click", ev => {
   else if (ds.week) weekOffset = Math.min(0, weekOffset + +ds.week);
   // Klar: tillbaka till Historik, eller till idag om dagen valdes i Kosts veckoremsa
   else if (ds.editdone !== undefined && kostDay && tab === "kost") { editDate = null; kostDay = false; mealPage = null; }
-  else if (ds.editdone !== undefined) { histDay = editDate; editDate = null; tab = "historik"; chosenDay = null; if (focus) endFocus(); }
+  else if (ds.editdone !== undefined) { histDay = editDate; editDate = null; tab = "historik"; chosenDay = null; }
   else if (ds.export !== undefined) { exportData(); return; }
   else if (ds.import !== undefined) { document.getElementById("importfile").click(); return; }
   else if (ds.reset !== undefined) {
