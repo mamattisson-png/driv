@@ -9,7 +9,10 @@ const start = source.indexOf('function stableJson(');
 const end = source.indexOf('stamp(true);', start);
 assert.ok(start >= 0 && end > start, 'Could not locate sync functions');
 const ctx = vm.createContext({ normalize: x => x, crypto: require('node:crypto').webcrypto, S: { log: {} } });
-vm.runInContext(source.slice(start, end), ctx);
+const mergeStart = source.indexOf('function mergeDoc(');
+const mergeEnd = source.indexOf('function applyCloudDoc(', mergeStart);
+assert.ok(mergeStart > end && mergeEnd > mergeStart, 'Could not locate mergeDoc');
+vm.runInContext(source.slice(start, end) + '\\n' + source.slice(mergeStart, mergeEnd), ctx);
 const merge = (id, a, b) => vm.runInContext('mergeDoc', ctx)(id, a, b);
 const plain = x => JSON.parse(JSON.stringify(x));
 const day = (workouts, deleted = {}) => ({
