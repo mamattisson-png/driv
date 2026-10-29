@@ -12,7 +12,7 @@ const ctx = vm.createContext({ normalize: x => x, crypto: require('node:crypto')
 const mergeStart = source.indexOf('function mergeDoc(');
 const mergeEnd = source.indexOf('function applyCloudDoc(', mergeStart);
 assert.ok(mergeStart > end && mergeEnd > mergeStart, 'Could not locate mergeDoc');
-vm.runInContext(source.slice(start, end) + '\\n' + source.slice(mergeStart, mergeEnd), ctx);
+vm.runInContext(source.slice(start, end) + '\n' + source.slice(mergeStart, mergeEnd), ctx);
 const merge = (id, a, b) => vm.runInContext('mergeDoc', ctx)(id, a, b);
 const plain = x => JSON.parse(JSON.stringify(x));
 const day = (workouts, deleted = {}) => ({
