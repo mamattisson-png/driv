@@ -702,7 +702,9 @@ def test_kost_maltider_forslag_mangd_och_upprepa(page):
     assert amounts(1)[-1] == ["Ägg", 154, "2 st"]
     assert page.locator('.qadd:has-text("Ägg")').count() == 0
     assert page.locator(".addpage .qadd button").count() == 0   # ett förslag är en enda knapp, utan egna − och +
-    assert "I lunchen: 2 saker" in page.inner_text(".kinnow")
+    assert page.inner_text(".meal-summary-head h2") == "I lunchen"
+    assert "262 kcal" in page.inner_text(".meal-summary-head")
+    assert page.locator(".meal-summary-card .kirow").count() == 2
     # Klar syns även i ett lågt fönster
     page.set_viewport_size({"width": 1200, "height": 500})
     klar = page.locator("#faddbtn").bounding_box()

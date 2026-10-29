@@ -711,13 +711,15 @@ function addPage(m) {
     <div id="productresults" aria-live="polite"></div>
     <div class="fidle">
     <section class="kinnow current-meal" aria-label="Tillagt i ${mealName}">
-      <h2 class="small">I ${mealName}en: <b>${items.length} ${items.length === 1 ? "sak" : "saker"} · ${tnum(sumKcal(mealItems))} kcal</b></h2>
+      <div class="meal-summary-head"><h2>I ${mealName}en</h2><b>${tnum(sumKcal(mealItems))} kcal</b></div>
+      <div class="meal-summary-card">
       ${items.length ? `<div class="kmeals kitems">${rows}</div>` : `<p class="muted small">Inget tillagt än.</p>`}
-      <p class="small"><b>Riktmärke för ${mealName}: cirka ${tnum(target)} kcal</b><br>
+      <p class="small meal-guideline"><b>Riktmärke för ${mealName}: cirka ${tnum(target)} kcal</b><br>
         <span class="muted">Beräknat som ${Math.round(share * 100)} % av ditt kalorimål för dagen.</span></p>
       <div class="kmacros">${nutrients}</div>
       ${mealItems.some(f => f.fat == null || f.fiber == null) ? `<p class="muted small kmiss">Fett eller fibrer saknas för ${mealItems.filter(f => f.fat == null || f.fiber == null).length} av ${items.length}.</p>` : ""}
       ${mealItems.filter(f => !isEst(f)).length > 1 ? `<button class="linkbtn2 small ksave" data-savegroup="${meal}">${icon("plus", 14)}Spara kombination som snabbval</button>` : ""}
+      </div>
     </section>
     <section class="card kintake" aria-label="Dagens intag"><div class="row between"><span class="small">Dagens intag</span><b class="small">${tnum(e.kcal)} / ${tnum(m.kcal)} kcal</b></div>
       <div class="bar"><div style="width:${pct(e.kcal)}%"></div></div>
