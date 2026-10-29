@@ -84,6 +84,8 @@ function friendsNudge() {
 }
 // På Hem: vännernas senaste pass med Peppa. Utan vänner en rad som leder till inbjudan.
 function friendsHome() {
+  if (sbEnabled && !account.ready && localOwner()) return `<section class="friendsrow" aria-label="Vänner" aria-busy="true"><div class="row between fsec-h"><h2>Vänner</h2></div>
+    <div class="card friendsbox"><div class="fevent muted small" role="status">Hämtar vänner …</div></div></section>`;
   if (!sbEnabled || account.step !== "in" || !social.loaded || social.error) return "";
   if (!social.friends.length) return `<button class="card homerow friendsinvite" data-gofriends><span class="hricon">${icon("vanner", 22)}</span>
     <span class="grow"><b>Vänner</b><span class="muted small">Bjud in en kompis och peppa varandra</span></span><span class="chev">${icon("right", 18)}</span></button>`;

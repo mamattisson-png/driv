@@ -8,3 +8,5 @@
 - Kör `python3 tools/sw-version.py` efter varje ändring av appens filer, och testerna
   (`CHROMIUM_PATH=/opt/pw-browsers/chromium python3 -m pytest tests -q`) före push.
 - main publiceras direkt till https://driv.driveify.se (GitHub Pages).
+
+- Uppdatera alltid `docs/kommande.md` när något färdigställs och publiceras. Markera verifierat klara punkter som Klar; lägg till en avslutad punkt om ändringen saknas i listan.
