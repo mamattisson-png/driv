@@ -129,7 +129,7 @@ function passetView(d) {
     ${muscleSummary(d)}
     ${d.ex.length ? `<div class="klabel sechead">Övningar</div>${passOverview(d, w)}`
       : `<div class="card empty"><b>Passet har inga övningar än.</b><button class="primary wide" style="margin-top:12px" data-edit>Lägg till övningar</button></div>`}
-    ${bottom}`;
+    ${bottom}${w && !w.end ? `<button class="ghost wide dangertext" data-passcancel="${d.id}">Avbryt passet utan att spara</button>` : ''}`;
 }
 
 // Ändra övningar: kroppen med musklerna överst, sedan övningarna. Ett tryck öppnar övningens blad.
