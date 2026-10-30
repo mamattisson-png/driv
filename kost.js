@@ -11,6 +11,16 @@ let quickMore = false;    // visa fler förslag
 let foodPanel = "senaste"; // under fältet: "senaste" (förslag) eller "kcal" (bara kcal)
 let quickCache = [];
 let stagedFoods = []; // Valda livsmedel innan registrering
+// Beräkna näring redan i urvalet, inte först vid slutlig registrering.
+function stageFood(item, meal) {
+  const f = { ...item, meal };
+  if (f.amt) { f.amt = { ...f.amt, u: { ...(f.amt.u || {}) } }; applyAmt(f); }
+  f.kcal = Number.isFinite(+f.kcal) ? +f.kcal : 0;
+  f.protein = Number.isFinite(+f.protein) ? +f.protein : 0;
+  stagedFoods.push(f);
+  stagedOpen = true;
+}
+
 let stagedOpen = false;
 let foodBrowseTab = "senaste";
 
@@ -321,6 +331,11 @@ document.addEventListener("click", ev => {
   save();
   render();
 });
+// Hindra mobilwebbläsaren från att först använda trycket till att stänga tangentbordet.
+document.addEventListener("pointerdown", ev => {
+  const target = ev.target.closest?.("[data-stagedraft]");
+  if (target && document.activeElement?.id === "fname") ev.preventDefault();
+});
 document.addEventListener("click", ev => {
   const b = ev.target.closest && ev.target.closest("[data-astep]");
   if (!b || b.disabled) return;
@@ -588,7 +603,7 @@ function mealCard(meal, L, m) {
   const sub = items.length ? `${tnum(sum)} kcal · ${prot} g protein` : `Rekommenderat: ca ${tnum(mealTarget(meal, m))} kcal`;
   const expanded = expandedOverviewMeal === meal && items.length > 0;
   const detail = expanded ? `<div id="km-overview-${meal}" style="padding:0 16px 10px 56px">${items.map(({f,i}) => `<div style="display:flex;align-items:center;border-top:1px solid rgba(150,150,150,.18);gap:8px"><button type="button" data-overviewitem="${i}" style="flex:1;min-width:0;display:flex;align-items:center;justify-content:space-between;text-align:left;padding:10px 0;border:0;background:transparent;color:inherit;gap:10px"><span><b style="display:block;font-size:.9rem">${itemName(f)}</b><span class="muted small">${amountText(f) || "1 portion"}</span></span><span class="small" style="white-space:nowrap">${tnum(f.kcal)} kcal</span></button><button type="button" data-overviewremove="${i}" aria-label="Ta bort ${esc(f.name)} från ${name}" style="display:inline-flex;align-items:center;justify-content:center;flex:0 0 36px;width:36px;height:36px;border:0;background:transparent;color:#f97316;font-size:24px;line-height:1">×</button></div>`).join("")}</div>` : "";
-  return `<div class="kmcard kmrow ${items.length ? "" : "empty"} ${items.some(x => fresh.has(x.f)) ? "fresh" : ""}" style="display:block"><div style="display:flex;align-items:center"><button class="kmopen" data-overviewmeal="${meal}" aria-expanded="${expanded}" aria-label="${name}: ${items.length ? (expanded ? "Dölj" : "Visa") + " livsmedel" : "Öppna måltid"}" style="flex:1;min-width:0"><span class="kmic">${mealIcon(meal)}</span><span class="grow col"><b>${name}</b><span class="small kprev ${items.length ? "kmsum" : "muted"}">${sub}${added ? ` <span class="kplus">+${tnum(added)}</span>` : ""}</span></span>${items.length ? `<span aria-hidden="true" style="font-size:20px;margin-right:8px">${expanded ? "⌃" : "⌄"}</span>` : ""}</button>${meal < 0 ? "" : `<button class="kmadd" data-addto="${meal}" aria-label="Lägg till i ${name.toLowerCase()}">${icon("plus", 20)}</button>`}</div>${detail}</div>`;
+  return `<div class="kmcard kmrow ${items.length ? "" : "empty"} ${items.some(x => fresh.has(x.f)) ? "fresh" : ""}" style="display:block"><div style="display:flex;align-items:center"><button class="kmopen" data-overviewmeal="${meal}" aria-expanded="${expanded}" aria-label="${name}: ${items.length ? (expanded ? "Dölj" : "Visa") + " livsmedel" : "Öppna måltid"}" style="flex:1;min-width:0"><span class="kmic">${mealIcon(meal)}</span><span class="grow col"><b>${name}</b><span class="small kprev ${items.length ? "kmsum" : "muted"}">${sub}${added ? ` <span class="kplus">+${tnum(added)}</span>` : ""}</span></span>${items.length ? `<span aria-hidden="true" style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;margin-right:8px">${icon(expanded ? "chevron-up" : "chevron-down", 20)}</span>` : ""}</button>${meal < 0 ? "" : `<button class="kmadd" data-addto="${meal}" aria-label="Lägg till i ${name.toLowerCase()}">${icon("plus", 20)}</button>`}</div>${detail}</div>`;
 
 }
 // Sidan för en måltid: det man ätit (ett tryck öppnar livsmedlet), summan mot förslaget och näringen
@@ -744,7 +759,7 @@ function addPage(m) {
     <div id="fpreview" class="fpreview"></div><button type="button" id="fstageinput" data-stageinput style="display:none;width:100%;margin:8px 0 14px;padding:12px;border-radius:12px;border:1px solid #ff7118;background:rgba(255,113,24,.12);color:#ff8b43;font-weight:700">+ Lägg i valda livsmedel</button>
     <div id="productresults" aria-live="polite"></div>
     <div class="fidle"><div class="fopts" role="tablist" aria-label="Snabbval"><button class="flink ${foodBrowseTab === "senaste" ? "on" : ""}" data-browsetab="senaste">Senaste</button><button class="flink ${foodBrowseTab === "favoriter" ? "on" : ""}" data-browsetab="favoriter">Favoriter</button><button class="flink ${foodBrowseTab === "recept" ? "on" : ""}" data-browsetab="recept">Mina recept</button></div><h2 class="klabel fsub">${foodBrowseTab === "senaste" ? "Senast använda" : foodBrowseTab === "favoriter" ? "Favoriter" : "Mina recept"}</h2><div class="qgrid">${quick || '<p class="muted small">Inga livsmedel här ännu.</p>'}</div>${foodBrowseTab === "senaste" && common.length ? `<h2 class="klabel fsub">Vanliga för ${mealName}</h2><div class="qgrid">${commonRows}</div>` : ""}</div>
-    <div class="staged-foods" style="margin-top:16px;border-top:1px solid rgba(150,150,150,.2);padding-top:10px"><button data-stagetoggle style="width:100%;display:flex;justify-content:space-between;align-items:center;padding:12px 0;background:transparent;color:inherit;border:0"><b>Valda livsmedel (${stagedFoods.length})</b><span style="display:inline-flex;align-items:center;gap:8px">${tnum(stagedTotal)} kcal <span aria-hidden="true" style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px">${stagedOpen ? "⌃" : "⌄"}</span></span></button>${stagedOpen ? `<div>${stagedRows}<div class="row" style="gap:8px;margin-top:12px"><button data-stagerecipe class="ghost grow" ${stagedFoods.length ? "" : "disabled"}>Spara recept</button></div></div>` : ""}</div>
+    <div class="staged-foods" style="margin-top:16px;border-top:1px solid rgba(150,150,150,.2);padding-top:10px"><button data-stagetoggle style="width:100%;display:flex;justify-content:space-between;align-items:center;padding:12px 0;background:transparent;color:inherit;border:0"><b>Valda livsmedel (${stagedFoods.length})</b><span style="display:inline-flex;align-items:center;gap:8px">${tnum(stagedTotal)} kcal <span aria-hidden="true" style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px">${icon(stagedOpen ? "chevron-up" : "chevron-down", 18)}</span></span></button>${stagedOpen ? `<div>${stagedRows}<div class="row" style="gap:8px;margin-top:12px"><button data-stagerecipe class="ghost grow" ${stagedFoods.length ? "" : "disabled"}>Spara recept</button></div></div>` : ""}</div>
     <div class="muted small credit">Näringsvärden: Livsmedelsverket (CC BY 4.0), egna uppskattningar och <a href="https://world.openfoodfacts.org/" target="_blank" rel="noopener">Open Food Facts</a> (<a href="produkter.json" download>produktdata, ODbL</a>).</div>
     <div class="pagefoot"><button class="primary wide bigbtn" id="faddbtn" data-addfood>Klar</button></div>
   </div>`;
@@ -911,11 +926,11 @@ document.addEventListener("click", ev => {
     foodDraft = []; foodPanel = "senaste";
     mealPage = meal;
   }
-  else if (ds.stagedraft !== undefined) { const d = foodDraft[+ds.stagedraft]; if (d?.amt && foodSheet) { stagedFoods.push({name:d.name,amt:{...d.amt},meal:foodSheet.meal}); stagedOpen = true; const input = $("fname"); if (input) { input.value = ""; input.blur(); } foodDraft = []; } }
-  else if (ds.stageinput !== undefined) { const p = foodPending(), input = $("fname"), name = input?.value.trim() || ""; if (p.ready && !p.claude && name && foodSheet) { const meal = foodSheet.meal; if (p.learned) stagedFoods.push({name,kcal:p.learned.kcal,protein:p.learned.protein,meal}); else foodDraft.filter(d=>d.amt).forEach(d=>stagedFoods.push({name:d.name,amt:d.amt,meal})); stagedOpen = true; input.value = ""; foodDraft = []; input.blur(); } }
+  else if (ds.stagedraft !== undefined) { const d = foodDraft[+ds.stagedraft]; if (d?.amt && foodSheet) { stageFood({name:d.name,amt:d.amt},foodSheet.meal); const input = $("fname"); if (input) { input.value = ""; input.blur(); } foodDraft = []; } }
+  else if (ds.stageinput !== undefined) { const p = foodPending(), input = $("fname"), name = input?.value.trim() || ""; if (p.ready && !p.claude && name && foodSheet) { const meal = foodSheet.meal; if (p.learned) stageFood({name,kcal:p.learned.kcal,protein:p.learned.protein},meal); else foodDraft.filter(d=>d.amt).forEach(d=>stageFood({name:d.name,amt:d.amt},meal)); stagedOpen = true; input.value = ""; foodDraft = []; input.blur(); } }
   else if (ds.browsetab) foodBrowseTab = ds.browsetab;
   else if (ds.favquick !== undefined || ds.favcommon !== undefined) { const f = ds.favquick !== undefined ? quickCache[+ds.favquick] : (window._kostCommon || [])[+ds.favcommon]; if (f) toggleFav(f); }
-  else if (ds.stagequick !== undefined || ds.stagecommon !== undefined) { const f = ds.stagequick !== undefined ? quickCache[+ds.stagequick] : (window._kostCommon || [])[+ds.stagecommon]; if (f) { stagedFoods.push({...perUnit(f), name:f.name, meal:foodSheet.meal}); stagedOpen = true; } }
+  else if (ds.stagequick !== undefined || ds.stagecommon !== undefined) { const f = ds.stagequick !== undefined ? quickCache[+ds.stagequick] : (window._kostCommon || [])[+ds.stagecommon]; if (f) { stageFood({...perUnit(f), name:f.name}, foodSheet.meal); } }
   else if (ds.stagetoggle !== undefined) stagedOpen = !stagedOpen;
   else if (ds.stageremove !== undefined) stagedFoods.splice(+ds.stageremove,1);
   else if (ds.stagecommit !== undefined) { stagedFoods.forEach(f => logFood(f, f.meal ?? foodSheet.meal)); stagedFoods = []; closeMealEditor(); }
