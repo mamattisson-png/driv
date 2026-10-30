@@ -961,9 +961,9 @@ function dailyClockAdvance() {
       c.phase = "done"; clearInterval(dailyClockTick); dailyClockTick = null;
       save(); render(); return;
     }
-    c.phase = "rest"; c.end = Date.now() + c.rest * 1000;
+    c.phase = "rest"; c.paused = false; c.end = Date.now() + c.rest * 1000;
   } else {
-    c.phase = "work"; c.set++; c.end = Date.now() + c.work * 1000;
+    c.phase = "work"; c.set++; c.paused = false; c.end = Date.now() + c.work * 1000;
   }
   render();
 }
@@ -993,7 +993,7 @@ document.addEventListener("click", ev => {
   const d = t.dataset;
   if (d.dclockstart) {
     const e = S.daily.find(x => x.id === d.dclockstart); if (!e) return;
-    const timed = /\\d+\\s*(?:s|sek)\\b/i.test(e.reps || "");
+    const timed = /\d+\s*(?:sek|s)\b/i.test(e.reps || "");
     const work = dailySeconds(e);
     dailyClock = {id:e.id,work,timed,reps:e.reps||"",rest:30,total:Math.max(1,+e.sets||1),set:1,phase:"work",end:Date.now()+work*1000,paused:false};
     clearInterval(dailyClockTick); dailyClockTick = setInterval(dailyClockRefresh,250);
