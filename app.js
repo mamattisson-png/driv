@@ -931,7 +931,7 @@ function dailyClockView() {
   const rest = c.phase === "rest", done = c.phase === "done", reps = !c.timed && c.phase === "work";
   return `<div class="daily-focus" role="region" aria-label="Daily timer">
     <div class="daily-focus-top"><span>${esc(EX[c.id]?.name || "Daily")}</span><button class="ghost small" data-dclockstop aria-label="Stäng timer">✕</button></div>
-    <div class="daily-focus-label">${done ? "Övningen klar!" : rest ? "Vila inför nästa set" : "Träning pågår"}</div>
+    <div class="daily-focus-figure">${figure(c.id)}</div><div class="daily-focus-label">${done ? "Övningen klar!" : rest ? "Vila inför nästa set" : "Träning pågår"}</div>
     <div class="daily-focus-sets">${done ? "Alla set klara" : `Set ${c.set} av ${c.total}`}</div>
     <div class="daily-focus-ring ${rest ? "rest" : ""} ${done ? "complete" : ""}">
       ${done ? `<span class="daily-focus-check">✓</span>` : reps ? `<span>${esc(c.reps || "Set")}</span>` : `<span id="daily-clock-time">${fmt(left)}</span>`}
@@ -992,7 +992,7 @@ document.addEventListener("click", ev => {
   ev.stopImmediatePropagation();
   const d = t.dataset;
   if (d.dclockstart) {
-    const e = S.daily.find(x => x.id === d.dclockstart); if (!e) return;
+    const e = S.daily.find(x => x.id === d.dclockstart); if (!e) return;\n    if (typeof focusDailies !== "undefined" && focusDailies) focusDailies = false;
     const timed = /\\d+\\s*(?:s|sek)\\b/i.test(e.reps || "");
     const work = dailySeconds(e);
     dailyClock = {id:e.id,work,timed,reps:e.reps||"",rest:30,total:Math.max(1,+e.sets||1),set:1,phase:"work",end:Date.now()+work*1000,paused:false};
@@ -1037,12 +1037,12 @@ function dailiesCard(inPass, banded) {
          <button class="done-btn big ${ok ? "on" : ""}" data-runcheck="${id}" aria-pressed="${ok}" aria-label="${esc(EX[id].name)}: ${ok ? "klar" : "fyll i km eller minuter"}">${check}</button>`
       : `<button class="done-btn big ${ok ? "on" : ""}" data-dcheck="${id}" aria-pressed="${ok}" aria-label="${esc(EX[id].name)} klar">${check}</button>`;
     return `<div class="daily ${ok ? "ok" : ""}">${thumb(id, "dt")}<div class="grow"><b>${esc(EX[id].name)}</b>
-      ${sub ? `<span class="muted small">${sub}</span>` : ""}</div>${its > 1 ? `<span class="muted small streak">${its} dagar i rad</span>` : ""}${!isRun(id) && /(?:sek|\\bs\\b)/i.test(e.reps || "") ? `<button class="ghost small" data-dclockstart="${id}" aria-label="Starta timer">▶ Starta</button>` : ""}${ctl}</div>`;
+      ${sub ? `<span class="muted small">${sub}</span>` : ""}</div>${its > 1 ? `<span class="muted small streak">${its} dagar i rad</span>` : ""}${!ok && !isRun(id) ? `<button class="ghost small" data-dclockstart="${id}" aria-label="Starta ${esc(EX[id].name)}">▶ Starta</button>` : ""}${ctl}</div>`;
   }).join("");
   // Rubriken: antal klara, och ett tryck öppnar Redigera dailys (inte under passet)
   const head = `<div class="dhead"><h2>Dailys${st > 1 ? `<span class="muted small"> · alla ${st} dagar i rad</span>` : ""}</h2>
     ${inPass ? `<span class="muted small">${done} av ${n} klara</span>` : `<button class="ghost small" data-dedit aria-label="Redigera dailys, ${done} av ${n} klara">${done} av ${n} klara${icon("right", 16)}</button>`}</div>`;
-  return `${dailyClock ? dailyClockView() : `<section class="card dailies" aria-label="Dailys">${head}${rows}</section>${supplementsCard()}`}`;
+  return `${dailyClock ? dailyClockView() : `<section class="card dailies" aria-label="Dailys">${head}${rows}</section>${inPass ? "" : supplementsCard()}`}`;
 }
 
 // Alla pass som knappar; används på Idag och under Pass
