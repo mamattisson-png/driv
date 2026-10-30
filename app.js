@@ -915,6 +915,93 @@ function currentPassDay() {
 
 // Schemat: kommande dagar med fasta veckodagar, annars passen i tur och ordning
 // Dagens dailys som en kort lista att bocka av, direkt på Idag
+// Dailys: separat tidsstyrd övning med automatisk vila (testfunktion).
+let dailyClock = null;
+let dailyClockTick = null;
+function dailySeconds(e) {
+  const m = String(e.reps || "").match(/(\d+)\s*(?:sek|s\b)/i);
+  return m ? Math.max(5, Math.min(1800, +m[1])) : 45;
+}
+function dailyClockView() {
+  if (!dailyClock) return "";
+  const c = dailyClock, e = S.daily.find(x => x.id === c.id);
+  if (!e) return "";
+  const left = Math.max(0, Math.ceil((c.end - Date.now()) / 1000));
+  return `<div class="daily-clock" aria-live="off"><div class="muted small">${c.phase === "rest" ? "Vila" : "Övning"} · Set ${c.set} av ${c.total}</div>
+    <div class="daily-clock-time" id="daily-clock-time">${String(Math.floor(left/60)).padStart(2,"0")}:${String(left%60).padStart(2,"0")}</div>
+    <div class="row between"><button class="ghost small" data-dclockpause>${c.paused ? "Fortsätt" : "Pausa"}</button><button class="ghost small" data-dclockskip>Hoppa över</button><button class="ghost small" data-dclockstop>Avsluta</button></div></div>`;
+}
+function dailyClockSound() {
+  try {
+    const A = window.AudioContext || window.webkitAudioContext;
+    if (!A) return;
+    const ctx = new A(), osc = ctx.createOscillator(), gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.frequency.value = 880; gain.gain.value = 0.12;
+    osc.start(); osc.stop(ctx.currentTime + 0.18);
+    osc.onended = () => ctx.close();
+  } catch (_) {}
+}
+function dailyClockAdvance() {
+  if (!dailyClock) return;
+  const c = dailyClock;
+  dailyClockSound();
+  if (c.phase === "work") {
+    if (c.set >= c.total) {
+      day().dailies[c.id] = true;
+      dailyClock = null; clearInterval(dailyClockTick); dailyClockTick = null;
+      save(); render(); return;
+    }
+    c.phase = "rest"; c.end = Date.now() + c.rest * 1000;
+  } else {
+    c.phase = "work"; c.set++; c.end = Date.now() + c.work * 1000;
+  }
+  render();
+}
+function dailyClockRefresh() {
+  if (!dailyClock || dailyClock.paused) return;
+  if (Date.now() >= dailyClock.end) { dailyClockAdvance(); return; }
+  const el = document.getElementById("daily-clock-time");
+  if (el) {
+    const n = Math.max(0, Math.ceil((dailyClock.end - Date.now()) / 1000));
+    el.textContent = String(Math.floor(n/60)).padStart(2,"0")+":"+String(n%60).padStart(2,"0");
+  }
+}
+function supplementsCard() {
+  const a = S.supplements || [];
+  const rows = a.map((x,i) => {
+    const ok = day().dailies["supp:"+x.id] === true;
+    return `<div class="daily ${ok ? "ok" : ""}"><div class="grow"><b>${esc(x.name)}</b><span class="muted small">${esc(x.dose || "")}</span>${x.note ? `<div class="muted small" style="margin-top:4px">${esc(x.note)}</div>` : ""}</div><button class="done-btn big ${ok ? "on" : ""}" data-suppcheck="${esc(x.id)}" aria-label="Markera ${esc(x.name)} som taget">${icon("check",18)}</button><button class="ghost small" data-suppedit="${i}" aria-label="Redigera">✎</button></div>`;
+  }).join("");
+  return `<section class="card dailies" aria-label="Kosttillskott"><div class="dhead"><h2>Kosttillskott</h2><span class="muted small">${a.filter(x=>day().dailies["supp:"+x.id]).length} av ${a.length} tagna</span></div>${rows}<button class="ghost small" data-suppadd style="margin-top:10px">+ Lägg till kosttillskott</button></section>`;
+}
+document.addEventListener("click", ev => {
+  const t = ev.target.closest?.("[data-dclockstart],[data-dclockpause],[data-dclockskip],[data-dclockstop],[data-suppadd],[data-suppedit],[data-suppcheck]");
+  if (!t) return;
+  ev.stopImmediatePropagation();
+  const d = t.dataset;
+  if (d.dclockstart) {
+    const e = S.daily.find(x => x.id === d.dclockstart); if (!e) return;
+    const work = dailySeconds(e);
+    dailyClock = {id:e.id,work,rest:30,total:Math.max(1,+e.sets||1),set:1,phase:"work",end:Date.now()+work*1000,paused:false};
+    clearInterval(dailyClockTick); dailyClockTick = setInterval(dailyClockRefresh,250);
+  } else if (d.dclockpause !== undefined && dailyClock) {
+    if (dailyClock.paused) {dailyClock.end = Date.now()+dailyClock.remaining;dailyClock.paused=false;}
+    else {dailyClock.remaining=Math.max(0,dailyClock.end-Date.now());dailyClock.paused=true;}
+  } else if (d.dclockskip !== undefined) dailyClockAdvance();
+  else if (d.dclockstop !== undefined) {dailyClock=null;clearInterval(dailyClockTick);dailyClockTick=null;}
+  else if (d.suppcheck) day().dailies["supp:"+d.suppcheck] = !day().dailies["supp:"+d.suppcheck];
+  else if (d.suppadd !== undefined || d.suppedit !== undefined) {
+    const i = d.suppedit !== undefined ? +d.suppedit : -1, a = S.supplements || (S.supplements=[]), old = a[i] || {};
+    const name = prompt("Kosttillskott",old.name||""); if (!name?.trim()) return;
+    const dose = prompt("Dosering (t.ex. 5 g eller 2 kapslar)",old.dose||"") || "";
+    const note = prompt("Anteckning (valfritt)",old.note||"") || "";
+    if (i >= 0) a[i]={...old,name:name.trim(),dose,note};
+    else a.push({id:"s"+Date.now(),name:name.trim(),dose,note});
+  }
+  save();render();
+}, true);
+
 function dailiesCard(inPass, banded) {
   const n = S.daily.length, date = logDate(), L = day(date);
   if (dailyEditing) return `<div class="card"><div class="row between"><h2>Redigera dailys</h2><button class="small ghost" data-dedit>Klar</button></div>
@@ -933,12 +1020,12 @@ function dailiesCard(inPass, banded) {
          <button class="done-btn big ${ok ? "on" : ""}" data-runcheck="${id}" aria-pressed="${ok}" aria-label="${esc(EX[id].name)}: ${ok ? "klar" : "fyll i km eller minuter"}">${check}</button>`
       : `<button class="done-btn big ${ok ? "on" : ""}" data-dcheck="${id}" aria-pressed="${ok}" aria-label="${esc(EX[id].name)} klar">${check}</button>`;
     return `<div class="daily ${ok ? "ok" : ""}">${thumb(id, "dt")}<div class="grow"><b>${esc(EX[id].name)}</b>
-      ${sub ? `<span class="muted small">${sub}</span>` : ""}</div>${its > 1 ? `<span class="muted small streak">${its} dagar i rad</span>` : ""}${ctl}</div>`;
+      ${sub ? `<span class="muted small">${sub}</span>` : ""}</div>${its > 1 ? `<span class="muted small streak">${its} dagar i rad</span>` : ""}${!isRun(id) && /(?:sek|\\bs\\b)/i.test(e.reps || "") ? `<button class="ghost small" data-dclockstart="${id}" aria-label="Starta timer">▶ Starta</button>` : ""}${ctl}</div>`;
   }).join("");
   // Rubriken: antal klara, och ett tryck öppnar Redigera dailys (inte under passet)
   const head = `<div class="dhead"><h2>Dailys${st > 1 ? `<span class="muted small"> · alla ${st} dagar i rad</span>` : ""}</h2>
     ${inPass ? `<span class="muted small">${done} av ${n} klara</span>` : `<button class="ghost small" data-dedit aria-label="Redigera dailys, ${done} av ${n} klara">${done} av ${n} klara${icon("right", 16)}</button>`}</div>`;
-  return `<section class="card dailies" aria-label="Dailys">${head}${rows}</section>`;
+  return `<section class="card dailies" aria-label="Dailys">${head}${rows}${dailyClockView()}</section>${supplementsCard()}`;
 }
 
 // Alla pass som knappar; används på Idag och under Pass
