@@ -926,10 +926,19 @@ function dailyClockView() {
   if (!dailyClock) return "";
   const c = dailyClock, e = S.daily.find(x => x.id === c.id);
   if (!e) return "";
-  const left = Math.max(0, Math.ceil((c.end - Date.now()) / 1000));
-  return `<div class="daily-clock" aria-live="off"><div class="muted small">${c.phase === "rest" ? "Vila" : "Övning"} · Set ${c.set} av ${c.total}</div>
-    <div class="daily-clock-time" id="daily-clock-time">${String(Math.floor(left/60)).padStart(2,"0")}:${String(left%60).padStart(2,"0")}</div>
-    <div class="row between"><button class="ghost small" data-dclockpause>${c.paused ? "Fortsätt" : "Pausa"}</button><button class="ghost small" data-dclockskip>Hoppa över</button><button class="ghost small" data-dclockstop>Avsluta</button></div></div>`;
+  const left = c.paused ? Math.ceil(c.remaining / 1000) : Math.max(0, Math.ceil((c.end - Date.now()) / 1000));
+  const fmt = n => String(Math.floor(n/60)).padStart(2,"0")+":"+String(n%60).padStart(2,"0");
+  const rest = c.phase === "rest", done = c.phase === "done";
+  return `<div class="daily-focus" role="region" aria-label="Daily timer">
+    <div class="daily-focus-top"><span>${esc(EX[c.id]?.name || "Daily")}</span><button class="ghost small" data-dclockstop aria-label="Stäng timer">✕</button></div>
+    <div class="daily-focus-label">${done ? "Övningen klar!" : rest ? "Vila inför nästa set" : "Träning pågår"}</div>
+    <div class="daily-focus-sets">${done ? "Alla set klara" : `Set ${c.set} av ${c.total}`}</div>
+    <div class="daily-focus-ring ${rest ? "rest" : ""} ${done ? "complete" : ""}">
+      ${done ? `<span class="daily-focus-check">✓</span>` : `<span id="daily-clock-time">${fmt(left)}</span>`}
+    </div>
+    <div class="daily-focus-caption">${done ? "Bra jobbat!" : rest ? "Nästa set startar automatiskt" : `${c.work} sekunder · ${c.total} set`}</div>
+    <div class="daily-focus-actions">${done ? `<button data-dclockstop>Stäng</button>` : `<button class="ghost" data-dclockpause>${c.paused ? "▶ Fortsätt" : "Ⅱ Pausa"}</button><button class="ghost" data-dclockskip>${rest ? "Starta nästa set" : "Hoppa över"}</button>`}</div>
+  </div>`;
 }
 function dailyClockSound() {
   try {
@@ -949,7 +958,7 @@ function dailyClockAdvance() {
   if (c.phase === "work") {
     if (c.set >= c.total) {
       day().dailies[c.id] = true;
-      dailyClock = null; clearInterval(dailyClockTick); dailyClockTick = null;
+      c.phase = "done"; clearInterval(dailyClockTick); dailyClockTick = null;
       save(); render(); return;
     }
     c.phase = "rest"; c.end = Date.now() + c.rest * 1000;
@@ -959,7 +968,7 @@ function dailyClockAdvance() {
   render();
 }
 function dailyClockRefresh() {
-  if (!dailyClock || dailyClock.paused) return;
+  if (!dailyClock || dailyClock.paused || dailyClock.phase === "done") return;
   if (Date.now() >= dailyClock.end) { dailyClockAdvance(); return; }
   const el = document.getElementById("daily-clock-time");
   if (el) {
@@ -1025,7 +1034,7 @@ function dailiesCard(inPass, banded) {
   // Rubriken: antal klara, och ett tryck öppnar Redigera dailys (inte under passet)
   const head = `<div class="dhead"><h2>Dailys${st > 1 ? `<span class="muted small"> · alla ${st} dagar i rad</span>` : ""}</h2>
     ${inPass ? `<span class="muted small">${done} av ${n} klara</span>` : `<button class="ghost small" data-dedit aria-label="Redigera dailys, ${done} av ${n} klara">${done} av ${n} klara${icon("right", 16)}</button>`}</div>`;
-  return `<section class="card dailies" aria-label="Dailys">${head}${rows}${dailyClockView()}</section>${supplementsCard()}`;
+  return `${dailyClock ? dailyClockView() : `<section class="card dailies" aria-label="Dailys">${head}${rows}</section>${supplementsCard()}`}`;
 }
 
 // Alla pass som knappar; används på Idag och under Pass
