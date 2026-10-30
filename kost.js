@@ -573,18 +573,18 @@ const MEAL_SVG = [
 const mealIcon = meal => meal < 0 ? "" : `<svg class="kicon" viewBox="0 0 24 24" aria-hidden="true">${MEAL_SVG[meal]}</svg>`;
 const foodTitle = f => { const a = amountText(f); return isEst(f) ? itemName(f) : `${esc(f.name)}${a ? (a.startsWith("×") ? ` ${a}` : ` · ${a}`) : ""}`; };
 let kostDay = false;  // en annan dag är vald i veckoremsan
+let expandedOverviewMeal = null;
 function mealCard(meal, L, m) {
   const items = L.food.map((f, i) => ({ f, i })).filter(x => (x.f.meal ?? -1) === meal);
   if (meal < 0 && !items.length) return "";
   const name = meal < 0 ? "Övrigt" : MEALS[meal][0], sum = sumKcal(items.map(x => x.f));
   const added = sumKcal(items.filter(x => fresh.has(x.f)).map(x => x.f));
-  // Bara summan här; maträtterna visas på måltidens sida
   const prot = Math.round(sumOf(items.map(x => x.f), "protein"));
-  const sub = items.length ? `${tnum(sum)} kcal · ${prot} g protein` : `Riktmärke: ca ${tnum(mealTarget(meal, m))} kcal`;
-  return `<div class="kmcard kmrow ${items.length ? "" : "empty"} ${items.some(x => fresh.has(x.f)) ? "fresh" : ""}">
-      <button class="kmopen" data-mealpage="${meal}" aria-label="${name}: ${items.length ? `${tnum(sum)} kcal` : "inget än"}"><span class="kmic">${mealIcon(meal)}</span>
-        <span class="grow col"><b>${name}</b><span class="small kprev ${items.length ? "kmsum" : "muted"}">${sub}${added ? ` <span class="kplus">+${tnum(added)}</span>` : ""}</span></span></button>
-      ${meal < 0 ? "" : `<button class="kmadd" data-addto="${meal}" aria-label="Lägg till i ${name.toLowerCase()}">${icon("plus", 20)}</button>`}</div>`;
+  const sub = items.length ? `${tnum(sum)} kcal · ${prot} g protein` : `Rekommenderat: ca ${tnum(mealTarget(meal, m))} kcal`;
+  const expanded = expandedOverviewMeal === meal && items.length > 0;
+  const detail = expanded ? `<div id="km-overview-${meal}" style="padding:0 16px 10px 56px">${items.map(({f,i}) => `<button type="button" data-overviewitem="${i}" style="display:flex;align-items:center;justify-content:space-between;width:100%;text-align:left;padding:10px 0;border:0;border-top:1px solid rgba(150,150,150,.18);background:transparent;color:inherit;gap:10px"><span><b style="display:block;font-size:.9rem">${itemName(f)}</b><span class="muted small">${amountText(f) || "1 portion"}</span></span><span class="small" style="white-space:nowrap">${tnum(f.kcal)} kcal</span></button>`).join("")}</div>` : "";
+  return `<div class="kmcard kmrow ${items.length ? "" : "empty"} ${items.some(x => fresh.has(x.f)) ? "fresh" : ""}" style="display:block"><div style="display:flex;align-items:center"><button class="kmopen" data-overviewmeal="${meal}" aria-expanded="${expanded}" aria-label="${name}: ${items.length ? (expanded ? "Dölj" : "Visa") + " livsmedel" : "Öppna måltid"}" style="flex:1;min-width:0"><span class="kmic">${mealIcon(meal)}</span><span class="grow col"><b>${name}</b><span class="small kprev ${items.length ? "kmsum" : "muted"}">${sub}${added ? ` <span class="kplus">+${tnum(added)}</span>` : ""}</span></span>${items.length ? `<span aria-hidden="true" style="font-size:20px;margin-right:8px">${expanded ? "⌃" : "⌄"}</span>` : ""}</button>${meal < 0 ? "" : `<button class="kmadd" data-addto="${meal}" aria-label="Lägg till i ${name.toLowerCase()}">${icon("plus", 20)}</button>`}</div>${detail}</div>`;
+
 }
 // Sidan för en måltid: det man ätit (ett tryck öppnar livsmedlet), summan mot förslaget och näringen
 function mealPageView(m) {
@@ -731,7 +731,7 @@ function addPage(m) {
       <div class="meal-summary-head"><h2>I ${mealName}en</h2><b>${tnum(sumKcal(mealItems))} kcal</b></div>
       <div class="meal-summary-card">
       ${items.length ? `<div class="kmeals kitems">${rows}</div>` : `<p class="muted small">Inget tillagt än.</p>`}
-      <p class="small meal-guideline"><b>Riktmärke för ${mealName}: cirka ${tnum(target)} kcal</b><br>
+      <p class="small meal-guideline"><b>Rekommenderat för ${mealName}: cirka ${tnum(target)} kcal</b><br>
         <span class="muted">Beräknat som ${Math.round(share * 100)} % av ditt kalorimål för dagen.</span></p>
       <div class="kmacros">${nutrients}</div>
       ${mealItems.some(f => f.fat == null || f.fiber == null) ? `<p class="muted small kmiss">Fett eller fibrer saknas för ${mealItems.filter(f => f.fat == null || f.fiber == null).length} av ${items.length}.</p>` : ""}
@@ -884,7 +884,7 @@ document.addEventListener("click", ev => {
     }
     save(); render(); return;
   }
-  const t = ev.target.closest("[data-addfood],[data-addto],[data-kmeal],[data-kday],[data-fsclose],[data-quick],[data-mstep],[data-mdel],[data-repeat],[data-savegroup],[data-savedremove],[data-sheetmeal],[data-usemeal],[data-repeatday],[data-quickmore],[data-fpanel],[data-fpick],[data-fvar],[data-amtopen],[data-fooditem],[data-itemclose],[data-qty],[data-itemfav],[data-mealpage],[data-mealback],[data-kweekopen]");
+  const t = ev.target.closest("[data-addfood],[data-addto],[data-kmeal],[data-kday],[data-fsclose],[data-quick],[data-mstep],[data-mdel],[data-repeat],[data-savegroup],[data-savedremove],[data-sheetmeal],[data-usemeal],[data-repeatday],[data-quickmore],[data-fpanel],[data-fpick],[data-fvar],[data-amtopen],[data-fooditem],[data-itemclose],[data-qty],[data-itemfav],[data-overviewmeal],[data-overviewitem],[data-mealpage],[data-mealback],[data-kweekopen]");
   if (!t || t.disabled) return;
   if (t.classList.contains("overlay") && ev.target !== t) return;   // klick inne i fönstret
   const ds = t.dataset, page = kostPageKey();
@@ -912,7 +912,9 @@ document.addEventListener("click", ev => {
   else if (ds.fpick) { const [j, k] = ds.fpick.split(":").map(Number); pickFood(j, k); return; }
   else if (ds.fvar) { const [j, k] = ds.fvar.split(":").map(Number); pickVariant(j, k); return; }
   else if (ds.amtopen !== undefined) { const e = t.closest("[data-drow]").querySelector(".famtedit"); e.hidden = !e.hidden; return; }
-  else if (ds.addto) openMealEditor(+ds.addto);
+  else if (ds.overviewmeal !== undefined) { const meal = +ds.overviewmeal; if (day().food.some(f => (f.meal ?? -1) === meal)) expandedOverviewMeal = expandedOverviewMeal === meal ? null : meal; else openMealEditor(meal); }
+  else if (ds.overviewitem !== undefined) foodItem = +ds.overviewitem;
+  else if (ds.addto !== undefined) openMealEditor(+ds.addto);
   else if (ds.fsclose !== undefined) closeMealEditor();
   else if (ds.mealpage) openMealEditor(+ds.mealpage);
   else if (ds.mealback !== undefined) closeMealEditor();
