@@ -856,7 +856,7 @@ function weightChart() {
 // ---------- Rendering ----------
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 // Fyra flikar; Profil nås via kugghjulet uppe till höger
-const TABS = [["idag", "hem", "Hem"], ["pass", "trana", "Träna"], ["kost", "kost", "Kost"], ["historik", "historik", "Historik"]];
+const TABS = [["idag", "hem", "Hem"], ["pass", "trana", "Träna"], ["dailys", "check", "Dailys"], ["kost", "kost", "Kost"], ["historik", "historik", "Historik"]];
 let tab = S.setupDone ? "idag" : "upplagg";
 let profBack = "idag";   // fliken man kom från, dit tillbaka-pilen i Profil går
 let vannerBack = "idag"; // dit tillbaka-pilen på vänsidan går
@@ -1058,6 +1058,13 @@ const VIEWS = {
     return onb ? onbView() : welcomeView();
   },
 
+  dailys() {
+    const a=S.supplements||[], ex=S.daily||[], n=ex.filter(e=>dailyDone(logDate(),e.id)).length, sn=a.filter(x=>day().dailies["supp:"+x.id]).length;
+    const total=ex.length+a.length, count=n+sn, pct=total?Math.round(count/total*100):0;
+    const week=Array.from({length:7},(_,i)=>shift(TODAY,i-3)).map(d=>`<span class="${d===TODAY?"on":""}">${d.slice(-2)}</span>`).join("");
+    const rows=ex.map(e=>{const ok=dailyDone(logDate(),e.id),timed=/\d+\s*(?:s|sek)\b/i.test(e.reps||"");return `<div class="daily">${thumb(e.id,"dt")}<div class="grow"><b>${esc(EX[e.id].name)}</b><span class="muted small">${e.sets} × ${esc(e.reps||"")}</span></div>${timed&&!ok?`<button class="ghost small" data-dclockstart="${e.id}">▶ Starta</button>`:""}<button class="done-btn big ${ok?"on":""}" data-dcheck="${e.id}">${icon("check",18)}</button></div>`;}).join("");
+    return `<div class="dailys-page"><h1>Dailys</h1>${dailyClock?dailyClockView():`<div class="dailys-week">${week}</div><div class="dailys-progress"><div class="dailys-progress-ring" style="--p:${pct}%">${pct}%</div><div><b>${count} av ${total}</b><div class="muted small">klara idag</div></div></div><div class="dailys-summary"><span>Träning <b>${n}/${ex.length}</b></span><span>Kosttillskott <b>${sn}/${a.length}</b></span></div><div class="dailys-sectionhead"><h2>Övningar</h2><button class="ghost small" data-dedit>✎ ${dailyEditing?"Klar":"Redigera"}</button></div>${dailyEditing?exRows("daily",S.daily,true):rows}<button class="ghost small dailys-add" data-openpick="daily">+ Lägg till övning</button>${supplementsCard()}`}</div>`;
+  },
   idag() {
     const m = macros(), e = eaten();
     m.kcal += burnedOn(TODAY);
