@@ -1588,6 +1588,19 @@
 .daily-clock button { min-height:40px; }
 .daily[data-dclockstart] { cursor:pointer; }
 .dailies .daily .ghost.small { flex-shrink:0; }
+
+/* Fokuserad Daily-timer på test */
+.daily-focus {position:relative;min-height:440px;padding:20px 16px 28px;background:var(--surface,#18191c);border:1px solid var(--line);border-radius:20px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px}
+.daily-focus-top {width:100%;display:flex;justify-content:space-between;align-items:center;font-size:16px;font-weight:700;text-align:left}
+.daily-focus-label {font-size:21px;font-weight:750;margin-top:16px}
+.daily-focus-sets {color:var(--muted);font-size:14px}
+.daily-focus-ring {width:min(62vw,236px);height:min(62vw,236px);margin:12px auto;border:9px solid #ed8542;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 0 32px rgba(237,133,66,.12);font-size:clamp(42px,10vw,64px);font-weight:750;font-variant-numeric:tabular-nums;letter-spacing:-.05em}
+.daily-focus-ring.rest {border-color:#45b9ad;box-shadow:0 0 32px rgba(69,185,173,.12)}
+.daily-focus-ring.complete {border-color:#43b780;color:#43b780}
+.daily-focus-check {font-size:90px}
+.daily-focus-caption {font-size:13px;color:var(--muted)}
+.daily-focus-actions {display:flex;justify-content:center;gap:12px;margin-top:auto;width:100%}
+.daily-focus-actions button {min-height:46px;flex:1;max-width:200px}
 </style>
 </head>
 <body>
