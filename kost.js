@@ -709,8 +709,9 @@ function addPage(m) {
   const food = day().food, items = food.map((f, i) => ({ f, i })).filter(x => x.f.meal === meal);
   const last = items.length ? null : lastSlot(meal);   // en uppskattning bredvid riktig mat kan räknas dubbelt
   // Förslagen som en lista: namn och kcal, plus till höger (stjärna för favoriter)
-  const quick = shown.map((f, i) => `<button class="qadd" data-stagequick="${i}" aria-label="Välj ${esc(f.name)}"><span class="grow col"><b>${esc(f.name)}</b><span class="muted small">${f.amt ? `${amtText(f.amt)} · ` : f.qty ? `${fmtNum(f.qty)} st · ` : ""}${tnum(f.kcal)} kcal</span></span><span class="qplus" aria-hidden="true">${icon("plus",18)}</span></button>`).join("");
-  const commonRows = common.map((f,i) => `<button class="qadd" data-stagecommon="${i}" aria-label="Välj ${esc(f.name)}"><span class="grow col"><b>${esc(f.name)}</b><span class="muted small">${f.amt ? `${amtText(f.amt)} · ` : ""}${tnum(f.kcal)} kcal</span></span><span class="qplus" aria-hidden="true">${icon("plus",18)}</span></button>`).join("");
+  const row = (f, i, type) => `<div class="qadd" style="display:flex;align-items:center;gap:8px"><button data-stage${type}="${i}" class="grow col" style="text-align:left;min-width:0;background:none;border:0;color:inherit;padding:10px 0"><b>${esc(f.name)}</b><span class="muted small">${f.amt ? amtText(f.amt) + " · " : f.qty ? fmtNum(f.qty) + " st · " : ""}${tnum(f.kcal)} kcal</span></button><button type="button" data-fav${type}="${i}" aria-label="${isFav(f) ? "Ta bort favorit" : "Lägg till favorit"}: ${esc(f.name)}" aria-pressed="${isFav(f)}" style="background:none;border:0;color:${isFav(f) ? "#ff7118" : "#9ca3af"};font-size:24px;padding:10px">♡</button><button type="button" data-stage${type}="${i}" class="qplus" aria-label="Välj ${esc(f.name)}">${icon("plus",18)}</button></div>`;
+  const quick = shown.map((f,i) => row(f,i,"quick")).join("");
+  const commonRows = common.map((f,i) => row(f,i,"common")).join("");
   window._kostCommon = common;
   const stagedTotal = sumKcal(stagedFoods);
   const stagedRows = stagedFoods.map((f,i) => `<div class="qadd" style="display:flex;align-items:center;border-bottom:1px solid rgba(150,150,150,.18);padding:10px 0"><span class="grow col"><b>${esc(f.name)}</b><span class="muted small">${f.amt ? amtText(f.amt) : f.qty ? fmtNum(f.qty)+" st" : "1 portion"} · ${tnum(f.kcal)} kcal</span></span><button data-stageremove="${i}" aria-label="Ta bort ${esc(f.name)}">−</button></div>`).join("");
@@ -881,7 +882,7 @@ document.addEventListener("click", ev => {
     }
     save(); render(); return;
   }
-  const t = ev.target.closest("[data-addfood],[data-addto],[data-kmeal],[data-kday],[data-fsclose],[data-quick],[data-mstep],[data-mdel],[data-repeat],[data-savegroup],[data-savedremove],[data-sheetmeal],[data-usemeal],[data-repeatday],[data-quickmore],[data-fpanel],[data-fpick],[data-fvar],[data-amtopen],[data-fooditem],[data-itemclose],[data-qty],[data-itemfav],[data-overviewmeal],[data-overviewitem],[data-browsetab],[data-stagequick],[data-stagecommon],[data-stagetoggle],[data-stageremove],[data-stagecommit],[data-stagerecipe],[data-mealpage],[data-mealback],[data-kweekopen]");
+  const t = ev.target.closest("[data-addfood],[data-addto],[data-kmeal],[data-kday],[data-fsclose],[data-quick],[data-mstep],[data-mdel],[data-repeat],[data-savegroup],[data-savedremove],[data-sheetmeal],[data-usemeal],[data-repeatday],[data-quickmore],[data-fpanel],[data-fpick],[data-fvar],[data-amtopen],[data-fooditem],[data-itemclose],[data-qty],[data-itemfav],[data-overviewmeal],[data-overviewitem],[data-browsetab],[data-stagequick],[data-stagecommon],[data-favquick],[data-favcommon],[data-stagetoggle],[data-stageremove],[data-stagecommit],[data-stagerecipe],[data-mealpage],[data-mealback],[data-kweekopen]");
   if (!t || t.disabled) return;
   if (t.classList.contains("overlay") && ev.target !== t) return;   // klick inne i fönstret
   const ds = t.dataset, page = kostPageKey();
@@ -907,7 +908,8 @@ document.addEventListener("click", ev => {
     mealPage = meal;
   }
   else if (ds.browsetab) foodBrowseTab = ds.browsetab;
-  else if (ds.stagequick !== undefined || ds.stagecommon !== undefined) { const f = ds.stagequick !== undefined ? quickCache[+ds.stagequick] : (window._kostCommon || [])[+ds.stagecommon]; if (f) { stagedFoods.push({...perUnit(f), name:f.name}); stagedOpen = false; } }
+  else if (ds.favquick !== undefined || ds.favcommon !== undefined) { const f = ds.favquick !== undefined ? quickCache[+ds.favquick] : (window._kostCommon || [])[+ds.favcommon]; if (f) toggleFav(f); }
+  else if (ds.stagequick !== undefined || ds.stagecommon !== undefined) { const f = ds.stagequick !== undefined ? quickCache[+ds.stagequick] : (window._kostCommon || [])[+ds.stagecommon]; if (f) { stagedFoods.push({...perUnit(f), name:f.name}); stagedOpen = true; } }
   else if (ds.stagetoggle !== undefined) stagedOpen = !stagedOpen;
   else if (ds.stageremove !== undefined) stagedFoods.splice(+ds.stageremove,1);
   else if (ds.stagecommit !== undefined) { stagedFoods.forEach(f => logFood(f,foodSheet.meal)); stagedFoods = []; closeMealEditor(); }
