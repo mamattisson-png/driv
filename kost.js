@@ -578,6 +578,7 @@ const foodTitle = f => { const a = amountText(f); return isEst(f) ? itemName(f) 
 let kostDay = false;  // en annan dag är vald i veckoremsan
 let expandedOverviewMeal = null;
 let lastOverviewRemoved = null;
+let overviewUndoTimer = null;
 function mealCard(meal, L, m) {
   const items = L.food.map((f, i) => ({ f, i })).filter(x => (x.f.meal ?? -1) === meal);
   if (meal < 0 && !items.length) return "";
@@ -740,7 +741,7 @@ function addPage(m) {
       <div class="row"><label class="field grow">Fett (g)<input id="ffat" type="number" inputmode="decimal" min="0" step="any" placeholder="valfritt"></label>
       <label class="field grow">Fibrer (g)<input id="ffiber" type="number" inputmode="decimal" min="0" step="any" placeholder="valfritt"></label></div>
       <div class="muted small">Utan namn sparas posten som en uppskattning.</div></div>
-    <div id="fpreview" class="fpreview"></div>
+    <div id="fpreview" class="fpreview"></div><button type="button" id="fstageinput" data-stageinput style="display:none;width:100%;margin:8px 0 14px;padding:12px;border-radius:12px;border:1px solid #ff7118;background:rgba(255,113,24,.12);color:#ff8b43;font-weight:700">+ Lägg i valda livsmedel</button>
     <div id="productresults" aria-live="polite"></div>
     <div class="fidle"><div class="fopts" role="tablist" aria-label="Snabbval"><button class="flink ${foodBrowseTab === "senaste" ? "on" : ""}" data-browsetab="senaste">Senaste</button><button class="flink ${foodBrowseTab === "favoriter" ? "on" : ""}" data-browsetab="favoriter">Favoriter</button><button class="flink ${foodBrowseTab === "recept" ? "on" : ""}" data-browsetab="recept">Mina recept</button></div><h2 class="klabel fsub">${foodBrowseTab === "senaste" ? "Senast använda" : foodBrowseTab === "favoriter" ? "Favoriter" : "Mina recept"}</h2><div class="qgrid">${quick || '<p class="muted small">Inga livsmedel här ännu.</p>'}</div>${foodBrowseTab === "senaste" && common.length ? `<h2 class="klabel fsub">Vanliga för ${mealName}</h2><div class="qgrid">${commonRows}</div>` : ""}</div>
     <div class="staged-foods" style="margin-top:16px;border-top:1px solid rgba(150,150,150,.2);padding-top:10px"><button data-stagetoggle style="width:100%;display:flex;justify-content:space-between;align-items:center;padding:12px 0;background:transparent;color:inherit;border:0"><b>Valda livsmedel (${stagedFoods.length})</b><span style="display:inline-flex;align-items:center;gap:8px">${tnum(stagedTotal)} kcal <span aria-hidden="true" style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px">${stagedOpen ? "⌃" : "⌄"}</span></span></button>${stagedOpen ? `<div>${stagedRows}<div class="row" style="gap:8px;margin-top:12px"><button data-stagerecipe class="ghost grow" ${stagedFoods.length ? "" : "disabled"}>Spara recept</button></div></div>` : ""}</div>
@@ -771,6 +772,7 @@ function updateFoodBtn() {
   if (!b || !foodSheet) return;
   const meal = foodSheet.meal, name = MEALS[meal][0].toLowerCase(), p = foodPending();
   const inMeal = sumKcal(day().food.filter(f => f.meal === meal));
+  const stageInput = $("fstageinput"); if (stageInput) stageInput.style.display = p.ready && foodPanel !== "kcal" ? "block" : "none";
   if (stagedFoods.length) { b.disabled = false; b.textContent = `Lägg till alla (${stagedFoods.length}) · ${tnum(sumKcal(stagedFoods))} kcal`; return; }
   b.disabled = !!p.unknown || !!p.invalidNutrition;
   b.textContent = p.ready ? `Lägg till i ${name}${p.claude ? "" : ` · ${tnum(p.kcal)} kcal`}`
@@ -857,7 +859,7 @@ function kostView() {
     ${kostWeekOpen ? kostWeek() : ""}
     ${kostRing(e, m)}
     ${!L.food.length && yesterdayFood() ? `<button class="klink kday" data-repeatday>Samma mat som igår<span class="muted"> · hela dagen, ${tnum(sumKcal(yesterdayFood()))} kcal</span></button>` : ""}
-    ${lastOverviewRemoved && lastOverviewRemoved.date === logDate() ? `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;margin-bottom:12px;background:rgba(150,150,150,.12);border-radius:10px"><span class="small">Livsmedel borttaget</span><button data-overviewundo type="button" style="border:0;background:none;color:#ff7118;font-weight:700;padding:8px">Ångra</button></div>` : ""}
+    ${lastOverviewRemoved && lastOverviewRemoved.date === logDate() && Date.now() - lastOverviewRemoved.at < 5000 ? `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;margin-bottom:12px;background:rgba(150,150,150,.12);border-radius:10px"><span class="small">Livsmedel borttaget</span><button data-overviewundo type="button" style="border:0;background:none;color:#ff7118;font-weight:700;padding:8px">Ångra</button></div>` : ""}
     <h2 class="ksec">Måltider</h2>
     <div class="kmeals" aria-label="Måltider">${MEALS.map((_, i) => mealCard(i, L, m)).join("")}${mealCard(-1, L, m)}</div>
     <button class="kmcard krecept" data-rlist><span class="kmic">${icon("kost", 22)}</span><span class="grow col"><b>Dina recept</b>
@@ -884,7 +886,7 @@ document.addEventListener("click", ev => {
     }
     save(); render(); return;
   }
-  const t = ev.target.closest("[data-addfood],[data-addto],[data-kmeal],[data-kday],[data-fsclose],[data-quick],[data-mstep],[data-mdel],[data-repeat],[data-savegroup],[data-savedremove],[data-sheetmeal],[data-usemeal],[data-repeatday],[data-quickmore],[data-fpanel],[data-fpick],[data-fvar],[data-amtopen],[data-fooditem],[data-itemclose],[data-qty],[data-itemfav],[data-overviewmeal],[data-overviewitem],[data-overviewremove],[data-overviewundo],[data-browsetab],[data-stagequick],[data-stagecommon],[data-favquick],[data-favcommon],[data-stagetoggle],[data-stageremove],[data-stagecommit],[data-stagerecipe],[data-mealpage],[data-mealback],[data-kweekopen]");
+  const t = ev.target.closest("[data-addfood],[data-addto],[data-kmeal],[data-kday],[data-fsclose],[data-quick],[data-mstep],[data-mdel],[data-repeat],[data-savegroup],[data-savedremove],[data-sheetmeal],[data-usemeal],[data-repeatday],[data-quickmore],[data-fpanel],[data-fpick],[data-fvar],[data-amtopen],[data-fooditem],[data-itemclose],[data-qty],[data-itemfav],[data-overviewmeal],[data-overviewitem],[data-overviewremove],[data-overviewundo],[data-browsetab],[data-stagequick],[data-stagecommon],[data-stageinput],[data-favquick],[data-favcommon],[data-stagetoggle],[data-stageremove],[data-stagecommit],[data-stagerecipe],[data-mealpage],[data-mealback],[data-kweekopen]");
   if (!t || t.disabled) return;
   if (t.classList.contains("overlay") && ev.target !== t) return;   // klick inne i fönstret
   const ds = t.dataset, page = kostPageKey();
@@ -909,6 +911,7 @@ document.addEventListener("click", ev => {
     foodDraft = []; foodPanel = "senaste";
     mealPage = meal;
   }
+  else if (ds.stageinput !== undefined) { const p = foodPending(), input = $("fname"), name = input?.value.trim() || ""; if (p.ready && !p.claude && name && foodSheet) { const meal = foodSheet.meal; if (p.learned) stagedFoods.push({name,kcal:p.learned.kcal,protein:p.learned.protein,meal}); else foodDraft.filter(d=>d.amt).forEach(d=>stagedFoods.push({name:d.name,amt:d.amt,meal})); stagedOpen = true; input.value = ""; foodDraft = []; input.blur(); } }
   else if (ds.browsetab) foodBrowseTab = ds.browsetab;
   else if (ds.favquick !== undefined || ds.favcommon !== undefined) { const f = ds.favquick !== undefined ? quickCache[+ds.favquick] : (window._kostCommon || [])[+ds.favcommon]; if (f) toggleFav(f); }
   else if (ds.stagequick !== undefined || ds.stagecommon !== undefined) { const f = ds.stagequick !== undefined ? quickCache[+ds.stagequick] : (window._kostCommon || [])[+ds.stagecommon]; if (f) { stagedFoods.push({...perUnit(f), name:f.name, meal:foodSheet.meal}); stagedOpen = true; } }
@@ -921,8 +924,8 @@ document.addEventListener("click", ev => {
   else if (ds.fvar) { const [j, k] = ds.fvar.split(":").map(Number); pickVariant(j, k); return; }
   else if (ds.amtopen !== undefined) { const e = t.closest("[data-drow]").querySelector(".famtedit"); e.hidden = !e.hidden; return; }
   else if (ds.overviewmeal !== undefined) { const meal = +ds.overviewmeal; if (day().food.some(f => (f.meal ?? -1) === meal)) expandedOverviewMeal = expandedOverviewMeal === meal ? null : meal; else openMealEditor(meal); }
-  else if (ds.overviewremove !== undefined) { const i = Number(ds.overviewremove); const foods = day().food; if (foods[i]) { lastOverviewRemoved = { item: foods[i], index: i, date: logDate() }; foods.splice(i, 1); if (!foods.some(x => (x.meal ?? -1) === expandedOverviewMeal)) expandedOverviewMeal = null; } }
-  else if (ds.overviewundo !== undefined) { if (lastOverviewRemoved && lastOverviewRemoved.date === logDate()) { day().food.splice(lastOverviewRemoved.index, 0, lastOverviewRemoved.item); expandedOverviewMeal = lastOverviewRemoved.item.meal ?? -1; lastOverviewRemoved = null; } }
+  else if (ds.overviewremove !== undefined) { const i = Number(ds.overviewremove); const foods = day().food; if (foods[i]) { lastOverviewRemoved = { item: foods[i], index: i, date: logDate(), at: Date.now() }; clearTimeout(overviewUndoTimer); overviewUndoTimer = setTimeout(() => { lastOverviewRemoved = null; if (!foodSheet && mealPage === null) render(); }, 5000); foods.splice(i, 1); if (!foods.some(x => (x.meal ?? -1) === expandedOverviewMeal)) expandedOverviewMeal = null; } }
+  else if (ds.overviewundo !== undefined) { if (lastOverviewRemoved && lastOverviewRemoved.date === logDate() && Date.now() - lastOverviewRemoved.at < 5000) { day().food.splice(lastOverviewRemoved.index, 0, lastOverviewRemoved.item); expandedOverviewMeal = lastOverviewRemoved.item.meal ?? -1; lastOverviewRemoved = null; } }
   else if (ds.overviewitem !== undefined) foodItem = +ds.overviewitem;
   else if (ds.addto !== undefined) openMealEditor(+ds.addto);
   else if (ds.fsclose !== undefined) closeMealEditor();
