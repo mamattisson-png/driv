@@ -74,6 +74,7 @@ def test_sticky_set_action_records_the_right_set_and_advances(page):
     many_sets(page)
     page.locator('.fset.active [data-f="kg"]').fill('21.5')
     page.locator('.fset.active [data-f="reps"]').fill('7')
+    page.click('[data-setconfirm]')
     page.click('.fbar .fdone')
     assert page.evaluate('workoutsOn(TODAY)[0].sets.bankpress[9].ok') is True
     assert page.evaluate('workoutsOn(TODAY)[0].sets.bankpress[9].kg')==21.5

@@ -34,7 +34,7 @@ def test_finish_completed_workout_is_an_action_and_does_not_reopen_it(page):
     page.click('[data-focusstart]')
     page.click('.fbar .fdone')
     assert page.evaluate('workoutsOn(TODAY)[0].done') is True
-    button = page.locator('.fbar .primary')
+    button = page.locator('.fbar .primary:visible')
     assert button.inner_text() == 'Avsluta pass'
     button.click()
     assert page.locator('.passdone').is_visible()

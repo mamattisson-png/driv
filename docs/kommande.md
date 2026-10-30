@@ -24,7 +24,7 @@ Senast uppdaterad: 2026-10-30. Källa: gemensam förbättringslista i ChatGPT. D
 | 18 | Sista steget i Kom igång: konto eller fortsätt utan | Onboarding | Hög | Ej påbörjad |
 | 19 | Tydligare e-postadress när inloggningskod inväntas | Konto | Medel | Klar |
 | 20 | Enhetliga DRIV-mejl med kod, länk och original-logga | Konto | Hög | Påbörjad |
-| 21 | Bekräfta viktinmatning med OK istället för att avsluta set | Träning | Hög | Ej påbörjad |
+| 21 | Bekräfta viktinmatning med OK istället för att avsluta set | Träning | Hög | Under arbete |
 | 22 | Tydlig återkoppling när set avslutas och nästa öppnas | Träning | Hög | Ej påbörjad |
 | 23 | Spara genomfört pass som namngiven passmall | Träning | Hög | Ej påbörjad |
 

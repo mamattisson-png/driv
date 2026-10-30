@@ -804,6 +804,10 @@
   .fsetcount { gap: 4px; margin-top: -8px; }
   .fsave { margin-left: auto; }
   .fdaily { align-self: center; display: inline-flex; align-items: center; gap: 6px; font-size: 13px; margin-top: auto; }
+  .fconfirm { display: none; }
+  body.set-editing .fbar .fconfirm { display: block; }
+  body.set-editing .fbar .fbar-action,
+  body.set-editing .fbar-row > button:not(.fconfirm) { display: none; }
   .fbar-row { display: flex; gap: 10px; align-items: stretch; }
   .fbar-action { min-width: 0; }
   .fbar .fdone { margin: 0; height: 100%; }
@@ -827,7 +831,8 @@
   .focus-scroll { min-height: 0; overflow-y: auto; overscroll-behavior: contain; display: flex; flex-direction: column; gap: 14px; padding-bottom: 12px; }
   .focus-controls { min-width: 0; padding-top: 8px; background: var(--bg); }
   body.infocus .fbar { position: static; margin-top: 0; }
-  @media (pointer: coarse) { body.infocus.typing main { height: 100dvh; } }
+  @media (pointer: coarse) { body.infocus.typing main { height: 100dvh; }
+    body.infocus.set-editing main { height: var(--set-edit-height, 100dvh); } }
 
   /* ---------- Muskelkartan ---------- */
   .mcard { display: flex; flex-direction: column; gap: 12px; }
