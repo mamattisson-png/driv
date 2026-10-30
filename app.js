@@ -1800,7 +1800,8 @@ document.addEventListener("click", ev => {
     const d = currentPassDay(), ex = d.ex.find(x => x.id === ds.ok), s = warmAt(d, ds.ok, +ds.i);
     s.ok = !s.ok;
     if (s.ok && ex) { const h = warmHint(d, ex, +ds.i); if (s.reps === undefined || s.reps === "") s.reps = h.reps; if ((s.kg === undefined || s.kg === "") && +h.kg) s.kg = h.kg; }
-    if (focus && !editDate && !focus.suspended) focus.sel = null;
+    if (focus && !editDate && !focus.suspended) { focus.sel = null; focus.scroll = "active"; }
+    if (s.ok) showSetFeedback(d, +ds.i, true); else clearSetFeedback();
   }
   else if (ds.ok) {
     const d = currentPassDay(), s = setAt(d, ds.ok, +ds.i);
@@ -1809,7 +1810,8 @@ document.addEventListener("click", ev => {
     // I ett superset vilar man först när varvet är klart
     if (s.ok) { fillFromHint(d, ds.ok, +ds.i); checkRecord(ds.ok, s); if (!editDate && !inRound) startRest(ds.ok); }
     syncDone(d);
-    if (s.ok) focusAfterSet(d, idx, +ds.i);
+    if (s.ok) { focusAfterSet(d, idx, +ds.i); showSetFeedback(d, +ds.i); }
+    else clearSetFeedback();
   }
   else if (ds.exok) {
     const d = currentPassDay(), ex = d.ex.find(x => x.id === ds.exok);

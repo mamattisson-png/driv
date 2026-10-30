@@ -808,6 +808,13 @@
   body.set-editing .fbar .fconfirm { display: block; }
   body.set-editing .fbar .fbar-action,
   body.set-editing .fbar-row > button:not(.fconfirm) { display: none; }
+  .set-tip-default, .set-feedback { display: inline-flex; align-items: center; gap: 8px; }
+  .set-feedback { display: none; color: var(--ok-text); font-weight: 500; }
+  .show-feedback .set-tip-default { display: none; }
+  .show-feedback .set-feedback { display: inline-flex; }
+  .set-arrival { animation: setarrival .35s ease-out; }
+  @keyframes setarrival { from { box-shadow: 0 0 0 3px var(--accent-soft); } to { box-shadow: 0 0 0 0 transparent; } }
+  @media (prefers-reduced-motion: reduce) { .set-arrival { animation: none; } }
   .fbar-row { display: flex; gap: 10px; align-items: stretch; }
   .fbar-action { min-width: 0; }
   .fbar .fdone { margin: 0; height: 100%; }

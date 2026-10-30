@@ -25,7 +25,7 @@ Senast uppdaterad: 2026-10-30. Källa: gemensam förbättringslista i ChatGPT. D
 | 19 | Tydligare e-postadress när inloggningskod inväntas | Konto | Medel | Klar |
 | 20 | Enhetliga DRIV-mejl med kod, länk och original-logga | Konto | Hög | Påbörjad |
 | 21 | Bekräfta viktinmatning med OK istället för att avsluta set | Träning | Hög | Klar |
-| 22 | Tydlig återkoppling när set avslutas och nästa öppnas | Träning | Hög | Ej påbörjad |
+| 22 | Tydlig återkoppling när set avslutas och nästa öppnas | Träning | Hög | Under arbete |
 | 23 | Spara genomfört pass som namngiven passmall | Träning | Hög | Ej påbörjad |
 | 24 | Testlägets extrabalk får inte skymma träningsvyn | Bugg | Hög | Ej påbörjad |
 
