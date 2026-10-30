@@ -1606,6 +1606,24 @@
 .supplement-form label {display:grid;gap:6px;font-size:13px;color:var(--muted)}
 .supplement-form input,.supplement-form textarea {width:100%;box-sizing:border-box;background:var(--bg,#101113);border:1px solid var(--line);border-radius:10px;padding:12px;color:var(--text,#fff);font:inherit}
 .supplement-form .row {display:flex;gap:10px}.supplement-form .row button {flex:1;min-height:44px}
+
+/* Egen Dailys-flik, test */
+.dailys-page {padding:8px 16px 100px;max-width:650px;margin:auto}
+.dailys-page h1 {font-size:32px;margin:8px 0 20px}
+.dailys-week {display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin:10px 0 24px}
+.dailys-week span {text-align:center;padding:13px 2px;border-radius:10px;background:var(--surface,#191a1d);font-weight:600;font-size:13px}
+.dailys-week span.on {background:#ff7829;color:#161616}
+.dailys-progress {display:flex;align-items:center;gap:20px;margin-bottom:18px}
+.dailys-progress-ring {--p:0%;width:92px;height:92px;flex-shrink:0;border-radius:50%;background:conic-gradient(#ff7829 var(--p),#292b30 0);display:grid;place-items:center;font-weight:800;font-size:18px;position:relative;isolation:isolate}
+.dailys-progress-ring:before {content:"";position:absolute;inset:11px;border-radius:50%;background:#141518;z-index:-1}
+.dailys-summary {display:flex;gap:12px;margin:18px 0 28px}
+.dailys-summary span {flex:1;background:var(--surface,#1b1c20);padding:15px 12px;border-radius:12px;font-size:13px}
+.dailys-summary b {display:block;margin-top:5px;font-size:17px}
+.dailys-sectionhead {display:flex;align-items:center;justify-content:space-between;margin:22px 0 6px}
+.dailys-sectionhead h2 {margin:0;font-size:19px}
+.dailys-page .daily {padding:12px 0}
+.dailys-page .dailies {margin-top:26px}
+.dailys-add {margin:12px 0}
 </style>
 </head>
 <body>
