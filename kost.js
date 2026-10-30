@@ -577,6 +577,7 @@ const mealIcon = meal => meal < 0 ? "" : `<svg class="kicon" viewBox="0 0 24 24"
 const foodTitle = f => { const a = amountText(f); return isEst(f) ? itemName(f) : `${esc(f.name)}${a ? (a.startsWith("×") ? ` ${a}` : ` · ${a}`) : ""}`; };
 let kostDay = false;  // en annan dag är vald i veckoremsan
 let expandedOverviewMeal = null;
+let lastOverviewRemoved = null;
 function mealCard(meal, L, m) {
   const items = L.food.map((f, i) => ({ f, i })).filter(x => (x.f.meal ?? -1) === meal);
   if (meal < 0 && !items.length) return "";
@@ -856,6 +857,7 @@ function kostView() {
     ${kostWeekOpen ? kostWeek() : ""}
     ${kostRing(e, m)}
     ${!L.food.length && yesterdayFood() ? `<button class="klink kday" data-repeatday>Samma mat som igår<span class="muted"> · hela dagen, ${tnum(sumKcal(yesterdayFood()))} kcal</span></button>` : ""}
+    ${lastOverviewRemoved && lastOverviewRemoved.date === logDate() ? `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;margin-bottom:12px;background:rgba(150,150,150,.12);border-radius:10px"><span class="small">Livsmedel borttaget</span><button data-overviewundo type="button" style="border:0;background:none;color:#ff7118;font-weight:700;padding:8px">Ångra</button></div>` : ""}
     <h2 class="ksec">Måltider</h2>
     <div class="kmeals" aria-label="Måltider">${MEALS.map((_, i) => mealCard(i, L, m)).join("")}${mealCard(-1, L, m)}</div>
     <button class="kmcard krecept" data-rlist><span class="kmic">${icon("kost", 22)}</span><span class="grow col"><b>Dina recept</b>
@@ -882,7 +884,7 @@ document.addEventListener("click", ev => {
     }
     save(); render(); return;
   }
-  const t = ev.target.closest("[data-addfood],[data-addto],[data-kmeal],[data-kday],[data-fsclose],[data-quick],[data-mstep],[data-mdel],[data-repeat],[data-savegroup],[data-savedremove],[data-sheetmeal],[data-usemeal],[data-repeatday],[data-quickmore],[data-fpanel],[data-fpick],[data-fvar],[data-amtopen],[data-fooditem],[data-itemclose],[data-qty],[data-itemfav],[data-overviewmeal],[data-overviewitem],[data-overviewremove],[data-browsetab],[data-stagequick],[data-stagecommon],[data-favquick],[data-favcommon],[data-stagetoggle],[data-stageremove],[data-stagecommit],[data-stagerecipe],[data-mealpage],[data-mealback],[data-kweekopen]");
+  const t = ev.target.closest("[data-addfood],[data-addto],[data-kmeal],[data-kday],[data-fsclose],[data-quick],[data-mstep],[data-mdel],[data-repeat],[data-savegroup],[data-savedremove],[data-sheetmeal],[data-usemeal],[data-repeatday],[data-quickmore],[data-fpanel],[data-fpick],[data-fvar],[data-amtopen],[data-fooditem],[data-itemclose],[data-qty],[data-itemfav],[data-overviewmeal],[data-overviewitem],[data-overviewremove],[data-overviewundo],[data-browsetab],[data-stagequick],[data-stagecommon],[data-favquick],[data-favcommon],[data-stagetoggle],[data-stageremove],[data-stagecommit],[data-stagerecipe],[data-mealpage],[data-mealback],[data-kweekopen]");
   if (!t || t.disabled) return;
   if (t.classList.contains("overlay") && ev.target !== t) return;   // klick inne i fönstret
   const ds = t.dataset, page = kostPageKey();
@@ -919,7 +921,8 @@ document.addEventListener("click", ev => {
   else if (ds.fvar) { const [j, k] = ds.fvar.split(":").map(Number); pickVariant(j, k); return; }
   else if (ds.amtopen !== undefined) { const e = t.closest("[data-drow]").querySelector(".famtedit"); e.hidden = !e.hidden; return; }
   else if (ds.overviewmeal !== undefined) { const meal = +ds.overviewmeal; if (day().food.some(f => (f.meal ?? -1) === meal)) expandedOverviewMeal = expandedOverviewMeal === meal ? null : meal; else openMealEditor(meal); }
-  else if (ds.overviewremove !== undefined) { const i = +ds.overviewremove; const f = day().food[i]; if (f && confirm(`Ta bort ${f.name} från måltiden?`)) { day().food.splice(i, 1); if (!day().food.some(x => (x.meal ?? -1) === expandedOverviewMeal)) expandedOverviewMeal = null; } }
+  else if (ds.overviewremove !== undefined) { const i = Number(ds.overviewremove); const foods = day().food; if (foods[i]) { lastOverviewRemoved = { item: foods[i], index: i, date: logDate() }; foods.splice(i, 1); if (!foods.some(x => (x.meal ?? -1) === expandedOverviewMeal)) expandedOverviewMeal = null; } }
+  else if (ds.overviewundo !== undefined) { if (lastOverviewRemoved && lastOverviewRemoved.date === logDate()) { day().food.splice(lastOverviewRemoved.index, 0, lastOverviewRemoved.item); expandedOverviewMeal = lastOverviewRemoved.item.meal ?? -1; lastOverviewRemoved = null; } }
   else if (ds.overviewitem !== undefined) foodItem = +ds.overviewitem;
   else if (ds.addto !== undefined) openMealEditor(+ds.addto);
   else if (ds.fsclose !== undefined) closeMealEditor();
