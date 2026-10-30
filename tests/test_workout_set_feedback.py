@@ -60,3 +60,13 @@ def test_motion_preference_and_polite_status(page,reduce):
     assert page.locator('.set-feedback').get_attribute('role')=='status'
     animation=page.locator('.fset.active').evaluate('e=>getComputedStyle(e).animationName')
     assert (animation=='none')==reduce
+
+
+def test_active_card_has_clearance_above_controls(page):
+    workout(page)
+    page.evaluate("workoutFor(dayById(focus.dayId)).sets.bankpress=[{kg:60,reps:8,ok:true}];startRest('bankpress');render();focus.scroll='active';afterFocusRender()")
+    page.wait_for_function("""() => {
+      const card=document.querySelector('.fset.active').getBoundingClientRect();
+      const pane=document.querySelector('.focus-scroll').getBoundingClientRect();
+      return card.bottom<=pane.bottom-10;
+    }""")

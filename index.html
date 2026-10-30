@@ -835,7 +835,7 @@
   body.infocus, body.infocus.resting { height: 100dvh; overflow: hidden; padding-bottom: 0; }
   body.infocus main { height: calc(100dvh - 96px - env(safe-area-inset-bottom, 0px)); padding-top: 12px; padding-bottom: 0; }
   body.infocus .focus { height: 100%; min-height: 0; display: grid; grid-template-rows: minmax(0, 1fr) auto; gap: 0; }
-  .focus-scroll { min-height: 0; overflow-y: auto; overscroll-behavior: contain; display: flex; flex-direction: column; gap: 14px; padding-bottom: 12px; }
+  .focus-scroll { min-height: 0; scroll-padding-bottom: 12px; overflow-y: auto; overscroll-behavior: contain; display: flex; flex-direction: column; gap: 14px; padding-bottom: 12px; }
   .focus-controls { min-width: 0; padding-top: 8px; background: var(--bg); }
   body.infocus .fbar { position: static; margin-top: 0; }
   @media (pointer: coarse) { body.infocus.typing main { height: 100dvh; }
