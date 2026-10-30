@@ -928,16 +928,16 @@ function dailyClockView() {
   if (!e) return "";
   const left = c.paused ? Math.ceil(c.remaining / 1000) : Math.max(0, Math.ceil((c.end - Date.now()) / 1000));
   const fmt = n => String(Math.floor(n/60)).padStart(2,"0")+":"+String(n%60).padStart(2,"0");
-  const rest = c.phase === "rest", done = c.phase === "done";
+  const rest = c.phase === "rest", done = c.phase === "done", reps = !c.timed && c.phase === "work";
   return `<div class="daily-focus" role="region" aria-label="Daily timer">
     <div class="daily-focus-top"><span>${esc(EX[c.id]?.name || "Daily")}</span><button class="ghost small" data-dclockstop aria-label="Stäng timer">✕</button></div>
     <div class="daily-focus-label">${done ? "Övningen klar!" : rest ? "Vila inför nästa set" : "Träning pågår"}</div>
     <div class="daily-focus-sets">${done ? "Alla set klara" : `Set ${c.set} av ${c.total}`}</div>
     <div class="daily-focus-ring ${rest ? "rest" : ""} ${done ? "complete" : ""}">
-      ${done ? `<span class="daily-focus-check">✓</span>` : `<span id="daily-clock-time">${fmt(left)}</span>`}
+      ${done ? `<span class="daily-focus-check">✓</span>` : reps ? `<span>${esc(c.reps || "Set")}</span>` : `<span id="daily-clock-time">${fmt(left)}</span>`}
     </div>
-    <div class="daily-focus-caption">${done ? "Bra jobbat!" : rest ? "Nästa set startar automatiskt" : `${c.work} sekunder · ${c.total} set`}</div>
-    <div class="daily-focus-actions">${done ? `<button data-dclockstop>Stäng</button>` : `<button class="ghost" data-dclockpause>${c.paused ? "▶ Fortsätt" : "Ⅱ Pausa"}</button><button class="ghost" data-dclockskip>${rest ? "Starta nästa set" : "Hoppa över"}</button>`}</div>
+    <div class="daily-focus-caption">${done ? "Bra jobbat!" : rest ? "Nästa set startar automatiskt" : c.timed ? `${c.work} sekunder · ${c.total} set` : `Utför ${esc(c.reps || "repetitionerna")} och markera setet klart`}</div>
+    <div class="daily-focus-actions">${done ? `<button data-dclockstop>Stäng</button>` : `<button class="ghost" data-dclockpause>${c.paused ? "▶ Fortsätt" : "Ⅱ Pausa"}</button><button class="ghost" data-dclockskip>${rest ? "Starta nästa set" : c.timed ? "Hoppa över" : "✓ Set klart"}</button>`}</div>
   </div>`;
 }
 function dailyClockSound() {
@@ -968,7 +968,7 @@ function dailyClockAdvance() {
   render();
 }
 function dailyClockRefresh() {
-  if (!dailyClock || dailyClock.paused || dailyClock.phase === "done") return;
+  if (!dailyClock || dailyClock.paused || dailyClock.phase === "done" || (dailyClock.phase === "work" && !dailyClock.timed)) return;
   if (Date.now() >= dailyClock.end) { dailyClockAdvance(); return; }
   const el = document.getElementById("daily-clock-time");
   if (el) {
@@ -993,8 +993,9 @@ document.addEventListener("click", ev => {
   const d = t.dataset;
   if (d.dclockstart) {
     const e = S.daily.find(x => x.id === d.dclockstart); if (!e) return;
+    const timed = /\\d+\\s*(?:s|sek)\\b/i.test(e.reps || "");
     const work = dailySeconds(e);
-    dailyClock = {id:e.id,work,rest:30,total:Math.max(1,+e.sets||1),set:1,phase:"work",end:Date.now()+work*1000,paused:false};
+    dailyClock = {id:e.id,work,timed,reps:e.reps||"",rest:30,total:Math.max(1,+e.sets||1),set:1,phase:"work",end:Date.now()+work*1000,paused:false};
     clearInterval(dailyClockTick); dailyClockTick = setInterval(dailyClockRefresh,250);
   } else if (d.dclockpause !== undefined && dailyClock) {
     if (dailyClock.paused) {dailyClock.end = Date.now()+dailyClock.remaining;dailyClock.paused=false;}
@@ -1062,7 +1063,7 @@ const VIEWS = {
     const a=S.supplements||[], ex=S.daily||[], n=ex.filter(e=>dailyDone(logDate(),e.id)).length, sn=a.filter(x=>day().dailies["supp:"+x.id]).length;
     const total=ex.length+a.length, count=n+sn, pct=total?Math.round(count/total*100):0;
     const week=Array.from({length:7},(_,i)=>shift(TODAY,i-3)).map(d=>`<span class="${d===TODAY?"on":""}">${d.slice(-2)}</span>`).join("");
-    const rows=ex.map(e=>{const ok=dailyDone(logDate(),e.id),timed=/\d+\s*(?:s|sek)\b/i.test(e.reps||"");return `<div class="daily">${thumb(e.id,"dt")}<div class="grow"><b>${esc(EX[e.id].name)}</b><span class="muted small">${e.sets} × ${esc(e.reps||"")}</span></div>${timed&&!ok?`<button class="ghost small" data-dclockstart="${e.id}">▶ Starta</button>`:""}<button class="done-btn big ${ok?"on":""}" data-dcheck="${e.id}">${icon("check",18)}</button></div>`;}).join("");
+    const rows=ex.map(e=>{const ok=dailyDone(logDate(),e.id),timed=/\d+\s*(?:s|sek)\b/i.test(e.reps||"");return `<div class="daily">${thumb(e.id,"dt")}<div class="grow"><b>${esc(EX[e.id].name)}</b><span class="muted small">${e.sets} × ${esc(e.reps||"")}</span></div>${!ok?`<button class="ghost small" data-dclockstart="${e.id}">▶ Starta</button>`:""}<button class="done-btn big ${ok?"on":""}" data-dcheck="${e.id}">${icon("check",18)}</button></div>`;}).join("");
     return `<div class="dailys-page"><h1>Dailys</h1>${dailyClock?dailyClockView():`<div class="dailys-week">${week}</div><div class="dailys-progress"><div class="dailys-progress-ring" style="--p:${pct}%">${pct}%</div><div><b>${count} av ${total}</b><div class="muted small">klara idag</div></div></div><div class="dailys-summary"><span>Träning <b>${n}/${ex.length}</b></span><span>Kosttillskott <b>${sn}/${a.length}</b></span></div><div class="dailys-sectionhead"><h2>Övningar</h2><button class="ghost small" data-dedit>✎ ${dailyEditing?"Klar":"Redigera"}</button></div>${dailyEditing?exRows("daily",S.daily,true):rows}<button class="ghost small dailys-add" data-openpick="daily">+ Lägg till övning</button>${supplementsCard()}`}</div>`;
   },
   idag() {
