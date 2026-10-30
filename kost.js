@@ -167,7 +167,7 @@ function draftRow(d, j) {
   return `<div class="drow" data-drow="${j}"><div class="grow"><b>${esc(d.name)}</b><div class="muted small dk">${draftKcal(d)}</div></div>
     <div class="fstep"><button data-astep="-1" ${d.amt.n <= (d.amt.unit === "g" ? 10 : 0.5) ? "disabled" : ""} aria-label="Mindre ${esc(d.name)}">−</button>
       <button class="famt" data-amtopen aria-label="Ändra mängd och enhet för ${esc(d.name)}">${amtText(d.amt)}</button>
-      <button data-astep="1" aria-label="Mer ${esc(d.name)}">+</button></div>
+      <button data-astep="1" aria-label="Mer ${esc(d.name)}">+</button></div><button type="button" data-stagedraft="${j}" aria-label="Lägg till ${esc(d.name)} i valda livsmedel" style="display:inline-flex;align-items:center;justify-content:center;flex:0 0 44px;width:44px;height:44px;border-radius:12px;border:0;background:#ff7118;color:#111;font-size:26px;font-weight:700;margin-left:8px">+</button>
     <div class="famtedit" hidden><input class="amt-n" type="number" inputmode="decimal" min="0" step="any" value="${d.amt.n}" data-d${j}="n" aria-label="Mängd">
       <select class="amt-u" data-d${j}="u" aria-label="Enhet">${unitChoices(d.amt).map(k => `<option value="${k}" ${k === d.amt.unit ? "selected" : ""}>${UNIT_NAMES[k] || k}</option>`).join("")}</select></div></div>
     <details class="nutrition-edit" data-dnutrition="${j}"><summary>Ändra näringsvärden</summary>
@@ -772,7 +772,7 @@ function updateFoodBtn() {
   if (!b || !foodSheet) return;
   const meal = foodSheet.meal, name = MEALS[meal][0].toLowerCase(), p = foodPending();
   const inMeal = sumKcal(day().food.filter(f => f.meal === meal));
-  const stageInput = $("fstageinput"); if (stageInput) stageInput.style.display = p.ready && foodPanel !== "kcal" ? "block" : "none";
+  const stageInput = $("fstageinput"); if (stageInput) stageInput.style.display = p.ready && foodPanel !== "kcal" && !foodDraft.some(d => d.amt) ? "block" : "none";
   if (stagedFoods.length) { b.disabled = false; b.textContent = `Lägg till alla (${stagedFoods.length}) · ${tnum(sumKcal(stagedFoods))} kcal`; return; }
   b.disabled = !!p.unknown || !!p.invalidNutrition;
   b.textContent = p.ready ? `Lägg till i ${name}${p.claude ? "" : ` · ${tnum(p.kcal)} kcal`}`
@@ -886,7 +886,7 @@ document.addEventListener("click", ev => {
     }
     save(); render(); return;
   }
-  const t = ev.target.closest("[data-addfood],[data-addto],[data-kmeal],[data-kday],[data-fsclose],[data-quick],[data-mstep],[data-mdel],[data-repeat],[data-savegroup],[data-savedremove],[data-sheetmeal],[data-usemeal],[data-repeatday],[data-quickmore],[data-fpanel],[data-fpick],[data-fvar],[data-amtopen],[data-fooditem],[data-itemclose],[data-qty],[data-itemfav],[data-overviewmeal],[data-overviewitem],[data-overviewremove],[data-overviewundo],[data-browsetab],[data-stagequick],[data-stagecommon],[data-stageinput],[data-favquick],[data-favcommon],[data-stagetoggle],[data-stageremove],[data-stagecommit],[data-stagerecipe],[data-mealpage],[data-mealback],[data-kweekopen]");
+  const t = ev.target.closest("[data-addfood],[data-addto],[data-kmeal],[data-kday],[data-fsclose],[data-quick],[data-mstep],[data-mdel],[data-repeat],[data-savegroup],[data-savedremove],[data-sheetmeal],[data-usemeal],[data-repeatday],[data-quickmore],[data-fpanel],[data-fpick],[data-fvar],[data-amtopen],[data-fooditem],[data-itemclose],[data-qty],[data-itemfav],[data-overviewmeal],[data-overviewitem],[data-overviewremove],[data-overviewundo],[data-browsetab],[data-stagequick],[data-stagecommon],[data-stageinput],[data-stagedraft],[data-favquick],[data-favcommon],[data-stagetoggle],[data-stageremove],[data-stagecommit],[data-stagerecipe],[data-mealpage],[data-mealback],[data-kweekopen]");
   if (!t || t.disabled) return;
   if (t.classList.contains("overlay") && ev.target !== t) return;   // klick inne i fönstret
   const ds = t.dataset, page = kostPageKey();
@@ -911,6 +911,7 @@ document.addEventListener("click", ev => {
     foodDraft = []; foodPanel = "senaste";
     mealPage = meal;
   }
+  else if (ds.stagedraft !== undefined) { const d = foodDraft[+ds.stagedraft]; if (d?.amt && foodSheet) { stagedFoods.push({name:d.name,amt:{...d.amt},meal:foodSheet.meal}); stagedOpen = true; const input = $("fname"); if (input) { input.value = ""; input.blur(); } foodDraft = []; } }
   else if (ds.stageinput !== undefined) { const p = foodPending(), input = $("fname"), name = input?.value.trim() || ""; if (p.ready && !p.claude && name && foodSheet) { const meal = foodSheet.meal; if (p.learned) stagedFoods.push({name,kcal:p.learned.kcal,protein:p.learned.protein,meal}); else foodDraft.filter(d=>d.amt).forEach(d=>stagedFoods.push({name:d.name,amt:d.amt,meal})); stagedOpen = true; input.value = ""; foodDraft = []; input.blur(); } }
   else if (ds.browsetab) foodBrowseTab = ds.browsetab;
   else if (ds.favquick !== undefined || ds.favcommon !== undefined) { const f = ds.favquick !== undefined ? quickCache[+ds.favquick] : (window._kostCommon || [])[+ds.favcommon]; if (f) toggleFav(f); }
