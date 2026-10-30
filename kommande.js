@@ -5,6 +5,7 @@
 let upcomingItems = null;
 let upcomingError = false;
 let upcomingLoading = false;
+let upcomingTab = "active";
 
 function parseUpcomingMarkdown(markdown) {
   const rows = [];
@@ -29,14 +30,27 @@ function upcomingFeaturesView() {
   if (!upcomingItems) return '<p class="muted small">Laddar förbättringslistan…</p>';
   const active = upcomingItems.filter(x => x.status !== "Klar");
   const done = upcomingItems.filter(x => x.status === "Klar");
+  const shown = upcomingTab === "done" ? done : active;
   const renderItem = item => `<li><span class="upcoming-status">${esc(item.status)} · ${esc(item.priority)} prioritet</span>
     <h2>${item.id}. ${esc(item.title)}</h2>
     <p class="muted small">${esc(item.description || item.category)}</p></li>`;
-  return `<p class="muted small upcoming-intro">Planerade förbättringar i DRIV. Samma lista som utvecklarna använder på GitHub.</p>
-    <h2>Återstår (${active.length})</h2>
-    ${active.length ? `<ul class="upcoming-list" aria-label="Planerade förbättringar">${active.map(renderItem).join("")}</ul>` : '<p class="muted small">Inga öppna förbättringar.</p>'}
-    ${done.length ? `<h2>Klart (${done.length})</h2><ul class="upcoming-list" aria-label="Genomförda förbättringar">${done.map(renderItem).join("")}</ul>` : ""}`;
+  return `<p class="muted small upcoming-intro">Förbättringar och planerade funktioner i DRIV.</p>
+    <div class="upcoming-tabs" role="group" aria-label="Visa förbättringar">
+      <button type="button" class="upcoming-tab ${upcomingTab === "active" ? "selected" : ""}" data-upcoming-tab="active" aria-pressed="${upcomingTab === "active"}">Kommande (${active.length})</button>
+      <button type="button" class="upcoming-tab ${upcomingTab === "done" ? "selected" : ""}" data-upcoming-tab="done" aria-pressed="${upcomingTab === "done"}">Genomförda (${done.length})</button>
+    </div>
+    ${shown.length ? `<ul class="upcoming-list" aria-label="${upcomingTab === "done" ? "Genomförda förbättringar" : "Kommande förbättringar"}">${shown.map(renderItem).join("")}</ul>` : `<p class="muted small">${upcomingTab === "done" ? "Inga genomförda förbättringar ännu." : "Inga öppna förbättringar."}</p>`}`;
 }
+
+document.addEventListener("click", event => {
+  const button = event.target.closest("[data-upcoming-tab]");
+  if (!button) return;
+  const next = button.dataset.upcomingTab;
+  if (next !== "active" && next !== "done") return;
+  upcomingTab = next;
+  const target = document.getElementById("upcoming-content");
+  if (target) target.innerHTML = upcomingFeaturesView();
+});
 
 async function loadUpcomingFeatures() {
   if (upcomingItems || upcomingLoading) return;
