@@ -72,7 +72,7 @@ function traningView() {
   const cols = n <= 3 ? n : n === 4 ? 2 : 3;
   const tiles = `<div class="ptiles" style="grid-template-columns:repeat(${cols},minmax(0,1fr))">${S.plan.days.map((p, i) =>
     `<button class="ptile ${p === d && !t.rest ? "today" : ""}" data-pick="${p.id}" aria-label="${esc(p.name)}">${status(p, i)}<b>${esc(p.name)}</b></button>`).join("")}</div>`;
-  const acts = actsOn(TODAY), nD = S.daily.length, dDone = S.daily.filter(e => dailyDone(TODAY, e.id)).length;
+  const acts = actsOn(TODAY), nD = dailyItems().length, dDone = dailyItems().filter(e => dailyDone(TODAY, e.id)).length;
   const extra = `<div class="trtiles">
       <button class="ttile" data-actnew="" data-actdate="${TODAY}"><span class="klabel">Annan träning</span><span class="plusic">${icon("plus", 20)}</span>
         <span class="muted small">${acts.length ? esc(acts.map(a => `${a.name} ${+a.min} min`).join(", ")) : "Padel, löpning …"}</span></button>
@@ -89,7 +89,7 @@ function traningView() {
 }
 
 function dailysSheet() {
-  const n = S.daily.length, done = S.daily.filter(e => dailyDone(logDate(), e.id)).length;
+  const n = dailyItems().length, done = dailyItems().filter(e => dailyDone(logDate(), e.id)).length;
   return `<div class="overlay" data-trsheet=""><div class="sheet dsheet" role="dialog" aria-label="Dailys">
     <div class="row between"><div><span class="klabel">Varje dag</span><h2 class="sheeth">Dailys</h2></div>${n ? `<span class="muted">${done} av ${n} idag</span>` : ""}</div>
     ${dailiesCard(true)}

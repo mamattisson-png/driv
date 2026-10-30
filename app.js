@@ -181,6 +181,8 @@ function freshState() {
     learned: {},           // rätter som Claude räknat ut, så att de känns igen nästa gång
     plan: { program: "ppl", count: 3, mode: "flex", weekdays: DEFAULT_WEEKDAYS[3].slice(), days: makeDays("ppl", 3) },
     daily: DEFAULT_DAILY.map(exEntry),
+    habits: [],
+    habitArchive: [],
     log: {},
   };
 }
@@ -568,7 +570,7 @@ function reminderIcs(time) {
     "BEGIN:VALARM", "ACTION:DISPLAY", "DESCRIPTION:Dags för dina dailys", "TRIGGER:PT0M", "END:VALARM",
     "END:VEVENT", "END:VCALENDAR"].join("\r\n");
 }
-const dailiesLeft = () => S.daily.filter(e => !dailyDone(TODAY, e.id)).length;
+const dailiesLeft = () => dailyItems().filter(e => !dailyDone(TODAY, e.id)).length;
 
 // Siffra på appikonen med antal dailys kvar (där systemet stöder det)
 function updateBadge() {
@@ -585,7 +587,7 @@ async function remindIfDue() {
   if (now.getHours() * 60 + now.getMinutes() < hh * 60 + mm || r.lastNotified === TODAY || !dailiesLeft()) return;
   r.lastNotified = TODAY;
   save();
-  const body = `${dailiesLeft()} av ${S.daily.length} dailys kvar idag.`;
+  const body = `${dailiesLeft()} av ${dailyItems().length} dailys kvar idag.`;
   const opts = { body, icon: "icons/icon-192-v2.png", tag: "dailys" };
   // Installerade appar visar notiser via service workern; annars en vanlig notis
   try {
@@ -747,7 +749,8 @@ function dailyDone(date, id) {
   const v = S.log[date] && S.log[date].dailies[id];
   return isRun(id) ? !!(v && (v.km || v.min)) : v === true;
 }
-const allDailiesDone = date => S.daily.length > 0 && S.daily.every(e => dailyDone(date, e.id));
+const dailyItems = () => [...S.daily, ...(S.habits || [])];
+const allDailiesDone = date => dailyItems().length > 0 && dailyItems().every(e => dailyDone(date, e.id));
 // Antal dagar i rad som test(datum) gäller, räknat från idag eller igår
 function streakOf(test) {
   let n = 0, d = test(TODAY) ? TODAY : shift(TODAY, -1);
@@ -914,15 +917,49 @@ function currentPassDay() {
 }
 
 // Schemat: kommande dagar med fasta veckodagar, annars passen i tur och ordning
+// Hälsorutiner har egna identiteter och metadata, men samma datumlogg som Dailys.
+const HABIT_PRESETS = ["Kreatin", "Vitaminer", "Omega-3", "Vatten"];
+function addHabit(name, note = "") {
+  name = String(name || "").trim().slice(0, 80);
+  note = String(note || "").trim().slice(0, 160);
+  if (!name || (S.habits || []).some(h => norm(h.name) === norm(name))) return false;
+  (S.habits ||= []).push({ id: `habit-${crypto.randomUUID()}`, name, note });
+  return true;
+}
+function healthHabitsEditor() {
+  const habits = S.habits || [];
+  return `<section class="health-dailys" aria-label="Redigera hälsorutiner"><h3>Hälsorutiner</h3>
+    <p class="muted small">Tillskott, vatten och egna vanor. Bockas av en gång per dag.</p>
+    ${habits.map(h => `<div class="habit-edit"><div class="grow col">
+      <input maxlength="80" value="${esc(h.name)}" data-habitedit="${h.id}" data-f="name" aria-label="Rutinens namn">
+      <input maxlength="160" value="${esc(h.note || "")}" data-habitedit="${h.id}" data-f="note" placeholder="Egen anteckning (valfritt)" aria-label="Anteckning för ${esc(h.name)}"></div>
+      <button class="small ghost" data-habitremove="${h.id}" aria-label="Ta bort ${esc(h.name)}">${icon("close", 18)}</button></div>`).join("")}
+    <div class="chips">${HABIT_PRESETS.map(name => `<button class="chipbtn" data-habitpreset="${name}" ${(habits.some(h => norm(h.name) === norm(name))) ? "disabled" : ""}>${icon("plus", 14)}${name}</button>`).join("")}</div>
+    <div class="habit-new"><label for="habit-name">Egen rutin</label><input id="habit-name" maxlength="80" placeholder="Namn på din rutin">
+      <label for="habit-note" class="small muted">Anteckning (valfritt)</label><input id="habit-note" maxlength="160" placeholder="Till exempel efter frukost">
+      <button class="small" data-habitadd>Lägg till rutin</button></div></section>`;
+}
+function healthHabitRows(date) {
+  const archived = tab === "historik" ? (S.habitArchive || []).filter(h => Object.prototype.hasOwnProperty.call((S.log[date] || {}).dailies || {}, h.id)) : [];
+  const habits = [...(S.habits || []), ...archived];
+  if (!habits.length) return "";
+  return `<section class="health-dailys" aria-label="Hälsorutiner"><h3>Hälsorutiner</h3>${habits.map(h => {
+    const ok = dailyDone(date, h.id);
+    return `<div class="daily ${ok ? "ok" : ""}"><div class="grow"><b>${esc(h.name)}</b>${h.note ? `<span class="muted small">${esc(h.note)}</span>` : ""}</div>
+      <button class="done-btn big ${ok ? "on" : ""}" data-dcheck="${h.id}" aria-pressed="${ok}" aria-label="${esc(h.name)} klar">${icon("check", 18)}</button></div>`;
+  }).join("")}</section>`;
+}
+
 // Dagens dailys som en kort lista att bocka av, direkt på Idag
 function dailiesCard(inPass, banded) {
-  const n = S.daily.length, date = logDate(), L = day(date);
+  const n = dailyItems().length, date = logDate(), L = day(date);
   if (dailyEditing) return `<div class="card"><div class="row between"><h2>Redigera dailys</h2><button class="small ghost" data-dedit>Klar</button></div>
-    ${exRows("daily", S.daily, true)}
+    <h3>Träningsövningar</h3>${exRows("daily", S.daily, true)}${healthHabitsEditor()}
     </div>`;
-  if (!n) return `<div class="card"><h2>Dailys</h2><div class="muted">Det du vill göra varje dag, till exempel plankan eller hängande benlyft.</div>
-    <button style="margin-top:10px" data-openpick="daily">+ Lägg till daily</button></div>`;
-  const done = S.daily.filter(e => dailyDone(date, e.id)).length, st = streakOf(allDailiesDone);
+  if (!n && tab === "historik" && healthHabitRows(date)) return `<section class="card dailies" aria-label="Dailys"><h2>Dailys</h2>${healthHabitRows(date)}</section>`;
+  if (!n) return `<div class="card"><h2>Dailys</h2><div class="muted">Träningsövningar och hälsorutiner du vill bocka av varje dag.</div>
+    <button style="margin-top:10px" data-dedit>+ Lägg till daily</button></div>`;
+  const done = dailyItems().filter(e => dailyDone(date, e.id)).length, st = streakOf(allDailiesDone);
   const rows = S.daily.map(e => {
     const id = e.id, ok = dailyDone(date, id), its = streakOf(d => dailyDone(d, id)), v = L.dailies[id] || {};
     const sub = isRun(id) ? "" : EX[id].cat === "cardio" ? esc(e.reps || "") : `${e.sets} × ${esc(e.reps)}`;
@@ -938,7 +975,7 @@ function dailiesCard(inPass, banded) {
   // Rubriken: antal klara, och ett tryck öppnar Redigera dailys (inte under passet)
   const head = `<div class="dhead"><h2>Dailys${st > 1 ? `<span class="muted small"> · alla ${st} dagar i rad</span>` : ""}</h2>
     ${inPass ? `<span class="muted small">${done} av ${n} klara</span>` : `<button class="ghost small" data-dedit aria-label="Redigera dailys, ${done} av ${n} klara">${done} av ${n} klara${icon("right", 16)}</button>`}</div>`;
-  return `<section class="card dailies" aria-label="Dailys">${head}${rows}</section>`;
+  return `<section class="card dailies" aria-label="Dailys">${head}${S.daily.length && (S.habits || []).length ? "<h3>Träningsövningar</h3>" : ""}${rows}${healthHabitRows(date)}</section>`;
 }
 
 // Alla pass som knappar; används på Idag och under Pass
@@ -1067,7 +1104,7 @@ const VIEWS = {
       ${group(sbEnabled ? "Vänner och notiser" : "Notiser", `${sbEnabled ? `<div class="prow" id="p-vanner"><div class="prow-line"><button class="prow-head" data-tab="vanner"><span class="pic">${icon("vanner", 20)}</span><span class="grow"><b>Vänner</b>
           <span class="muted small">${friends}</span></span><span class="chev">${icon("right", 18)}</span></button></div></div>` : ""}
         ${profRow("notiser", "bell", "Notiser", pushSummary(), pushBody(), pushSwitch)}
-        ${S.daily.length ? profRow("paminnelse", "kalender", "Påminnelse i kalendern", r ? `För dina dailys · kl. ${esc(r.time)}` : "För dina dailys · ingen vald", reminderCard()) : ""}`)}
+        ${dailyItems().length ? profRow("paminnelse", "kalender", "Påminnelse i kalendern", r ? `För dina dailys · kl. ${esc(r.time)}` : "För dina dailys · ingen vald", reminderCard()) : ""}`)}
       ${group("Appen", `${profRow("utseende", "utseende", "Utseende", "", null, themeSeg)}
         ${profRow("konto", "data", sbEnabled ? "Konto och data" : "Data", account.step === "in" ? esc(account.email) : sbEnabled ? "Inloggning, exportera, importera" : "Exportera, importera",
           `${accountCard()}${data}`)}
@@ -1387,7 +1424,7 @@ function weekLetter(ws) {
   const stat = (label, value, extra = "") => `<div class="lstat"><div class="klabel">${label}</div><div class="lbig">${value}</div>${extra}</div>`;
   const stats = [
     stat("Pass", `${cur.passes} av ${goalPasses}`, prev.passes || cur.passes ? deltaBadge(cur.passes - prev.passes, "mot förra") : ""),
-    S.daily.length ? stat("Alla dailys", `${cur.dailies} av 7 dagar`) : "",
+    dailyItems().length ? stat("Alla dailys", `${cur.dailies} av 7 dagar`) : "",
     !S.hideWeight && wNow != null ? stat("Vikt, snitt", `${fmtNum(wNow)} kg`, wPrev != null ? weightBadge(wNow - wPrev) : "") : "",
     cur.kcal ? stat("Kalorier per dag", tnum(cur.kcal), `<span class="muted small">mål ${tnum(macros().kcal)}</span>`) : "",
     cur.km || prev.km ? stat("Löpning", `${fmtNum(cur.km)} km`) : "",
@@ -1851,6 +1888,16 @@ document.addEventListener("click", ev => {
   }
   else if (ds.dcheck) day().dailies[ds.dcheck] = !dailyDone(logDate(), ds.dcheck);
   else if (ds.dedit !== undefined) dailyEditing = !dailyEditing;
+  else if (ds.habitpreset !== undefined) addHabit(ds.habitpreset);
+  else if (ds.habitadd !== undefined) {
+    const name = $("habit-name");
+    if (!addHabit(name.value, $("habit-note").value)) { fieldError(name, "Skriv ett nytt namn på rutinen."); return; }
+  }
+  else if (ds.habitremove !== undefined) {
+    const habit = (S.habits || []).find(h => h.id === ds.habitremove);
+    if (habit) (S.habitArchive ||= []).push({ ...habit });
+    S.habits = (S.habits || []).filter(h => h.id !== ds.habitremove);
+  }
   else if (ds.letterclose) S.letterSeen = ds.letterclose;
   else if (ds.showweight !== undefined) S.hideWeight = !t.checked;
   else if (ds.wsave !== undefined) {
@@ -1996,6 +2043,15 @@ document.addEventListener("change", ev => {
     }
     save();
     return;   // ingen omritning, så att fokus stannar kvar i fältet
+  }
+  if (ds.habitedit) {
+    const habit = (S.habits || []).find(h => h.id === ds.habitedit);
+    if (!habit || !["name", "note"].includes(ds.f)) return;
+    const value = t.value.trim().slice(0, ds.f === "name" ? 80 : 160);
+    if (ds.f === "name" && (!value || (S.habits || []).some(h => h.id !== habit.id && norm(h.name) === norm(value)))) {
+      t.value = habit.name; fieldError(t, "Använd ett unikt namn på rutinen."); return;
+    }
+    habit[ds.f] = value; save(); return;
   }
   if (ds.run) { const L = day(); L.dailies[ds.run] = Object.assign({}, L.dailies[ds.run], { [ds.f]: +t.value || 0 }); }
   else if (ds.weighday !== undefined) S.weighDay = +t.value;

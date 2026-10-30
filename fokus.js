@@ -235,14 +235,14 @@ function focusView() {
     : next ? `<button class="primary grow" data-focusgo="${nextIdx}">Nästa: ${esc(EX[next.id].name)}</button>`
     : w && w.done ? `<button class="primary grow" data-finish="${d.id}" data-focusend>Avsluta pass</button>`
     : `<button class="primary grow" data-finish="${d.id}" data-focusend>Spara och avsluta</button>`;
-  const dDone = S.daily.filter(e => dailyDone(logDate(), e.id)).length;
+  const dDone = dailyItems().filter(e => dailyDone(logDate(), e.id)).length;
   const start = focus.start || Date.now();
   const tools = `<div class="ftools">
     <button class="chipbtn" data-setcount="-1" data-ex="${ex.id}" ${ex.sets > 1 ? "" : "disabled"} aria-label="Ett set färre">− Set</button>
     <button class="chipbtn" data-setcount="1" data-ex="${ex.id}" aria-label="Ett set till">+ Set</button>
     ${!g && d.ex.length > 1 ? `<button class="chipbtn ${focus.ssPick ? "on" : ""}" data-sspick>${icon("plus", 14)}Superset</button>` : ""}
     ${d.ex.length > 1 ? `<button class="chipbtn" data-forder>Ordning</button>` : ""}
-    ${S.daily.length ? `<button class="chipbtn" data-fdopen aria-label="Dailys, ${dDone} av ${S.daily.length} klara">Dailys ${dDone} av ${S.daily.length}</button>` : ""}</div>`;
+    ${dailyItems().length ? `<button class="chipbtn" data-fdopen aria-label="Dailys, ${dDone} av ${dailyItems().length} klara">Dailys ${dDone} av ${dailyItems().length}</button>` : ""}</div>`;
   return `<div class="focus"><div class="focus-scroll">
     <header class="fhead"><button class="fhbtn" data-fend>Avsluta</button>
       <span class="fclock"><span class="klabel">${esc(d.name)}</span><b class="ftimer" data-start="${start}">${clockText(Date.now() - start)}</b></span>

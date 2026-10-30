@@ -37,7 +37,7 @@ function calendar() {
       <h2 style="margin:0">${MONTHS[mo - 1].replace(/^./, c => c.toUpperCase())} ${y}</h2>
       <button class="roundbtn ghost" data-hmonth="1" ${atNow ? "disabled" : ""} aria-label="Nästa månad">${icon("right", 20)}</button></div>
     <div class="cal">${WD.map(w => `<b aria-hidden="true">${w[0]}</b>`).join("")}${cells}</div>
-    <div class="legend muted small"><span><i class="lg-pass"></i>Pass</span>${S.daily.length ? `<span><i class="lg-daily"></i>Alla dailys</span>` : ""}<span><i class="lg-today"></i>Idag</span></div></section>`;
+    <div class="legend muted small"><span><i class="lg-pass"></i>Pass</span>${dailyItems().length ? `<span><i class="lg-daily"></i>Alla dailys</span>` : ""}<span><i class="lg-today"></i>Idag</span></div></section>`;
 }
 
 function daySheet() {
@@ -89,7 +89,7 @@ function weekSection() {
   const wNow = weekAvgWeight(ws), wPrev = weekAvgWeight(prevWs);
   const tiles = [
     tile("Pass", cur.passes, `av ${S.plan.count}`, diff(cur.passes, prev.passes, true)),
-    S.daily.length ? tile("Dailys", cur.dailies, "av 7 dagar", diff(cur.dailies, prev.dailies, true)) : "",
+    dailyItems().length ? tile("Dailys", cur.dailies, "av 7 dagar", diff(cur.dailies, prev.dailies, true)) : "",
     tile("Kalorier", cur.kcal ? tnum(cur.kcal) : "–", "snitt", cur.kcal && prev.kcal ? diff(cur.kcal, prev.kcal, null) : `<span class="muted small">mål ${tnum(macros().kcal)}</span>`),
     S.hideWeight ? "" : tile("Vikt", wNow != null ? fmtNum(wNow) : "–", "kg", wNow != null && wPrev != null ? diff(wNow, wPrev, null, " kg") : `<span class="muted small">${wNow != null ? "Första vägningen" : "Ingen vägning"}</span>`),
     cur.km || prev.km ? tile("Löpning", fmtNum(cur.km), "km", diff(cur.km, prev.km, true, " km")) : "",

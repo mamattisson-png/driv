@@ -12,7 +12,7 @@ export function dailyMessage(s, log, date, wd) {
   const plan = s.plan, fixed = plan.mode === "fixed";
   const due = !trained && (fixed ? (plan.weekdays || []).includes(wd) : week < plan.count);
   const dailyDone = (id) => { const v = (today.dailies || {})[id]; return v === true || !!(v && (v.km || v.min)); };
-  const daily = s.daily || [], left = daily.filter((e) => !dailyDone(e.id)).length;
+  const daily = [...(s.daily || []), ...(s.habits || [])], left = daily.filter((e) => !dailyDone(e.id)).length;
   const dailyText = left ? `${left} av ${daily.length} dailys kvar idag.` : "";
   if (due) {
     const day = fixed ? plan.days[(plan.weekdays || []).indexOf(wd)] : null;
