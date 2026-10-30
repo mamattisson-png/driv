@@ -1580,6 +1580,14 @@
 .productsearch .fask-opts button { display:grid; text-align:left; white-space:normal; overflow-wrap:anywhere; }
   .code-destination { display: block; margin: 12px 0 8px; }
   .code-destination strong { display: block; overflow-wrap: anywhere; }
+
+/* Dailys-timer – endast utvecklingsgrenen */
+.daily-clock { margin-top:14px; padding:18px 14px; border:1px solid var(--line); border-radius:16px; text-align:center; background:rgba(255,132,46,.045); }
+.daily-clock-time { font-size:clamp(52px,13vw,76px); font-weight:750; letter-spacing:-.055em; font-variant-numeric:tabular-nums; color:var(--accent,#ff883c); margin:14px 0; }
+.daily-clock .row { gap:8px; justify-content:center; }
+.daily-clock button { min-height:40px; }
+.daily[data-dclockstart] { cursor:pointer; }
+.dailies .daily .ghost.small { flex-shrink:0; }
 </style>
 </head>
 <body>
