@@ -333,7 +333,7 @@ document.addEventListener("click", ev => {
 });
 // Hindra mobilwebbläsaren från att först använda trycket till att stänga tangentbordet.
 document.addEventListener("pointerdown", ev => {
-  const target = ev.target.closest?.("[data-stagedraft]");
+  const target = ev.target.closest?.("[data-stagedraft],[data-fpick],[data-fvar]");
   if (target && document.activeElement?.id === "fname") ev.preventDefault();
 });
 document.addEventListener("click", ev => {
@@ -827,7 +827,8 @@ function pickFood(j, k) {
   if (f.code && typeof chooseProduct === "function") chooseProduct(j, f);
   input.value = input.value.replace(d.text, amount + x.name);
   foodPreview();
-  input.focus();
+  // Låt tangentbordet förbli stängt efter val; nästa tryck ska inte behövas.
+  input.blur();
 }
 // Sidan för ett livsmedel: mängd, näring, favorit och ta bort
 function itemPage() {
