@@ -976,16 +976,18 @@ function dailyClockRefresh() {
     el.textContent = String(Math.floor(n/60)).padStart(2,"0")+":"+String(n%60).padStart(2,"0");
   }
 }
+let supplementEditing = null;
 function supplementsCard() {
   const a = S.supplements || [];
   const rows = a.map((x,i) => {
     const ok = day().dailies["supp:"+x.id] === true;
     return `<div class="daily ${ok ? "ok" : ""}"><div class="grow"><b>${esc(x.name)}</b><span class="muted small">${esc(x.dose || "")}</span>${x.note ? `<div class="muted small" style="margin-top:4px">${esc(x.note)}</div>` : ""}</div><button class="done-btn big ${ok ? "on" : ""}" data-suppcheck="${esc(x.id)}" aria-label="Markera ${esc(x.name)} som taget">${icon("check",18)}</button><button class="ghost small" data-suppedit="${i}" aria-label="Redigera">✎</button></div>`;
   }).join("");
-  return `<section class="card dailies" aria-label="Kosttillskott"><div class="dhead"><h2>Kosttillskott</h2><span class="muted small">${a.filter(x=>day().dailies["supp:"+x.id]).length} av ${a.length} tagna</span></div>${rows}<button class="ghost small" data-suppadd style="margin-top:10px">+ Lägg till kosttillskott</button></section>`;
+  const form = supplementEditing !== null ? (() => { const old = a[supplementEditing] || {}; return `<form id="supplement-form" class="supplement-form"><h3>${supplementEditing < 0 ? "Lägg till kosttillskott" : "Redigera kosttillskott"}</h3><label>Namn<input name="name" required maxlength="80" placeholder="T.ex. Kreatin" value="${esc(old.name || "")}"></label><label>Dosering<input name="dose" maxlength="60" placeholder="T.ex. 5 g" value="${esc(old.dose || "")}"></label><label>Anteckning (valfri)<textarea name="note" rows="2" maxlength="300" placeholder="T.ex. tillsammans med frukost">${esc(old.note || "")}</textarea></label><div class="row"><button type="button" class="ghost" data-suppcancel>Avbryt</button><button type="submit">Spara</button></div></form>`; })() : "";
+  return `<section class="card dailies" aria-label="Kosttillskott"><div class="dhead"><h2>Kosttillskott</h2><span class="muted small">${a.filter(x=>day().dailies["supp:"+x.id]).length} av ${a.length} tagna</span></div>${rows}${form}${supplementEditing === null ? `<button class="ghost small" data-suppadd style="margin-top:10px">+ Lägg till kosttillskott</button>` : ""}</section>`;
 }
 document.addEventListener("click", ev => {
-  const t = ev.target.closest?.("[data-dclockstart],[data-dclockpause],[data-dclockskip],[data-dclockstop],[data-suppadd],[data-suppedit],[data-suppcheck]");
+  const t = ev.target.closest?.("[data-dclockstart],[data-dclockpause],[data-dclockskip],[data-dclockstop],[data-suppadd],[data-suppedit],[data-suppcheck],[data-suppcancel]");
   if (!t) return;
   ev.stopImmediatePropagation();
   const d = t.dataset;
@@ -1000,15 +1002,20 @@ document.addEventListener("click", ev => {
   } else if (d.dclockskip !== undefined) dailyClockAdvance();
   else if (d.dclockstop !== undefined) {dailyClock=null;clearInterval(dailyClockTick);dailyClockTick=null;}
   else if (d.suppcheck) day().dailies["supp:"+d.suppcheck] = !day().dailies["supp:"+d.suppcheck];
-  else if (d.suppadd !== undefined || d.suppedit !== undefined) {
-    const i = d.suppedit !== undefined ? +d.suppedit : -1, a = S.supplements || (S.supplements=[]), old = a[i] || {};
-    const name = prompt("Kosttillskott",old.name||""); if (!name?.trim()) return;
-    const dose = prompt("Dosering (t.ex. 5 g eller 2 kapslar)",old.dose||"") || "";
-    const note = prompt("Anteckning (valfritt)",old.note||"") || "";
-    if (i >= 0) a[i]={...old,name:name.trim(),dose,note};
-    else a.push({id:"s"+Date.now(),name:name.trim(),dose,note});
-  }
+  else if (d.suppcancel !== undefined) supplementEditing = null;
+  else if (d.suppadd !== undefined || d.suppedit !== undefined) supplementEditing = d.suppedit !== undefined ? +d.suppedit : -1;
   save();render();
+}, true);
+
+document.addEventListener("submit", ev => {
+  if (ev.target.id !== "supplement-form") return;
+  ev.preventDefault(); ev.stopImmediatePropagation();
+  const f = new FormData(ev.target), name = String(f.get("name") || "").trim();
+  if (!name || supplementEditing === null) return;
+  const a = S.supplements || (S.supplements=[]), i = supplementEditing;
+  const item = {id:i >= 0 ? a[i].id : "s"+Date.now(),name,dose:String(f.get("dose")||"").trim(),note:String(f.get("note")||"").trim()};
+  if (i >= 0) a[i] = item; else a.push(item);
+  supplementEditing = null; save(); render();
 }, true);
 
 function dailiesCard(inPass, banded) {
