@@ -931,13 +931,13 @@ function dailyClockView() {
   const rest = c.phase === "rest", done = c.phase === "done", reps = !c.timed && c.phase === "work";
   return `<div class="daily-focus" role="region" aria-label="Daily timer">
     <div class="daily-focus-top"><span>${esc(EX[c.id]?.name || "Daily")}</span><button class="ghost small" data-dclockstop aria-label="Stäng timer">✕</button></div>
-    <div class="daily-focus-figure">${figure(c.id)}</div><div class="daily-focus-label">${done ? "Övningen klar!" : rest ? "Vila inför nästa set" : "Träning pågår"}</div>
+    <div class="daily-focus-figure">${figure(c.id)}</div><div class="daily-focus-label">${done ? "Övningen klar!" : rest ? "Vila inför nästa set" : reps ? "Repetitioner" : "Träning pågår"}</div>
     <div class="daily-focus-sets">${done ? "Alla set klara" : `Set ${c.set} av ${c.total}`}</div>
-    <div class="daily-focus-ring ${rest ? "daily-rest-ring" : ""} ${done ? "complete" : ""}">
-      ${done ? `<span class="daily-focus-check">✓</span>` : reps ? `<span>${esc(c.reps || "Set")}</span>` : `<span id="daily-clock-time">${fmt(left)}</span>`}
+    <div class="daily-focus-ring ${rest ? "daily-rest-ring" : ""} ${reps ? "daily-reps-ring" : ""} ${done ? "complete" : ""}">
+      ${done ? `<span class="daily-focus-check">✓</span>` : reps ? `<span>${esc(c.reps || "Set")} <small class="daily-reps-unit">reps</small></span>` : `<span id="daily-clock-time">${fmt(left)}</span>`}
     </div>
-    <div class="daily-focus-caption">${done ? "Bra jobbat!" : rest ? "Nästa set startar automatiskt" : c.timed ? `${c.work} sekunder · ${c.total} set` : `Utför ${esc(c.reps || "repetitionerna")} och markera setet klart`}</div>
-    <div class="daily-focus-actions">${done ? `<button data-dclockstop>Stäng</button>` : `<button class="ghost" data-dclockpause>${c.paused ? "▶ Fortsätt" : "Ⅱ Pausa"}</button><button class="ghost" data-dclockskip>${rest ? "Starta nästa set" : c.timed ? "Hoppa över" : "✓ Set klart"}</button>`}</div>
+    <div class="daily-focus-caption">${done ? "Bra jobbat!" : rest ? "Nästa set startar automatiskt" : c.timed ? `${c.work} sekunder · ${c.total} set` : `Ingen nedräkning – tryck Set klart när du är färdig`}</div>
+    <div class="daily-focus-actions">${done ? `<button data-dclockstop>Stäng</button>` : `${reps ? "" : `<button class="ghost" data-dclockpause>${c.paused ? "▶ Fortsätt" : "Ⅱ Pausa"}</button>`}<button class="ghost" data-dclockskip>${rest ? "Starta nästa set" : c.timed ? "Hoppa över" : "✓ Set klart"}</button>`}</div>
   </div>`;
 }
 function dailyClockSound() {
