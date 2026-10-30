@@ -933,7 +933,7 @@ function dailyClockView() {
     <div class="daily-focus-top"><span>${esc(EX[c.id]?.name || "Daily")}</span><button class="ghost small" data-dclockstop aria-label="Stäng timer">✕</button></div>
     <div class="daily-focus-figure">${figure(c.id)}</div><div class="daily-focus-label">${done ? "Övningen klar!" : rest ? "Vila inför nästa set" : "Träning pågår"}</div>
     <div class="daily-focus-sets">${done ? "Alla set klara" : `Set ${c.set} av ${c.total}`}</div>
-    <div class="daily-focus-ring ${rest ? "rest" : ""} ${done ? "complete" : ""}">
+    <div class="daily-focus-ring ${rest ? "daily-rest-ring" : ""} ${done ? "complete" : ""}">
       ${done ? `<span class="daily-focus-check">✓</span>` : reps ? `<span>${esc(c.reps || "Set")}</span>` : `<span id="daily-clock-time">${fmt(left)}</span>`}
     </div>
     <div class="daily-focus-caption">${done ? "Bra jobbat!" : rest ? "Nästa set startar automatiskt" : c.timed ? `${c.work} sekunder · ${c.total} set` : `Utför ${esc(c.reps || "repetitionerna")} och markera setet klart`}</div>
