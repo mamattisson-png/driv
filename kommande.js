@@ -35,9 +35,9 @@ function upcomingFeaturesView() {
     <h2>${item.id}. ${esc(item.title)}</h2>
     <p class="muted small">${esc(item.description || item.category)}</p></li>`;
   return `<p class="muted small upcoming-intro">Förbättringar och planerade funktioner i DRIV.</p>
-    <div class="upcoming-tabs" role="group" aria-label="Visa förbättringar">
-      <button type="button" class="upcoming-tab ${upcomingTab === "active" ? "selected" : ""}" data-upcoming-tab="active" aria-pressed="${upcomingTab === "active"}">Kommande (${active.length})</button>
-      <button type="button" class="upcoming-tab ${upcomingTab === "done" ? "selected" : ""}" data-upcoming-tab="done" aria-pressed="${upcomingTab === "done"}">Genomförda (${done.length})</button>
+    <div class="upcoming-tabs" style="display:flex;gap:8px;margin:0 0 18px" role="group" aria-label="Visa förbättringar">
+      <button type="button" style="flex:1;min-width:0;padding:11px 8px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--text);font:inherit;font-size:13px;font-weight:600;cursor:pointer" class="upcoming-tab ${upcomingTab === "active" ? "selected" : ""}" data-upcoming-tab="active" aria-pressed="${upcomingTab === "active"}">Kommande (${active.length})</button>
+      <button type="button" style="flex:1;min-width:0;padding:11px 8px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--text);font:inherit;font-size:13px;font-weight:600;cursor:pointer" class="upcoming-tab ${upcomingTab === "done" ? "selected" : ""}" data-upcoming-tab="done" aria-pressed="${upcomingTab === "done"}">Genomförda (${done.length})</button>
     </div>
     ${shown.length ? `<ul class="upcoming-list" aria-label="${upcomingTab === "done" ? "Genomförda förbättringar" : "Kommande förbättringar"}">${shown.map(renderItem).join("")}</ul>` : `<p class="muted small">${upcomingTab === "done" ? "Inga genomförda förbättringar ännu." : "Inga öppna förbättringar."}</p>`}`;
 }
