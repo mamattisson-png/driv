@@ -992,7 +992,8 @@ document.addEventListener("click", ev => {
   ev.stopImmediatePropagation();
   const d = t.dataset;
   if (d.dclockstart) {
-    const e = S.daily.find(x => x.id === d.dclockstart); if (!e) return;\n    const timed = /\\d+\\s*(?:s|sek)\\b/i.test(e.reps || "");
+    const e = S.daily.find(x => x.id === d.dclockstart); if (!e) return;
+    const timed = /\\d+\\s*(?:s|sek)\\b/i.test(e.reps || "");
     const work = dailySeconds(e);
     dailyClock = {id:e.id,work,timed,reps:e.reps||"",rest:30,total:Math.max(1,+e.sets||1),set:1,phase:"work",end:Date.now()+work*1000,paused:false};
     clearInterval(dailyClockTick); dailyClockTick = setInterval(dailyClockRefresh,250);
