@@ -741,7 +741,7 @@ function addPage(m) {
     <div id="fpreview" class="fpreview"></div>
     <div id="productresults" aria-live="polite"></div>
     <div class="fidle"><div class="fopts" role="tablist" aria-label="Snabbval"><button class="flink ${foodBrowseTab === "senaste" ? "on" : ""}" data-browsetab="senaste">Senaste</button><button class="flink ${foodBrowseTab === "favoriter" ? "on" : ""}" data-browsetab="favoriter">Favoriter</button><button class="flink ${foodBrowseTab === "recept" ? "on" : ""}" data-browsetab="recept">Mina recept</button></div><h2 class="klabel fsub">${foodBrowseTab === "senaste" ? "Senast använda" : foodBrowseTab === "favoriter" ? "Favoriter" : "Mina recept"}</h2><div class="qgrid">${quick || '<p class="muted small">Inga livsmedel här ännu.</p>'}</div>${foodBrowseTab === "senaste" && common.length ? `<h2 class="klabel fsub">Vanliga för ${mealName}</h2><div class="qgrid">${commonRows}</div>` : ""}</div>
-    <div class="staged-foods" style="margin-top:16px;border-top:1px solid rgba(150,150,150,.2);padding-top:10px"><button data-stagetoggle style="width:100%;display:flex;justify-content:space-between;align-items:center;padding:12px 0;background:transparent;color:inherit;border:0"><b>Valda livsmedel (${stagedFoods.length})</b><span>${tnum(stagedTotal)} kcal ${stagedOpen ? "⌃" : "⌄"}</span></button>${stagedOpen ? `<div>${stagedRows}<div class="row" style="gap:8px;margin-top:12px"><button data-stagerecipe class="ghost grow" ${stagedFoods.length ? "" : "disabled"}>Spara recept</button><button data-stagecommit class="primary grow" ${stagedFoods.length ? "" : "disabled"}>Lägg till alla</button></div></div>` : stagedFoods.length ? `<button data-stagecommit class="primary wide">Lägg till alla (${stagedFoods.length})</button>` : ""}</div>
+    <div class="staged-foods" style="margin-top:16px;border-top:1px solid rgba(150,150,150,.2);padding-top:10px"><button data-stagetoggle style="width:100%;display:flex;justify-content:space-between;align-items:center;padding:12px 0;background:transparent;color:inherit;border:0"><b>Valda livsmedel (${stagedFoods.length})</b><span>${tnum(stagedTotal)} kcal ${stagedOpen ? "⌃" : "⌄"}</span></button>${stagedOpen ? `<div>${stagedRows}<div class="row" style="gap:8px;margin-top:12px"><button data-stagerecipe class="ghost grow" ${stagedFoods.length ? "" : "disabled"}>Spara recept</button></div></div>` : ""}</div>
     <div class="muted small credit">Näringsvärden: Livsmedelsverket (CC BY 4.0), egna uppskattningar och <a href="https://world.openfoodfacts.org/" target="_blank" rel="noopener">Open Food Facts</a> (<a href="produkter.json" download>produktdata, ODbL</a>).</div>
     <div class="pagefoot"><button class="primary wide bigbtn" id="faddbtn" data-addfood>Klar</button></div>
   </div>`;
@@ -769,6 +769,7 @@ function updateFoodBtn() {
   if (!b || !foodSheet) return;
   const meal = foodSheet.meal, name = MEALS[meal][0].toLowerCase(), p = foodPending();
   const inMeal = sumKcal(day().food.filter(f => f.meal === meal));
+  if (stagedFoods.length) { b.disabled = false; b.textContent = `Lägg till alla (${stagedFoods.length}) · ${tnum(sumKcal(stagedFoods))} kcal`; return; }
   b.disabled = !!p.unknown || !!p.invalidNutrition;
   b.textContent = p.ready ? `Lägg till i ${name}${p.claude ? "" : ` · ${tnum(p.kcal)} kcal`}`
     : p.invalidNutrition ? "Kontrollera näringsvärden" : p.unknown ? "Välj vad du menade ovan" : inMeal ? `Klar · ${tnum(inMeal)} kcal i ${name}en` : "Klar";
@@ -887,6 +888,7 @@ document.addEventListener("click", ev => {
   if (ds.addfood !== undefined) {
     // Lägg till stannar på måltidssidan; Klar går till översikten för samma datum.
     if (!foodSheet) return;
+    if (stagedFoods.length) { stagedFoods.forEach(f => logFood(f, foodSheet.meal)); stagedFoods = []; closeMealEditor(); save(); render(); window.scrollTo(0, 0); return; }
     const meal = foodSheet.meal, p = foodPending(), text = ($("fname").value || "").trim();
     if (!p.ready) { closeMealEditor(); render(); window.scrollTo(0, 0); return; }
     if (p.claude) { askClaude(true); return; }
