@@ -8,7 +8,7 @@ Senast uppdaterad: 2026-10-30. Källa: gemensam förbättringslista i ChatGPT. D
 | 2 | Kompaktare avslutade set | Träning | Hög | Klar |
 | 3 | Skalbar träningsvy | Träning | Hög | Klar |
 | 4 | Facelift av hemskärmen | Design | Hög | Väntar på Claude |
-| 5 | Tillskott och hälsorutiner i Dailys | Dailys | Medel | Under arbete |
+| 5 | Tillskott och hälsorutiner i Dailys | Dailys | Medel | I test |
 | 6 | Interaktiv stretchguide | Dailys | Medel | Ej påbörjad |
 | 7 | Tydligare övningsfigurer och animationer | Design | Hög | Ej påbörjad |
 | 8 | Smart grönmarkering av måltider | Kost | Medel | Ej påbörjad |
@@ -35,7 +35,7 @@ Senast uppdaterad: 2026-10-30. Källa: gemensam förbättringslista i ChatGPT. D
 2. **Kompaktare avslutade set (Klar enligt användaren):** Visa avklarade set kompakt och behåll alla befintliga övningsikoner upptill. Inga nya gröna knappar.
 3. **Skalbar träningsvy (Klar enligt användaren):** Även långa pass, exempelvis tio set, ska visa nödvändiga kontroller.
 4. **Facelift av hemskärmen:** Förenkla och förtydliga enligt tidigare designplan. Bevara DRIV-logga och befintliga övningsfigurer. Väntar på Claude-krediter.
-5. **Tillskott och hälsorutiner i Dailys:** Kreatin, vitaminer, omega-3, vatten och egna återkommande vanor. Separera från träningsövningar.
+5. **Tillskott och hälsorutiner i Dailys:** Publicerad i separat testversion: https://feat-health-dailys.driv-test.pages.dev/ . Öppna Träna → Dailys → Ändra dailys. Egen sektion för hälsorutiner med Kreatin, Vitaminer, Omega-3, Vatten och egna namn/anteckningar. Redigering, borttagning, daglig avprickning och läsbara arkiverade rutiner i historiken. 19 riktade tester för hälsorutiner, synk och service worker passerar. Lägga till och bocka av Kreatin verifierat i publicerad testvy. Ingen produktionsimplementation publicerad. Serverns påminnelseregel är förberedd i grenen men inte driftsatt. Den breda testsuiten har ytterligare fel som behöver utredas före produktionspublicering.
 6. **Interaktiv stretchguide:** Välj stel kroppsdel, få relevanta övningar med demonstration och möjlighet att lägga till i Dailys eller pass.
 7. **Tydligare övningsfigurer och animationer:** Förbättra befintlig stil, liten ikon och förstorat läge, i både ljust och mörkt tema. Ändra inte loggan.
 8. **Smart grönmarkering av måltider:** Markera måltider när rekommenderat kalorimål nåtts. Om totalt dagsmål nås kan registrerade måltider markeras gröna trots annan fördelning.
