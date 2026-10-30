@@ -18,6 +18,7 @@ function startFocus(dayId) {
   return true;
 }
 function endFocus() {
+  clearSetFeedback();
   focus = null;
   focusDailies = false; focusOrder = false; focusEnd = false;
   keepAwake(false);
@@ -30,6 +31,24 @@ function cancelPassSheet(target) {
     <p>${target.workoutId ? 'Passets loggade set tas bort.' : 'Passet avbryts utan att sparas.'} Det räknas inte som ett genomfört pass.</p>
     <div class="col endbtns"><button class="wide dangertext" data-passcancelconfirm>Ja, avbryt passet</button>
       <button class="primary wide" data-passcancelclose>Behåll passet</button></div></div></div>`;
+}
+
+// Kort återkoppling i den befintliga tipsraden, aldrig i en popup.
+let setFeedbackTimer = null;
+function clearSetFeedback() {
+  clearTimeout(setFeedbackTimer); setFeedbackTimer = null;
+  if (focus) focus.feedback = null;
+  document.querySelectorAll(".show-feedback, .set-arrival").forEach(el => el.classList.remove("show-feedback", "set-arrival"));
+}
+function showSetFeedback(d, i, warm = false) {
+  if (!focus || editDate || focus.suspended || focus.dayId !== d.id) return;
+  clearSetFeedback();
+  const owner = focus;
+  const feedback = { idx: focus.idx, text: `${warm ? "Uppvärmning" : "Set"} ${i + 1} ${warm ? "registrerad" : "registrerat"}`, until: Date.now() + 1800, animated: false };
+  focus.feedback = feedback;
+  setFeedbackTimer = setTimeout(() => {
+    if (focus === owner && focus.feedback === feedback) clearSetFeedback();
+  }, 1800);
 }
 
 // Efter ett avbockat set: är övningen klar går fokus vidare till nästa medan vilan räknar ned
@@ -97,16 +116,18 @@ document.addEventListener("keydown", ev => {
 
 // Anropas efter varje ritning: nästa set (eller nästa övning) hamnar i bild
 function afterFocusRender() {
+  if (tab !== "pass" || editDate || (focus && focus.suspended)) clearSetFeedback();
   if (editingSetInput && !editingSetInput.isConnected) clearSetEditing();
   fitBigNums();
   if (!focus || !focus.scroll || tab !== "pass" || editDate || focus.suspended) return;
   const where = focus.scroll;
   focus.scroll = null;
   const pane = document.querySelector(".focus-scroll");
-  if (where === "top") { if (pane) pane.scrollTop = 0; }
+  const behavior = focus.feedback && !matchMedia("(prefers-reduced-motion: reduce)").matches ? "smooth" : "auto";
+  if (where === "top") { if (pane) pane.scrollTo({ top: 0, behavior }); }
   else {
     const a = document.querySelector(".fset.active");
-    if (a && a.scrollIntoView) a.scrollIntoView({ block: "nearest" });
+    if (a && a.scrollIntoView) a.scrollIntoView({ block: "nearest", behavior });
   }
 }
 
@@ -180,6 +201,9 @@ function focusView() {
   const stOf = s => (s.w ? warm[s.i] : sets[s.i]) || {};
   const active = all.findIndex(s => !stOf(s).ok);
   const sel = focus.sel != null && all[focus.sel] ? focus.sel : active;
+  const feedback = focus.feedback && focus.feedback.idx === focus.idx && focus.sel == null && focus.feedback.until > Date.now() ? focus.feedback : null;
+  const arrival = feedback && !feedback.animated;
+  if (feedback) feedback.animated = true;
   const g = ssGroup(d, focus.idx);
   const fmt = v => fmtSet2({ kg: +v.kg || 0, reps: +v.reps || 0 }, ex.id);
   const badge = s => s.w ? `U${s.i + 1}` : `${s.i + 1}`;
@@ -187,7 +211,7 @@ function focusView() {
   let setAction = "";
   const rows = all.map((s, k) => {
     const v = stOf(s), h = s.w ? warmHint(d, ex, s.i) : liveHint(d, ex, s.i), p = !s.w && prev ? hintSet(prev, s.i) : null;
-    const cls = `fset ${v.ok ? "done" : ""} ${s.w ? "warm" : ""} ${k === sel ? "active" : ""}`;
+    const cls = `fset ${v.ok ? "done" : ""} ${s.w ? "warm" : ""} ${k === sel ? `active ${arrival ? "set-arrival" : ""}` : ""}`;
     if (k === sel) {
       const kg = bigStepper(ex.id, s.i, "kg", v.kg, h.kg || 0, bw ? "Extra vikt" : "Vikt", "kg", s.w);
       const reps = bigStepper(ex.id, s.i, "reps", v.reps, h.reps || repRange(ex.reps).lo || "", timed ? "Sekunder" : "Reps", timed ? "sek" : "reps", s.w);
@@ -252,7 +276,8 @@ function focusView() {
     <div class="ftitle"><button class="thumb dt finfo" data-info="${ex.id}" aria-label="Visa hur ${esc(EX[ex.id].name)} görs">${figure(ex.id)}<span class="ibadge" aria-hidden="true">i</span></button>
       <div class="grow"><span class="muted small">Övning ${focus.idx + 1} av ${d.ex.length} · ${repsText(ex)}${nW ? ` · +${nW} uppv.` : ""}</span>
       <h2>${esc(EX[ex.id].name)}</h2></div></div>
-    <div class="ftip">${icon("trend", 16)}<span>${tip}</span></div>
+    <div class="ftip ${feedback ? "show-feedback" : ""}"><span class="set-tip-default">${icon("trend", 16)}<span>${tip}</span></span>
+      <span class="set-feedback" role="status" aria-live="polite" aria-atomic="true">${feedback ? `${icon("check", 16)}<span>${esc(feedback.text)} · ${sel >= 0 ? `${esc(EX[ex.id].name)} · ${all[sel].w ? `Uppvärmning ${all[sel].i + 1}` : `Set ${all[sel].i + 1} av ${ex.sets}`}` : "Alla set klara"}</span>` : ""}</span></div>
     ${completedView}
     ${currentRows ? `<ol class="fsets" aria-label="Set">${currentRows}</ol>` : ""}
     ${allDone ? `<div class="fall">${icon("check", 16)}Alla set klara</div>` : ""}
@@ -427,8 +452,8 @@ document.addEventListener("click", ev => {
   if (ds.focusstart) { tab = "pass"; editing = false; startFocus(ds.focusstart); }
   else if (ds.focusex !== undefined) { if (startFocus(currentPassDay().id)) focus.idx = +ds.focusex; }
   else if (ds.focusexit !== undefined) { stopRest(); endFocus(); passOpen = true; }
-  else if (ds.focusgo !== undefined) { focus.idx = Math.max(0, +ds.focusgo); focus.sel = null; focus.ssPick = false; }
-  else if (ds.fsel !== undefined) { focus.sel = +ds.fsel; focus.scroll = "active"; }
+  else if (ds.focusgo !== undefined) { clearSetFeedback(); focus.idx = Math.max(0, +ds.focusgo); focus.sel = null; focus.ssPick = false; }
+  else if (ds.fsel !== undefined) { clearSetFeedback(); focus.sel = +ds.fsel; focus.scroll = "active"; }
   else if (ds.sspick !== undefined) focus.ssPick = !focus.ssPick;
   else if (ds.sspair !== undefined) {
     // Den valda övningen flyttas till direkt efter den här och kopplas ihop med den
