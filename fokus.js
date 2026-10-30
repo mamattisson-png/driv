@@ -48,8 +48,56 @@ function focusAfterSet(d, idx = focus && focus.idx, i = 0) {
   focus.scroll = focus.idx !== from ? "top" : "active";
   focus.sel = null;
 }
+// Bekräfta manuell inmatning separat från att avsluta setet.
+let editingSetInput = null;
+function clearSetEditing() {
+  editingSetInput = null;
+  document.body.classList.remove("set-editing");
+  document.body.style.removeProperty("--set-edit-height");
+}
+function fitSetEditingViewport() {
+  if (editingSetInput && window.visualViewport) document.body.style.setProperty("--set-edit-height", `${window.visualViewport.height}px`);
+}
+if (window.visualViewport) window.visualViewport.addEventListener("resize", fitSetEditingViewport);
+
+function confirmSetInput() {
+  const input = editingSetInput;
+  if (input && input.isConnected) {
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+    input.blur();
+  }
+  clearSetEditing();
+}
+document.addEventListener("focusin", ev => {
+  if (ev.target.matches(".bignum input[data-set]")) {
+    editingSetInput = ev.target;
+    document.body.classList.add("set-editing");
+    fitSetEditingViewport();
+  }
+});
+document.addEventListener("focusout", () => setTimeout(() => {
+  if (!editingSetInput) return;
+  const active = document.activeElement;
+  if (active !== editingSetInput && !active.matches("[data-setconfirm]")) clearSetEditing();
+}, 0));
+// Behåll fältets fokus tills klicket på OK är färdigt även på pekskärm.
+document.addEventListener("pointerdown", ev => {
+  if (ev.target.closest("[data-setconfirm]")) ev.preventDefault();
+});
+document.addEventListener("click", ev => {
+  if (ev.target.closest("[data-setconfirm]") || (editingSetInput && ev.target.closest(".fbar .fdone"))) {
+    ev.preventDefault(); ev.stopImmediatePropagation(); confirmSetInput();
+  }
+}, true);
+document.addEventListener("keydown", ev => {
+  if (ev.key === "Enter" && ev.target.matches(".bignum input[data-set]")) {
+    ev.preventDefault(); confirmSetInput();
+  }
+});
+
 // Anropas efter varje ritning: nästa set (eller nästa övning) hamnar i bild
 function afterFocusRender() {
+  if (editingSetInput && !editingSetInput.isConnected) clearSetEditing();
   fitBigNums();
   if (!focus || !focus.scroll || tab !== "pass" || editDate || focus.suspended) return;
   const where = focus.scroll;
@@ -98,7 +146,7 @@ function bigStepper(exId, i, f, val, hint, label, unit, warm = false) {
   return `<section class="bigstep" aria-label="${label}">
     <div class="bigrow">${btn(-1, "Minska")}
       <label class="bignum"><input type="number" inputmode="${f === "kg" ? "decimal" : "numeric"}" step="${f === "kg" ? 0.25 : 1}" min="0" max="${setMax(exId, f)}"
-        value="${val ?? ""}" placeholder="${hint ?? ""}" data-set="${exId}" data-i="${i}"${w} data-f="${f}" aria-label="${label}, ${warm ? "uppvärmning" : "set"} ${i + 1}"><span class="klabel">${unit || label}</span></label>
+        value="${val ?? ""}" placeholder="${hint ?? ""}" enterkeyhint="done" data-set="${exId}" data-i="${i}"${w} data-f="${f}" aria-label="${label}, ${warm ? "uppvärmning" : "set"} ${i + 1}"><span class="klabel">${unit || label}</span></label>
       ${btn(1, "Öka")}</div></section>`;
 }
 
@@ -212,7 +260,7 @@ function focusView() {
     <div class="focus-controls">${tools}
     <div class="fbar">${restBox ? `<div class="frestctl" role="group" aria-label="Vila"><button class="small" data-restadd="-15">−15</button>
       <button class="small" data-restadd="15">+15</button><button class="small" data-restskip>Klar</button></div>` : ""}
-      <div class="fbar-row">${main}${restBox}</div></div></div>
+      <div class="fbar-row">${main}<button class="primary grow fconfirm" data-setconfirm aria-label="Bekräfta inmatning">OK</button>${restBox}</div></div></div>
   </div>${focusDailies ? `<div class="overlay" data-fdclose><div class="sheet">
     <div class="row between"><span class="muted small">Fläta in i passet</span><button class="small ghost iconbtn" data-fdclose aria-label="Stäng">${icon("close", 18)}</button></div>
     ${dailiesCard(true)}<button class="wide" data-fdclose style="margin-top:14px">Tillbaka till passet</button></div></div>` : ""}${focusOrder ? orderSheet(d, w) : ""}${focusEnd ? endSheet(d, w) : ""}`;
