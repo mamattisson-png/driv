@@ -1076,7 +1076,7 @@ const VIEWS = {
     return `<div class="stretch-page"><button class="ghost small" data-tab="idag">‹ Tillbaka</button><h1>Stretchguide</h1><p class="muted">Var känns det stelt eller ömt? Välj ett område för att se övningar.</p><div class="stretch-areas">${areas.map(([label,key])=>`<button class="${selected===key?"on":""}" data-stretcharea="${key}">${label} ›</button>`).join("")}</div>${selected?`<h2>${areas.find(x=>x[1]===selected)[0]}</h2><div class="stretch-results">${matches.length?matches.slice(0,12).map(id=>`<div class="stretch-result">${thumb(id,"dt")}<span class="grow"><b>${esc(EX[id].name)}</b><small>${esc(EX[id].reps||"")}</small></span><button class="small ghost" data-info="${id}">Visa ›</button></div>`).join(""):`<p class="muted">Inga övningar hittades för detta område.</p>`}</div>`:""}</div>`;
   },
   vagning() {
-    return `<div class="weigh-page"><button class="ghost small" data-tab="idag">‹ Tillbaka</button><h1>Veckans vägning</h1><p class="muted">Registrera din vikt och följ utvecklingen.</p>${weightCard()}</div>`;
+    return `<div class="weigh-page"><button class="ghost small" data-tab="idag">‹ Tillbaka</button><h1>Veckans vägning</h1><p class="muted">Registrera din vikt och följ utvecklingen.</p>${`<section class="card wrow"><div class="grow"><b>Registrera vikt</b><span class="muted small">Dagens datum · ${dateLabel(TODAY)}</span></div><input id="wkg" type="number" inputmode="decimal" step="0.1" placeholder="kg" aria-label="Vikt i kg" value="${weights()[TODAY]??""}"><button class="small" data-wsave data-wdate="${TODAY}">Spara</button></section>`}${weightChart()}</div>`;
   },
   idag() {
     const m=macros(),e=eaten(),t=todaysPass(),d=t.d,w=t.w;
