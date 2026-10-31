@@ -978,13 +978,17 @@ function dailyClockRefresh() {
   }
 }
 let supplementEditing = null;
+function supplementForm() {
+  const a = S.supplements || [];
+  return supplementEditing !== null ? (() => { const old = a[supplementEditing] || {}; return `<form id="supplement-form" class="supplement-form"><h3>${supplementEditing < 0 ? "Lägg till kosttillskott" : "Redigera kosttillskott"}</h3><label>Namn<input name="name" required maxlength="80" placeholder="T.ex. Kreatin" value="${esc(old.name || "")}"></label><label>Ikon<select name="icon"><option value="◇" ${!old.icon || old.icon==="◇"?"selected":""}>◇ Standard</option><option value="◈" ${old.icon==="◈"?"selected":""}>◈ Kapsel</option><option value="✦" ${old.icon==="✦"?"selected":""}>✦ Vitamin</option><option value="●" ${old.icon==="●"?"selected":""}>● Tablett</option><option value="♡" ${old.icon==="♡"?"selected":""}>♡ Hälsa</option></select></label><label>Dosering<input name="dose" maxlength="60" placeholder="T.ex. 5 g" value="${esc(old.dose || "")}"></label><label>Anteckning (valfri)<textarea name="note" rows="2" maxlength="300" placeholder="T.ex. tillsammans med frukost">${esc(old.note || "")}</textarea></label><div class="row"><button type="button" class="ghost" data-suppcancel>Avbryt</button><button type="submit">Spara</button></div></form>`; })() : "";
+}
 function supplementsCard() {
   const a = S.supplements || [];
   const rows = a.map((x,i) => {
     const ok = day().dailies["supp:"+x.id] === true;
     return `<div class="daily ${ok ? "ok" : ""}"><div class="dailys-suppicon">${esc(x.icon || "◇")}</div><div class="grow"><b>${esc(x.name)}</b><span class="muted small">${esc(x.dose || "")}</span>${x.note ? `<div class="muted small" style="margin-top:4px">${esc(x.note)}</div>` : ""}</div><button class="done-btn big ${ok ? "on" : ""}" data-suppcheck="${esc(x.id)}" aria-label="Markera ${esc(x.name)} som taget">${icon("check",18)}</button><button class="ghost small" data-suppedit="${i}" aria-label="Redigera">✎</button></div>`;
   }).join("");
-  const form = supplementEditing !== null ? (() => { const old = a[supplementEditing] || {}; return `<form id="supplement-form" class="supplement-form"><h3>${supplementEditing < 0 ? "Lägg till kosttillskott" : "Redigera kosttillskott"}</h3><label>Namn<input name="name" required maxlength="80" placeholder="T.ex. Kreatin" value="${esc(old.name || "")}"></label><label>Ikon<select name="icon"><option value="◇" ${!old.icon || old.icon==="◇"?"selected":""}>◇ Standard</option><option value="◈" ${old.icon==="◈"?"selected":""}>◈ Kapsel</option><option value="✦" ${old.icon==="✦"?"selected":""}>✦ Vitamin</option><option value="●" ${old.icon==="●"?"selected":""}>● Tablett</option><option value="♡" ${old.icon==="♡"?"selected":""}>♡ Hälsa</option></select></label><label>Dosering<input name="dose" maxlength="60" placeholder="T.ex. 5 g" value="${esc(old.dose || "")}"></label><label>Anteckning (valfri)<textarea name="note" rows="2" maxlength="300" placeholder="T.ex. tillsammans med frukost">${esc(old.note || "")}</textarea></label><div class="row"><button type="button" class="ghost" data-suppcancel>Avbryt</button><button type="submit">Spara</button></div></form>`; })() : "";
+  const form = supplementForm();
   return `<section class="card dailies" aria-label="Kosttillskott"><div class="dhead"><h2>Kosttillskott</h2><span class="muted small">${a.filter(x=>day().dailies["supp:"+x.id]).length} av ${a.length} tagna</span></div>${rows}${form}${supplementEditing === null ? `<button class="ghost small" data-suppadd style="margin-top:10px">+ Lägg till kosttillskott</button>` : ""}</section>`;
 }
 document.addEventListener("click", ev => {
@@ -1061,11 +1065,38 @@ const VIEWS = {
   },
 
   dailys() {
-    const a=S.supplements||[], ex=S.daily||[], n=ex.filter(e=>dailyDone(logDate(),e.id)).length, sn=a.filter(x=>day().dailies["supp:"+x.id]).length;
-    const total=ex.length+a.length, count=n+sn, pct=total?Math.round(count/total*100):0;
-    const week=Array.from({length:7},(_,i)=>shift(TODAY,i-3)).map(d=>`<span class="${d===TODAY?"on":""}">${d.slice(-2)}</span>`).join("");
-    const rows=ex.map(e=>{const ok=dailyDone(logDate(),e.id),timed=/\d+\s*(?:s|sek)\b/i.test(e.reps||"");return `<div class="daily ${ok?"ok":""}">${thumb(e.id,"dt")}<div class="grow"><b>${esc(EX[e.id].name)}</b><span class="muted small">${e.sets} × ${esc(e.reps||"")}</span></div>${!ok?`<button class="ghost small" data-dclockstart="${e.id}">▶ Starta</button>`:""}<button class="done-btn big ${ok?"on":""}" data-dcheck="${e.id}">${icon("check",18)}</button></div>`;}).join("");
-    return `<div class="dailys-page"><button class="ghost small page-back" data-tab="idag">${icon("left",16)} Tillbaka</button><h1>Dailys</h1>${dailyClock?dailyClockView():`<div class="dailys-week">${week}</div><div class="dailys-progress ${total>0&&count===total?"all-done":""}"><div class="dailys-progress-ring ${total>0&&count===total?"complete":""}" style="--p:${pct}%">${pct}%</div><div><b>${count} av ${total}</b><div class="muted small">${total>0&&count===total?"Alla klara idag!":"klara idag"}</div></div></div><div class="dailys-summary"><span class="${ex.length>0&&n===ex.length?"summary-done":""}">Träning <b>${n}/${ex.length} ${ex.length>0&&n===ex.length?"✓":""}</b></span><span class="${a.length>0&&sn===a.length?"summary-done":""}">Kosttillskott <b>${sn}/${a.length} ${a.length>0&&sn===a.length?"✓":""}</b></span></div><div class="dailys-sectionhead"><h2>Övningar</h2><button class="ghost small" data-dedit>✎ ${dailyEditing?"Klar":"Redigera"}</button></div>${dailyEditing?exRows("daily",S.daily,true):rows}<button class="ghost small dailys-add" data-openpick="daily">+ Lägg till övning</button>${supplementsCard()}`}</div>`;
+    if (dailyClock) return `<div class="dlx">${dailyClockView()}</div>`;
+    const a = S.supplements || [], ex = S.daily || [], date = logDate();
+    const n = ex.filter(e => dailyDone(date, e.id)).length, sn = a.filter(x => day().dailies["supp:" + x.id]).length;
+    const total = ex.length + a.length, count = n + sn, allOk = total > 0 && count === total, st = streakOf(allDailiesDone);
+    // Veckan bakåt till idag: grön prick när allt var klart, orange när något var gjort
+    const week = Array.from({ length: 7 }, (_, i) => shift(TODAY, i - 6)).map(d => {
+      const L = S.log[d], done = ex.filter(e => L && dailyDone(d, e.id)).length + a.filter(x => L && L.dailies && L.dailies["supp:" + x.id]).length;
+      const cls = total && done === total ? "ok" : done ? "part" : "";
+      return `<span class="dlx-day ${d === TODAY ? "on" : ""}"><small>${WD[weekdayOf(d)].slice(0, 2)}</small><b>${+d.slice(-2)}</b><i class="${cls}"></i></span>`;
+    }).join("");
+    const rows = ex.map(e => {
+      const ok = dailyDone(date, e.id);
+      return `<div class="h3-row dlx-row ${ok ? "ok" : ""}">${thumb(e.id, "exl")}<span class="grow"><b>${esc(EX[e.id].name)}</b><small>${e.sets} × ${esc(e.reps || "")}</small></span>
+        ${ok ? "" : `<button class="dlx-play" data-dclockstart="${e.id}" aria-label="Starta ${esc(EX[e.id].name)}">${icon("play", 16)}</button>`}
+        <button class="dlx-check ${ok ? "on" : ""}" data-dcheck="${e.id}" aria-pressed="${ok}" aria-label="${esc(EX[e.id].name)} klar">${icon("check", 18)}</button></div>`;
+    }).join("");
+    const supp = a.map((x, i) => {
+      const ok = day().dailies["supp:" + x.id] === true;
+      return `<div class="h3-row dlx-row ${ok ? "ok" : ""}"><span class="h3-ic dlx-sicon">${esc(x.icon || "◇")}</span><span class="grow"><b>${esc(x.name)}</b><small>${esc([x.dose, x.note].filter(Boolean).join(" · "))}</small></span>
+        <button class="dlx-edit" data-suppedit="${i}" aria-label="Ändra ${esc(x.name)}">${icon("edit", 16)}</button>
+        <button class="dlx-check ${ok ? "on" : ""}" data-suppcheck="${esc(x.id)}" aria-pressed="${ok}" aria-label="${esc(x.name)} tagen">${icon("check", 18)}</button></div>`;
+    }).join("");
+    const addRow = (attr, text) => `<button class="h3-row dlx-addrow" ${attr}><span class="h3-ic">${icon("plus", 16)}</span><span class="grow"><b>${text}</b></span></button>`;
+    return `<div class="dlx"><h1>Dailys</h1>
+      <div class="muted dlx-sub">Idag · ${count} av ${total} klara${st > 1 ? ` · ${st} dagar i rad` : ""}</div>
+      <section class="dlx-top ${allOk ? "ok" : ""}"><span class="dlx-ring">${ring(total ? count / total : 0, 60, allOk ? "ok" : "")}<b>${total ? Math.round(count / total * 100) : 0}%</b></span>
+        <div class="dlx-week">${week}</div></section>
+      <div class="row between dlx-sec"><span class="klabel">Övningar · ${n}/${ex.length}</span><button class="linkbtn2" data-dedit>${dailyEditing ? "Klar" : "Ändra"}</button></div>
+      ${dailyEditing ? exRows("daily", S.daily, true) : `<section class="h3-list">${rows}${addRow('data-openpick="daily"', "Lägg till övning")}</section>`}
+      <div class="row between dlx-sec"><span class="klabel">Kosttillskott · ${sn}/${a.length}</span></div>
+      <section class="h3-list">${supp}${supplementEditing === null ? addRow("data-suppadd", "Lägg till kosttillskott") : ""}</section>
+      ${supplementForm()}</div>`;
   },
   stretchguide() { return stretchGuideView(); },
   vagning() {

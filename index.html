@@ -1757,6 +1757,36 @@ button.h3-card.h3-head { background: var(--card); padding: 12px 14px; }
 .bm-label.on .bm-dot { fill: var(--accent); }
 .exlib .sg-map, .sguide .sg-map { padding: 8px 4px; background: radial-gradient(ellipse at 50% 40%, #1d1712, var(--card) 70%); }
 .sg-infoadd { margin: 12px 0 4px; display: flex; align-items: center; justify-content: center; gap: 6px; }
+
+/* Dailys: samma uppbyggnad som Hem och Kost – en sammanfattning och två listor */
+.dlx h1 { margin: 0; }
+.dlx-sub { font-size: 14px; margin: 2px 0 12px; }
+.dlx-top { display: flex; align-items: center; gap: 14px; background: var(--card); border-radius: 20px; padding: 12px 14px; }
+.dlx-top.ok { background: color-mix(in srgb, var(--ok) 9%, var(--card)); }
+.dlx-ring { position: relative; width: 60px; height: 60px; flex: none; display: grid; place-items: center; }
+.dlx-ring svg { position: absolute; inset: 0; }
+.dlx-ring b { font: 700 11.5px "Unbounded", sans-serif; }
+.dlx-week { flex: 1; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; }
+.dlx-day { display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 4px 0; border-radius: 10px; }
+.dlx-day small { font-size: 10px; color: var(--muted); }
+.dlx-day b { font-size: 14px; font-weight: 600; }
+.dlx-day.on { background: var(--card-2); }
+.dlx-day i { width: 6px; height: 6px; border-radius: 3px; background: var(--line); }
+.dlx-day i.ok { background: var(--ok); }
+.dlx-day i.part { background: var(--accent); }
+.dlx-sec { margin: 16px 4px 6px; align-items: center; }
+.dlx-row { min-height: 60px; gap: 10px; }
+.dlx-row .thumb.exl { width: 44px; height: 44px; border-radius: 12px; flex: none; }
+.dlx-row.ok b { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--line-strong); }
+.dlx-play, .dlx-edit { width: 36px; height: 36px; flex: none; padding: 0; border: 0; border-radius: 18px; background: var(--card-2); color: var(--accent-text); display: grid; place-items: center; }
+.dlx-edit { background: none; color: var(--muted); }
+.dlx-check { width: 40px; height: 40px; flex: none; padding: 0; border-radius: 20px; border: 1.5px solid var(--line-strong); background: none; color: transparent; display: grid; place-items: center; }
+.dlx-check.on { background: var(--ok-strong); border-color: var(--ok-strong); color: var(--on-color); }
+.dlx-sicon { font-size: 18px; }
+.dlx-addrow { min-height: 52px; }
+.dlx-addrow b { color: var(--accent-text); font-weight: 600; }
+.dlx-addrow .h3-ic { color: var(--accent-text); }
+.dlx .supplement-form { margin-top: 10px; }
 </style>
 </head>
 <body>
