@@ -51,41 +51,39 @@ function ring(pct, size = 64, cls = "") {
     ${p ? `<circle class="hring-fg" cx="24" cy="24" r="${r}" stroke-dasharray="${(c * p).toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 24 24)"/>` : ""}</svg>`;
 }
 
+
+let trainingSection = "overview";
+let trainingSearch = "";
+let trainingCategory = "Alla";
+document.addEventListener("click", ev => {
+  const btn = ev.target.closest("[data-training-section],[data-training-category]");
+  if (!btn) return;
+  if (btn.dataset.trainingSection) trainingSection = btn.dataset.trainingSection;
+  if (btn.dataset.trainingCategory) trainingCategory = btn.dataset.trainingCategory;
+  if (typeof render === "function") render();
+});
+document.addEventListener("input", ev => {
+  if (ev.target.id !== "training-ex-search") return;
+  trainingSearch = ev.target.value;
+  const rows = document.querySelectorAll(".training-ex-row");
+  rows.forEach(row => { row.hidden = !row.dataset.search.includes(trainingSearch.toLocaleLowerCase("sv-SE")); });
+});
 function traningView() {
-  const t = todaysPass(), d = t.d, w = t.w, done = w && w.done, started = !done && (t.active || (w && Object.values(w.sets).some(a => a.some(x => x && x.ok))));
-  const passes = weekSummary(weekStart(TODAY)).passes, n = S.plan.days.length;
-  const dayCard = `<section class="card daypass" aria-label="${passLabel(t)}">
-      <div class="row between"><span class="klabel accent">${t.rest ? `Vilodag · nästa ${WD_LONG[weekdayOf(t.next)]}` : passLabel(t)}</span>
-        <button class="linkbtn2" data-seepass="${d.id}">Se övningar${icon("right", 14)}</button></div>
-      <div><h2 class="passname">${esc(d.name)}</h2><div class="muted">${esc(passMuscles(d))} · ${d.ex.length} ${d.ex.length === 1 ? "övning" : "övningar"}</div></div>
-      ${done ? `<div class="row between"><span class="passok">${icon("check", 16)}Genomfört idag</span><button class="small" data-seepass="${d.id}">Öppna passet</button></div>`
-        : d.ex.length ? `<button class="primary wide bigbtn" data-focusstart="${d.id}">${icon("play", 18)}${started ? "Fortsätt" : t.rest ? "Kör ändå:" : "Starta"} ${esc(d.name)}</button>`
-        : `<button class="wide" data-seepass="${d.id}">Lägg till övningar</button>`}</section>`;
-  const status = (p, i) => {
-    const completed = completedPassDate(p);
-    if (completed) return `<span class="pst ok">${completed === TODAY ? "Genomfört idag" : `Genomfört · ${WD_LONG[weekdayOf(completed)]}`}</span>`;
-    if (p === d && started) return `<span class="pst accent">Pågående</span>`;
-    if (isFixed() && S.plan.weekdays[i] === weekdayOf(TODAY)) return `<span class="pst accent">Idag</span>`;
-    if (!isFixed() && p === d) return `<span class="pst accent">På tur</span>`;
-    return `<span class="pst">${isFixed() ? cap(WD_LONG[S.plan.weekdays[i]]) : `Pass ${i + 1}`}</span>`;
-  };
-  const cols = n <= 3 ? n : n === 4 ? 2 : 3;
-  const tiles = `<div class="ptiles" style="grid-template-columns:repeat(${cols},minmax(0,1fr))">${S.plan.days.map((p, i) =>
-    `<button class="ptile ${p === d && !t.rest ? "today" : ""}" data-pick="${p.id}" aria-label="${esc(p.name)}">${status(p, i)}<b>${esc(p.name)}</b></button>`).join("")}</div>`;
-  const acts = actsOn(TODAY), nD = S.daily.length, dDone = S.daily.filter(e => dailyDone(TODAY, e.id)).length;
-  const extra = `<div class="trtiles">
-      <button class="ttile" data-actnew="" data-actdate="${TODAY}"><span class="klabel">Annan träning</span><span class="plusic">${icon("plus", 20)}</span>
-        <span class="muted small">${acts.length ? esc(acts.map(a => `${a.name} ${+a.min} min`).join(", ")) : "Padel, löpning …"}</span></button>
-      <button class="ttile" data-trsheet="dailys"><span class="klabel">Dailys</span>${ring(nD ? dDone / nD : 0, 46, nD && dDone === nD ? "ok" : "")}
-        <span class="small">${nD ? `<b>${dDone}</b><span class="muted"> / ${nD} idag</span>` : `<span class="muted">Lägg till</span>`}</span></button></div>`;
-  return `<div class="muted small toplabel">Vecka ${weekNo(TODAY)} · ${passes} av ${S.plan.count} pass</div><h1>Träna</h1>
-    ${dayCard}
-    <div class="row between trprog"><span class="klabel">${esc(PROGRAMS[S.plan.program || "ppl"].name)} · ${S.plan.count} i veckan</span>
-      <button class="linkbtn2" data-tab="upplagg">Byt upplägg${icon("right", 14)}</button></div>
-    ${tiles}
-    ${extra}
-    ${acts.length ? `<div class="homeacts">${acts.map((a, i) => `<button class="dchip on" data-actedit="${i}" data-actdate="${TODAY}">${icon("check", 16)}${esc(a.name)} · ${+a.min} min</button>`).join("")}</div>` : ""}
-    ${trSheet === "dailys" ? dailysSheet() : ""}`;
+  const t=todaysPass(),d=t.d,w=t.w,done=!!(w&&w.done);
+  const days=S.plan.days||[], completed=days.filter(p=>!!completedPassDate(p)).length;
+  const sections=[["overview","Översikt"],["schema","Schema"],["exercises","Övningar"],["stats","Statistik"]];
+  const nav='<div class="training-tabs" role="tablist">'+sections.map(([id,label])=>'<button type="button" role="tab" aria-selected="'+(trainingSection===id)+'" class="'+(trainingSection===id?'selected':'')+'" data-training-section="'+id+'">'+label+'</button>').join("")+'</div>';
+  const cards='<div class="training-weekcards">'+days.map((p,i)=>{const completedDate=completedPassDate(p),isNext=p.id===d.id&&!done;return '<button class="training-weekcard '+(completedDate?'finished':isNext?'up-next':'')+'" data-pick="'+p.id+'"><span class="training-card-state">'+(completedDate?'✓':isNext?'○':'·')+'</span><b>'+esc(p.name)+'</b><small>'+(completedDate?'Klar':isFixed()?cap(WD_LONG[S.plan.weekdays[i]]):'Pass '+(i+1))+'</small></button>';}).join("")+'</div>';
+  const next='<div class="training-next"><div><span class="muted small">'+(done?'Dagens pass':'Nästa pass')+'</span><h2>'+esc(d.name)+'</h2><span class="muted small">'+d.ex.length+' övningar</span></div><button class="'+(done?'':'primary')+'" '+(done?'data-seepass':'data-focusstart')+'="'+d.id+'">'+(done?'Öppna':'▶ Starta')+'</button></div>';
+  const overview='<div class="training-section-title"><h2>Veckans pass</h2><span class="muted">'+completed+' av '+days.length+' klara</span></div>'+cards+next+'<div class="training-section-title"><h2>Din utveckling</h2></div><button class="training-statlink" data-training-section="stats"><strong>'+completed+'</strong><span>genomförda pass den här veckan</span><span>›</span></button><div class="training-actions"><button data-tab="upplagg">Träningsupplägg <span>›</span></button><button data-training-section="exercises">Övningsbibliotek <span>›</span></button><button data-actnew="" data-actdate="'+TODAY+'">Annan träning <span>＋</span></button></div>';
+  const schema='<div class="training-section-title"><h2>Mitt schema</h2><span class="muted">'+esc(PROGRAMS[S.plan.program||"ppl"].name)+'</span></div>'+days.map((p,i)=>'<button class="training-schema-row" data-pick="'+p.id+'"><span>'+ (isFixed()?cap(WD_LONG[S.plan.weekdays[i]]):'Pass '+(i+1))+'</span><b>'+esc(p.name)+'</b><span class="'+(completedPassDate(p)?'training-green':'')+'">'+(completedPassDate(p)?'✓':'›')+'</span></button>').join("")+'<button class="training-wide-action" data-tab="upplagg">Redigera träningsupplägg</button>';
+  const cats=["Alla","Bröst","Rygg","Ben","Axlar","Armar","Bål"];
+  const ids=Object.keys(EX).filter(id=>EX[id]&&EX[id].cat!=="stretch");
+  const catWords={"Bröst":/bröst|chest|pec|press|fly/i,"Rygg":/rygg|back|rodd|row|pull|lats/i,"Ben":/ben|leg|squat|knä|lår|vad|höft/i,"Axlar":/axel|shoulder|press|raise/i,"Armar":/biceps|triceps|curl|arm/i,"Bål":/mage|core|plank|crunch|twist|bål/i};
+  const filtered=ids.filter(id=>trainingCategory==="Alla"||catWords[trainingCategory].test([EX[id].name,EX[id].muscles,EX[id].target].join(" ")));
+  const exercises='<div class="training-ex-search"><input id="training-ex-search" type="search" placeholder="Sök övning…" value="'+esc(trainingSearch)+'"></div><div class="training-categories">'+cats.map(cat=>'<button class="'+(trainingCategory===cat?'selected':'')+'" data-training-category="'+cat+'">'+cat+'</button>').join("")+'</div><div class="training-ex-list">'+filtered.map(id=>'<button class="training-ex-row" data-info="'+esc(id)+'" data-search="'+esc(EX[id].name.toLocaleLowerCase("sv-SE"))+'" '+(!EX[id].name.toLocaleLowerCase("sv-SE").includes(trainingSearch.toLocaleLowerCase("sv-SE"))?'hidden':'')+'>'+thumb(id,"dt")+'<b>'+esc(EX[id].name)+'</b><span>›</span></button>').join("")+'</div>';
+  const stats='<div class="training-section-title"><h2>Träningsstatistik</h2></div><div class="training-stats"><div><strong>'+completed+'</strong><span>Pass denna vecka</span></div><div><strong>'+days.length+'</strong><span>Planerade pass</span></div><div><strong>'+Math.round(100*completed/Math.max(1,days.length))+'%</strong><span>Veckans mål</span></div></div><p class="muted small">Statistiken bygger på sparade genomförda pass den här veckan.</p><button class="training-wide-action" data-tab="historik">Visa träningshistorik ›</button>';
+  return '<div class="training-redesign"><div class="muted small toplabel">Min träning · vecka '+weekNo(TODAY)+'</div><h1>Träna</h1>'+nav+(trainingSection==="schema"?schema:trainingSection==="exercises"?exercises:trainingSection==="stats"?stats:overview)+'</div>';
 }
 
 function dailysSheet() {
