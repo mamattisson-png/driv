@@ -1576,9 +1576,19 @@ def test_valj_ovning_efter_kroppsdel_och_utrustning(page):
     page.click(f'[data-pick="{page.evaluate("S.plan.days[0].id")}"]')
     page.click("[data-edit]")
     page.click('[data-openpick]')
-    # Push-passet börjar på Bröst
-    assert page.eval_on_selector("[data-areasel]", "e => e.value") == "brost"
+    # Push-passet börjar på push-övningarna: bröst, axlar och armar
+    assert page.eval_on_selector("[data-areasel]", "e => e.value") == "push"
+    cats = lambda: page.evaluate("[...document.querySelectorAll('.pick')].filter(e => !e.hidden).map(e => e.dataset.cat + '/' + e.dataset.area)")
+    assert set(cats()) == {"push/brost", "push/axlar", "push/armar"}
+    # Sökningen förstår passtyper: "pull" ger dragövningar
+    page.select_option("[data-areasel]", "alla")
+    page.fill("#exsearch", "pull")
+    assert {c.split("/")[0] for c in cats()} == {"pull"} and len(cats()) > 30
+    page.fill("#exsearch", "")
+    page.select_option("[data-areasel]", "pull")
+    assert {c.split("/")[0] for c in cats()} == {"pull"}
     visible = lambda: page.evaluate("[...document.querySelectorAll('.pick')].filter(e => !e.hidden).map(e => e.dataset.area + '/' + e.dataset.gear)")
+    page.select_option("[data-areasel]", "brost")
     assert visible() and all(v.startswith("brost/") for v in visible())
     page.select_option("[data-gearsel]", "db")
     assert visible() and all(v == "brost/db" for v in visible())
