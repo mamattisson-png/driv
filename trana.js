@@ -105,9 +105,17 @@ function exLibView() {
   }).join("");
   return `<div class="exlib"><button class="backbtn" data-exlibclose>${icon("left", 18)}Träna</button><h1>Övningar</h1>
     <div class="psearch">${icon("search", 18)}<input id="exlibq" type="search" placeholder="Sök övning eller muskel" value="${esc(exLib.q)}" autocomplete="off" aria-label="Sök övning"></div>
+    <section class="sg-map">${exLibMap(f)}</section>
     <div class="exlib-chips" role="radiogroup" aria-label="Visa">${chips.map(c => c ? `<button role="radio" class="${f === c[0] ? "on" : ""}" aria-checked="${f === c[0]}" data-exlibf="${c[0]}">${c[1]}</button>` : `<span class="exlib-sep" aria-hidden="true"></span>`).join("")}</div>
     <div class="muted small exlib-count" id="exlibn"></div>
     ${groups}<div class="muted exlib-none" hidden>Inga övningar matchar.</div></div>`;
+}
+// Kroppen överst i biblioteket: ett tryck på en muskel väljer kroppsdelen
+const EXLIB_KEY = { chest: "brost", shoulders: "axlar", arms: "armar", upper_back: "rygg", hips: "ben", quads: "ben", hamstrings: "ben", calves: "ben" };
+function exLibMap(f) {
+  return bodyMap({ sel: f, attr: "data-exlibf", labels: [["front", "shoulders", "Axlar"], ["front", "chest", "Bröst"], ["front", "arms", "Armar"], ["front", "lower_back", "Mage"], ["front", "quads", "Ben"],
+    ["back", "upper_back", "Rygg"], ["back", "lower_back", "Ländrygg"], ["back", "hips", "Säte"], ["back", "calves", "Vader"]],
+    keyOf: (side, a) => a === "lower_back" ? (side === "front" ? "mage" : "rygg") : EXLIB_KEY[a] || null, name: k => AREAS[k] });
 }
 // Sökning och filter utan att sidan ritas om, så att tangentbordet stannar
 function filterExLib() {

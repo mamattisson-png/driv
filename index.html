@@ -1722,15 +1722,6 @@ button.h3-card.h3-head { background: var(--card); padding: 12px 14px; }
 .sguide h1 { margin: 0; }
 .sg-sub { font-size: 14px; margin: 2px 0 12px; }
 .sg-map { display: flex; justify-content: center; gap: 18px; background: var(--card); border-radius: 22px; padding: 14px 10px 8px; margin-bottom: 10px; }
-.sbody { margin: 0; text-align: center; }
-.sbody svg { width: 128px; height: auto; display: block; }
-.sbody figcaption { font-size: 12px; color: var(--muted); margin-top: 2px; }
-.sbody-base { fill: var(--card-2); }
-.sreg polygon { stroke: var(--card); stroke-width: .4; stroke-linejoin: round; }
-.sreg { fill: var(--line-strong); cursor: pointer; transition: fill .15s; }
-.sreg:hover { fill: var(--muted); }
-.sreg.on { fill: var(--accent); }
-.sreg:focus-visible { outline: none; fill: var(--accent-text); }
 .sg-chips { margin-bottom: 8px; }
 .sg-head { align-items: baseline; margin: 10px 4px 8px; }
 .sg-head h2 { margin: 0; font-size: 20px; }
@@ -1747,6 +1738,24 @@ button.h3-card.h3-head { background: var(--card); padding: 12px 14px; }
 .sg-opts { background: var(--card-2); margin-top: 12px; }
 .sg-opt[disabled] { opacity: 1; }
 .sg-opt.have small, .sg-opt.have > .ic { color: var(--ok-text); }
+
+/* Kroppskartan: dov orange toning, det valda lyser med ett svagt sken, etiketter med streck */
+.bodymap { width: 100%; height: auto; display: block; }
+.bm-base { fill: #24262b; }
+.bm-reg { fill: url(#bm-dim); cursor: pointer; }
+.bm-reg polygon { stroke: #0d0e10; stroke-width: .5; stroke-linejoin: round; }
+.bm-reg:hover { fill: #a85a2a; }
+.bm-reg.on { fill: url(#bm-on); filter: url(#bm-glow); }
+.bm-label { cursor: pointer; }
+.bm-label rect { fill: #16181b; stroke: #3a3e44; stroke-width: .7; }
+.bm-label text { fill: #f4f2ef; font: 500 8.6px "Lexend", sans-serif; }
+.bm-line { fill: none; stroke: #6a6e75; stroke-width: .6; }
+.bm-dot { fill: #f4f2ef; }
+.bm-label.on rect { fill: #3a2312; stroke: var(--accent); }
+.bm-label.on text { fill: #ffb380; font-weight: 600; }
+.bm-label.on .bm-line { stroke: var(--accent); }
+.bm-label.on .bm-dot { fill: var(--accent); }
+.exlib .sg-map, .sguide .sg-map { padding: 8px 4px; background: radial-gradient(ellipse at 50% 40%, #1d1712, var(--card) 70%); }
 </style>
 </head>
 <body>

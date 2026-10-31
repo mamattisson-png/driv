@@ -2105,7 +2105,7 @@ def test_stretchguide_omraden_och_lagg_till(page):
     assert page.evaluate("Object.keys(EX).filter(id => EX[id].cat === 'stretch').every(id => Object.keys(STRETCH_AREAS).some(a => stretchInArea(id, a)))")
     assert page.evaluate("Object.keys(EX).filter(id => id.startsWith('strg_')).length") >= 16
     # Ett tryck på kroppen väljer området
-    page.click('.sbody [data-sarea="hamstrings"] polygon >> nth=0')
+    page.click('.bm-reg[data-sarea="hamstrings"] polygon >> nth=0')
     assert "Baksida lår" in page.inner_text(".sg-head")
     first = page.get_attribute("[data-sgadd] >> nth=0", "data-sgadd")
     # Lägg till i Dailys och i ett pass; det som redan finns markeras
@@ -2122,3 +2122,13 @@ def test_stretchguide_omraden_och_lagg_till(page):
     page.fill("#sgq", "duvan")
     assert page.evaluate("document.activeElement.id") == "sgq" and "Duvan" in page.inner_text(".h3-list")
     assert not page.errors
+
+
+def test_kroppskartan_i_biblioteket(page):
+    start(page)
+    go(page, "pass")
+    page.click("[data-exlib]")
+    page.click('.bm-label[data-exlibf="brost"] rect')
+    assert page.locator('.bm-reg.on[data-exlibf="brost"]').count() == 1
+    shown = page.evaluate("[...document.querySelectorAll('.exlib-row')].filter(e => !e.hidden).map(e => e.dataset.area)")
+    assert shown and set(shown) == {"brost"}
