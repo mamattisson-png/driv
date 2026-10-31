@@ -978,7 +978,9 @@ function dailyClockAdvance() {
   dailyClockSound();
   if (c.phase === "work") {
     if (c.set >= c.total) {
+      const before=allTodaysDailysComplete();
       day().dailies[c.id] = true;
+      if(!before&&allTodaysDailysComplete()) setTimeout(()=>drivCelebrate("daily"),0);
       c.phase = "done"; clearInterval(dailyClockTick); dailyClockTick = null;
       save(); render(); return;
     }
