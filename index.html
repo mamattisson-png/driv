@@ -1664,6 +1664,18 @@
 
 /* Dailys redesign v2 */
 .dailys-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}.dailys-top .page-back{display:grid;place-items:center;padding:8px}.dailys-top button:last-child{font-weight:700}.dailys-page>h1{margin:0 0 18px;font-size:32px}.dailys-week{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px;margin-bottom:18px}.dailys-week span{display:flex;flex-direction:column;gap:4px;align-items:center;justify-content:center;min-height:56px;border:1px solid #34383e;border-radius:12px;background:#17191d;padding:7px 1px}.dailys-week span small{font-size:11px;color:#b7b9be}.dailys-week span b{font-size:15px}.dailys-week span.on{background:#ff7829;color:#161616;border-color:#ff7829}.dailys-week span.on small{color:#161616}.dailys-progress{padding:16px;border:1px solid #33363a;border-radius:18px;background:#17191c;gap:15px}.dailys-progress.all-done{background:linear-gradient(110deg,rgba(18,108,61,.36),rgba(10,46,32,.65));border-color:#238b59}.dailys-progress.all-done .dailys-progress-ring{box-shadow:0 0 22px rgba(45,213,117,.15)}.dailys-progress>div:last-child b{font-size:18px}.dailys-summary{margin:15px 0 25px;gap:10px}.dailys-summary span{border:1px solid #34373d;display:flex;flex-direction:column;justify-content:center;min-height:73px;padding:12px}.dailys-summary span.summary-done{border-color:#278d58;background:linear-gradient(110deg,rgba(29,120,71,.26),rgba(10,51,34,.4))}.dailys-sectionhead{margin:18px 0 10px}.dailys-exbar{height:7px;background:#303238;border-radius:10px;overflow:hidden;margin:0 0 14px}.dailys-exbar i{display:block;height:100%;background:#ff7829;border-radius:10px;transition:width .2s}.dailys-progress.all-done~.dailys-sectionhead+.dailys-exbar i{background:#2cc678}.dailys-page .daily{border:1px solid #30343a;border-radius:13px;background:#16181b;margin:7px 0;padding:10px 12px;min-height:66px}.dailys-page .daily.ok{border-color:rgba(42,165,104,.56);background:rgba(20,83,50,.24)}.dailys-page .daily .grow b{font-size:14px}.dailys-page .daily.ok .done-btn.on{background:#28b275}.dailys-page .dailys-add{margin:14px 0 24px}.dailys-page .dailys-suppicon{flex-shrink:0}
+
+/* Completion celebration, accessible and skippable */
+.driv-celebrate{position:fixed;inset:0;z-index:99999;display:grid;place-items:center;background:rgba(7,10,12,.91);color:#f6f7f8;animation:driv-celebrate-in .25s ease-out;cursor:pointer;text-align:center;padding:24px}
+.driv-celebrate-inner{display:flex;flex-direction:column;align-items:center;gap:13px;max-width:340px}
+.driv-celebrate-mark{display:grid;place-items:center;width:120px;height:120px;border:8px solid #ff7829;border-radius:50%;color:#ff7829;font-size:68px;font-weight:800;animation:driv-celebrate-pop .7s cubic-bezier(.2,1.5,.4,1) both;box-shadow:0 0 45px rgba(255,120,41,.16)}
+.driv-celebrate.daily-celebrate .driv-celebrate-mark{border-color:#32ce83;color:#32ce83;box-shadow:0 0 50px rgba(50,206,131,.24)}
+.driv-celebrate strong{font-size:clamp(27px,7vw,36px);line-height:1.12}
+.driv-celebrate span{color:#c3c8c9;font-size:16px}
+.driv-celebrate small{margin-top:18px;color:#9da3a7}
+@keyframes driv-celebrate-in{from{opacity:0}to{opacity:1}}
+@keyframes driv-celebrate-pop{0%{opacity:0;transform:scale(.45) rotate(-20deg)}65%{transform:scale(1.12) rotate(3deg)}100%{opacity:1;transform:scale(1) rotate(0)}}
+@media(prefers-reduced-motion:reduce){.driv-celebrate,.driv-celebrate-mark{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
