@@ -1073,19 +1073,28 @@ const VIEWS = {
     const names={all:"Helkropp",neck:"Nacke",shoulder:"Axlar",chest:"Bröst",back:"Rygg",hip:"Höfter",legs:"Ben"};
     const selected=stretchArea||"back";
     const ids=(typeof EXTRA_STRETCH_IDS!=="undefined"?EXTRA_STRETCH_IDS:[]).filter(id=>EX[id]);
-    const terms={neck:/nack|neck|trapez|levator/i,shoulder:/axel|shoulder|rotator|deltoid/i,chest:/bröst|chest|pectoral/i,back:/rygg|back|lat|länd|spine|rotation|cat_cow|child_pose/i,hip:/höft|hip|glute|säte|ljumske/i,legs:/knä|knee|quad|hamstring|lår|vad|calf|ankle|fot/i};
+    const terms={neck:/nack|neck|trapez|levator/i,shoulder:/axel|shoulder|rotator|deltoid/i,chest:/bröst|chest|pectoral/i,back:/rygg|back|lat|länd|spine|bröstrygg|lumbar|thoracic/i,hip:/höft|hip|glute|säte|ljumske/i,legs:/knä|knee|quad|hamstring|lår|vad|calf|ankle|fot/i};
     const matches=(selected==="all"?ids:ids.filter(id=>terms[selected].test([id,EX[id].name,(EX[id].stretchTargets||[]).join(" "),EX[id].muscles||""].join(" ")))).slice(0,12);
-    const figure=(back)=>`<svg class="stretch-figure" viewBox="0 0 110 255" aria-label="${back?"Kropp bakifrån":"Kropp framifrån"}" role="img">
-      <g fill="none" stroke="#e0e2e6" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-        <ellipse cx="55" cy="22" rx="14" ry="19"/><path d="M45 40 L45 49 Q32 52 25 58 Q18 68 17 91 L12 124 L6 145 Q3 151 8 156 L14 145 L19 128 L28 92 L31 116 Q34 136 41 143 L40 173 L34 217 L32 241 Q31 249 39 249 L47 244 L51 219 L55 173 L59 219 L63 244 L71 249 Q79 249 78 241 L76 217 L70 173 L69 143 Q76 136 79 116 L82 92 L91 128 L96 145 L102 156 Q107 151 104 145 L98 124 L93 91 Q92 68 85 58 Q78 52 65 49 L65 40"/><path d="M31 80 Q55 91 79 80 M41 143 Q55 151 69 143 M55 56 L55 141" stroke="#60636a" stroke-width="1.4"/>
+    const figure=(back)=>`<svg class="stretch-figure" viewBox="0 0 180 400" aria-label="${back?"Kropp bakifrån":"Kropp framifrån"}" role="img" xmlns="http://www.w3.org/2000/svg">
+      <g fill="#1a1c20" stroke="none">
+        <path d="M78 66 Q69 70 56 73 Q40 77 34 92 Q29 106 27 131 L19 170 Q16 186 12 204 L6 221 Q5 229 10 232 L14 230 L18 220 L17 235 Q18 240 22 238 L26 228 L28 214 L34 181 L43 140 L49 119 Q49 145 56 162 Q59 174 65 187 Q65 206 63 225 L57 275 L55 319 L50 365 Q45 379 43 389 Q43 396 51 396 L68 394 Q73 391 70 384 L70 370 L76 327 L85 279 L90 237 L95 279 L104 327 L110 370 L110 384 Q107 391 112 394 L129 396 Q137 396 137 389 Q135 379 130 365 L125 319 L123 275 L117 225 Q115 206 115 187 Q121 174 124 162 Q131 145 131 119 L137 140 L146 181 L152 214 L154 228 L158 238 Q162 240 163 235 L162 220 L166 230 L170 232 Q175 229 174 221 L168 204 Q164 186 161 170 L153 131 Q151 106 146 92 Q140 77 124 73 Q111 70 102 66 L101 58 L79 58Z"/>
       </g>
-      ${(selected==="back"&&back)?`<path d="M45 51 Q32 53 26 64 L30 88 L46 105 L55 96 L64 105 L80 88 L84 64 Q77 53 65 51 L55 62Z M46 107 L55 99 L64 107 L68 141 L55 151 L42 141Z" fill="#ff711b" opacity=".95"/>`:""}
-      ${selected==="neck"?`<path d="M45 40 L45 52 L65 52 L65 40" fill="#ff711b"/>`:""}
-      ${selected==="shoulder"?`<ellipse cx="29" cy="65" rx="12" ry="16" fill="#ff711b"/><ellipse cx="81" cy="65" rx="12" ry="16" fill="#ff711b"/>`:""}
-      ${selected==="chest"&&!back?`<path d="M32 61 Q55 70 78 61 L77 89 Q55 101 33 89Z" fill="#ff711b"/>`:""}
-      ${selected==="hip"?`<path d="M39 140 Q55 152 71 140 L69 171 L55 183 L41 171Z" fill="#ff711b"/>`:""}
-      ${selected==="legs"?`<path d="M41 174 L54 174 L49 220 L44 237 L35 237 L35 217Z M57 174 L69 174 L76 217 L76 237 L66 237 L61 220Z" fill="#ff711b"/>`:""}
-      ${selected==="all"?`<path d="M33 65 Q55 55 77 65 L69 143 L70 172 L76 235 L66 235 L55 172 L44 235 L34 235 L40 172 L41 143Z" fill="#ff711b" opacity=".35"/>`:""}
+      ${selected==="back"&&back?`<g fill="#ff711b"><path d="M78 70 Q62 72 49 83 Q43 91 44 106 L54 133 L78 149 L90 137 L102 149 L126 133 L136 106 Q137 91 131 83 Q118 72 102 70 L90 85Z"/><path d="M79 151 L90 141 L101 151 Q112 165 111 184 L100 202 L90 213 L80 202 L69 184 Q68 165 79 151Z"/></g>`:""}
+      ${selected==="neck"?`<path d="M79 57 L79 75 L101 75 L101 57Z" fill="#ff711b"/>`:""}
+      ${selected==="shoulder"?`<path d="M56 74 Q35 79 32 101 L42 119 L55 113 L65 81Z M124 74 Q145 79 148 101 L138 119 L125 113 L115 81Z" fill="#ff711b"/>`:""}
+      ${selected==="chest"&&!back?`<path d="M61 87 Q76 79 90 96 Q104 79 119 87 L124 119 Q107 133 90 124 Q73 133 56 119Z" fill="#ff711b"/>`:""}
+      ${selected==="hip"?`<path d="M64 183 Q90 195 116 183 L119 225 L90 245 L61 225Z" fill="#ff711b"/>`:""}
+      ${selected==="legs"?`<path d="M64 232 L88 237 L83 277 L74 330 L61 330 L59 279Z M92 237 L116 232 L121 279 L119 330 L106 330 L97 277Z" fill="#ff711b"/>`:""}
+      ${selected==="all"?`<path d="M56 87 Q90 72 124 87 L117 187 L115 225 L123 315 L104 315 L90 239 L76 315 L57 315 L65 225 L63 187Z" fill="#ff711b" opacity=".27"/>`:""}
+      <g fill="none" stroke="#f1f1f2" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M77 66 Q66 71 55 73 Q39 78 34 92 Q29 105 27 131 Q23 153 19 170 L12 204 L6 221 Q5 228 10 232 Q14 232 17 220 L17 235 Q18 240 22 238 L26 228 L28 214 L34 181 L43 140 L49 119 Q49 145 56 162 Q60 177 65 187 Q65 207 63 225 L57 275 L55 319 L50 365 L43 389 Q42 396 51 396 L68 394 Q73 391 70 384 L70 370 L76 327 L85 279 L90 237 L95 279 L104 327 L110 370 L110 384 Q107 391 112 394 L129 396 Q138 396 137 389 L130 365 L125 319 L123 275 L117 225 Q115 207 115 187 Q120 177 124 162 Q131 145 131 119 L137 140 L146 181 L152 214 L154 228 L158 238 Q162 240 163 235 L163 220 Q166 232 170 232 Q175 228 174 221 L168 204 L161 170 Q157 153 153 131 Q151 105 146 92 Q141 78 125 73 Q114 71 103 66"/>
+        <path d="M78 65 L79 56 M102 65 L101 56"/>
+        <path d="M90 8 C71 8 66 25 69 42 Q70 53 80 60 Q90 67 100 60 Q110 53 111 42 Q114 25 104 14 Q99 8 90 8Z"/>
+      </g>
+      <g fill="none" stroke="#5c626b" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        ${back?`<path d="M90 72 L90 180 M58 85 Q73 95 90 88 Q107 95 122 85 M52 107 Q62 132 87 145 M128 107 Q118 132 93 145 M66 177 Q90 188 114 177 M90 190 L90 224 M67 229 Q90 246 113 229"/>`:`<path d="M90 74 L90 186 M58 88 Q73 98 90 92 Q107 98 122 88 M57 120 Q75 134 90 121 Q105 134 123 120 M66 145 Q90 155 114 145 M70 162 Q90 170 110 162 M66 186 Q90 197 114 186 M90 201 L90 229"/>`}
+        <path d="M63 244 Q70 261 61 298 M117 244 Q110 261 119 298 M58 334 L70 335 M110 335 L122 334"/>
+      </g>
     </svg>`;
     const rows=matches.map(id=>`<div class="stretch-result">${thumb(id,"dt")}<span class="grow"><b>${esc(EX[id].name)}</b><small>${esc(EX[id].reps||"")} · Stretchövning</small></span><button class="stretch-play" data-info="${id}" aria-label="Visa ${esc(EX[id].name)}">▶</button></div>`).join("");
     return `<div class="stretch-page stretch-redesign">
