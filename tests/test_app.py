@@ -2096,3 +2096,31 @@ def test_ovningsbiblioteket(page):
     page.click(".sheet [data-close] >> nth=0")
     page.click("[data-exlibclose]")
     assert page.locator(".wkcard").count() == 3
+
+
+def test_stretchguide_omraden_och_lagg_till(page):
+    start(page)
+    page.click('[data-tab="stretchguide"]')
+    # Alla stretchövningar hör till minst ett område, och de nya finns med
+    assert page.evaluate("Object.keys(EX).filter(id => EX[id].cat === 'stretch').every(id => Object.keys(STRETCH_AREAS).some(a => stretchInArea(id, a)))")
+    assert page.evaluate("Object.keys(EX).filter(id => id.startsWith('strg_')).length") >= 16
+    # Ett tryck på kroppen väljer området
+    leg = page.locator('[data-sarea="hamstrings"] > :first-child')
+    box = leg.bounding_box()
+    leg.click(position={"x": box["width"] * 0.25, "y": box["height"] * 0.5})
+    assert "Baksida lår" in page.inner_text(".sg-head")
+    first = page.get_attribute("[data-sgadd] >> nth=0", "data-sgadd")
+    # Lägg till i Dailys och i ett pass; det som redan finns markeras
+    page.click("[data-sgadd] >> nth=0")
+    page.click('[data-sgto="daily"]')
+    assert page.evaluate(f"S.daily.some(e => e.id === '{first}')")
+    page.click("[data-sgadd] >> nth=0")
+    assert page.locator('[data-sgto="daily"][disabled]').count() == 1
+    day0 = page.evaluate("S.plan.days[0].id")
+    page.click(f'[data-sgto="{day0}"]')
+    assert page.evaluate(f"S.plan.days[0].ex.some(e => e.id === '{first}')")
+    # Sökningen behåller fokus medan listan filtreras
+    page.click('[data-sarea="all"]')
+    page.fill("#sgq", "duvan")
+    assert page.evaluate("document.activeElement.id") == "sgq" and "Duvan" in page.inner_text(".h3-list")
+    assert not page.errors
