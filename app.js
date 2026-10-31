@@ -856,7 +856,7 @@ function weightChart() {
 // ---------- Rendering ----------
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 // Fyra flikar; Profil nås via kugghjulet uppe till höger
-const TABS = [["idag", "hem", "Hem"], ["pass", "trana", "Träna"], ["kost", "kost", "Kost"], ["historik", "historik", "Historik"]];
+const TABS = [["idag", "hem", "Hem"], ["pass", "trana", "Träna"], ["dailys", "check", "Dailys"], ["kost", "kost", "Kost"], ["historik", "historik", "Historik"]];
 let tab = S.setupDone ? "idag" : "upplagg";
 let profBack = "idag";   // fliken man kom från, dit tillbaka-pilen i Profil går
 let vannerBack = "idag"; // dit tillbaka-pilen på vänsidan går
@@ -915,6 +915,110 @@ function currentPassDay() {
 
 // Schemat: kommande dagar med fasta veckodagar, annars passen i tur och ordning
 // Dagens dailys som en kort lista att bocka av, direkt på Idag
+// Dailys: separat tidsstyrd övning med automatisk vila (testfunktion).
+let dailyClock = null;
+let dailyClockTick = null;
+function dailySeconds(e) {
+  const m = String(e.reps || "").match(/(\d+)\s*(?:sek|s\b)/i);
+  return m ? Math.max(5, Math.min(1800, +m[1])) : 45;
+}
+function dailyClockView() {
+  if (!dailyClock) return "";
+  const c = dailyClock, e = S.daily.find(x => x.id === c.id);
+  if (!e) return "";
+  const left = c.paused ? Math.ceil(c.remaining / 1000) : Math.max(0, Math.ceil((c.end - Date.now()) / 1000));
+  const fmt = n => String(Math.floor(n/60)).padStart(2,"0")+":"+String(n%60).padStart(2,"0");
+  const rest = c.phase === "rest", done = c.phase === "done", reps = !c.timed && c.phase === "work";
+  return `<div class="daily-focus" role="region" aria-label="Daily timer">
+    <div class="daily-focus-top"><span>${esc(EX[c.id]?.name || "Daily")}</span><button class="ghost small" data-dclockstop aria-label="Stäng timer">✕</button></div>
+    <div class="daily-focus-figure">${figure(c.id)}</div><div class="daily-focus-label">${done ? "Övningen klar!" : rest ? "Vila inför nästa set" : reps ? "Repetitioner" : "Träning pågår"}</div>
+    <div class="daily-focus-sets">${done ? "Alla set klara" : `Set ${c.set} av ${c.total}`}</div>
+    <div class="daily-focus-ring ${rest ? "daily-rest-ring" : ""} ${reps ? "daily-reps-ring" : ""} ${done ? "complete" : ""}">
+      ${done ? `<span class="daily-focus-check">✓</span>` : reps ? `<span>${esc(c.reps || "Set")} <small class="daily-reps-unit">reps</small></span>` : `<span id="daily-clock-time">${fmt(left)}</span>`}
+    </div>
+    <div class="daily-focus-caption">${done ? "Bra jobbat!" : rest ? "Nästa set startar automatiskt" : c.timed ? `${c.work} sekunder · ${c.total} set` : `Ingen nedräkning – tryck Set klart när du är färdig`}</div>
+    <div class="daily-focus-actions">${done ? `<button data-dclockstop>Stäng</button>` : `${reps ? "" : `<button class="ghost" data-dclockpause>${c.paused ? "▶ Fortsätt" : "Ⅱ Pausa"}</button>`}<button class="ghost" data-dclockskip>${rest ? "Starta nästa set" : c.timed ? "Hoppa över" : "✓ Set klart"}</button>`}</div>
+  </div>`;
+}
+function dailyClockSound() {
+  try {
+    const A = window.AudioContext || window.webkitAudioContext;
+    if (!A) return;
+    const ctx = new A(), osc = ctx.createOscillator(), gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.frequency.value = 880; gain.gain.value = 0.12;
+    osc.start(); osc.stop(ctx.currentTime + 0.18);
+    osc.onended = () => ctx.close();
+  } catch (_) {}
+}
+function dailyClockAdvance() {
+  if (!dailyClock) return;
+  const c = dailyClock;
+  dailyClockSound();
+  if (c.phase === "work") {
+    if (c.set >= c.total) {
+      day().dailies[c.id] = true;
+      c.phase = "done"; clearInterval(dailyClockTick); dailyClockTick = null;
+      save(); render(); return;
+    }
+    c.phase = "rest"; c.paused = false; c.end = Date.now() + c.rest * 1000;
+  } else {
+    c.phase = "work"; c.set++; c.paused = false; c.end = Date.now() + c.work * 1000;
+  }
+  render();
+}
+function dailyClockRefresh() {
+  if (!dailyClock || dailyClock.paused || dailyClock.phase === "done" || (dailyClock.phase === "work" && !dailyClock.timed)) return;
+  if (Date.now() >= dailyClock.end) { dailyClockAdvance(); return; }
+  const el = document.getElementById("daily-clock-time");
+  if (el) {
+    const n = Math.max(0, Math.ceil((dailyClock.end - Date.now()) / 1000));
+    el.textContent = String(Math.floor(n/60)).padStart(2,"0")+":"+String(n%60).padStart(2,"0");
+  }
+}
+let supplementEditing = null;
+function supplementsCard() {
+  const a = S.supplements || [];
+  const rows = a.map((x,i) => {
+    const ok = day().dailies["supp:"+x.id] === true;
+    return `<div class="daily ${ok ? "ok" : ""}"><div class="dailys-suppicon">${esc(x.icon || "◇")}</div><div class="grow"><b>${esc(x.name)}</b><span class="muted small">${esc(x.dose || "")}</span>${x.note ? `<div class="muted small" style="margin-top:4px">${esc(x.note)}</div>` : ""}</div><button class="done-btn big ${ok ? "on" : ""}" data-suppcheck="${esc(x.id)}" aria-label="Markera ${esc(x.name)} som taget">${icon("check",18)}</button><button class="ghost small" data-suppedit="${i}" aria-label="Redigera">✎</button></div>`;
+  }).join("");
+  const form = supplementEditing !== null ? (() => { const old = a[supplementEditing] || {}; return `<form id="supplement-form" class="supplement-form"><h3>${supplementEditing < 0 ? "Lägg till kosttillskott" : "Redigera kosttillskott"}</h3><label>Namn<input name="name" required maxlength="80" placeholder="T.ex. Kreatin" value="${esc(old.name || "")}"></label><label>Ikon<select name="icon"><option value="◇" ${!old.icon || old.icon==="◇"?"selected":""}>◇ Standard</option><option value="◈" ${old.icon==="◈"?"selected":""}>◈ Kapsel</option><option value="✦" ${old.icon==="✦"?"selected":""}>✦ Vitamin</option><option value="●" ${old.icon==="●"?"selected":""}>● Tablett</option><option value="♡" ${old.icon==="♡"?"selected":""}>♡ Hälsa</option></select></label><label>Dosering<input name="dose" maxlength="60" placeholder="T.ex. 5 g" value="${esc(old.dose || "")}"></label><label>Anteckning (valfri)<textarea name="note" rows="2" maxlength="300" placeholder="T.ex. tillsammans med frukost">${esc(old.note || "")}</textarea></label><div class="row"><button type="button" class="ghost" data-suppcancel>Avbryt</button><button type="submit">Spara</button></div></form>`; })() : "";
+  return `<section class="card dailies" aria-label="Kosttillskott"><div class="dhead"><h2>Kosttillskott</h2><span class="muted small">${a.filter(x=>day().dailies["supp:"+x.id]).length} av ${a.length} tagna</span></div>${rows}${form}${supplementEditing === null ? `<button class="ghost small" data-suppadd style="margin-top:10px">+ Lägg till kosttillskott</button>` : ""}</section>`;
+}
+document.addEventListener("click", ev => {
+  const t = ev.target.closest?.("[data-dclockstart],[data-dclockpause],[data-dclockskip],[data-dclockstop],[data-suppadd],[data-suppedit],[data-suppcheck],[data-suppcancel]");
+  if (!t) return;
+  ev.stopImmediatePropagation();
+  const d = t.dataset;
+  if (d.dclockstart) {
+    const e = S.daily.find(x => x.id === d.dclockstart); if (!e) return;
+    const timed = /\d+\s*(?:sek|s)\b/i.test(e.reps || "");
+    const work = dailySeconds(e);
+    dailyClock = {id:e.id,work,timed,reps:e.reps||"",rest:30,total:Math.max(1,+e.sets||1),set:1,phase:"work",end:Date.now()+work*1000,paused:false};
+    clearInterval(dailyClockTick); dailyClockTick = setInterval(dailyClockRefresh,250);
+  } else if (d.dclockpause !== undefined && dailyClock) {
+    if (dailyClock.paused) {dailyClock.end = Date.now()+dailyClock.remaining;dailyClock.paused=false;}
+    else {dailyClock.remaining=Math.max(0,dailyClock.end-Date.now());dailyClock.paused=true;}
+  } else if (d.dclockskip !== undefined) dailyClockAdvance();
+  else if (d.dclockstop !== undefined) {dailyClock=null;clearInterval(dailyClockTick);dailyClockTick=null;}
+  else if (d.suppcheck) day().dailies["supp:"+d.suppcheck] = !day().dailies["supp:"+d.suppcheck];
+  else if (d.suppcancel !== undefined) supplementEditing = null;
+  else if (d.suppadd !== undefined || d.suppedit !== undefined) supplementEditing = d.suppedit !== undefined ? +d.suppedit : -1;
+  save();render();
+}, true);
+
+document.addEventListener("submit", ev => {
+  if (ev.target.id !== "supplement-form") return;
+  ev.preventDefault(); ev.stopImmediatePropagation();
+  const f = new FormData(ev.target), name = String(f.get("name") || "").trim();
+  if (!name || supplementEditing === null) return;
+  const a = S.supplements || (S.supplements=[]), i = supplementEditing;
+  const item = {id:i >= 0 ? a[i].id : "s"+Date.now(),name,icon:String(f.get("icon")||"◇"),dose:String(f.get("dose")||"").trim(),note:String(f.get("note")||"").trim()};
+  if (i >= 0) a[i] = item; else a.push(item);
+  supplementEditing = null; save(); render();
+}, true);
+
 function dailiesCard(inPass, banded) {
   const n = S.daily.length, date = logDate(), L = day(date);
   if (dailyEditing) return `<div class="card"><div class="row between"><h2>Redigera dailys</h2><button class="small ghost" data-dedit>Klar</button></div>
@@ -933,12 +1037,12 @@ function dailiesCard(inPass, banded) {
          <button class="done-btn big ${ok ? "on" : ""}" data-runcheck="${id}" aria-pressed="${ok}" aria-label="${esc(EX[id].name)}: ${ok ? "klar" : "fyll i km eller minuter"}">${check}</button>`
       : `<button class="done-btn big ${ok ? "on" : ""}" data-dcheck="${id}" aria-pressed="${ok}" aria-label="${esc(EX[id].name)} klar">${check}</button>`;
     return `<div class="daily ${ok ? "ok" : ""}">${thumb(id, "dt")}<div class="grow"><b>${esc(EX[id].name)}</b>
-      ${sub ? `<span class="muted small">${sub}</span>` : ""}</div>${its > 1 ? `<span class="muted small streak">${its} dagar i rad</span>` : ""}${ctl}</div>`;
+      ${sub ? `<span class="muted small">${sub}</span>` : ""}</div>${its > 1 ? `<span class="muted small streak">${its} dagar i rad</span>` : ""}${!ok && !isRun(id) ? `<button class="ghost small" data-dclockstart="${id}" aria-label="Starta ${esc(EX[id].name)}">▶ Starta</button>` : ""}${ctl}</div>`;
   }).join("");
   // Rubriken: antal klara, och ett tryck öppnar Redigera dailys (inte under passet)
   const head = `<div class="dhead"><h2>Dailys${st > 1 ? `<span class="muted small"> · alla ${st} dagar i rad</span>` : ""}</h2>
     ${inPass ? `<span class="muted small">${done} av ${n} klara</span>` : `<button class="ghost small" data-dedit aria-label="Redigera dailys, ${done} av ${n} klara">${done} av ${n} klara${icon("right", 16)}</button>`}</div>`;
-  return `<section class="card dailies" aria-label="Dailys">${head}${rows}</section>`;
+  return `${dailyClock ? dailyClockView() : `<section class="card dailies" aria-label="Dailys">${head}${rows}</section>${inPass ? "" : supplementsCard()}`}`;
 }
 
 // Alla pass som knappar; används på Idag och under Pass
@@ -947,6 +1051,11 @@ function dayPicker(selected) {
     `<button role="tab" data-pick="${k.id}" class="${k.id === selected ? "on" : ""}" aria-selected="${k.id === selected}" aria-pressed="${k.id === selected}"><b>${esc(TYPES[k.type] && k.type !== "custom" ? TYPES[k.type].label : k.name)}</b><span>${isFixed() ? WD[S.plan.weekdays[i]] : `Pass ${i + 1}`}</span></button>`).join("")}</div>`;
 }
 
+document.addEventListener("change",ev=>{if(ev.target.id==="stretch-search"){stretchQuery=ev.target.value;stretchLimit=24;render();}});
+let stretchArea = "back";
+let stretchMode = "areas";
+let stretchQuery = "";
+let stretchLimit = 24;
 const VIEWS = {
   upplagg() {
     if (S.setupDone) return upplaggView();
@@ -955,46 +1064,79 @@ const VIEWS = {
     return onb ? onbView() : welcomeView();
   },
 
+  dailys() {
+    const a=S.supplements||[], ex=S.daily||[], n=ex.filter(e=>dailyDone(logDate(),e.id)).length, sn=a.filter(x=>day().dailies["supp:"+x.id]).length;
+    const total=ex.length+a.length, count=n+sn, pct=total?Math.round(count/total*100):0;
+    const week=Array.from({length:7},(_,i)=>shift(TODAY,i-3)).map(d=>`<span class="${d===TODAY?"on":""}">${d.slice(-2)}</span>`).join("");
+    const rows=ex.map(e=>{const ok=dailyDone(logDate(),e.id),timed=/\d+\s*(?:s|sek)\b/i.test(e.reps||"");return `<div class="daily">${thumb(e.id,"dt")}<div class="grow"><b>${esc(EX[e.id].name)}</b><span class="muted small">${e.sets} × ${esc(e.reps||"")}</span></div>${!ok?`<button class="ghost small" data-dclockstart="${e.id}">▶ Starta</button>`:""}<button class="done-btn big ${ok?"on":""}" data-dcheck="${e.id}">${icon("check",18)}</button></div>`;}).join("");
+    return `<div class="dailys-page"><button class="ghost small page-back" data-tab="idag">${icon("left",16)} Tillbaka</button><h1>Dailys</h1>${dailyClock?dailyClockView():`<div class="dailys-week">${week}</div><div class="dailys-progress"><div class="dailys-progress-ring" style="--p:${pct}%">${pct}%</div><div><b>${count} av ${total}</b><div class="muted small">klara idag</div></div></div><div class="dailys-summary"><span>Träning <b>${n}/${ex.length}</b></span><span>Kosttillskott <b>${sn}/${a.length}</b></span></div><div class="dailys-sectionhead"><h2>Övningar</h2><button class="ghost small" data-dedit>✎ ${dailyEditing?"Klar":"Redigera"}</button></div>${dailyEditing?exRows("daily",S.daily,true):rows}<button class="ghost small dailys-add" data-openpick="daily">+ Lägg till övning</button>${supplementsCard()}`}</div>`;
+  },
+  stretchguide() {
+    const areas=[["Helkropp","all"],["Nacke","neck"],["Axlar","shoulder"],["Bröst","chest"],["Rygg","back"],["Höfter","hip"],["Ben","legs"]];
+    const names={all:"Helkropp",neck:"Nacke",shoulder:"Axlar",chest:"Bröst",back:"Rygg",hip:"Höfter",legs:"Ben"};
+    const selected=stretchArea||"back";
+    const ids=(typeof EXTRA_STRETCH_IDS!=="undefined"?EXTRA_STRETCH_IDS:[]).filter(id=>EX[id]);
+    const terms={neck:/nack|neck|trapez|levator/i,shoulder:/axel|shoulder|rotator|deltoid/i,chest:/bröst|chest|pectoral/i,back:/rygg|back|lat|länd|spine|bröstrygg|lumbar|thoracic/i,hip:/höft|hip|glute|säte|ljumske/i,legs:/knä|knee|quad|hamstring|lår|vad|calf|ankle|fot/i};
+    const catalog=Object.keys(EX).filter(id=>EX[id]&&EX[id].cat==="stretch");
+    const pool=stretchMode==="all"?catalog:(selected==="all"?catalog:catalog.filter(id=>terms[selected].test([id,EX[id].name,(EX[id].stretchTargets||[]).join(" "),EX[id].muscles||""].join(" "))));
+    const matches=pool.filter(id=>!stretchQuery||EX[id].name.toLowerCase().includes(stretchQuery.toLowerCase()));
+    const figure=(back)=>`<svg class="stretch-figure" viewBox="0 0 180 400" aria-label="${back?"Kropp bakifrån":"Kropp framifrån"}" role="img" xmlns="http://www.w3.org/2000/svg">
+      <g fill="#1a1c20" stroke="none">
+        <path d="M78 66 Q69 70 56 73 Q40 77 34 92 Q29 106 27 131 L19 170 Q16 186 12 204 L6 221 Q5 229 10 232 L14 230 L18 220 L17 235 Q18 240 22 238 L26 228 L28 214 L34 181 L43 140 L49 119 Q49 145 56 162 Q59 174 65 187 Q65 206 63 225 L57 275 L55 319 L50 365 Q45 379 43 389 Q43 396 51 396 L68 394 Q73 391 70 384 L70 370 L76 327 L85 279 L90 237 L95 279 L104 327 L110 370 L110 384 Q107 391 112 394 L129 396 Q137 396 137 389 Q135 379 130 365 L125 319 L123 275 L117 225 Q115 206 115 187 Q121 174 124 162 Q131 145 131 119 L137 140 L146 181 L152 214 L154 228 L158 238 Q162 240 163 235 L162 220 L166 230 L170 232 Q175 229 174 221 L168 204 Q164 186 161 170 L153 131 Q151 106 146 92 Q140 77 124 73 Q111 70 102 66 L101 58 L79 58Z"/>
+      </g>
+      ${selected==="back"&&back?`<g fill="#ff711b"><path d="M78 70 Q62 72 49 83 Q43 91 44 106 L54 133 L78 149 L90 137 L102 149 L126 133 L136 106 Q137 91 131 83 Q118 72 102 70 L90 85Z"/><path d="M79 151 L90 141 L101 151 Q112 165 111 184 L100 202 L90 213 L80 202 L69 184 Q68 165 79 151Z"/></g>`:""}
+      ${selected==="neck"?`<path d="M79 57 L79 75 L101 75 L101 57Z" fill="#ff711b"/>`:""}
+      ${selected==="shoulder"?`<path d="M56 74 Q35 79 32 101 L42 119 L55 113 L65 81Z M124 74 Q145 79 148 101 L138 119 L125 113 L115 81Z" fill="#ff711b"/>`:""}
+      ${selected==="chest"&&!back?`<path d="M61 87 Q76 79 90 96 Q104 79 119 87 L124 119 Q107 133 90 124 Q73 133 56 119Z" fill="#ff711b"/>`:""}
+      ${selected==="hip"?`<path d="M64 183 Q90 195 116 183 L119 225 L90 245 L61 225Z" fill="#ff711b"/>`:""}
+      ${selected==="legs"?`<path d="M64 232 L88 237 L83 277 L74 330 L61 330 L59 279Z M92 237 L116 232 L121 279 L119 330 L106 330 L97 277Z" fill="#ff711b"/>`:""}
+      ${selected==="all"?`<path d="M56 87 Q90 72 124 87 L117 187 L115 225 L123 315 L104 315 L90 239 L76 315 L57 315 L65 225 L63 187Z" fill="#ff711b" opacity=".27"/>`:""}
+      <g fill="none" stroke="#f1f1f2" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M77 66 Q66 71 55 73 Q39 78 34 92 Q29 105 27 131 Q23 153 19 170 L12 204 L6 221 Q5 228 10 232 Q14 232 17 220 L17 235 Q18 240 22 238 L26 228 L28 214 L34 181 L43 140 L49 119 Q49 145 56 162 Q60 177 65 187 Q65 207 63 225 L57 275 L55 319 L50 365 L43 389 Q42 396 51 396 L68 394 Q73 391 70 384 L70 370 L76 327 L85 279 L90 237 L95 279 L104 327 L110 370 L110 384 Q107 391 112 394 L129 396 Q138 396 137 389 L130 365 L125 319 L123 275 L117 225 Q115 207 115 187 Q120 177 124 162 Q131 145 131 119 L137 140 L146 181 L152 214 L154 228 L158 238 Q162 240 163 235 L163 220 Q166 232 170 232 Q175 228 174 221 L168 204 L161 170 Q157 153 153 131 Q151 105 146 92 Q141 78 125 73 Q114 71 103 66"/>
+        <path d="M78 65 L79 56 M102 65 L101 56"/>
+        <path d="M90 8 C71 8 66 25 69 42 Q70 53 80 60 Q90 67 100 60 Q110 53 111 42 Q114 25 104 14 Q99 8 90 8Z"/>
+      </g>
+      <g fill="none" stroke="#5c626b" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        ${back?`<path d="M90 72 L90 180 M58 85 Q73 95 90 88 Q107 95 122 85 M52 107 Q62 132 87 145 M128 107 Q118 132 93 145 M66 177 Q90 188 114 177 M90 190 L90 224 M67 229 Q90 246 113 229"/>`:`<path d="M90 74 L90 186 M58 88 Q73 98 90 92 Q107 98 122 88 M57 120 Q75 134 90 121 Q105 134 123 120 M66 145 Q90 155 114 145 M70 162 Q90 170 110 162 M66 186 Q90 197 114 186 M90 201 L90 229"/>`}
+        <path d="M63 244 Q70 261 61 298 M117 244 Q110 261 119 298 M58 334 L70 335 M110 335 L122 334"/>
+      </g>
+    </svg>`;
+    const rows=matches.slice(0,stretchLimit).map(id=>`<div class="stretch-result">${thumb(id,"dt")}<span class="grow"><b>${esc(EX[id].name)}</b><small>${esc(EX[id].reps||"")} · Stretchövning</small></span><button class="stretch-play" data-info="${id}" aria-label="Visa ${esc(EX[id].name)}">▶</button></div>`).join("");
+    return `<div class="stretch-page stretch-redesign">
+      <div class="stretch-top"><button class="ghost page-back" data-tab="idag" aria-label="Tillbaka till Hem">${icon("left",24)}</button><h1>Stretchguide</h1></div>
+      <div class="stretch-mode"><button class="${stretchMode==="areas"?"on":""}" data-stretchmode="areas">Välj område</button><button class="${stretchMode==="all"?"on":""}" data-stretchmode="all">Alla övningar</button></div>
+      ${stretchMode==="areas"?`<div class="stretch-layout"><div class="stretch-areas">${areas.map(([name,key])=>`<button class="${selected===key?"on":""}" data-stretcharea="${key}">${name}</button>`).join("")}</div><div class="stretch-bodies">${figure(false)}${figure(true)}</div></div>`:""}
+      <h2>${stretchMode==="all"?"Alla stretchövningar ("+matches.length+")":names[selected]+" – "+matches.length+" stretchövningar"}</h2>${stretchMode==="all"?`<input class="stretch-search" id="stretch-search" type="search" placeholder="Sök övning..." value="${esc(stretchQuery)}" aria-label="Sök stretchövning">`:""}
+      <div class="stretch-results">${rows||'<p class="muted">Inga övningar hittades.</p>'}</div>${matches.length>stretchLimit?`<button class="stretch-more" data-stretchmore>Visa fler (${matches.length-stretchLimit} kvar)</button>`:""}
+    </div>`;
+  },
+  vagning() {
+    return `<div class="weigh-page"><button class="ghost small" data-tab="idag">${icon("left",16)} Tillbaka</button><h1>Veckans vägning</h1><p class="muted">Registrera din vikt och följ utvecklingen.</p>${`<section class="card wrow"><div class="grow"><b>Registrera vikt</b><span class="muted small">Dagens datum · ${dateLabel(TODAY)}</span></div><input id="wkg" type="number" inputmode="decimal" step="0.1" placeholder="kg" aria-label="Vikt i kg" value="${weights()[TODAY]??""}"><button class="small" data-wsave data-wdate="${TODAY}">Spara</button></section>`}${weightChart()}</div>`;
+  },
   idag() {
-    const m = macros(), e = eaten();
-    m.kcal += burnedOn(TODAY);
-    const t = todaysPass(), d = t.d, w = t.w, done = w && w.done;
-    const started = !done && (t.active || (w && d.ex.some(x => ((w.sets[x.id]) || []).some(s => s && s.ok))));
-    const passes = weekSummary(weekStart(TODAY)).passes, acts = actsOn(TODAY);
-    const greet = done ? "Bra jobbat idag." : started ? "Fortsätt där du var." : t.rest ? (acts.length ? "Snyggt, aktiv vilodag." : "Vilodag idag.") : "Dags att köra.";
-    const nDone = d.ex.filter(x => exDone(w, x)).length;
-    const status = done ? `<span class="oktext">${icon("check", 14)}Genomfört idag</span>` : started ? `${nDone} av ${d.ex.length} övningar` : t.rest ? `Vila · nästa ${WD_LONG[weekdayOf(t.next)]}` : "Inte gjort än";
-    const passTile = `<button class="htile passtile ${done ? "ok" : t.rest ? "" : "go"}" data-tab="pass" aria-label="${passLabel(t)}: ${esc(d.name)}, ${done ? "genomfört" : started ? "påbörjat" : t.rest ? "vilodag" : "inte gjort än"}. Till Träna">
-        <span class="klabel ${done ? "oktext" : "accent"}">${passLabel(t)}</span>
-        <span class="col"><b class="hname">${esc(d.name)}</b><span class="muted small">${status}</span>${acts.length ? `<span class="muted small">+ ${esc(acts.map(a => a.name).join(", "))}</span>` : ""}</span>
-        <span class="hlink">Till Träna${icon("right", 14)}</span></button>`;
-    const pct = m.kcal ? e.kcal / m.kcal : 0;
-    const kcalTile = `<button class="htile kcaltile" data-go="kost" aria-label="Kalorier: ${tnum(e.kcal)} av ${tnum(m.kcal)}"><span class="klabel">Kalorier</span>
-        <span class="ringbox">${ring(pct, 64, pct > 1.05 ? "over" : "")}<b>${Math.round(pct * 100)}%</b></span>
-        <span><b class="hnum">${tnum(e.kcal)}</b><span class="muted small"> / ${tnum(m.kcal)}</span></span></button>`;
-    const segs = Math.max(S.plan.count, passes);
-    const week = `<section class="card weekrow" aria-label="Veckan: ${passes} av ${S.plan.count} pass"><span class="klabel">Veckan</span>
-      <span class="wsegs" aria-hidden="true">${Array.from({ length: segs }, (_, i) => `<i class="${i < passes ? "on" : ""}"></i>`).join("")}</span>
-      <b class="small">${passes} av ${S.plan.count} pass</b></section>`;
-    const lw = letterWeekToShow();
-    const letter = !lw ? "" : (() => {
-      const c = weekSummary(lw), recs = weekRecords(lw).length;
-      return `<div class="card homerow letter-card"><span class="hricon">${icon("mail", 22)}</span>
-        <span class="grow"><b>Din vecka ${weekNo(lw)}</b><span class="muted small">${c.passes} av ${S.plan.count} pass${recs ? ` · ${recs} ${recs === 1 ? "nytt personbästa" : "nya personbästa"}` : ""}</span></span>
-        <button class="small" data-letter="${lw}">Visa</button><button class="small ghost iconbtn" data-letterclose="${lw}" aria-label="Stäng sammanfattningen">${icon("close", 18)}</button></div>`;
-    })();
-    const today = new Date().toLocaleDateString("sv-SE", { weekday: "long", day: "numeric", month: "long" });
-    return `<header class="homehead"><div class="brand"><img src="icons/icon-192-v2.png" alt=""><div class="ordbild"><span class="wordmark">DRIV</span><span class="slogan">Ditt mål. <em>Ditt driv.</em></span></div></div>
-        <button class="gear avbtn" data-tab="profil" aria-label="Inställningar"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Z"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06-1.87 1.87-.06-.06A1.7 1.7 0 0 0 16 18.4a1.7 1.7 0 0 0-1 1.56V21h-6v-1.04A1.7 1.7 0 0 0 8 18.4a1.7 1.7 0 0 0-1.87.34l-.06.06-1.87-1.87.06-.06A1.7 1.7 0 0 0 4.6 15 1.7 1.7 0 0 0 3 14H2v-4h1a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.34-1.87L4.2 7.07 6.07 5.2l.06.06A1.7 1.7 0 0 0 8 5.6 1.7 1.7 0 0 0 9 4V3h6v1a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.87-.34l.06-.06 1.87 1.87-.06.06A1.7 1.7 0 0 0 19.4 9 1.7 1.7 0 0 0 21 10h1v4h-1a1.7 1.7 0 0 0-1.6 1Z"/></svg></button></header>
-      <div class="muted homedate">${cap(today)}</div>
-      <h1 class="greet">${greet}</h1>
-      <div class="htiles">${passTile}${kcalTile}</div>
-      ${week}
-      ${letter}
-      ${accountNudge()}${installNudge()}
-      ${friendsNudge()}
-      ${friendsHome()}
-      ${S.hideWeight ? "" : weighCardDue()}`;
+    const m=macros(),e=eaten(),t=todaysPass(),d=t.d,w=t.w;
+    m.kcal+=burnedOn(TODAY);
+    const done=!!(w&&w.done), started=!done&&(t.active||(w&&d.ex.some(x=>((w.sets[x.id])||[]).some(z=>z&&z.ok))));
+    const dailyEx=S.daily||[],supp=S.supplements||[];
+    const completed=dailyEx.filter(x=>dailyDone(logDate(),x.id)).length+supp.filter(x=>day().dailies["supp:"+x.id]).length;
+    const total=dailyEx.length+supp.length;
+    const hr=new Date().getHours(),allDone=done&&completed===total&&total>0;
+    const greeting=allDone?"Allt klart för idag!":done?"Bra jobbat idag!":started?"Fortsätt där du var!":hr<10?"God morgon!":hr<17?"Dags att köra!":hr<21?"God kväll!":"Dags att varva ner!";
+    const sub=allDone?"Snyggt jobbat. Njut av resten av dagen.":done?"Dagens pass är avklarat.":started?"Ditt träningspass väntar på dig.":hr>=21?"Ta hand om återhämtningen.":"Dags att ta tag i dagen.";
+    const date=cap(new Date().toLocaleDateString("sv-SE",{weekday:"long",day:"numeric",month:"long"}));
+    const status=done?"Passet klart":started?"Fortsätt "+esc(d.name):t.rest?"Vilodag":"Starta "+esc(d.name);
+    return `<div class="home-new">
+      <header class="homehead"><div class="brand"><img src="icons/icon-192-v2.png" alt=""><div class="ordbild"><span class="wordmark">DRIV</span><span class="slogan">Ditt mål. <em>Ditt driv.</em></span></div></div><button class="gear avbtn" data-tab="profil" aria-label="Inställningar">⚙</button></header>
+      <div class="homedate muted">${date}</div><h1 class="greet">${greeting}</h1><p class="home-sub muted">${sub}</p>
+      <section class="home-new-card home-pass"><div class="home-cardline"><span class="home-num">1</span><div class="grow"><span class="klabel accent">DAGENS PASS</span><h2>${esc(t.rest?"Vilodag":d.name)}</h2><span class="muted small">${t.rest?"Återhämtning idag":esc((TYPES[d.type]||{}).desc||"")+" · "+d.ex.length+" övningar"}</span></div><button class="home-arrow" data-tab="pass" aria-label="Se övningar">›</button></div><button class="home-start" data-tab="pass">${done?"✓ "+status:t.rest?"Se träningsschema":"▶ "+status}</button></section>
+      <button class="home-new-card home-linkcard" data-tab="kost"><span class="home-num">2</span><span class="grow"><b>Logga dagens mat</b><span class="muted small">${tnum(e.kcal)} / ${tnum(m.kcal)} kcal · ${tnum(e.protein)} / ${tnum(m.protein)} g protein</span><span class="home-meter"><i style="width:${Math.min(100,Math.round(100*e.kcal/Math.max(1,m.kcal)))}%"></i></span></span><span class="home-chevron">›</span></button>
+      <button class="home-new-card home-linkcard" data-tab="dailys"><span class="home-num">3</span><span class="grow"><b>Gör dina dailys</b></span><span class="muted small home-count">${completed} av ${total} klara</span><span class="home-chevron">›</span></button>
+      <section class="home-other"><div class="klabel">ÖVRIGT IDAG</div>
+        <button data-tab="stretchguide" class="home-other-row"><span>♧</span><span class="grow"><b>Stretchguide</b><small>Välj övningar för rörlighet</small></span><span>›</span></button>
+        <button data-homeactivity class="home-other-row"><span>⌁</span><span class="grow"><b>Annan aktivitet</b><small>Löpning, cykling, padel m.m.</small></span><span>›</span></button>
+        <button data-tab="vagning" class="home-other-row"><span>▢</span><span class="grow"><b>Veckans vägning</b><small>Följ din utveckling vecka för vecka</small></span><span>›</span></button>
+        <button data-tab="vanner" class="home-other-row"><span>♧</span><span class="grow"><b>Vänner</b><small>Träna tillsammans och följ varandra</small></span><span>›</span></button>
+      </section></div>`;
   },
 
   pass() {
@@ -1014,7 +1156,7 @@ const VIEWS = {
 
   vanner() { return friendsView(); },
 
-  kommande: () => upcomingFeaturesPage(),
+  kommande: () => `<div class="page-back-wrap"><button class="ghost small page-back" data-tab="profil">${icon("left",16)} Tillbaka</button></div>${upcomingFeaturesPage()}`,
 
   profil() {
     checkPush();
@@ -1750,6 +1892,10 @@ document.addEventListener("click", ev => {
   if (!t || t.disabled) return;
   if (t.classList.contains("overlay") && ev.target !== t) return;   // klick inne i rutan
   const ds = t.dataset, prevTab = tab;
+  if (ds.stretchmore !== undefined) { stretchLimit += 24; render(); return; }
+  if (ds.stretchmode !== undefined) { stretchMode=ds.stretchmode; render(); return; }
+  if (ds.stretcharea !== undefined) { stretchArea = ds.stretcharea; render(); return; }
+  if (ds.homeactivity !== undefined) { openAct(logDate(),null,""); render(); return; }
   if (ds.close !== undefined) { modal = null; render(); return; }
   if (ds.opentest !== undefined) {
     try { localStorage.setItem("driv-dev", "1"); } catch (e) { /* blockerad lagring */ }
