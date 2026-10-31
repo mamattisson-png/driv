@@ -180,7 +180,7 @@ cable_pullover_single|Enarms raka drag i kabel|Stå framför en hög trissa och 
 `, {cable:[95,-8]});
   family("skulder_armhavningar", "bw", "backBW", ["Sänk skuldrorna från öronen med armbågarna raka.", "Släpp kontrollerat tillbaka till utgångsläget utan att svinga."], `
 scap_pullup|Skulderblads-pull-ups|Häng i en stång med raka armar och gör en liten höjning av bröstkorgen genom skuldrorna.|8–12
-`, {A:EX.pullups.A,B:{...EX.pullups.A,h:[61,50]},scene:EX.pullups.scene,prim:["rygg"],sec:["underarmar"],muscles:"Skulderbladens muskler, lats"}, "rygg");
+`, {cat:"pull",A:EX.pullups.A,B:{...EX.pullups.A,h:[61,50]},scene:EX.pullups.scene,prim:["rygg"],sec:["underarmar"],muscles:"Skulderbladens muskler, lats"}, "rygg");
 
   // Axlar: fria vikter, kabel och kroppsvikt (33).
   const overhead = ["Pressa vikten uppåt tills armen är sträckt utan att skjuta revbenen framåt.", "Sänk kontrollerat till axelhöjd med stilla huvud och spänd mage."];

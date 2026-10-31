@@ -28,6 +28,7 @@ Senast uppdaterad: 2026-10-30. Källa: gemensam förbättringslista i ChatGPT. D
 | 22 | Tydlig återkoppling när set avslutas och nästa öppnas | Träning | Hög | Hanteras av Claude |
 | 23 | Spara genomfört pass som namngiven passmall | Träning | Hög | Ej påbörjad |
 | 24 | Testlägets extrabalk får inte skymma träningsvyn | Bugg | Hög | Ej påbörjad |
+| 27 | Sök och filtrera övningar på passtyp (Push, Pull, Ben) | Träning | Medel | Klar |
 
 ## Detaljer och acceptanskriterier
 
@@ -57,6 +58,8 @@ Senast uppdaterad: 2026-10-30. Källa: gemensam förbättringslista i ChatGPT. D
 23. **Spara genomfört pass som namngiven passmall:** Efter avslutat träningspass erbjud ett diskret frivilligt val **Spara som passmall?** med möjlighet att ange ett eget namn, t.ex. *Jobbet*, *Gymmet* eller *Hemma*. Spara övningar, ordning och relevanta upplägg (set/reps), men inte själva träningsresultatet som ny mall. Gör det möjligt att starta ett nytt pass från en sparad mall, samt byta namn, redigera och ta bort mallar. Användaren ska kunna ha flera varianter beroende på träningsplats och kunna avsluta utan att spara. Kontrollera befintliga pass-/favoritfunktioner innan implementation så att inga dubbla system skapas.\n\n24. **Testlägets extrabalk får inte skymma träningsvyn:** Den orangea testlägesbalken högst upp tar extra höjd och kan leda till att träningsvyn och nedersta knappar klipps eller täcks, särskilt när mobilt numeriskt tangentbord visas. Gör testbalken kompakt eller fällbar och se till att sticky/fixed-element, scrollutrymme och safe-area/tangentbordshöjd räknar med den. **Klar med set** och övriga kontroller ska vara fullt synliga och åtkomliga även i testläge. Undvik att ändra produktionens layout. Verifiera på mobil med tangentbord öppet/stängt och med supersets.\n\n25. **Utfällbara måltider i kostöversikten:** Implementerad i `kost.js` (commit `1bfac02`). Tryck på en måltid med registrerad mat för att visa/dölja livsmedel med mängd och kcal; plusknappen är kvar. Texten ”Riktmärke” ändrad till ”Rekommenderat”. **Status: Implementerad, väntar på verifiering i testmiljön.**
 
 26. **Ny förenklad vy för att lägga till mat:** Godkänd design, ännu ej implementerad. Sökning med gram före kcal och utan matbilder; Senaste (5 över alla mål), Vanliga för aktuell måltid (3), Favoriter och Mina recept. Vid sökning ersätts förslagen av resultat. Plus lägger till i ett tillfälligt urval; kompakt expanderbar panel visar valda livsmedel och total kcal, med möjlighet att ändra mängd, spara recept och lägga till alla i måltiden. Rena rader med diskreta avdelare, inga nästlade kort. **Status: Påbörjad (commit `c2f5ef2`); snabbval och tillfälligt urval inlagda, sökresultat, mängdjustering, recept och mobiltest återstår att färdigställa/verifiera.**
+
+27. **Sök och filtrera övningar på passtyp (Klar):** I Lägg till övning finns filtret Pass med Push, Pull och Ben, och väljaren startar på passets typ. Sökningen förstår pull, push, ben, legs, överkropp, underkropp och bål. Rättat samtidigt: Skulderblads-pull-ups var felaktigt markerad som push.
 
 ## Arbetsregler
 

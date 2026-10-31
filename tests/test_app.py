@@ -1583,7 +1583,9 @@ def test_valj_ovning_efter_kroppsdel_och_utrustning(page):
     # Sökningen förstår passtyper: "pull" ger dragövningar
     page.select_option("[data-areasel]", "alla")
     page.fill("#exsearch", "pull")
-    assert {c.split("/")[0] for c in cats()} == {"pull"} and len(cats()) > 30
+    # Alla dragövningar syns (plus enstaka med "pull" i namnet, som pull-through)
+    pulls = page.evaluate("Object.keys(EX).filter(id => EX[id].cat === 'pull').length")
+    assert sum(c.startswith("pull/") for c in cats()) == pulls and pulls > 30
     page.fill("#exsearch", "")
     page.select_option("[data-areasel]", "pull")
     assert {c.split("/")[0] for c in cats()} == {"pull"}
