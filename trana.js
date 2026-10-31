@@ -69,24 +69,68 @@ function traningView() {
     if (!isFixed() && p === d) return `<span class="pst accent">På tur</span>`;
     return `<span class="pst">${isFixed() ? cap(WD_LONG[S.plan.weekdays[i]]) : `Pass ${i + 1}`}</span>`;
   };
+  // Veckans pass som kort: grön bock när det är gjort, orange ram på det som står på tur
   const cols = n <= 3 ? n : n === 4 ? 2 : 3;
-  const tiles = `<div class="ptiles" style="grid-template-columns:repeat(${cols},minmax(0,1fr))">${S.plan.days.map((p, i) =>
-    `<button class="ptile ${p === d && !t.rest ? "today" : ""}" data-pick="${p.id}" aria-label="${esc(p.name)}">${status(p, i)}<b>${esc(p.name)}</b></button>`).join("")}</div>`;
-  const acts = actsOn(TODAY), nD = S.daily.length, dDone = S.daily.filter(e => dailyDone(TODAY, e.id)).length;
-  const extra = `<div class="trtiles">
-      <button class="ttile" data-actnew="" data-actdate="${TODAY}"><span class="klabel">Annan träning</span><span class="plusic">${icon("plus", 20)}</span>
-        <span class="muted small">${acts.length ? esc(acts.map(a => `${a.name} ${+a.min} min`).join(", ")) : "Padel, löpning …"}</span></button>
-      <button class="ttile" data-trsheet="dailys"><span class="klabel">Dailys</span>${ring(nD ? dDone / nD : 0, 46, nD && dDone === nD ? "ok" : "")}
-        <span class="small">${nD ? `<b>${dDone}</b><span class="muted"> / ${nD} idag</span>` : `<span class="muted">Lägg till</span>`}</span></button></div>`;
+  const tiles = `<div class="wkcards" style="grid-template-columns:repeat(${cols},minmax(0,1fr))">${S.plan.days.map((p, i) => {
+    const ok = !!completedPassDate(p), next = p === d && !t.rest && !ok;
+    const c = completedPassDate(p), st = ok ? `<span class="pst ok">${c === TODAY ? "Klar idag" : `Klar · ${WD[weekdayOf(c)].toLowerCase()}`}</span>` : status(p, i);
+    return `<button class="wkcard ${ok ? "ok" : next ? "next" : ""}" data-pick="${p.id}" aria-label="${esc(p.name)}"><span class="wkst"><span class="wkdot">${ok ? icon("check", 10) : ""}</span>${st}</span><b>${esc(p.name)}</b></button>`;
+  }).join("")}</div>`;
+  const acts = actsOn(TODAY);
+  const row = (ic, title, sub, attrs, end = "right") => `<button class="h3-row" ${attrs}><span class="h3-ic">${icon(ic, 18)}</span><span class="grow"><b>${title}</b><small>${sub}</small></span>${icon(end, 18)}</button>`;
   return `<div class="muted small toplabel">Vecka ${weekNo(TODAY)} · ${passes} av ${S.plan.count} pass</div><h1>Träna</h1>
     ${dayCard}
-    <div class="row between trprog"><span class="klabel">${esc(PROGRAMS[S.plan.program || "ppl"].name)} · ${S.plan.count} i veckan</span>
-      <button class="linkbtn2" data-tab="upplagg">Byt upplägg${icon("right", 14)}</button></div>
+    <div class="row between trprog"><span class="klabel">Veckans pass</span>
+      <button class="linkbtn2" data-tab="upplagg">${esc(PROGRAMS[S.plan.program || "ppl"].name)}${icon("right", 14)}</button></div>
     ${tiles}
-    ${extra}
+    <div class="klabel h3-sec">Mer</div>
+    <section class="h3-list">
+      ${row("search", "Övningsbibliotek", `${Object.keys(EX).length} övningar · sök och läs instruktioner`, "data-exlib")}
+      ${row("upplagg", "Träningsupplägg", `${esc(PROGRAMS[S.plan.program || "ppl"].name)} · ${S.plan.count} pass i veckan`, 'data-tab="upplagg"')}
+      ${row("aktivitet", "Annan träning", acts.length ? esc(acts.map(a => `${a.name} ${+a.min} min`).join(", ")) : "Padel, löpning, cykling …", `data-actnew="" data-actdate="${TODAY}"`, "plus")}
+    </section>
     ${acts.length ? `<div class="homeacts">${acts.map((a, i) => `<button class="dchip on" data-actedit="${i}" data-actdate="${TODAY}">${icon("check", 16)}${esc(a.name)} · ${+a.min} min</button>`).join("")}</div>` : ""}
     ${trSheet === "dailys" ? dailysSheet() : ""}`;
 }
+
+// Övningsbiblioteket: alla övningar att bläddra bland, med samma kroppsdelar och passtyper som när man väljer övning
+let exLib = null;   // { q, f } när biblioteket är öppet; f är "alla", en passtyp (push/pull/legs) eller en kroppsdel
+function exLibView() {
+  const f = exLib.f;
+  const chips = [["alla", "Alla"], ...Object.entries(PASS_FILTER).map(([k, n]) => [k, n.split(":")[0]]), null, ...Object.entries(AREAS).map(([k, n]) => [k, n])];
+  const groups = Object.keys(AREAS).map(a => {
+    const ids = Object.keys(EX).filter(id => areaOf(id) === a);
+    return ids.length ? `<section class="exlib-group" data-group="${a}"><div class="klabel h3-sec">${AREAS[a]}</div><div class="h3-list">${ids.map(id => `<button class="h3-row exlib-row" data-info="${id}" data-area="${a}" data-cat="${EX[id].cat}"
+      data-q="${esc(norm(EX[id].name + " " + EX[id].muscles + " " + AREAS[a] + " " + (PASS_WORDS[EX[id].cat] || "")))}"><span class="thumb exl">${figure(id)}</span><span class="grow"><b>${esc(EX[id].name)}</b><small>${esc(EX[id].muscles)}</small></span>${icon("right", 18)}</button>`).join("")}</div></section>` : "";
+  }).join("");
+  return `<div class="exlib"><button class="backbtn" data-exlibclose>${icon("left", 18)}Träna</button><h1>Övningar</h1>
+    <div class="psearch">${icon("search", 18)}<input id="exlibq" type="search" placeholder="Sök övning eller muskel" value="${esc(exLib.q)}" autocomplete="off" aria-label="Sök övning"></div>
+    <div class="exlib-chips" role="radiogroup" aria-label="Visa">${chips.map(c => c ? `<button role="radio" class="${f === c[0] ? "on" : ""}" aria-checked="${f === c[0]}" data-exlibf="${c[0]}">${c[1]}</button>` : `<span class="exlib-sep" aria-hidden="true"></span>`).join("")}</div>
+    <div class="muted small exlib-count" id="exlibn"></div>
+    ${groups}<div class="muted exlib-none" hidden>Inga övningar matchar.</div></div>`;
+}
+// Sökning och filter utan att sidan ritas om, så att tangentbordet stannar
+function filterExLib() {
+  if (!exLib) return;
+  const q = norm(exLib.q.trim()), f = exLib.f;
+  let n = 0;
+  for (const el of document.querySelectorAll(".exlib-row")) {
+    const hit = (!q || el.dataset.q.includes(q)) && (f === "alla" || (PASS_FILTER[f] ? el.dataset.cat === f : el.dataset.area === f));
+    el.hidden = !hit; if (hit) n++;
+  }
+  for (const g of document.querySelectorAll(".exlib-group")) g.hidden = !g.querySelector(".exlib-row:not([hidden])");
+  const c = $("exlibn"); if (c) c.textContent = `${n} ${n === 1 ? "övning" : "övningar"}`;
+  const none = document.querySelector(".exlib-none"); if (none) none.hidden = n > 0;
+}
+document.addEventListener("input", ev => { if (ev.target.id === "exlibq" && exLib) { exLib.q = ev.target.value; filterExLib(); } });
+document.addEventListener("click", ev => {
+  const b = ev.target.closest && ev.target.closest("[data-exlib],[data-exlibclose],[data-exlibf]");
+  if (!b) return;
+  if (b.dataset.exlib !== undefined) { exLib = { q: "", f: "alla" }; tab = "pass"; passOpen = false; window.scrollTo(0, 0); }
+  else if (b.dataset.exlibclose !== undefined) exLib = null;
+  else { exLib.f = b.dataset.exlibf; }
+  render(); filterExLib();
+});
 
 function dailysSheet() {
   const n = S.daily.length, done = S.daily.filter(e => dailyDone(logDate(), e.id)).length;
@@ -193,7 +237,7 @@ document.addEventListener("click", ev => {
   if (!t || t.disabled) return;
   if (t.classList.contains("overlay") && ev.target !== t) return;   // klick inne i fönstret
   const ds = t.dataset;
-  if (ds.seepass !== undefined) { chosenDay = ds.seepass || currentPassDay().id; passOpen = true; editing = false; window.scrollTo(0, 0); }
+  if (ds.seepass !== undefined) { tab = "pass"; chosenDay = ds.seepass || currentPassDay().id; passOpen = true; editing = false; window.scrollTo(0, 0); }
   else if (ds.passback !== undefined) { passOpen = false; chosenDay = null; window.scrollTo(0, 0); }
   else if (ds.editcancel !== undefined) {
     const d = editSnap && dayById(editSnap.id);

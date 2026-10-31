@@ -1642,9 +1642,6 @@
 .daypass {border-color:var(--line-strong)!important}
 .ptile.today {border-color:var(--line-strong)!important}
 
-/* Startsida v2 – test */
-.home-new{display:flex;flex-direction:column;gap:12px;padding-bottom:24px}.home-new .homehead{margin-bottom:4px}.home-new .homedate{font-size:13px;margin-top:4px}.home-new .greet{margin:0;font-size:clamp(26px,7vw,36px);line-height:1.12}.home-sub{margin:0 0 5px;font-size:14px}.home-new-card{display:flex;width:100%;background:var(--card,#17191d);border:1px solid var(--line,#303137);border-radius:19px;padding:16px;text-align:left;color:inherit;box-sizing:border-box;align-items:center;gap:14px}.home-pass{display:block}.home-cardline{display:flex;align-items:center;gap:14px}.home-num{display:grid;place-items:center;flex:0 0 38px;width:38px;height:38px;border-radius:50%;background:#ff6b18;color:#141414;font-weight:800;font-size:19px}.home-new-card h2{font-size:25px;margin:3px 0 1px}.home-new-card b{font-size:16px}.home-new-card .small{display:block;margin-top:5px}.home-arrow,.home-chevron{background:transparent;border:0;color:#aeb4c0;font-size:30px;padding:0 3px}.home-start{width:100%;border:0;border-radius:13px;background:#ff6b18;color:#101010;font-weight:800;font-size:16px;padding:15px;margin-top:15px}.home-linkcard{cursor:pointer;min-height:85px}.home-meter{display:block;width:100%;height:5px;border-radius:8px;background:#383a40;margin-top:10px;overflow:hidden}.home-meter i{display:block;height:100%;background:#ff6b18}.home-count{white-space:nowrap;margin:0!important}.home-other{padding:10px 8px 0}.home-other>.klabel{margin-bottom:7px}.home-other-row{display:flex;align-items:center;gap:15px;width:100%;background:transparent;border:0;border-top:1px solid var(--line,#303137);color:inherit;padding:12px 5px;text-align:left}.home-other-row>span:first-child{font-size:23px;width:28px;text-align:center}.home-other-row b{font-size:15px}.home-other-row small{display:block;color:var(--muted,#9da1aa);font-size:12px;margin-top:2px}.home-other-row>span:last-child{font-size:24px;color:#aeb4c0}@media(max-height:760px){.home-new{gap:8px}.home-new-card{padding:12px}.home-other-row{padding:9px 5px}.home-new .greet{font-size:27px}}
-
 /* Stretchguide och vägning på test */
 .stretch-page,.weigh-page{padding:12px 0 36px}.stretch-page h1,.weigh-page h1{margin:18px 0 8px}.stretch-page p,.weigh-page p{margin-bottom:18px}.stretch-areas{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:16px 0 24px}.stretch-areas button{background:var(--card,#181a1e);border:1px solid var(--line,#303137);border-radius:13px;color:inherit;padding:16px 12px;text-align:left;font-weight:650}.stretch-areas button.on{border-color:#ff6b18;color:#ff873d}.stretch-results{display:flex;flex-direction:column;gap:8px}.stretch-result{display:flex;align-items:center;gap:12px;background:var(--card,#181a1e);border:1px solid var(--line,#303137);border-radius:13px;padding:10px}.stretch-result small{display:block;color:var(--muted,#999);margin-top:4px}.weigh-page .wrow{margin:14px 0}.weigh-page .wrow input{max-width:80px}
 
@@ -1653,16 +1650,72 @@
 .stretch-search{display:block;width:100%;border:1px solid #41434a;border-radius:14px;background:#222429;color:inherit;padding:13px 15px;margin:0 0 14px;font-size:15px}.stretch-more{display:block;width:100%;margin:16px 0 24px;border:1px solid #ff711b;border-radius:13px;padding:14px;background:#291c15;color:#ff944f;font-weight:700}
 
 /* Completion state: Dailys and home */
-.home-new-card.home-done{border-color:rgba(41,171,117,.5);background:linear-gradient(110deg,rgba(37,170,121,.11),var(--surface,#191a1d) 70%)}
-.home-new-card.home-done .home-num{background:#27a977;color:#fff}
-.home-new-card.home-done .home-start{background:#27a977;color:#fff}
-.home-new-card.home-done .home-meter i{background:#27a977}
-.home-new-card.home-done .home-count{color:#43d19b;font-weight:700}
 .dailys-progress.all-done>div:last-child b{color:#44d29d}
 .dailys-summary .summary-done{border:1px solid rgba(39,169,119,.48);background:rgba(39,169,119,.1)}
 .dailys-summary .summary-done b{color:#42cf98}
 .dailys-page .daily.ok .grow>b{color:#b9c4bf}
 .dailys-page .daily.ok .done-btn.on{background:#27a977}
+
+/* Hem: lugnare kort utan ramar; orange bara för det man trycker på, grön bock när ett steg är klart */
+.home3 .homehead { margin-bottom: 6px; }
+.h3-date { font-size: 14px; }
+.h3-greet { font: 800 26px/1.15 "Unbounded", sans-serif; margin: 2px 0 2px; }
+.h3-sub { font-size: 14px; margin-bottom: 12px; }
+.h3-card { display: block; width: 100%; background: var(--card); border: 0; border-radius: 20px; padding: 12px 14px; margin: 0 0 8px; color: var(--text); text-align: left; font: inherit; }
+button.h3-card.h3-head, .h3-head { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; background: none; border: 0; padding: 0; color: inherit; font: inherit; min-height: 0; }
+button.h3-card.h3-head { background: var(--card); padding: 12px 14px; }
+.h3-head .grow { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.h3-head > .ic { color: var(--muted); flex: none; }
+.h3-head b { font-size: 16px; font-weight: 600; }
+.h3-head small, .h3-row small { color: var(--muted); font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.h3-card .h3-head small { white-space: normal; }
+.daypass { border: 0 !important; }
+.h3-pass { font: 800 22px/1.15 "Unbounded", sans-serif !important; text-transform: uppercase; }
+.h3-no { width: 26px; height: 26px; border-radius: 13px; flex: none; display: grid; place-items: center; background: var(--card-2); color: var(--muted); font: 600 13px "Lexend", sans-serif; align-self: flex-start; margin-top: 1px; }
+.h3-no.ok { background: var(--ok-strong); color: var(--on-color); }
+.h3-card.done { background: color-mix(in srgb, var(--ok) 9%, var(--card)); }
+.h3-card.done .h3-head b:not(.h3-pass) { color: var(--ok-text); }
+.h3-bar { display: block; height: 4px; border-radius: 2px; background: var(--card-2); margin-top: 8px; overflow: hidden; }
+.h3-bar i { display: block; height: 100%; border-radius: 2px; background: var(--muted); }
+.h3-card.done .h3-bar i { background: var(--ok); }
+.h3-btn { width: 100%; min-height: 46px; margin-top: 10px; border: 0; border-radius: 16px; background: var(--accent-strong); color: var(--on-accent); font: 600 16px "Lexend", sans-serif; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.h3-btn.ok { background: var(--card-2); color: var(--ok-text); }
+.h3-btn.ghost { background: var(--card-2); color: var(--text); }
+.h3-sec { margin: 14px 4px 6px; }
+.h3-list { background: var(--card); border-radius: 20px; padding: 0 14px; }
+.h3-row { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 50px; padding: 6px 0; border: 0; border-radius: 0; background: none; color: var(--text); text-align: left; font: inherit; }
+.h3-row + .h3-row { border-top: 1px solid var(--line); }
+.h3-row .grow { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.h3-row b { font-size: 15px; font-weight: 600; }
+.h3-row > .ic { color: var(--muted); flex: none; }
+.h3-ic { width: 32px; height: 32px; border-radius: 11px; flex: none; display: grid; place-items: center; background: var(--card-2); color: var(--text); overflow: hidden; }
+.h3-ic .fig { width: 32px; height: 32px; }
+/* Träna: veckans pass som kort med status */
+.wkcards { display: grid; gap: 8px; margin-bottom: 4px; }
+.wkcard { display: flex; flex-direction: column; justify-content: space-between; gap: 18px; min-height: 88px; padding: 12px; border: 0; border-radius: 18px; background: var(--card); color: var(--text); text-align: left; font: inherit; }
+.wkcard b { font: 700 15px "Unbounded", sans-serif; text-transform: uppercase; overflow-wrap: anywhere; }
+.wkst { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.wkst .pst { font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wkdot { width: 16px; height: 16px; flex: none; border-radius: 8px; border: 1.5px solid var(--line-strong); display: grid; place-items: center; }
+.wkcard.ok { background: color-mix(in srgb, var(--ok) 10%, var(--card)); }
+.wkcard.ok .wkdot { background: var(--ok-strong); border-color: var(--ok-strong); color: var(--on-color); }
+.wkcard.ok .pst { color: var(--ok-text); }
+.wkcard.next { box-shadow: inset 0 0 0 1.5px var(--accent); }
+.wkcard.next .wkdot { border-color: var(--accent); }
+.wkcard.next .pst { color: var(--accent-text); }
+/* Övningsbiblioteket */
+.exlib > .backbtn { margin-bottom: 2px; }
+.exlib h1 { margin: 0 0 10px; }
+.exlib .psearch { margin-bottom: 10px; }
+.exlib-chips { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; margin: 0 -16px 6px; padding: 0 16px; }
+.exlib-chips::-webkit-scrollbar { display: none; }
+.exlib-chips button { flex: none; min-height: 36px; padding: 0 14px; border-radius: 18px; border: 0; background: var(--card-2); color: var(--muted); font-size: 14px; }
+.exlib-chips button.on { background: var(--accent-soft); color: var(--text); box-shadow: inset 0 0 0 1.5px var(--accent); font-weight: 600; }
+.exlib-sep { flex: none; width: 1px; background: var(--line); margin: 6px 2px; }
+.exlib-count { margin: 4px 4px 0; }
+.exlib .thumb.exl { width: 46px; height: 46px; border-radius: 12px; flex: none; pointer-events: none; }
+.exlib-row { min-height: 60px; }
+.exlib-none { margin: 20px 4px; }
 </style>
 </head>
 <body>

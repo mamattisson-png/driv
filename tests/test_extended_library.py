@@ -16,10 +16,10 @@ def test_biblioteket_laddas_med_flera_hundra_nya_ovningar(page):
 def test_ny_stretch_kan_laggas_till_som_daily_och_bevaras(page):
     start(page)
     exercise=page.evaluate("EXTRA_STRETCH_IDS.find(id=>isTimed(id))")
-    go(page,'pass');page.click('[data-trsheet=dailys]');page.click('[data-dedit]')
+    go(page,'dailys')
     page.click('[data-openpick="daily"]');page.select_option('[data-areasel]','stretch')
     page.fill('#exsearch',page.evaluate('id=>EX[id].name',exercise))
-    page.click(f'[data-add="{exercise}"]');page.click('[data-dedit]')
+    page.click(f'[data-add="{exercise}"]');page.evaluate('modal = null; render()')
     page.click(f'[data-dcheck="{exercise}"]')
     assert page.evaluate('id=>dailyDone(TODAY,id)',exercise)
     page.reload()
@@ -52,7 +52,7 @@ def test_utokade_kataloger_fungerar_offline(page):
     start(page)
     page.context.set_offline(True)
     assert page.evaluate('EXTRA_STRENGTH_IDS.every(id=>EX[id])&&EXTRA_STRETCH_IDS.every(id=>EX[id])')
-    go(page,'pass');page.click('[data-trsheet=dailys]');page.click('[data-dedit]')
+    go(page,'dailys')
     page.click('[data-openpick="daily"]');page.select_option('[data-areasel]','stretch')
     assert page.locator('.pick:not([hidden])').count()>=100
 

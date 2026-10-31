@@ -80,7 +80,7 @@ def test_eget_upplagg_med_egna_namn_och_ovningar(page):
     page.click("button.primary[data-edit]")
     assert page.evaluate("[S.plan.days[0].name, S.plan.days[0].ex.length, S.plan.days.length]") == ["Bröst & triceps", 1, 2]
     page.click("[data-passback]")
-    assert "BRÖST & TRICEPS" in page.inner_text(".ptiles").upper()
+    assert "BRÖST & TRICEPS" in page.inner_text(".wkcards").upper()
 
 
 def test_hem_visar_dagens_pass(page):
@@ -449,7 +449,7 @@ def test_aktivitet_loggas_och_raknas_som_pass(page):
     start(page)
     go(page, "pass")
     assert page.locator("text=Kommande").count() == 0
-    page.click('.ttile[data-actnew]')
+    page.click('.h3-row[data-actnew]')
     page.click('[data-actpick="Padel"]')
     page.click('[data-actmin="15"]')   # 75 min
     page.click('[data-actint="3"]')
@@ -457,7 +457,7 @@ def test_aktivitet_loggas_och_raknas_som_pass(page):
     assert page.evaluate("S.log[TODAY].acts.map(({name,min,int}) => ({name,min,int}))") == [{"name": "Padel", "min": 75, "int": 3}]
     assert page.evaluate("weekSummary(weekStart(TODAY)).passes") == 1
     # En egen aktivitet, och dagens aktiviteter syns under rutorna i Träna
-    page.click('.ttile[data-actnew]')
+    page.click('.h3-row[data-actnew]')
     page.fill("#actname", "Kanotpaddling")
     page.click('[data-actmin="-15"]')
     page.click('[data-actmin="-15"]')
@@ -591,8 +591,9 @@ def test_dailys_flyttas_over_fran_gammalt_format(page):
     page.reload()
     assert page.evaluate("S.daily.map(e => e.id)") == ["plankan", "lop", "promenad"]
     assert page.evaluate("S.log['2026-01-05'].dailies") == {"lop": {"km": 5, "min": 30}, "plankan": True, "promenad": True}
+    # Löpning med km och minuter finns i dailys-panelen
     go(page, "pass")
-    page.click("[data-trsheet=dailys]")
+    page.evaluate("trSheet = 'dailys'; render()")
     page.click("[data-dcheck=plankan]")
     assert page.evaluate("dailyDone(TODAY, 'plankan')")
     # Löpningen får samma bock när km är ifyllt
@@ -1229,8 +1230,7 @@ def test_fyra_flikar_och_profil_via_kugghjulet(page):
     page.click(".gear")
     assert page.evaluate("tab") == "profil" and "Inställningar" in page.inner_text("h1")
     # Dailys bockas av under Träna
-    go(page, "pass")
-    page.click("[data-trsheet=dailys]")
+    go(page, "dailys")
     page.click("[data-dcheck=plankan]")
     assert page.evaluate("dailyDone(TODAY, 'plankan')")
 
@@ -1502,16 +1502,14 @@ def test_testlage_har_egen_data(page):
 
 def test_stretch_som_daily(page):
     start(page)
-    go(page, "pass")
-    page.click("[data-trsheet=dailys]")
-    page.click("[data-dedit]")
+    go(page, "dailys")
     page.click('[data-openpick="daily"]')
     page.select_option("[data-areasel]", "stretch")
     shown = page.evaluate("[...document.querySelectorAll('.pick')].filter(e => !e.hidden).map(e => e.querySelector('.pname').textContent)")
     assert "Duvan" in shown and "Höftböjarstretch" in shown and len(shown) == page.evaluate("Object.values(EX).filter(e => e.cat === 'stretch').length")
     page.click('[data-add="duvan"]')
-    page.click("[data-dedit]")   # Klar
-    assert "Duvan" in page.inner_text(".dailies") and "2 × 45 s/sida" in page.inner_text(".dailies")
+    page.evaluate("modal = null; render()")
+    assert "Duvan" in page.inner_text("#app") and "2 × 45 s/sida" in page.inner_text("#app")
     page.click('[data-dcheck="duvan"]')
     assert page.evaluate("dailyDone(TODAY, 'duvan')") is True
     # Stretch hålls en tid: i ett pass syns bara sekunder, ingen vikt
@@ -2065,3 +2063,36 @@ def test_ingrediens_kan_tas_bort(page):
     page.click("[data-ringadd]")
     page.click('[data-rdel="2"]')
     assert page.evaluate("recipeEdit.items.map(i => i.name)") == ["Ägg", "Lök"]
+
+
+def test_hem_steg_och_ovrigt_idag(page):
+    start(page)
+    seed(page, "S.daily = [{id:'plankan',sets:3,reps:'45 s'}]; day().dailies.plankan = true")
+    # Tre steg; klara steg får en bock i stället för siffran
+    assert page.locator(".h3-no").count() == 3 and page.locator(".h3-no.ok").count() == 1
+    assert "Dailys klara" in page.inner_text("#app")
+    rows = page.locator(".h3-list .h3-row")
+    assert rows.count() == 4 and "Vänner" in rows.nth(3).inner_text()
+    # Passkortet startar passet direkt
+    page.click(".h3-btn[data-focusstart]")
+    assert page.locator(".focus").count() == 1
+
+
+def test_ovningsbiblioteket(page):
+    start(page)
+    go(page, "pass")
+    assert page.locator(".wkcard").count() == 3
+    page.click("[data-exlib]")
+    total = page.evaluate("Object.keys(EX).length")
+    assert page.inner_text("#exlibn").startswith(f"{total} ")
+    page.click('[data-exlibf="pull"]')
+    pulls = page.evaluate("Object.keys(EX).filter(id => EX[id].cat === 'pull').length")
+    assert page.inner_text("#exlibn").startswith(f"{pulls} ")
+    page.fill("#exlibq", "rodd")
+    shown = page.evaluate("[...document.querySelectorAll('.exlib-row')].filter(e => !e.hidden).map(e => e.dataset.cat)")
+    assert shown and set(shown) == {"pull"}
+    page.click(".exlib-row:not([hidden]) >> nth=0")
+    assert page.locator(".mwlink, .sheet .fig").count() > 0
+    page.click(".sheet [data-close] >> nth=0")
+    page.click("[data-exlibclose]")
+    assert page.locator(".wkcard").count() == 3

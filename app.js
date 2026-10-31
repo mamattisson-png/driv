@@ -894,6 +894,7 @@ function render() {
   const focusScroll = document.querySelector(".focus-scroll");
   if (focusScroll && focus) focusScroll.scrollTop = focus.scrollTop || 0;
   afterFocusRender();
+  if (exLib && tab === "pass") filterExLib();
   updateBadge();
 }
 
@@ -1114,28 +1115,51 @@ const VIEWS = {
     return `<div class="weigh-page"><button class="ghost small" data-tab="idag">${icon("left",16)} Tillbaka</button><h1>Veckans vägning</h1><p class="muted">Registrera din vikt och följ utvecklingen.</p>${`<section class="card wrow"><div class="grow"><b>Registrera vikt</b><span class="muted small">Dagens datum · ${dateLabel(TODAY)}</span></div><input id="wkg" type="number" inputmode="decimal" step="0.1" placeholder="kg" aria-label="Vikt i kg" value="${weights()[TODAY]??""}"><button class="small" data-wsave data-wdate="${TODAY}">Spara</button></section>`}${weightChart()}</div>`;
   },
   idag() {
-    const m=macros(),e=eaten(),t=todaysPass(),d=t.d,w=t.w;
-    m.kcal+=burnedOn(TODAY);
-    const done=!!(w&&w.done), started=!done&&(t.active||(w&&d.ex.some(x=>((w.sets[x.id])||[]).some(z=>z&&z.ok))));
-    const dailyEx=S.daily||[],supp=S.supplements||[];
-    const completed=dailyEx.filter(x=>dailyDone(logDate(),x.id)).length+supp.filter(x=>day().dailies["supp:"+x.id]).length;
-    const total=dailyEx.length+supp.length;
-    const hr=new Date().getHours(),allDone=done&&completed===total&&total>0;
-    const greeting=allDone?"Allt klart för idag!":done?"Bra jobbat idag!":started?"Fortsätt där du var!":hr<10?"God morgon!":hr<17?"Dags att köra!":hr<21?"God kväll!":"Dags att varva ner!";
-    const sub=allDone?"Snyggt jobbat. Njut av resten av dagen.":done?"Dagens pass är avklarat.":started?"Ditt träningspass väntar på dig.":hr>=21?"Ta hand om återhämtningen.":"Dags att ta tag i dagen.";
-    const date=cap(new Date().toLocaleDateString("sv-SE",{weekday:"long",day:"numeric",month:"long"}));
-    const status=done?"Passet klart":started?"Fortsätt "+esc(d.name):t.rest?"Vilodag":"Starta "+esc(d.name);
-    return `<div class="home-new">
-      <header class="homehead"><div class="brand"><img src="icons/icon-192-v2.png" alt=""><div class="ordbild"><span class="wordmark">DRIV</span><span class="slogan">Ditt mål. <em>Ditt driv.</em></span></div></div><button class="gear avbtn" data-tab="profil" aria-label="Inställningar">⚙</button></header>
-      <div class="homedate muted">${date}</div><h1 class="greet">${greeting}</h1><p class="home-sub muted">${sub}</p>
-      <section class="home-new-card home-pass ${done?"home-done":""}"><div class="home-cardline"><span class="home-num">${done?"✓":"1"}</span><div class="grow"><span class="klabel accent">DAGENS PASS</span><h2>${esc(t.rest?"Vilodag":d.name)}</h2><span class="muted small">${t.rest?"Återhämtning idag":esc((TYPES[d.type]||{}).desc||"")+" · "+d.ex.length+" övningar"}</span></div><button class="home-arrow" data-tab="pass" aria-label="Se övningar">›</button></div><button class="home-start" data-tab="pass">${done?"✓ "+status:t.rest?"Se träningsschema":"▶ "+status}</button></section>
-      <button class="home-new-card home-linkcard ${e.kcal>=m.kcal&&m.kcal>0?"home-done":""}" data-tab="kost"><span class="home-num">${e.kcal>=m.kcal&&m.kcal>0?"✓":"2"}</span><span class="grow"><b>${e.kcal>=m.kcal&&m.kcal>0?"Kalorimål uppnått":"Logga dagens mat"}</b><span class="muted small">${tnum(e.kcal)} / ${tnum(m.kcal)} kcal · ${tnum(e.protein)} / ${tnum(m.protein)} g protein</span><span class="home-meter"><i style="width:${Math.min(100,Math.round(100*e.kcal/Math.max(1,m.kcal)))}%"></i></span></span><span class="home-chevron">›</span></button>
-      <button class="home-new-card home-linkcard ${total>0&&completed===total?"home-done":""}" data-tab="dailys"><span class="home-num">${total>0&&completed===total?"✓":"3"}</span><span class="grow"><b>${total>0&&completed===total?"Dailys klara!":"Gör dina dailys"}</b></span><span class="muted small home-count">${completed} av ${total} klara</span><span class="home-chevron">›</span></button>
-      <section class="home-other"><div class="klabel">ÖVRIGT IDAG</div>
-        <button data-tab="stretchguide" class="home-other-row"><span>♧</span><span class="grow"><b>Stretchguide</b><small>Välj övningar för rörlighet</small></span><span>›</span></button>
-        <button data-homeactivity class="home-other-row"><span>⌁</span><span class="grow"><b>Annan aktivitet</b><small>Löpning, cykling, padel m.m.</small></span><span>›</span></button>
-        <button data-tab="vagning" class="home-other-row"><span>▢</span><span class="grow"><b>Veckans vägning</b><small>Följ din utveckling vecka för vecka</small></span><span>›</span></button>
-        <button data-tab="vanner" class="home-other-row"><span>♧</span><span class="grow"><b>Vänner</b><small>Träna tillsammans och följ varandra</small></span><span>›</span></button>
+    const m = macros(), e = eaten(), t = todaysPass(), d = t.d, w = t.w;
+    m.kcal += burnedOn(TODAY);
+    const done = !!(w && w.done), started = !done && (t.active || (w && d.ex.some(x => ((w.sets[x.id]) || []).some(z => z && z.ok))));
+    const dailyEx = S.daily || [], supp = S.supplements || [];
+    const completed = dailyEx.filter(x => dailyDone(logDate(), x.id)).length + supp.filter(x => day().dailies["supp:" + x.id]).length;
+    const total = dailyEx.length + supp.length, dailysOk = total > 0 && completed === total;
+    const foodOk = m.kcal > 0 && e.kcal >= m.kcal;
+    const hr = new Date().getHours();
+    const greeting = done && dailysOk ? "Allt klart för idag" : done ? "Bra jobbat idag" : started ? "Fortsätt där du var" : hr < 10 ? "God morgon" : hr < 17 ? "God dag" : hr < 21 ? "God kväll" : "Dags att varva ner";
+    const passes = weekSummary(weekStart(TODAY)).passes;
+    const sub = t.rest ? "Vilodag idag" : done ? "Dagens pass är klart" : started ? `${esc(d.name)} är påbörjat` : `${esc(d.name)} står på schemat`;
+    const date = cap(new Date().toLocaleDateString("sv-SE", { weekday: "long", day: "numeric", month: "long" }));
+    // Siffran blir en grön bock när steget är klart; orange bara för det man trycker på
+    const no = (n, ok) => `<span class="h3-no ${ok ? "ok" : ""}" aria-hidden="true">${ok ? icon("check", 14) : n}</span>`;
+    const exN = `${d.ex.length} ${d.ex.length === 1 ? "övning" : "övningar"}`;
+    const mins = Math.max(5, Math.round(d.ex.reduce((a, x) => a + (+x.sets || 0), 0) * 2.5 / 5) * 5);
+    const passInfo = t.rest ? `Återhämtning · nästa pass ${WD_LONG[weekdayOf(t.next)]}` : [passMuscles(d), exN, d.ex.length ? `~${mins} min` : ""].filter(Boolean).map(esc).join(" · ");
+    const passBtn = done ? `<button class="h3-btn ok" data-seepass="${d.id}">${icon("check", 16)}Passet klart · visa</button>`
+      : t.rest ? `<button class="h3-btn ghost" data-tab="pass">Kör ett pass ändå</button>`
+      : d.ex.length ? `<button class="h3-btn" data-focusstart="${d.id}">${icon("play", 16)}${started ? "Fortsätt" : "Starta"} ${esc(d.name)}</button>`
+      : `<button class="h3-btn ghost" data-seepass="${d.id}">Lägg till övningar</button>`;
+    const row = (ic, title, sub, attrs, end = "right") => `<button class="h3-row" ${attrs}><span class="h3-ic">${ic}</span><span class="grow"><b>${title}</b><small>${sub}</small></span>${icon(end, 18)}</button>`;
+    const stretchId = Object.keys(EX).find(id => EX[id].cat === "stretch");
+    const ws = weekStart(TODAY), weighed = weekDates(ws).some(x => x <= TODAY && weights()[x] > 0), avg = weekAvgWeight(ws);
+    const others = typeof social !== "undefined" && account.step === "in" && social.loaded ? social.feed.filter(a => !a.mine) : [];
+    const friendSub = others.length ? `${esc(others[0].name)} körde ${esc(others[0].pass)} · peppa` : "Träna tillsammans och följ varandra";
+    return `<div class="home3">
+      <header class="homehead"><div class="brand"><img src="icons/icon-192-v2.png" alt=""><div class="ordbild"><span class="wordmark">DRIV</span><span class="slogan">Ditt mål. <em>Ditt driv.</em></span></div></div>
+        <button class="gear avbtn" data-tab="profil" aria-label="Inställningar">${icon("profil", 20)}</button></header>
+      <div class="muted h3-date">${date}</div><h1 class="h3-greet">${greeting}</h1>
+      <div class="muted h3-sub">${sub} · ${passes} av ${S.plan.count} pass i veckan</div>
+      <section class="h3-card ${done ? "done" : ""}"><button class="h3-head" data-seepass="${d.id}" aria-label="Dagens pass: ${esc(d.name)}">${no(1, done)}
+        <span class="grow"><span class="klabel ${done ? "oktext" : "accent"}">${t.rest ? "Vilodag" : "Dagens pass"}</span><b class="h3-pass">${esc(t.rest ? "Vila" : d.name)}</b><small>${passInfo}</small></span>${icon("right", 18)}</button>
+        ${passBtn}</section>
+      <button class="h3-card h3-head ${foodOk ? "done" : ""}" data-tab="kost">${no(2, foodOk)}<span class="grow"><b>${foodOk ? "Kalorimålet nått" : "Logga dagens mat"}</b>
+        <small>${tnum(e.kcal)} / ${tnum(m.kcal)} kcal · ${tnum(e.protein)} / ${tnum(m.protein)} g protein</small>
+        <span class="h3-bar"><i style="width:${Math.min(100, Math.round(100 * e.kcal / Math.max(1, m.kcal)))}%"></i></span></span>${icon("right", 18)}</button>
+      <button class="h3-card h3-head ${dailysOk ? "done" : ""}" data-tab="dailys">${no(3, dailysOk)}<span class="grow"><b>${dailysOk ? "Dailys klara" : "Gör dina dailys"}</b>
+        <small>${total ? `${completed} av ${total} idag` : "Lägg till det du vill göra varje dag"}</small></span>${icon("right", 18)}</button>
+      <div class="klabel h3-sec">Övrigt idag</div>
+      <section class="h3-list">
+        ${row(stretchId ? figure(stretchId) : icon("utseende", 18), "Stretchguide", "Välj kroppsdel och få övningar", 'data-tab="stretchguide"')}
+        ${row(icon("aktivitet", 18), "Annan aktivitet", "Löpning, padel, promenad …", "data-homeactivity", "plus")}
+        ${row(icon("vikt", 18), weighed ? "Veckans vikt" : "Veckans vägning", weighed && avg ? `${fmtNum(avg)} kg den här veckan` : `Väg dig ${WD_LONG[weighDay()]}`, 'data-tab="vagning"')}
+        ${row(icon("vanner", 18), "Vänner", friendSub, 'data-tab="vanner"')}
       </section></div>`;
   },
 
@@ -1145,6 +1169,7 @@ const VIEWS = {
     const d = currentPassDay();
     if (editing) return editView(d) + (exSheet != null && d.ex[exSheet] ? exSheetView(d) : "");
     if (passOpen && chosenDay) return passetView(d);
+    if (exLib) return exLibView();
     return traningView();
   },
 
@@ -1932,7 +1957,7 @@ document.addEventListener("click", ev => {
     passDone = null;
     if (ds.tab === "pass" && focus) focus.suspended = false;
     tab = ds.tab; editing = false; dailyEditing = false; draft = null; editDate = null; histDay = null;
-    chosenDay = null; passOpen = false; kostDay = false; mealPage = null; foodSheet = null; foodItem = null; recipeOpen = null; recipeEdit = null;
+    chosenDay = null; passOpen = false; exLib = null; kostDay = false; mealPage = null; foodSheet = null; foodItem = null; recipeOpen = null; recipeEdit = null;
     editSnap = null; exSheet = null; ordna = false; trSheet = null;
     if (ds.popen) profOpen = ds.popen;
     if (tab === "upplagg") setupFrom = prevTab;
