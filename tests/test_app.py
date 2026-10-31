@@ -2105,9 +2105,7 @@ def test_stretchguide_omraden_och_lagg_till(page):
     assert page.evaluate("Object.keys(EX).filter(id => EX[id].cat === 'stretch').every(id => Object.keys(STRETCH_AREAS).some(a => stretchInArea(id, a)))")
     assert page.evaluate("Object.keys(EX).filter(id => id.startsWith('strg_')).length") >= 16
     # Ett tryck på kroppen väljer området
-    leg = page.locator('[data-sarea="hamstrings"] > :first-child')
-    box = leg.bounding_box()
-    leg.click(position={"x": box["width"] * 0.25, "y": box["height"] * 0.5})
+    page.click('.sbody [data-sarea="hamstrings"] polygon >> nth=0')
     assert "Baksida lår" in page.inner_text(".sg-head")
     first = page.get_attribute("[data-sgadd] >> nth=0", "data-sgadd")
     # Lägg till i Dailys och i ett pass; det som redan finns markeras
