@@ -100,8 +100,9 @@ function exLibView() {
   const chips = [["alla", "Alla"], ...Object.entries(PASS_FILTER).map(([k, n]) => [k, n.split(":")[0]]), null, ...Object.entries(AREAS).map(([k, n]) => [k, n])];
   const groups = Object.keys(AREAS).map(a => {
     const ids = Object.keys(EX).filter(id => areaOf(id) === a);
-    return ids.length ? `<section class="exlib-group" data-group="${a}"><div class="klabel h3-sec">${AREAS[a]}</div><div class="h3-list">${ids.map(id => `<button class="h3-row exlib-row" data-info="${id}" data-area="${a}" data-cat="${EX[id].cat}"
-      data-q="${esc(norm(EX[id].name + " " + EX[id].muscles + " " + AREAS[a] + " " + (PASS_WORDS[EX[id].cat] || "")))}"><span class="thumb exl">${figure(id)}</span><span class="grow"><b>${esc(EX[id].name)}</b><small>${esc(EX[id].muscles)}</small></span>${icon("right", 18)}</button>`).join("")}</div></section>` : "";
+    return ids.length ? `<section class="exlib-group" data-group="${a}"><div class="klabel h3-sec">${AREAS[a]}</div><div class="h3-list">${ids.map(id => `<div class="h3-row sg-row exlib-row" data-area="${a}" data-cat="${EX[id].cat}"
+      data-q="${esc(norm(EX[id].name + " " + EX[id].muscles + " " + AREAS[a] + " " + (PASS_WORDS[EX[id].cat] || "")))}"><button class="sg-open" data-info="${id}" aria-label="Visa ${esc(EX[id].name)}"><span class="thumb exl">${figure(id)}</span><span class="grow"><b>${esc(EX[id].name)}</b><small>${esc(EX[id].muscles)}</small></span></button>
+      ${addBtn(id)}</div>`).join("")}</div></section>` : "";
   }).join("");
   return `<div class="exlib"><button class="backbtn" data-exlibclose>${icon("left", 18)}Träna</button><h1>Övningar</h1>
     <div class="psearch">${icon("search", 18)}<input id="exlibq" type="search" placeholder="Sök övning eller muskel" value="${esc(exLib.q)}" autocomplete="off" aria-label="Sök övning"></div>

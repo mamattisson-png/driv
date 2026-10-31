@@ -2132,3 +2132,21 @@ def test_kroppskartan_i_biblioteket(page):
     assert page.locator('.bm-reg.on[data-exlibf="brost"]').count() == 1
     shown = page.evaluate("[...document.querySelectorAll('.exlib-row')].filter(e => !e.hidden).map(e => e.dataset.area)")
     assert shown and set(shown) == {"brost"}
+
+
+def test_alla_ovningar_kan_laggas_till(page):
+    start(page)
+    go(page, "pass")
+    page.click("[data-exlib]")
+    # Varje övning i biblioteket har ett plus
+    assert page.evaluate("document.querySelectorAll('.exlib-row [data-sgadd]').length") == page.evaluate("Object.keys(EX).length")
+    page.fill("#exlibq", "hantelrodd")
+    page.click(".exlib-row:not([hidden]) [data-sgadd] >> nth=0")
+    day1 = page.evaluate("S.plan.days[1].id")
+    page.click(f'[data-sgto="{day1}"]')
+    assert page.evaluate("S.plan.days[1].ex.some(e => e.id === 'hantelrodd')")
+    # Även från instruktionen
+    page.click(".exlib-row:not([hidden]) [data-info] >> nth=0")
+    page.click(".sg-infoadd")
+    page.click('[data-sgto="daily"]')
+    assert page.evaluate("S.daily.some(e => e.id === 'hantelrodd')") and not page.errors

@@ -30,6 +30,7 @@ Senast uppdaterad: 2026-10-30. Källa: gemensam förbättringslista i ChatGPT. D
 | 24 | Testlägets extrabalk får inte skymma träningsvyn | Bugg | Hög | Ej påbörjad |
 | 27 | Sök och filtrera övningar på passtyp (Push, Pull, Ben) | Träning | Medel | Klar |
 | 28 | Träna som en sida och övningsbibliotek | Träning | Hög | Klar |
+| 29 | Kroppskarta i bibliotek och stretchguide, alla övningar kan läggas till | Träning | Hög | Klar |
 
 ## Detaljer och acceptanskriterier
 
@@ -65,6 +66,8 @@ Senast uppdaterad: 2026-10-30. Källa: gemensam förbättringslista i ChatGPT. D
 4 och 6 (Klar, publicerad 2026-10-31): **Hem** har kort utan ramar, orange bara för det man trycker på och grön bock när ett steg är klart; Övrigt idag är ett samlat kort med riktiga ikoner och allt får plats ovanför menyn. **Stretchguiden** har en anatomisk kroppskarta (muskler från react-body-highlighter, MIT) där man trycker på en muskel, tio områden, 16 nya övningar (125 totalt), mål för alla äldre stretchövningar och en knapp för att lägga till varje övning i Dailys eller ett pass.
 
 28. **Träna som en sida och övningsbibliotek (Klar, publicerad 2026-10-31):** Nästa pass med Starta, veckans pass som kort med status (klar, på tur), och raderna Övningsbibliotek, Träningsupplägg och Annan träning. Testversionens flikar (Schema, Statistik) togs inte med. Övningsbiblioteket visar alla övningar grupperade efter kroppsdel med sökning och filter på passtyp och kroppsdel.
+
+29. **Kroppskarta och lägg till (Klar, publicerad 2026-10-31):** Övningsbiblioteket och Stretchguiden har samma kroppskarta i stil med GPT-förslaget: dov orange toning, sken på det valda och etiketter med streck. Ett tryck filtrerar listan. Alla övningar har ett plus (i biblioteket, stretchguiden och instruktionen) som lägger till övningen i Dailys eller ett valfritt pass.
 
 ## Arbetsregler
 

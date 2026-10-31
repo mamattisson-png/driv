@@ -133,7 +133,7 @@ function stretchGuideView() {
   const inDaily = id => S.daily.some(e => e.id === id);
   const rows = list.slice(0, sgLimit).map(id => `<div class="h3-row sg-row"><button class="sg-open" data-info="${id}" aria-label="Visa ${esc(EX[id].name)}">
       <span class="thumb exl">${figure(id)}</span><span class="grow"><b>${esc(EX[id].name)}</b><small>${EX[id].sets} × ${esc(EX[id].reps)} · ${esc(EX[id].muscles)}</small></span></button>
-      <button class="sg-add ${inDaily(id) ? "have" : ""}" data-sgadd="${id}" aria-label="Lägg till ${esc(EX[id].name)}">${icon(inDaily(id) ? "check" : "plus", 18)}</button></div>`).join("");
+      ${addBtn(id)}</div>`).join("");
   return `<div class="sguide"><button class="backbtn" data-tab="idag">${icon("left", 18)}Hem</button>
     <h1>Stretchguide</h1><div class="muted sg-sub">Tryck där det känns stelt, eller välj ett område.</div>
     <section class="sg-map">${stretchMap(sgArea)}</section>
@@ -143,9 +143,12 @@ function stretchGuideView() {
     <div class="psearch">${icon("search", 18)}<input id="sgq" type="search" placeholder="Sök stretchövning" value="${esc(sgQuery)}" autocomplete="off" aria-label="Sök stretchövning"></div>
     ${rows ? `<section class="h3-list">${rows}</section>` : `<div class="muted sg-none">Inga övningar matchar.</div>`}
     ${list.length > sgLimit ? `<button class="wide sg-more" data-sgmore>Visa fler (${list.length - sgLimit})</button>` : ""}
-    ${sgAdd && EX[sgAdd] ? stretchAddSheet(sgAdd) : ""}</div>`;
+</div>`;
 }
-// Bladet för att lägga till en övning: i Dailys eller i ett av passen
+// Plusknappen på en övning; en bock när den redan finns i Dailys eller något pass
+const inSomeList = id => S.daily.some(e => e.id === id) || S.plan.days.some(d => d.ex.some(e => e.id === id));
+const addBtn = id => `<button class="sg-add ${inSomeList(id) ? "have" : ""}" data-sgadd="${id}" aria-label="Lägg till ${esc(EX[id].name)} i Dailys eller ett pass">${icon(inSomeList(id) ? "check" : "plus", 18)}</button>`;
+// Bladet för att lägga till en övning: i Dailys eller i ett av passen. Ritas överst i vilken vy som helst.
 function stretchAddSheet(id) {
   const has = list => list.some(e => e.id === id);
   const opt = (target, name, sub, ic, there) => `<button class="h3-row sg-opt ${there ? "have" : ""}" data-sgto="${target}" ${there ? "disabled" : ""}>
@@ -171,7 +174,7 @@ document.addEventListener("click", ev => {
   ev.stopImmediatePropagation();
   const ds = t.dataset;
   if (ds.sarea) { sgArea = ds.sarea; sgLimit = 20; }
-  else if (ds.sgadd) sgAdd = ds.sgadd;
+  else if (ds.sgadd) { sgAdd = ds.sgadd; if (typeof modal !== "undefined" && modal && modal.info) modal = null; }
   else if (ds.sgclose !== undefined) sgAdd = null;
   else if (ds.sgmore !== undefined) sgLimit += 20;
   else if (ds.sgto) {

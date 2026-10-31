@@ -888,7 +888,7 @@ function render() {
   // Samma inställningsknapp på alla huvudvyer. Hem har knappen i sin egen header.
   const gear = tab === "idag" || tab === "profil" || tab === "upplagg" || passDone ? "" : `<button class="gear" data-tab="profil" aria-label="Inställningar"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Z"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06-1.87 1.87-.06-.06A1.7 1.7 0 0 0 16 18.4a1.7 1.7 0 0 0-1 1.56V21h-6v-1.04A1.7 1.7 0 0 0 8 18.4a1.7 1.7 0 0 0-1.87.34l-.06.06-1.87-1.87.06-.06A1.7 1.7 0 0 0 4.6 15 1.7 1.7 0 0 0 3 14H2v-4h1a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.34-1.87L4.2 7.07 6.07 5.2l.06.06A1.7 1.7 0 0 0 8 5.6 1.7 1.7 0 0 0 9 4V3h6v1a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.87-.34l.06-.06 1.87 1.87-.06.06A1.7 1.7 0 0 0 19.4 9 1.7 1.7 0 0 0 21 10h1v4h-1a1.7 1.7 0 0 0-1.6 1Z"/></svg></button>`;
   document.getElementById("app").innerHTML = passDone ? passDoneView()
-    : gear + banner + VIEWS[tab]() + (modal ? renderModal() : "") + (actSheet ? actSheetView() : "");
+    : gear + banner + VIEWS[tab]() + (modal ? renderModal() : "") + (actSheet ? actSheetView() : "") + (sgAdd && EX[sgAdd] ? stretchAddSheet(sgAdd) : "");
   if (modal && modal.pick) filterPicker();
   if (tab === "recept" && typeof filterRecipes === "function") filterRecipes();
   const focusScroll = document.querySelector(".focus-scroll");
@@ -1605,6 +1605,7 @@ function renderModal() {
       ${figure(modal.info, "big", true)}<div class="muted">${esc(e.muscles)}</div>
       ${gearOf(modal.info) ? `<div class="gearbox"><b>${GEAR[gearOf(modal.info)][0]}</b><div>${GEAR[gearOf(modal.info)][1]}</div></div>` : ""}
       <ol>${e.cues.map(c => `<li>${esc(c)}</li>`).join("")}</ol>
+      ${modal.back ? "" : `<button class="wide sg-infoadd" data-sgadd="${modal.info}">${icon("plus", 16)}Lägg till i Dailys eller ett pass</button>`}
       ${mwUrl(modal.info) ? `<a class="mwlink" href="${mwUrl(modal.info)}" target="_blank" rel="noopener">${MW[modal.info].startsWith("exercises/") ? "Liknande övningar på MuscleWiki" : "Mer om övningen på MuscleWiki"} <span aria-hidden="true">↗</span></a>` : ""}</div></div>`;
   }
   const list = exList(modal.pick);
