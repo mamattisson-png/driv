@@ -1051,6 +1051,7 @@ function dayPicker(selected) {
     `<button role="tab" data-pick="${k.id}" class="${k.id === selected ? "on" : ""}" aria-selected="${k.id === selected}" aria-pressed="${k.id === selected}"><b>${esc(TYPES[k.type] && k.type !== "custom" ? TYPES[k.type].label : k.name)}</b><span>${isFixed() ? WD[S.plan.weekdays[i]] : `Pass ${i + 1}`}</span></button>`).join("")}</div>`;
 }
 
+let stretchArea = null;
 const VIEWS = {
   upplagg() {
     if (S.setupDone) return upplaggView();
@@ -1065,6 +1066,17 @@ const VIEWS = {
     const week=Array.from({length:7},(_,i)=>shift(TODAY,i-3)).map(d=>`<span class="${d===TODAY?"on":""}">${d.slice(-2)}</span>`).join("");
     const rows=ex.map(e=>{const ok=dailyDone(logDate(),e.id),timed=/\d+\s*(?:s|sek)\b/i.test(e.reps||"");return `<div class="daily">${thumb(e.id,"dt")}<div class="grow"><b>${esc(EX[e.id].name)}</b><span class="muted small">${e.sets} × ${esc(e.reps||"")}</span></div>${!ok?`<button class="ghost small" data-dclockstart="${e.id}">▶ Starta</button>`:""}<button class="done-btn big ${ok?"on":""}" data-dcheck="${e.id}">${icon("check",18)}</button></div>`;}).join("");
     return `<div class="dailys-page"><h1>Dailys</h1>${dailyClock?dailyClockView():`<div class="dailys-week">${week}</div><div class="dailys-progress"><div class="dailys-progress-ring" style="--p:${pct}%">${pct}%</div><div><b>${count} av ${total}</b><div class="muted small">klara idag</div></div></div><div class="dailys-summary"><span>Träning <b>${n}/${ex.length}</b></span><span>Kosttillskott <b>${sn}/${a.length}</b></span></div><div class="dailys-sectionhead"><h2>Övningar</h2><button class="ghost small" data-dedit>✎ ${dailyEditing?"Klar":"Redigera"}</button></div>${dailyEditing?exRows("daily",S.daily,true):rows}<button class="ghost small dailys-add" data-openpick="daily">+ Lägg till övning</button>${supplementsCard()}`}</div>`;
+  },
+  stretchguide() {
+    const areas=[["Nacke","neck"],["Axel","shoulder"],["Överkropp","chest"],["Armbåge & handled","wrist"],["Rygg","back"],["Höft","hip"],["Knä","knee"],["Fotled & fot","ankle"]];
+    const ids=(typeof EXTRA_STRETCH_IDS!=="undefined"?EXTRA_STRETCH_IDS:[]).filter(id=>EX[id]);
+    const selected=stretchArea||"";
+    const terms={neck:/nack|neck|trapez|levator/i,shoulder:/axel|shoulder|rotator|deltoid/i,chest:/bröst|chest|triceps|biceps|arm/i,wrist:/handled|wrist|underarm|forearm|armbåg/i,back:/rygg|back|lat|länd|spine/i,hip:/höft|hip|glute|säte|ljumske/i,knee:/knä|knee|quad|hamstring|lår/i,ankle:/fot|ankle|vad|calf|achilles/i};
+    const matches=selected?ids.filter(id=>terms[selected].test([EX[id].name,(EX[id].stretchTargets||[]).join(" "),EX[id].muscles||""].join(" "))):[];
+    return `<div class="stretch-page"><button class="ghost small" data-tab="idag">‹ Tillbaka</button><h1>Stretchguide</h1><p class="muted">Var känns det stelt eller ömt? Välj ett område för att se övningar.</p><div class="stretch-areas">${areas.map(([label,key])=>`<button class="${selected===key?"on":""}" data-stretcharea="${key}">${label} ›</button>`).join("")}</div>${selected?`<h2>${areas.find(x=>x[1]===selected)[0]}</h2><div class="stretch-results">${matches.length?matches.slice(0,12).map(id=>`<div class="stretch-result">${thumb(id,"dt")}<span class="grow"><b>${esc(EX[id].name)}</b><small>${esc(EX[id].reps||"")}</small></span><button class="small ghost" data-info="${id}">Visa ›</button></div>`).join(""):`<p class="muted">Inga övningar hittades för detta område.</p>`}</div>`:""}</div>`;
+  },
+  vagning() {
+    return `<div class="weigh-page"><button class="ghost small" data-tab="idag">‹ Tillbaka</button><h1>Veckans vägning</h1><p class="muted">Registrera din vikt och följ utvecklingen.</p>${weightCard()}</div>`;
   },
   idag() {
     const m=macros(),e=eaten(),t=todaysPass(),d=t.d,w=t.w;
@@ -1085,9 +1097,9 @@ const VIEWS = {
       <button class="home-new-card home-linkcard" data-tab="kost"><span class="home-num">2</span><span class="grow"><b>Logga dagens mat</b><span class="muted small">${tnum(e.kcal)} / ${tnum(m.kcal)} kcal · ${tnum(e.protein)} / ${tnum(m.protein)} g protein</span><span class="home-meter"><i style="width:${Math.min(100,Math.round(100*e.kcal/Math.max(1,m.kcal)))}%"></i></span></span><span class="home-chevron">›</span></button>
       <button class="home-new-card home-linkcard" data-tab="dailys"><span class="home-num">3</span><span class="grow"><b>Gör dina dailys</b></span><span class="muted small home-count">${completed} av ${total} klara</span><span class="home-chevron">›</span></button>
       <section class="home-other"><div class="klabel">ÖVRIGT IDAG</div>
-        <button data-tab="pass" class="home-other-row"><span>♧</span><span class="grow"><b>Stretchguide</b><small>Välj övningar för rörlighet</small></span><span>›</span></button>
-        <button data-tab="pass" class="home-other-row"><span>⌁</span><span class="grow"><b>Annan aktivitet</b><small>Löpning, cykling, padel m.m.</small></span><span>›</span></button>
-        <button data-tab="profil" class="home-other-row"><span>▢</span><span class="grow"><b>Veckans vägning</b><small>Följ din utveckling vecka för vecka</small></span><span>›</span></button>
+        <button data-tab="stretchguide" class="home-other-row"><span>♧</span><span class="grow"><b>Stretchguide</b><small>Välj övningar för rörlighet</small></span><span>›</span></button>
+        <button data-homeactivity class="home-other-row"><span>⌁</span><span class="grow"><b>Annan aktivitet</b><small>Löpning, cykling, padel m.m.</small></span><span>›</span></button>
+        <button data-tab="vagning" class="home-other-row"><span>▢</span><span class="grow"><b>Veckans vägning</b><small>Följ din utveckling vecka för vecka</small></span><span>›</span></button>
         <button data-tab="vanner" class="home-other-row"><span>♧</span><span class="grow"><b>Vänner</b><small>Träna tillsammans och följ varandra</small></span><span>›</span></button>
       </section></div>`;
   },
@@ -1845,6 +1857,8 @@ document.addEventListener("click", ev => {
   if (!t || t.disabled) return;
   if (t.classList.contains("overlay") && ev.target !== t) return;   // klick inne i rutan
   const ds = t.dataset, prevTab = tab;
+  if (ds.stretcharea !== undefined) { stretchArea = ds.stretcharea; render(); return; }
+  if (ds.homeactivity !== undefined) { openAct(logDate(),null,""); render(); return; }
   if (ds.close !== undefined) { modal = null; render(); return; }
   if (ds.opentest !== undefined) {
     try { localStorage.setItem("driv-dev", "1"); } catch (e) { /* blockerad lagring */ }
