@@ -1051,7 +1051,8 @@ function dayPicker(selected) {
     `<button role="tab" data-pick="${k.id}" class="${k.id === selected ? "on" : ""}" aria-selected="${k.id === selected}" aria-pressed="${k.id === selected}"><b>${esc(TYPES[k.type] && k.type !== "custom" ? TYPES[k.type].label : k.name)}</b><span>${isFixed() ? WD[S.plan.weekdays[i]] : `Pass ${i + 1}`}</span></button>`).join("")}</div>`;
 }
 
-let stretchArea = null;
+let stretchArea = "back";
+let stretchMode = "areas";
 const VIEWS = {
   upplagg() {
     if (S.setupDone) return upplaggView();
@@ -1068,12 +1069,32 @@ const VIEWS = {
     return `<div class="dailys-page"><button class="ghost small page-back" data-tab="idag">${icon("left",16)} Tillbaka</button><h1>Dailys</h1>${dailyClock?dailyClockView():`<div class="dailys-week">${week}</div><div class="dailys-progress"><div class="dailys-progress-ring" style="--p:${pct}%">${pct}%</div><div><b>${count} av ${total}</b><div class="muted small">klara idag</div></div></div><div class="dailys-summary"><span>Träning <b>${n}/${ex.length}</b></span><span>Kosttillskott <b>${sn}/${a.length}</b></span></div><div class="dailys-sectionhead"><h2>Övningar</h2><button class="ghost small" data-dedit>✎ ${dailyEditing?"Klar":"Redigera"}</button></div>${dailyEditing?exRows("daily",S.daily,true):rows}<button class="ghost small dailys-add" data-openpick="daily">+ Lägg till övning</button>${supplementsCard()}`}</div>`;
   },
   stretchguide() {
-    const areas=[["Nacke","neck"],["Axel","shoulder"],["Överkropp","chest"],["Armbåge & handled","wrist"],["Rygg","back"],["Höft","hip"],["Knä","knee"],["Fotled & fot","ankle"]];
+    const areas=[["Helkropp","all"],["Nacke","neck"],["Axlar","shoulder"],["Bröst","chest"],["Rygg","back"],["Höfter","hip"],["Ben","legs"]];
+    const names={all:"Helkropp",neck:"Nacke",shoulder:"Axlar",chest:"Bröst",back:"Rygg",hip:"Höfter",legs:"Ben"};
+    const selected=stretchArea||"back";
     const ids=(typeof EXTRA_STRETCH_IDS!=="undefined"?EXTRA_STRETCH_IDS:[]).filter(id=>EX[id]);
-    const selected=stretchArea||"";
-    const terms={neck:/nack|neck|trapez|levator/i,shoulder:/axel|shoulder|rotator|deltoid/i,chest:/bröst|chest|triceps|biceps|arm/i,wrist:/handled|wrist|underarm|forearm|armbåg/i,back:/rygg|back|lat|länd|spine/i,hip:/höft|hip|glute|säte|ljumske/i,knee:/knä|knee|quad|hamstring|lår/i,ankle:/fot|ankle|vad|calf|achilles/i};
-    const matches=selected?ids.filter(id=>terms[selected].test([EX[id].name,(EX[id].stretchTargets||[]).join(" "),EX[id].muscles||""].join(" "))):[];
-    return `<div class="stretch-page"><button class="ghost small" data-tab="idag">${icon("left",16)} Tillbaka</button><h1>Stretchguide</h1><p class="muted">Var känns det stelt eller ömt? Välj ett område för att se övningar.</p><div class="stretch-areas">${areas.map(([label,key])=>`<button class="${selected===key?"on":""}" data-stretcharea="${key}">${label} ›</button>`).join("")}</div>${selected?`<h2>${areas.find(x=>x[1]===selected)[0]}</h2><div class="stretch-results">${matches.length?matches.slice(0,12).map(id=>`<div class="stretch-result">${thumb(id,"dt")}<span class="grow"><b>${esc(EX[id].name)}</b><small>${esc(EX[id].reps||"")}</small></span><button class="small ghost" data-info="${id}">Visa ›</button></div>`).join(""):`<p class="muted">Inga övningar hittades för detta område.</p>`}</div>`:""}</div>`;
+    const terms={neck:/nack|neck|trapez|levator/i,shoulder:/axel|shoulder|rotator|deltoid/i,chest:/bröst|chest|pectoral/i,back:/rygg|back|lat|länd|spine|rotation|cat_cow|child_pose/i,hip:/höft|hip|glute|säte|ljumske/i,legs:/knä|knee|quad|hamstring|lår|vad|calf|ankle|fot/i};
+    const matches=(selected==="all"?ids:ids.filter(id=>terms[selected].test([id,EX[id].name,(EX[id].stretchTargets||[]).join(" "),EX[id].muscles||""].join(" ")))).slice(0,12);
+    const figure=(back)=>`<svg class="stretch-figure" viewBox="0 0 110 255" aria-label="${back?"Kropp bakifrån":"Kropp framifrån"}" role="img">
+      <g fill="none" stroke="#e0e2e6" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <ellipse cx="55" cy="22" rx="14" ry="19"/><path d="M45 40 L45 49 Q32 52 25 58 Q18 68 17 91 L12 124 L6 145 Q3 151 8 156 L14 145 L19 128 L28 92 L31 116 Q34 136 41 143 L40 173 L34 217 L32 241 Q31 249 39 249 L47 244 L51 219 L55 173 L59 219 L63 244 L71 249 Q79 249 78 241 L76 217 L70 173 L69 143 Q76 136 79 116 L82 92 L91 128 L96 145 L102 156 Q107 151 104 145 L98 124 L93 91 Q92 68 85 58 Q78 52 65 49 L65 40"/><path d="M31 80 Q55 91 79 80 M41 143 Q55 151 69 143 M55 56 L55 141" stroke="#60636a" stroke-width="1.4"/>
+      </g>
+      ${(selected==="back"&&back)?`<path d="M45 51 Q32 53 26 64 L30 88 L46 105 L55 96 L64 105 L80 88 L84 64 Q77 53 65 51 L55 62Z M46 107 L55 99 L64 107 L68 141 L55 151 L42 141Z" fill="#ff711b" opacity=".95"/>`:""}
+      ${selected==="neck"?`<path d="M45 40 L45 52 L65 52 L65 40" fill="#ff711b"/>`:""}
+      ${selected==="shoulder"?`<ellipse cx="29" cy="65" rx="12" ry="16" fill="#ff711b"/><ellipse cx="81" cy="65" rx="12" ry="16" fill="#ff711b"/>`:""}
+      ${selected==="chest"&&!back?`<path d="M32 61 Q55 70 78 61 L77 89 Q55 101 33 89Z" fill="#ff711b"/>`:""}
+      ${selected==="hip"?`<path d="M39 140 Q55 152 71 140 L69 171 L55 183 L41 171Z" fill="#ff711b"/>`:""}
+      ${selected==="legs"?`<path d="M41 174 L54 174 L49 220 L44 237 L35 237 L35 217Z M57 174 L69 174 L76 217 L76 237 L66 237 L61 220Z" fill="#ff711b"/>`:""}
+      ${selected==="all"?`<path d="M33 65 Q55 55 77 65 L69 143 L70 172 L76 235 L66 235 L55 172 L44 235 L34 235 L40 172 L41 143Z" fill="#ff711b" opacity=".35"/>`:""}
+    </svg>`;
+    const rows=matches.map(id=>`<div class="stretch-result">${thumb(id,"dt")}<span class="grow"><b>${esc(EX[id].name)}</b><small>${esc(EX[id].reps||"")} · Stretchövning</small></span><button class="stretch-play" data-info="${id}" aria-label="Visa ${esc(EX[id].name)}">▶</button></div>`).join("");
+    return `<div class="stretch-page stretch-redesign">
+      <div class="stretch-top"><button class="ghost page-back" data-tab="idag" aria-label="Tillbaka till Hem">${icon("left",24)}</button><h1>Stretchguide</h1></div>
+      <div class="stretch-mode"><button class="${stretchMode==="areas"?"on":""}" data-stretchmode="areas">Välj område</button><button class="${stretchMode==="all"?"on":""}" data-stretchmode="all">Alla övningar</button></div>
+      ${stretchMode==="areas"?`<div class="stretch-layout"><div class="stretch-areas">${areas.map(([name,key])=>`<button class="${selected===key?"on":""}" data-stretcharea="${key}">${name}</button>`).join("")}</div><div class="stretch-bodies">${figure(false)}${figure(true)}</div></div>`:""}
+      <h2>${stretchMode==="all"?"Alla stretchövningar":names[selected]+" – "+matches.length+" stretchövningar"}</h2>
+      <div class="stretch-results">${rows||'<p class="muted">Inga övningar hittades.</p>'}</div>
+    </div>`;
   },
   vagning() {
     return `<div class="weigh-page"><button class="ghost small" data-tab="idag">${icon("left",16)} Tillbaka</button><h1>Veckans vägning</h1><p class="muted">Registrera din vikt och följ utvecklingen.</p>${`<section class="card wrow"><div class="grow"><b>Registrera vikt</b><span class="muted small">Dagens datum · ${dateLabel(TODAY)}</span></div><input id="wkg" type="number" inputmode="decimal" step="0.1" placeholder="kg" aria-label="Vikt i kg" value="${weights()[TODAY]??""}"><button class="small" data-wsave data-wdate="${TODAY}">Spara</button></section>`}${weightChart()}</div>`;
@@ -1857,6 +1878,7 @@ document.addEventListener("click", ev => {
   if (!t || t.disabled) return;
   if (t.classList.contains("overlay") && ev.target !== t) return;   // klick inne i rutan
   const ds = t.dataset, prevTab = tab;
+  if (ds.stretchmode !== undefined) { stretchMode=ds.stretchmode; render(); return; }
   if (ds.stretcharea !== undefined) { stretchArea = ds.stretcharea; render(); return; }
   if (ds.homeactivity !== undefined) { openAct(logDate(),null,""); render(); return; }
   if (ds.close !== undefined) { modal = null; render(); return; }
