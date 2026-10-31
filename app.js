@@ -1067,45 +1067,29 @@ const VIEWS = {
     return `<div class="dailys-page"><h1>Dailys</h1>${dailyClock?dailyClockView():`<div class="dailys-week">${week}</div><div class="dailys-progress"><div class="dailys-progress-ring" style="--p:${pct}%">${pct}%</div><div><b>${count} av ${total}</b><div class="muted small">klara idag</div></div></div><div class="dailys-summary"><span>Träning <b>${n}/${ex.length}</b></span><span>Kosttillskott <b>${sn}/${a.length}</b></span></div><div class="dailys-sectionhead"><h2>Övningar</h2><button class="ghost small" data-dedit>✎ ${dailyEditing?"Klar":"Redigera"}</button></div>${dailyEditing?exRows("daily",S.daily,true):rows}<button class="ghost small dailys-add" data-openpick="daily">+ Lägg till övning</button>${supplementsCard()}`}</div>`;
   },
   idag() {
-    const m = macros(), e = eaten();
-    m.kcal += burnedOn(TODAY);
-    const t = todaysPass(), d = t.d, w = t.w, done = w && w.done;
-    const started = !done && (t.active || (w && d.ex.some(x => ((w.sets[x.id]) || []).some(s => s && s.ok))));
-    const passes = weekSummary(weekStart(TODAY)).passes, acts = actsOn(TODAY);
-    const greet = done ? "Bra jobbat idag." : started ? "Fortsätt där du var." : t.rest ? (acts.length ? "Snyggt, aktiv vilodag." : "Vilodag idag.") : "Dags att köra.";
-    const nDone = d.ex.filter(x => exDone(w, x)).length;
-    const status = done ? `<span class="oktext">${icon("check", 14)}Genomfört idag</span>` : started ? `${nDone} av ${d.ex.length} övningar` : t.rest ? `Vila · nästa ${WD_LONG[weekdayOf(t.next)]}` : "Inte gjort än";
-    const passTile = `<button class="htile passtile ${done ? "ok" : t.rest ? "" : "go"}" data-tab="pass" aria-label="${passLabel(t)}: ${esc(d.name)}, ${done ? "genomfört" : started ? "påbörjat" : t.rest ? "vilodag" : "inte gjort än"}. Till Träna">
-        <span class="klabel ${done ? "oktext" : "accent"}">${passLabel(t)}</span>
-        <span class="col"><b class="hname">${esc(d.name)}</b><span class="muted small">${status}</span>${acts.length ? `<span class="muted small">+ ${esc(acts.map(a => a.name).join(", "))}</span>` : ""}</span>
-        <span class="hlink">Till Träna${icon("right", 14)}</span></button>`;
-    const pct = m.kcal ? e.kcal / m.kcal : 0;
-    const kcalTile = `<button class="htile kcaltile" data-go="kost" aria-label="Kalorier: ${tnum(e.kcal)} av ${tnum(m.kcal)}"><span class="klabel">Kalorier</span>
-        <span class="ringbox">${ring(pct, 64, pct > 1.05 ? "over" : "")}<b>${Math.round(pct * 100)}%</b></span>
-        <span><b class="hnum">${tnum(e.kcal)}</b><span class="muted small"> / ${tnum(m.kcal)}</span></span></button>`;
-    const segs = Math.max(S.plan.count, passes);
-    const week = `<section class="card weekrow" aria-label="Veckan: ${passes} av ${S.plan.count} pass"><span class="klabel">Veckan</span>
-      <span class="wsegs" aria-hidden="true">${Array.from({ length: segs }, (_, i) => `<i class="${i < passes ? "on" : ""}"></i>`).join("")}</span>
-      <b class="small">${passes} av ${S.plan.count} pass</b></section>`;
-    const lw = letterWeekToShow();
-    const letter = !lw ? "" : (() => {
-      const c = weekSummary(lw), recs = weekRecords(lw).length;
-      return `<div class="card homerow letter-card"><span class="hricon">${icon("mail", 22)}</span>
-        <span class="grow"><b>Din vecka ${weekNo(lw)}</b><span class="muted small">${c.passes} av ${S.plan.count} pass${recs ? ` · ${recs} ${recs === 1 ? "nytt personbästa" : "nya personbästa"}` : ""}</span></span>
-        <button class="small" data-letter="${lw}">Visa</button><button class="small ghost iconbtn" data-letterclose="${lw}" aria-label="Stäng sammanfattningen">${icon("close", 18)}</button></div>`;
-    })();
-    const today = new Date().toLocaleDateString("sv-SE", { weekday: "long", day: "numeric", month: "long" });
-    return `<header class="homehead"><div class="brand"><img src="icons/icon-192-v2.png" alt=""><div class="ordbild"><span class="wordmark">DRIV</span><span class="slogan">Ditt mål. <em>Ditt driv.</em></span></div></div>
-        <button class="gear avbtn" data-tab="profil" aria-label="Inställningar"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Z"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06-1.87 1.87-.06-.06A1.7 1.7 0 0 0 16 18.4a1.7 1.7 0 0 0-1 1.56V21h-6v-1.04A1.7 1.7 0 0 0 8 18.4a1.7 1.7 0 0 0-1.87.34l-.06.06-1.87-1.87.06-.06A1.7 1.7 0 0 0 4.6 15 1.7 1.7 0 0 0 3 14H2v-4h1a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.34-1.87L4.2 7.07 6.07 5.2l.06.06A1.7 1.7 0 0 0 8 5.6 1.7 1.7 0 0 0 9 4V3h6v1a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.87-.34l.06-.06 1.87 1.87-.06.06A1.7 1.7 0 0 0 19.4 9 1.7 1.7 0 0 0 21 10h1v4h-1a1.7 1.7 0 0 0-1.6 1Z"/></svg></button></header>
-      <div class="muted homedate">${cap(today)}</div>
-      <h1 class="greet">${greet}</h1>
-      <div class="htiles">${passTile}${kcalTile}</div>
-      ${week}
-      ${letter}
-      ${accountNudge()}${installNudge()}
-      ${friendsNudge()}
-      ${friendsHome()}
-      ${S.hideWeight ? "" : weighCardDue()}`;
+    const m=macros(),e=eaten(),t=todaysPass(),d=t.d,w=t.w;
+    m.kcal+=burnedOn(TODAY);
+    const done=!!(w&&w.done), started=!done&&(t.active||(w&&d.ex.some(x=>((w.sets[x.id])||[]).some(z=>z&&z.ok))));
+    const dailyEx=S.daily||[],supp=S.supplements||[];
+    const completed=dailyEx.filter(x=>dailyDone(logDate(),x.id)).length+supp.filter(x=>day().dailies["supp:"+x.id]).length;
+    const total=dailyEx.length+supp.length;
+    const hr=new Date().getHours(),allDone=done&&completed===total&&total>0;
+    const greeting=allDone?"Allt klart för idag!":done?"Bra jobbat idag!":started?"Fortsätt där du var!":hr<10?"God morgon!":hr<17?"Dags att köra!":hr<21?"God kväll!":"Dags att varva ner!";
+    const sub=allDone?"Snyggt jobbat. Njut av resten av dagen.":done?"Dagens pass är avklarat.":started?"Ditt träningspass väntar på dig.":hr>=21?"Ta hand om återhämtningen.":"Dags att ta tag i dagen.";
+    const date=cap(new Date().toLocaleDateString("sv-SE",{weekday:"long",day:"numeric",month:"long"}));
+    const status=done?"Passet klart":started?"Fortsätt "+esc(d.name):t.rest?"Vilodag":"Starta "+esc(d.name);
+    return `<div class="home-new">
+      <header class="homehead"><div class="brand"><img src="icons/icon-192-v2.png" alt=""><div class="ordbild"><span class="wordmark">DRIV</span><span class="slogan">Ditt mål. <em>Ditt driv.</em></span></div></div><button class="gear avbtn" data-tab="profil" aria-label="Inställningar">⚙</button></header>
+      <div class="homedate muted">${date}</div><h1 class="greet">${greeting}</h1><p class="home-sub muted">${sub}</p>
+      <section class="home-new-card home-pass"><div class="home-cardline"><span class="home-num">1</span><div class="grow"><span class="klabel accent">DAGENS PASS</span><h2>${esc(t.rest?"Vilodag":d.name)}</h2><span class="muted small">${t.rest?"Nästa pass "+esc(t.next||""):esc((TYPES[d.type]||{}).desc||"")+" · "+d.ex.length+" övningar"}</span></div><button class="home-arrow" data-tab="pass" aria-label="Se övningar">›</button></div><button class="home-start" data-tab="pass">${done?"✓ "+status:t.rest?"Se träningsschema":"▶ "+status}</button></section>
+      <button class="home-new-card home-linkcard" data-tab="kost"><span class="home-num">2</span><span class="grow"><b>Logga dagens mat</b><span class="muted small">${tnum(e.kcal)} / ${tnum(m.kcal)} kcal · ${tnum(e.protein)} / ${tnum(m.protein)} g protein</span><span class="home-meter"><i style="width:${Math.min(100,Math.round(100*e.kcal/Math.max(1,m.kcal)))}%"></i></span></span><span class="home-chevron">›</span></button>
+      <button class="home-new-card home-linkcard" data-tab="dailys"><span class="home-num">3</span><span class="grow"><b>Gör dina dailys</b></span><span class="muted small home-count">${completed} av ${total} klara</span><span class="home-chevron">›</span></button>
+      <section class="home-other"><div class="klabel">ÖVRIGT IDAG</div>
+        <button data-tab="pass" class="home-other-row"><span>♧</span><span class="grow"><b>Stretchguide</b><small>Välj övningar för rörlighet</small></span><span>›</span></button>
+        <button data-tab="pass" class="home-other-row"><span>⌁</span><span class="grow"><b>Annan aktivitet</b><small>Löpning, cykling, padel m.m.</small></span><span>›</span></button>
+        <button data-tab="profil" class="home-other-row"><span>▢</span><span class="grow"><b>Veckans vägning</b><small>Följ din utveckling vecka för vecka</small></span><span>›</span></button>
+        <button data-tab="vanner" class="home-other-row"><span>♧</span><span class="grow"><b>Vänner</b><small>Träna tillsammans och följ varandra</small></span><span>›</span></button>
+      </section></div>`;
   },
 
   pass() {
