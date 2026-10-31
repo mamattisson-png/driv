@@ -1686,6 +1686,17 @@
 .training-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
 .training-stats>div{display:flex;flex-direction:column;gap:9px;border:1px solid #35373b;border-radius:15px;padding:16px 9px;background:#1b1c20}
 .training-stats strong{font-size:26px;color:#39c68d}.training-stats span{font-size:12px;color:#adb0b6}
+
+/* Stretchguide clickable anatomy labels */
+.stretch-anatomy{position:relative;min-width:0;padding-top:26px}
+.stretch-anatomy .stretch-bodies{position:relative;z-index:1;pointer-events:none}
+.stretch-tap-hint{position:absolute;top:0;left:0;right:0;text-align:center;color:#bfc1c7;font-size:11px;letter-spacing:.01em}
+.stretch-callouts{position:absolute;inset:26px 0 0;z-index:2;pointer-events:none}
+.stretch-callout{position:absolute;pointer-events:auto;border:1px solid #666970;border-radius:18px;background:#24262b;color:#f4f4f4;font-size:11px;font-weight:700;line-height:1;padding:7px 8px;box-shadow:0 2px 6px #0008;white-space:nowrap;transform:translate(-50%,-50%);min-height:28px}
+.stretch-callout.on{border-color:#ff711b;color:#ff944e;background:#342116}
+.stretch-callout:focus-visible{outline:2px solid #ff711b;outline-offset:2px}
+.stretch-callout-neck{top:15%;left:50%}.stretch-callout-shoulder{top:28%;left:12%}.stretch-callout-chest{top:35%;left:37%}.stretch-callout-back{top:39%;left:84%}.stretch-callout-hip{top:57%;left:75%}.stretch-callout-legs{top:76%;left:32%}
+@media(max-width:390px){.stretch-callout{font-size:10px;padding:6px}.stretch-tap-hint{font-size:10px}}
 </style>
 </head>
 <body>
