@@ -31,6 +31,7 @@ Senast uppdaterad: 2026-10-30. Källa: gemensam förbättringslista i ChatGPT. D
 | 27 | Sök och filtrera övningar på passtyp (Push, Pull, Ben) | Träning | Medel | Klar |
 | 28 | Träna som en sida och övningsbibliotek | Träning | Hög | Klar |
 | 29 | Kroppskarta i bibliotek och stretchguide, alla övningar kan läggas till | Träning | Hög | Klar |
+| 30 | Sammanhängande Dailys-vy | Dailys | Medel | Klar |
 
 ## Detaljer och acceptanskriterier
 
@@ -68,6 +69,8 @@ Senast uppdaterad: 2026-10-30. Källa: gemensam förbättringslista i ChatGPT. D
 28. **Träna som en sida och övningsbibliotek (Klar, publicerad 2026-10-31):** Nästa pass med Starta, veckans pass som kort med status (klar, på tur), och raderna Övningsbibliotek, Träningsupplägg och Annan träning. Testversionens flikar (Schema, Statistik) togs inte med. Övningsbiblioteket visar alla övningar grupperade efter kroppsdel med sökning och filter på passtyp och kroppsdel.
 
 29. **Kroppskarta och lägg till (Klar, publicerad 2026-10-31):** Övningsbiblioteket och Stretchguiden har samma kroppskarta i stil med GPT-förslaget: dov orange toning, sken på det valda och etiketter med streck. Ett tryck filtrerar listan. Alla övningar har ett plus (i biblioteket, stretchguiden och instruktionen) som lägger till övningen i Dailys eller ett valfritt pass.
+
+30. **Sammanhängande Dailys-vy (Klar, publicerad 2026-11-01):** Ingen tillbakaknapp på fliken. En sammanfattning med ring och de sju senaste dagarna (grön prick när allt var klart, orange när något var gjort). Övningar och kosttillskott som två likadana listor med rund bock, liten startknapp och "Lägg till" som sista rad. Klara rader får grön bock och överstruket namn.
 
 ## Arbetsregler
 
