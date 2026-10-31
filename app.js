@@ -860,6 +860,27 @@ const TABS = [["idag", "hem", "Hem"], ["pass", "trana", "Träna"], ["dailys", "c
 let tab = S.setupDone ? "idag" : "upplagg";
 let profBack = "idag";   // fliken man kom från, dit tillbaka-pilen i Profil går
 let vannerBack = "idag"; // dit tillbaka-pilen på vänsidan går
+
+// Short, skippable celebration after a real completion (not on page reload).
+function drivCelebrate(kind) {
+  document.querySelector(".driv-celebrate")?.remove();
+  const reduced=window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+  const daily=kind==="daily";
+  const overlay=document.createElement("div");
+  overlay.className="driv-celebrate "+(daily?"daily-celebrate":"pass-celebrate")+(reduced?" reduced":"");
+  overlay.setAttribute("role","status");
+  overlay.setAttribute("aria-label",daily?"Alla dailys klara":"Träningspasset avklarat");
+  overlay.innerHTML='<div class="driv-celebrate-inner"><div class="driv-celebrate-mark">✓</div><strong>'+(daily?"Du klarade allt idag!":"Snyggt jobbat!")+'</strong><span>'+(daily?"100 % av dina Dailys avklarade":"Passet är avklarat")+'</span><small>Tryck för att fortsätta</small></div>';
+  document.body.appendChild(overlay);
+  if(!reduced && navigator.vibrate) navigator.vibrate(35);
+  const timer=setTimeout(()=>overlay.remove(),reduced?900:2500);
+  overlay.addEventListener("click",()=>{clearTimeout(timer);overlay.remove()},{once:true});
+}
+function allTodaysDailysComplete(){
+  const exercises=S.daily||[],supps=S.supplements||[];
+  return exercises.length+supps.length>0&&exercises.every(e=>dailyDone(logDate(),e.id))&&supps.every(x=>day().dailies["supp:"+x.id]===true);
+}
+
 let passDone = null;     // { dayId, date } medan skärmen för ett avslutat pass visas
 let chosenDay = null;
 let editing = false;
@@ -1002,7 +1023,7 @@ document.addEventListener("click", ev => {
     else {dailyClock.remaining=Math.max(0,dailyClock.end-Date.now());dailyClock.paused=true;}
   } else if (d.dclockskip !== undefined) dailyClockAdvance();
   else if (d.dclockstop !== undefined) {dailyClock=null;clearInterval(dailyClockTick);dailyClockTick=null;}
-  else if (d.suppcheck) day().dailies["supp:"+d.suppcheck] = !day().dailies["supp:"+d.suppcheck];
+  else if (d.suppcheck) { const before=allTodaysDailysComplete(); day().dailies["supp:"+d.suppcheck] = !day().dailies["supp:"+d.suppcheck]; if(!before&&allTodaysDailysComplete()) setTimeout(()=>drivCelebrate("daily"),0); }
   else if (d.suppcancel !== undefined) supplementEditing = null;
   else if (d.suppadd !== undefined || d.suppedit !== undefined) supplementEditing = d.suppedit !== undefined ? +d.suppedit : -1;
   save();render();
@@ -1988,14 +2009,14 @@ document.addEventListener("click", ev => {
     shareWorkout(dayById(ds.finish), logDate(), w.done);
     // Ett sparat pass visar skärmen Pass klart; i efterhand går man tillbaka till dagen i Historik
     if (w.done && editDate) { histDay = editDate; editDate = null; tab = "historik"; }
-    else if (w.done) { passDone = { dayId: ds.finish, date: logDate() }; tab = "idag"; }
+    else if (w.done) { passDone = { dayId: ds.finish, date: logDate() }; tab = "idag"; setTimeout(()=>drivCelebrate("pass"),0); }
   }
   else if (ds.setcount) {
     const d = currentPassDay(), ex = d.ex.find(x => x.id === ds.ex);
     ex.sets = Math.max(1, ex.sets + +ds.setcount);
     syncDone(d);
   }
-  else if (ds.dcheck) day().dailies[ds.dcheck] = !dailyDone(logDate(), ds.dcheck);
+  else if (ds.dcheck) { const before=allTodaysDailysComplete(); day().dailies[ds.dcheck] = !dailyDone(logDate(), ds.dcheck); if(!before&&allTodaysDailysComplete()) setTimeout(()=>drivCelebrate("daily"),0); }
   else if (ds.dedit !== undefined) dailyEditing = !dailyEditing;
   else if (ds.letterclose) S.letterSeen = ds.letterclose;
   else if (ds.showweight !== undefined) S.hideWeight = !t.checked;
