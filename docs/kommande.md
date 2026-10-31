@@ -7,9 +7,9 @@ Senast uppdaterad: 2026-10-30. Källa: gemensam förbättringslista i ChatGPT. D
 | 1 | Nästa set-knappen alltid synlig | Bugg | Hög | Klar |
 | 2 | Kompaktare avslutade set | Träning | Hög | Klar |
 | 3 | Skalbar träningsvy | Träning | Hög | Klar |
-| 4 | Facelift av hemskärmen | Design | Hög | Väntar på Claude |
+| 4 | Facelift av hemskärmen | Design | Hög | Klar |
 | 5 | Tillskott och hälsorutiner i Dailys | Dailys | Medel | I test |
-| 6 | Interaktiv stretchguide | Dailys | Medel | Ej påbörjad |
+| 6 | Interaktiv stretchguide | Dailys | Medel | Klar |
 | 7 | Tydligare övningsfigurer och animationer | Design | Hög | Ej påbörjad |
 | 8 | Smart grönmarkering av måltider | Kost | Medel | Ej påbörjad |
 | 9 | Tydligare avklarade aktiviteter | Design | Hög | Ej påbörjad |
@@ -29,6 +29,7 @@ Senast uppdaterad: 2026-10-30. Källa: gemensam förbättringslista i ChatGPT. D
 | 23 | Spara genomfört pass som namngiven passmall | Träning | Hög | Ej påbörjad |
 | 24 | Testlägets extrabalk får inte skymma träningsvyn | Bugg | Hög | Ej påbörjad |
 | 27 | Sök och filtrera övningar på passtyp (Push, Pull, Ben) | Träning | Medel | Klar |
+| 28 | Träna som en sida och övningsbibliotek | Träning | Hög | Klar |
 
 ## Detaljer och acceptanskriterier
 
@@ -60,6 +61,10 @@ Senast uppdaterad: 2026-10-30. Källa: gemensam förbättringslista i ChatGPT. D
 26. **Ny förenklad vy för att lägga till mat:** Godkänd design, ännu ej implementerad. Sökning med gram före kcal och utan matbilder; Senaste (5 över alla mål), Vanliga för aktuell måltid (3), Favoriter och Mina recept. Vid sökning ersätts förslagen av resultat. Plus lägger till i ett tillfälligt urval; kompakt expanderbar panel visar valda livsmedel och total kcal, med möjlighet att ändra mängd, spara recept och lägga till alla i måltiden. Rena rader med diskreta avdelare, inga nästlade kort. **Status: Påbörjad (commit `c2f5ef2`); snabbval och tillfälligt urval inlagda, sökresultat, mängdjustering, recept och mobiltest återstår att färdigställa/verifiera.**
 
 27. **Sök och filtrera övningar på passtyp (Klar):** I Lägg till övning finns filtret Pass med Push, Pull och Ben, och väljaren startar på passets typ. Sökningen förstår pull, push, ben, legs, överkropp, underkropp och bål. Rättat samtidigt: Skulderblads-pull-ups var felaktigt markerad som push.
+
+4 och 6 (Klar, publicerad 2026-10-31): **Hem** har kort utan ramar, orange bara för det man trycker på och grön bock när ett steg är klart; Övrigt idag är ett samlat kort med riktiga ikoner och allt får plats ovanför menyn. **Stretchguiden** har en anatomisk kroppskarta (muskler från react-body-highlighter, MIT) där man trycker på en muskel, tio områden, 16 nya övningar (125 totalt), mål för alla äldre stretchövningar och en knapp för att lägga till varje övning i Dailys eller ett pass.
+
+28. **Träna som en sida och övningsbibliotek (Klar, publicerad 2026-10-31):** Nästa pass med Starta, veckans pass som kort med status (klar, på tur), och raderna Övningsbibliotek, Träningsupplägg och Annan träning. Testversionens flikar (Schema, Statistik) togs inte med. Övningsbiblioteket visar alla övningar grupperade efter kroppsdel med sökning och filter på passtyp och kroppsdel.
 
 ## Arbetsregler
 
