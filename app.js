@@ -1051,8 +1051,11 @@ function dayPicker(selected) {
     `<button role="tab" data-pick="${k.id}" class="${k.id === selected ? "on" : ""}" aria-selected="${k.id === selected}" aria-pressed="${k.id === selected}"><b>${esc(TYPES[k.type] && k.type !== "custom" ? TYPES[k.type].label : k.name)}</b><span>${isFixed() ? WD[S.plan.weekdays[i]] : `Pass ${i + 1}`}</span></button>`).join("")}</div>`;
 }
 
+document.addEventListener("change",ev=>{if(ev.target.id==="stretch-search"){stretchQuery=ev.target.value;stretchLimit=24;render();}});
 let stretchArea = "back";
 let stretchMode = "areas";
+let stretchQuery = "";
+let stretchLimit = 24;
 const VIEWS = {
   upplagg() {
     if (S.setupDone) return upplaggView();
@@ -1074,7 +1077,9 @@ const VIEWS = {
     const selected=stretchArea||"back";
     const ids=(typeof EXTRA_STRETCH_IDS!=="undefined"?EXTRA_STRETCH_IDS:[]).filter(id=>EX[id]);
     const terms={neck:/nack|neck|trapez|levator/i,shoulder:/axel|shoulder|rotator|deltoid/i,chest:/bröst|chest|pectoral/i,back:/rygg|back|lat|länd|spine|bröstrygg|lumbar|thoracic/i,hip:/höft|hip|glute|säte|ljumske/i,legs:/knä|knee|quad|hamstring|lår|vad|calf|ankle|fot/i};
-    const matches=(selected==="all"?ids:ids.filter(id=>terms[selected].test([id,EX[id].name,(EX[id].stretchTargets||[]).join(" "),EX[id].muscles||""].join(" ")))).slice(0,12);
+    const catalog=Object.keys(EX).filter(id=>EX[id]&&EX[id].cat==="stretch");
+    const pool=stretchMode==="all"?catalog:(selected==="all"?catalog:catalog.filter(id=>terms[selected].test([id,EX[id].name,(EX[id].stretchTargets||[]).join(" "),EX[id].muscles||""].join(" "))));
+    const matches=pool.filter(id=>!stretchQuery||EX[id].name.toLowerCase().includes(stretchQuery.toLowerCase()));
     const figure=(back)=>`<svg class="stretch-figure" viewBox="0 0 180 400" aria-label="${back?"Kropp bakifrån":"Kropp framifrån"}" role="img" xmlns="http://www.w3.org/2000/svg">
       <g fill="#1a1c20" stroke="none">
         <path d="M78 66 Q69 70 56 73 Q40 77 34 92 Q29 106 27 131 L19 170 Q16 186 12 204 L6 221 Q5 229 10 232 L14 230 L18 220 L17 235 Q18 240 22 238 L26 228 L28 214 L34 181 L43 140 L49 119 Q49 145 56 162 Q59 174 65 187 Q65 206 63 225 L57 275 L55 319 L50 365 Q45 379 43 389 Q43 396 51 396 L68 394 Q73 391 70 384 L70 370 L76 327 L85 279 L90 237 L95 279 L104 327 L110 370 L110 384 Q107 391 112 394 L129 396 Q137 396 137 389 Q135 379 130 365 L125 319 L123 275 L117 225 Q115 206 115 187 Q121 174 124 162 Q131 145 131 119 L137 140 L146 181 L152 214 L154 228 L158 238 Q162 240 163 235 L162 220 L166 230 L170 232 Q175 229 174 221 L168 204 Q164 186 161 170 L153 131 Q151 106 146 92 Q140 77 124 73 Q111 70 102 66 L101 58 L79 58Z"/>
@@ -1096,13 +1101,13 @@ const VIEWS = {
         <path d="M63 244 Q70 261 61 298 M117 244 Q110 261 119 298 M58 334 L70 335 M110 335 L122 334"/>
       </g>
     </svg>`;
-    const rows=matches.map(id=>`<div class="stretch-result">${thumb(id,"dt")}<span class="grow"><b>${esc(EX[id].name)}</b><small>${esc(EX[id].reps||"")} · Stretchövning</small></span><button class="stretch-play" data-info="${id}" aria-label="Visa ${esc(EX[id].name)}">▶</button></div>`).join("");
+    const rows=matches.slice(0,stretchLimit).map(id=>`<div class="stretch-result">${thumb(id,"dt")}<span class="grow"><b>${esc(EX[id].name)}</b><small>${esc(EX[id].reps||"")} · Stretchövning</small></span><button class="stretch-play" data-info="${id}" aria-label="Visa ${esc(EX[id].name)}">▶</button></div>`).join("");
     return `<div class="stretch-page stretch-redesign">
       <div class="stretch-top"><button class="ghost page-back" data-tab="idag" aria-label="Tillbaka till Hem">${icon("left",24)}</button><h1>Stretchguide</h1></div>
       <div class="stretch-mode"><button class="${stretchMode==="areas"?"on":""}" data-stretchmode="areas">Välj område</button><button class="${stretchMode==="all"?"on":""}" data-stretchmode="all">Alla övningar</button></div>
       ${stretchMode==="areas"?`<div class="stretch-layout"><div class="stretch-areas">${areas.map(([name,key])=>`<button class="${selected===key?"on":""}" data-stretcharea="${key}">${name}</button>`).join("")}</div><div class="stretch-bodies">${figure(false)}${figure(true)}</div></div>`:""}
-      <h2>${stretchMode==="all"?"Alla stretchövningar":names[selected]+" – "+matches.length+" stretchövningar"}</h2>
-      <div class="stretch-results">${rows||'<p class="muted">Inga övningar hittades.</p>'}</div>
+      <h2>${stretchMode==="all"?"Alla stretchövningar ("+matches.length+")":names[selected]+" – "+matches.length+" stretchövningar"}</h2>${stretchMode==="all"?`<input class="stretch-search" id="stretch-search" type="search" placeholder="Sök övning..." value="${esc(stretchQuery)}" aria-label="Sök stretchövning">`:""}
+      <div class="stretch-results">${rows||'<p class="muted">Inga övningar hittades.</p>'}</div>${matches.length>stretchLimit?`<button class="stretch-more" data-stretchmore>Visa fler (${matches.length-stretchLimit} kvar)</button>`:""}
     </div>`;
   },
   vagning() {
@@ -1887,6 +1892,7 @@ document.addEventListener("click", ev => {
   if (!t || t.disabled) return;
   if (t.classList.contains("overlay") && ev.target !== t) return;   // klick inne i rutan
   const ds = t.dataset, prevTab = tab;
+  if (ds.stretchmore !== undefined) { stretchLimit += 24; render(); return; }
   if (ds.stretchmode !== undefined) { stretchMode=ds.stretchmode; render(); return; }
   if (ds.stretcharea !== undefined) { stretchArea = ds.stretcharea; render(); return; }
   if (ds.homeactivity !== undefined) { openAct(logDate(),null,""); render(); return; }
