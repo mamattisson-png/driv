@@ -74,7 +74,7 @@ function muscleView() {
   const pool = Object.keys(EX).filter(id => (q || (st ? EX[id].cat === "stretch" : EX[id].cat !== "stretch")) && (ctx.kind !== "workout" || EX[id].cat !== "cardio"));
   const list = pool.filter(id => (!replacing || id !== replacing.id) && (!q || norm(EX[id].name + " " + (EX[id].aliases || []).join(" ") + " " + (EX[id].muscles || "") + " " + (PASS_WORDS[EX[id].cat] || "")).includes(q))
     && (q || !msk.sel || (st ? stretchMuscles(id).includes(msk.sel) : trainsMuscle(id, msk.sel)))
-    && (q || st || cat === "alla" || EX[id].cat === cat) && (gear === "alla" || gearGroup(id) === gear));
+    && (q || st || cat === "alla" || EX[id].cat === cat) && (q || gear === "alla" || gearGroup(id) === gear));
   const title = q ? "Sökresultat – styrka och stretch" : msk.sel ? MUSKEL_NAMN[msk.sel] : st ? "Alla stretchövningar" : cat !== "alla" ? `Alla ${areaLabel(cat).toLowerCase()}-övningar` : "Alla övningar";
   const heading = replacing ? `Byt ut ${esc(EX[replacing.id].name)}` : ctx.kind === "daily" ? "Lägg till daily" : ctx.kind === "workout" ? `Lägg till i ${esc(libTargetName(ctx.target))}` : "Sök på muskel";
   const back = browse ? `<button class="backbtn" ${msk.back === "idag" ? 'data-tab="idag"' : "data-exlibclose"}>${icon("left", 18)}${msk.back === "idag" ? "Hem" : "Träna"}</button>`
@@ -98,7 +98,7 @@ function muscleView() {
       ${anatSvg(msk.view, { strong: q || !msk.sel ? [] : [msk.sel], mode: msk.mode })}</section>
     <div class="psearch">${icon("search", 18)}<input id="mskq" type="search" placeholder="${st ? "Sök stretchövning" : "Sök övning eller muskel"}" value="${esc(msk.q)}" autocomplete="off" aria-label="Sök"></div>
     ${filters}
-    <div class="row between sg-head"><h2>${title}</h2><span class="muted small">${list.length} ${st ? (list.length === 1 ? "stretch" : "stretchövningar") : (list.length === 1 ? "övning" : "övningar")}${msk.sel && !q ? ` · <button class="link small" data-mus="">Visa alla</button>` : ""}</span></div>
+    <div class="row between sg-head"><h2>${title}</h2><span class="muted small">${list.length} ${q ? (list.length === 1 ? "träff" : "träffar") : st ? (list.length === 1 ? "stretch" : "stretchövningar") : (list.length === 1 ? "övning" : "övningar")}${msk.sel && !q ? ` · <button class="link small" data-mus="">Visa alla</button>` : ""}</span></div>
     ${rows ? `<section class="h3-list">${rows}</section>` : `<div class="muted sg-none">${q ? "Inga övningar matchar." : `Inga ${st ? "stretchövningar" : "övningar"} matchar. Prova en annan muskel eller utrustning.`}</div>`}
     ${list.length > msk.limit ? `<button class="wide sg-more" data-mskmore>Visa fler (${list.length - msk.limit})</button>` : ""}</div>`;
 }
