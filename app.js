@@ -884,6 +884,7 @@ let confirmReset = false;
 let importMsg = "";
 
 function render() {
+  if (libCtx && libCtx.tab !== tab) libCtx = null;   // en annan flik lämnar biblioteket
   const oldFocusScroll = document.querySelector(".focus-scroll");
   if (focus && oldFocusScroll) focus.scrollTop = oldFocusScroll.scrollTop;
   if (TABS.some(([id]) => id === tab)) profBack = tab;

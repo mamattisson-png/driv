@@ -1635,6 +1635,13 @@ def test_lagg_till_fran_pass_och_dailys(page):
     page.click('[data-openpick="daily"]')
     page.fill("#mskq", "bänkpress")
     assert page.locator('[data-libpick="bankpress"]').count() == 0 and page.locator(".msk-row.have").count() >= 1
+    # Menyn lämnar biblioteket, både till en annan flik och till fliken man kom från
+    page.click('#nav [data-tab="kost"]')
+    assert page.locator(".msk").count() == 0 and page.evaluate("tab") == "kost"
+    go(page, "dailys")
+    page.click('[data-openpick="daily"]')
+    page.click('#nav [data-tab="dailys"]')
+    assert page.locator(".msk").count() == 0 and page.evaluate("libCtx") is None
 
 
 def test_byt_ovning_under_passet(page):
