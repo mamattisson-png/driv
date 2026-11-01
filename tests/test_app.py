@@ -2199,3 +2199,25 @@ def test_nollstall_allt_borjar_pa_valkomstsidan(page):
     assert page.locator("[data-welcomelogin]").count() == 0
     page.click('[data-onb="1"]')
     assert "Hur vill du träna" in page.inner_text("#app")
+
+
+def test_valkomstsidan_tre_vagar_in_och_rundtur(page):
+    page.context.route("**/config.js", lambda r: r.fulfill(
+        body='window.DRIV_CONFIG = { supabaseUrl: "https://exempel.supabase.co", supabaseAnonKey: "nyckel" };',
+        content_type="application/javascript"))
+    open_app(page, SUPABASE_MOCK)
+    assert "Varför Driv? Det är enkelt." in page.inner_text(".welcome")
+    # Skapa konto och Logga in går till samma kodinloggning med olika rubrik
+    page.click('[data-welcomelogin="create"]')
+    assert "Skapa ditt konto" in page.inner_text(".login h1")
+    page.click('.login [data-welcomelogin="login"]')
+    assert "Välkommen tillbaka" in page.inner_text(".login h1")
+    page.click('.login .backbtn')
+    # Utan konto: varning om att datan bara finns i telefonen
+    page.click(".wnoacct")
+    assert "Du kör utan konto" in page.inner_text("#app")
+    finish_setup(page)
+    # Rundturen erbjuds en gång på Hem
+    assert page.locator(".tour-offer").count() == 1
+    page.click("[data-tourskip]")
+    assert page.locator(".tour-offer").count() == 0 and page.evaluate("S.tourAsked") is True

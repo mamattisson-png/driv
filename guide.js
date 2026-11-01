@@ -59,10 +59,12 @@ function positionTour() {
   card.style.cssText = `top:${down ? below : above}px;--ax:${Math.max(22, Math.min(cw - 22, r.left + r.width / 2 - left))}px`;
 }
 document.addEventListener("click", ev => {
-  const t = ev.target.closest && ev.target.closest("[data-tourstart],[data-tournext],[data-tourprev],[data-tourend]");
+  const t = ev.target.closest && ev.target.closest("[data-tourstart],[data-tourskip],[data-tournext],[data-tourprev],[data-tourend]");
   if (!t) return;
   ev.stopImmediatePropagation();
   const ds = t.dataset;
+  if (ds.tourstart !== undefined || ds.tourskip !== undefined) { S.tourAsked = true; save(); }
+  if (ds.tourskip !== undefined) { render(); return; }
   if (ds.tourstart !== undefined) tour = 0;
   else if (ds.tourprev !== undefined) tour = Math.max(0, tour - 1);
   else if (ds.tournext !== undefined) tour = tour + 1 < TOUR.length ? tour + 1 : null;

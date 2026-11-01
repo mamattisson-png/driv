@@ -1145,6 +1145,8 @@ const VIEWS = {
       <header class="homehead"><div class="brand"><img src="icons/icon-192-v2.png" alt=""><div class="ordbild"><span class="wordmark">DRIV</span><span class="slogan">Ditt mål. <em>Ditt driv.</em></span></div></div>
         <span class="row h3-hbtns"><button class="gear avbtn infobtn" data-tourstart aria-label="Visa appguiden">${icon("info", 20)}</button>
         <button class="gear avbtn" data-tab="profil" aria-label="Inställningar">${icon("profil", 20)}</button></span></header>
+      ${S.tourAsked !== false ? "" : `<section class="tour-offer"><span class="h3-ic">${icon("info", 20)}</span><span class="grow"><b>Ny i Driv?</b><small>En kort rundtur visar var allt finns.</small></span>
+        <button class="small primary" data-tourstart>Visa</button><button class="small ghost" data-tourskip>Inte nu</button></section>`}
       <div class="muted h3-date">${date}</div><h1 class="h3-greet">${greeting}</h1>
       <div class="muted h3-sub">${sub} · ${passes} av ${S.plan.count} pass i veckan</div>
       <section class="h3-card ${done ? "done" : ""}"><button class="h3-head" data-seepass="${d.id}" aria-label="Dagens pass: ${esc(d.name)}">${no(1, done)}
@@ -1848,6 +1850,7 @@ function saveSetup() {
   S.plan = { program: draft.program, count: draft.count, mode: draft.mode, weekdays, days: draft.days };
   // Har man hoppat över kalorimålet påminner Kost om att ställa in det
   if (!S.setupDone && S.profileSet !== true) S.profileSet = false;
+  if (!S.setupDone) S.tourAsked = false;   // nya användare erbjuds rundturen på Hem
   S.setupDone = true;
   draft = null;
   // Ändrat upplägg: tillbaka dit man kom ifrån (Träna, Profil eller Hem)
@@ -1991,7 +1994,7 @@ document.addEventListener("click", ev => {
   else if (ds.fbsend !== undefined) { sendFeedback(); return; }
   else if (ds.fbagain !== undefined) { feedback.sent = false; feedback.msg = ""; }
   else if (ds.verifycode !== undefined) { verifyLoginCode(); return; }
-  else if (ds.welcomelogin !== undefined) { welcomeLogin = ds.welcomelogin || null; account.msg = ""; }
+  else if (ds.welcomelogin !== undefined) { welcomeLogin = ds.welcomelogin || null; account.msg = ""; if (welcomeLogin) welcomeAgain = false; }
   else if (ds.gokonto !== undefined) {
     openProfRow("konto", "acctemail");
     return;

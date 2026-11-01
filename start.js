@@ -31,8 +31,12 @@ function welcomeView() {
     <div class="wpoints">${pt("trana", "Träna efter ett upplägg", "Passen, vikterna och vad som är nästa")}
       ${pt("kost", "Håll koll på maten", "Ett kalorimål som passar dig")}
       ${pt("vanner", "Peppa varandra", "Se när vännerna har tränat")}</div>
-    <div class="welcome-cta"><button class="primary wide bigbtn" data-onb="1">Kom igång</button>
-      ${sbEnabled && account.step !== "in" ? `<button class="wide bigbtn" data-welcomelogin="login">Jag har redan ett konto</button>` : ""}
+    <p class="wwhy">Varför Driv? <em>Det är enkelt.</em></p>
+    <div class="welcome-cta">${sbEnabled && account.step !== "in"
+      ? `<button class="primary wide bigbtn" data-welcomelogin="create">Skapa konto</button>
+      <button class="wide bigbtn" data-welcomelogin="login">Logga in</button>
+      <button class="link wnoacct" data-onb="1">Fortsätt utan konto</button>`
+      : `<button class="primary wide bigbtn" data-onb="1">Kom igång</button>`}
       <span class="muted small">Tar ungefär en minut. Allt går att ändra sen.</span></div></div>`;
 }
 
@@ -54,19 +58,20 @@ function loginView() {
   }
   return `<div class="login"><button class="backbtn" data-welcomelogin="">${icon("left", 18)}Tillbaka</button>
     <img class="loginlogo" src="icons/icon-192-v2.png" alt="">
-    <h1>Välkommen tillbaka</h1>
-    <div class="muted lead">Skriv e-posten du använde, så skickar vi en kod. Inget lösenord behövs.</div>
+    <h1>${welcomeLogin === "create" ? "Skapa ditt konto" : "Välkommen tillbaka"}</h1>
+    <div class="muted lead">${welcomeLogin === "create" ? "Skriv din e-post, så skickar vi en kod. Inget lösenord behövs." : "Skriv e-posten du använde, så skickar vi en kod. Inget lösenord behövs."}</div>
     <label class="field">E-post<input id="acctemail" type="email" autocomplete="email" placeholder="din@epost.se" value="${esc(a.email)}"></label>
     <div class="muted small" style="margin:8px 4px 0">Din e-post används bara för att logga in, aldrig för reklam.</div>
     <div class="note">${icon("data", 20)}<span class="muted">Allt du loggat finns på kontot: upplägg, pass, mat och vänner. Det följer med till alla enheter du loggar in på.</span></div>
     ${msg}
     <div class="login-cta"><button class="primary wide bigbtn" data-sendcode ${a.busy ? "disabled" : ""}>Skicka kod</button>
-      <span class="muted small">Inget konto än? <button class="link" data-welcomelogin="" data-onb="1">Kom igång</button></span></div></div>`;
+      <span class="muted small">${welcomeLogin === "create" ? `Har du redan ett konto? <button class="link" data-welcomelogin="login">Logga in</button>`
+        : `Inget konto än? <button class="link" data-welcomelogin="create">Skapa konto</button>`}</span></div></div>`;
 }
 
 // Inloggad men utan sparat upplägg: ett besked överst i stegen
 function accountNote() {
-  if (account.step !== "in") return "";
+  if (account.step !== "in") return sbEnabled ? `<div class="card note-card warn-card"><b>Du kör utan konto.</b> <span class="muted">Allt sparas bara i den här telefonen och kan gå förlorat om du byter telefon eller rensar webbläsaren. Skapa konto när du vill under Inställningar.</span></div>` : "";
   return `<div class="card note-card"><b>Inloggad som ${esc(account.email)}.</b> <span class="muted">${cloud.status === "cloud" ? "Kontot har inget sparat upplägg än. Välj ett här, så sparas det på kontot."
     : cloud.status === "error" ? "Kunde inte hämta från kontot. Ladda om sidan." : "Hämtar från kontot…"}</span></div>`;
 }
