@@ -32,6 +32,7 @@ Senast uppdaterad: 2026-10-30. Källa: gemensam förbättringslista i ChatGPT. D
 | 28 | Träna som en sida och övningsbibliotek | Träning | Hög | Klar |
 | 29 | Kroppskarta i bibliotek och stretchguide, alla övningar kan läggas till | Träning | Hög | Klar |
 | 30 | Sammanhängande Dailys-vy | Dailys | Medel | Klar |
+| 31 | Passet klart först när alla övningar är gjorda, och ångra genomfört pass | Träning | Hög | Klar |
 
 ## Detaljer och acceptanskriterier
 
@@ -71,6 +72,8 @@ Senast uppdaterad: 2026-10-30. Källa: gemensam förbättringslista i ChatGPT. D
 29. **Kroppskarta och lägg till (Klar, publicerad 2026-10-31):** Övningsbiblioteket och Stretchguiden har samma kroppskarta i stil med GPT-förslaget: dov orange toning, sken på det valda och etiketter med streck. Ett tryck filtrerar listan. Alla övningar har ett plus (i biblioteket, stretchguiden och instruktionen) som lägger till övningen i Dailys eller ett valfritt pass.
 
 30. **Sammanhängande Dailys-vy (Klar, publicerad 2026-11-01):** Ingen tillbakaknapp på fliken. En sammanfattning med ring och de sju senaste dagarna (grön prick när allt var klart, orange när något var gjort). Övningar och kosttillskott som två likadana listor med rund bock, liten startknapp och "Lägg till" som sista rad. Klara rader får grön bock och överstruket namn.
+
+31. **Passet klart först när alla övningar är gjorda, och ångra (Klar, publicerad 2026-11-01):** I fokusläget leder knappen efter en klar övning till nästa övning som inte är gjord (först efter, annars från början); Spara och avsluta visas först när alla är klara. Pass klart har "Ångra – passet är inte klart". Ett sparat pass kan öppnas igen eller tas bort helt med två tryck; det försvinner också ur vännernas flöde. Tipset för tidsövningar säger "håll i 30 s" i stället för att be om en vikt.
 
 ## Arbetsregler
 
