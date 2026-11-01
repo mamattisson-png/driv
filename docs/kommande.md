@@ -39,6 +39,9 @@ Senast uppdaterad: 2026-11-01. Status bygger på dokumenterade publiceringar och
 | 35 | Direktlänkar till rätt MuscleWiki-övning | Stretch | Medel | Ej påbörjad |
 | 36 | Gemensamt övningsbibliotek för pass, Dailys och byten | Träning | Hög | Klar |
 | 37 | Testbalken trycker inte ut innehåll utanför skärmen | Testläge | Låg | Klar |
+| 38 | Hela kroppen i Sök på muskel | Träning | Medel | Klar |
+| 39 | Menyn lämnar övningsbiblioteket | Träning | Hög | Klar |
+| 40 | Nollställ allt börjar på välkomstsidan | Start | Medel | Klar |
 
 ## Detaljer och acceptanskriterier
 
@@ -92,6 +95,11 @@ Senast uppdaterad: 2026-11-01. Status bygger på dokumenterade publiceringar och
 11. **Frivillig appguide (Klar, publicerad 2026-11-01):** Startas med i-knappen på Hem eller under Inställningar → Appen, aldrig av sig själv. Nio steg: de fem flikarna, uppvärmning, supersets och dailys under passet, och var guiden startas igen. Varje steg visar det verkliga elementet med en lysande ram och ett kort med pil, utan mörk slöja. Stegen ligger i `guide.js`; testet `test_appguiden_gar_igenom_alla_flikar` faller om ett steg pekar på något som inte längre finns.
 36. **Gemensamt övningsbibliotek (Klar, publicerad 2026-11-01, PR #28):** Lägg till övning i ett pass, Lägg till i Dailys och Byt övning (i redigeringen och under passet) öppnar samma muskelbibliotek med sök, kroppskarta, filter för passtyp och utrustning, figurer och instruktioner. Plus lägger till direkt och tar en tillbaka; övningar som redan finns är markerade med en bock. Vid byte under passet väljs Bara i dag eller Även framåt. Den separata väljaren och det gamla övningsbiblioteket är borttagna. Granskad via Cloudflare-preview innan publicering.
 37. **Testbalken (Klar, publicerad 2026-11-01):** Balken i testläget är smalare och dess höjd räknas bort i vyer som fyller skärmen (start, passet och Passet klart), så att inget hamnar utanför.
+38. **Hela kroppen (Klar, publicerad 2026-11-01):** Etiketten Hela kroppen på kroppskartan tänder hela figuren och visar alla övningar eller all stretch, fram och bak.
+
+39. **Menyn lämnar biblioteket (Klar, publicerad 2026-11-01):** Öppnat från Dailys eller ett pass låg biblioteket kvar över alla flikar. Nu stänger ett tryck i menyn biblioteket.
+
+40. **Nollställ allt (Klar, publicerad 2026-11-01):** Efter Nollställ allt hamnar man på välkomstsidan som en ny användare, även inloggad.
 
 ## Arbetsregler
 
