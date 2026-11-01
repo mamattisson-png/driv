@@ -2221,3 +2221,21 @@ def test_valkomstsidan_tre_vagar_in_och_rundtur(page):
     assert page.locator(".tour-offer").count() == 1
     page.click("[data-tourskip]")
     assert page.locator(".tour-offer").count() == 0 and page.evaluate("S.tourAsked") is True
+
+
+def test_kvinnlig_figur_efter_kon_och_installning(page):
+    start(page)
+    go(page, "pass")
+    page.click("[data-exlib]")
+    assert "anatomi.webp" in page.get_attribute(".anat image", "href")
+    # Kvinna i profilen: kvinnlig figur, samma muskler att trycka på
+    page.evaluate("S.profile.sex = 'f'; render()")
+    assert "anatomi-kvinna.webp" in page.get_attribute(".anat image", "href")
+    page.click('.an-lab[data-mus="mage"] rect')
+    assert page.evaluate("msk.sel") == "mage" and page.locator('.an-reg.on[data-mus="mage"]').count() == 1
+    # Går att byta i Inställningar
+    go(page, "profil")
+    page.click('[data-figure-set="m"]')
+    assert page.evaluate("[S.figure, figK()]") == ["m", False]
+    page.reload()
+    assert page.evaluate("figK()") is False

@@ -1209,6 +1209,8 @@ const VIEWS = {
       ? `<input type="checkbox" role="switch" class="switch" data-pushtoggle aria-label="Notiser" ${push.on ? "checked" : ""} ${push.busy ? "disabled" : ""}>` : "";
     const themeSeg = `<div class="tseg" role="radiogroup" aria-label="Utseende">${Object.entries(THEMES).map(([k, n]) =>
       `<button role="radio" data-theme-set="${k}" class="${themeNow() === k ? "on" : ""}" aria-checked="${themeNow() === k}" aria-pressed="${themeNow() === k}">${k === "auto" ? "Auto" : n}</button>`).join("")}</div>`;
+    const figSeg = `<div class="tseg" role="radiogroup" aria-label="Figur">${[["m", "Man"], ["k", "Kvinna"]].map(([k, n]) =>
+      `<button role="radio" data-figure-set="${k}" class="${figK() === (k === "k") ? "on" : ""}" aria-checked="${figK() === (k === "k")}">${n}</button>`).join("")}</div>`;
     return `<button class="backbtn" data-tab="${profBack}">${icon("left", 18)}${{ idag: "Hem", pass: "Träna", kost: "Kost", historik: "Historik" }[profBack] || "Tillbaka"}</button>
       <h1 class="ptitle">Inställningar</h1>
       <section class="card pcard" aria-label="Du"><div class="row"><span class="avatar" aria-hidden="true">${esc(name.slice(0, 1).toUpperCase())}</span>
@@ -1239,6 +1241,7 @@ const VIEWS = {
         ${profRow("notiser", "bell", "Notiser", pushSummary(), pushBody(), pushSwitch)}
         ${S.daily.length ? profRow("paminnelse", "kalender", "Påminnelse i kalendern", r ? `För dina dailys · kl. ${esc(r.time)}` : "För dina dailys · ingen vald", reminderCard()) : ""}`)}
       ${group("Appen", `${profRow("utseende", "utseende", "Utseende", "", null, themeSeg)}
+        ${profRow("figur", "profil", "Figur", "I kroppskartan", null, figSeg)}
         ${profRow("guide", "info", "Appguide", "En kort rundtur genom flikarna", null, `<button class="small" data-tourstart>Starta</button>`)}
         ${profRow("konto", "data", sbEnabled ? "Konto och data" : "Data", account.step === "in" ? esc(account.email) : sbEnabled ? "Inloggning, exportera, importera" : "Exportera, importera",
           `${accountCard()}${data}`)}
@@ -1908,6 +1911,7 @@ document.addEventListener("click", ev => {
     if (tab === "upplagg") setupFrom = prevTab;
   }
   else if (ds.themeSet) setTheme(ds.themeSet);
+  else if (ds.figureSet) S.figure = ds.figureSet;
   else if (ds.psec) profOpen = profOpen === ds.psec ? null : ds.psec;
   else if (ds.go) { tab = ds.go; if (ds.day) chosenDay = ds.day; if (tab === "kost") { mealPage = null; foodSheet = null; foodItem = null; } }
   else if (ds.pick) { chosenDay = ds.pick; passOpen = true; if (!editDate) window.scrollTo(0, 0); }
