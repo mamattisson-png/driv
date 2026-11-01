@@ -1,6 +1,6 @@
 # DRIV – Kommande förbättringar
 
-Senast uppdaterad: 2026-10-30. Källa: gemensam förbättringslista i ChatGPT. Denna fil är en planeringslista, inte en bekräftelse på att funktioner har implementerats. Status 1–3 har markerats klara av användaren. Punkt 17 är färdigställd och godkänd för publicering.
+Senast uppdaterad: 2026-11-01. Status bygger på dokumenterade publiceringar och kontrollerad kod. Ej verifierade funktioner behåller pågående status.
 
 | Nr | Förbättring | Kategori | Prioritet | Status |
 |---|---|---|---|---|
@@ -11,8 +11,8 @@ Senast uppdaterad: 2026-10-30. Källa: gemensam förbättringslista i ChatGPT. D
 | 5 | Tillskott och hälsorutiner i Dailys | Dailys | Medel | I test |
 | 6 | Interaktiv stretchguide | Dailys | Medel | Klar |
 | 7 | Tydligare övningsfigurer och animationer | Design | Hög | Ej påbörjad |
-| 8 | Smart grönmarkering av måltider | Kost | Medel | Ej påbörjad |
-| 9 | Tydligare avklarade aktiviteter | Design | Hög | Ej påbörjad |
+| 8 | Smart grönmarkering av måltider | Kost | Medel | Klar |
+| 9 | Tydligare avklarade aktiviteter | Design | Hög | Klar |
 | 10 | Körbara tränings-Dailys | Dailys | Hög | Ej påbörjad |
 | 11 | Frivillig appguide | Ny funktion | Medel | Ej påbörjad |
 | 12 | Enhetlig profil- och inställningsikon | Design | Medel | Ej påbörjad |
@@ -34,6 +34,9 @@ Senast uppdaterad: 2026-10-30. Källa: gemensam förbättringslista i ChatGPT. D
 | 30 | Sammanhängande Dailys-vy | Dailys | Medel | Klar |
 | 31 | Passet klart först när alla övningar är gjorda, och ångra genomfört pass | Träning | Hög | Klar |
 | 32 | Sök på muskel: övningar och stretch med realistisk anatomibild | Träning | Hög | Klar |
+| 33 | Ta bort dubbla muskelknappar under kroppskartan | UX | Låg | Klar |
+| 34 | MuscleWiki-länk från stretchövningens detaljsida | Stretch | Medel | Klar |
+| 35 | Direktlänkar till rätt MuscleWiki-övning | Stretch | Medel | Ej påbörjad |
 
 ## Detaljer och acceptanskriterier
 
@@ -44,8 +47,8 @@ Senast uppdaterad: 2026-10-30. Källa: gemensam förbättringslista i ChatGPT. D
 5. **Tillskott och hälsorutiner i Dailys:** Publicerad i separat testversion: https://feat-health-dailys.driv-test.pages.dev/ . Öppna Träna → Dailys → Ändra dailys. Egen sektion för hälsorutiner med Kreatin, Vitaminer, Omega-3, Vatten och egna namn/anteckningar. Redigering, borttagning, daglig avprickning och läsbara arkiverade rutiner i historiken. 19 riktade tester för hälsorutiner, synk och service worker passerar. Lägga till och bocka av Kreatin verifierat i publicerad testvy. Ingen produktionsimplementation publicerad. Serverns påminnelseregel är förberedd i grenen men inte driftsatt. Den breda testsuiten har ytterligare fel som behöver utredas före produktionspublicering.
 6. **Interaktiv stretchguide:** Välj stel kroppsdel, få relevanta övningar med demonstration och möjlighet att lägga till i Dailys eller pass.
 7. **Tydligare övningsfigurer och animationer:** Förbättra befintlig stil, liten ikon och förstorat läge, i både ljust och mörkt tema. Ändra inte loggan.
-8. **Smart grönmarkering av måltider:** Markera måltider när rekommenderat kalorimål nåtts. Om totalt dagsmål nås kan registrerade måltider markeras gröna trots annan fördelning.
-9. **Tydligare avklarade aktiviteter:** Grön check eller annan diskret, tydlig återkoppling för genomförda träningspass och Dailys.
+8. **Smart grönmarkering av måltider (Klar):** Publicerad hemskärmslogik visar grönt för Kost först när det faktiska dagsmålet för kalorier har nåtts, inte bara när mat har registrerats. Detaljerad markering av enskilda måltider kan vidareutvecklas separat.
+9. **Tydligare avklarade aktiviteter (Klar):** Publicerad hemskärm visar gröna bockar för avklarade steg och Dailys visar avklarade rader med bock och överstruket namn.
 10. **Körbara tränings-Dailys:** Exempel plankan 3×45 s med timer, vila, nästa set och automatiskt avslut; använd befintlig träningslogik där möjligt.
 11. **Frivillig appguide:** Startas via info-knapp, visar verkliga UI-element, kan avslutas och startas om. Aldrig obligatorisk vid första besöket.
 12. **Enhetlig profil- och inställningsikon:** Samma ikon, placering och beteende på Hem och Historik; föredra initialavatar.
@@ -77,6 +80,12 @@ Senast uppdaterad: 2026-10-30. Källa: gemensam förbättringslista i ChatGPT. D
 31. **Passet klart först när alla övningar är gjorda, och ångra (Klar, publicerad 2026-11-01):** I fokusläget leder knappen efter en klar övning till nästa övning som inte är gjord (först efter, annars från början); Spara och avsluta visas först när alla är klara. Pass klart har "Ångra – passet är inte klart". Ett sparat pass kan öppnas igen eller tas bort helt med två tryck; det försvinner också ur vännernas flöde. Tipset för tidsövningar säger "håll i 30 s" i stället för att be om en vikt.
 
 32. **Sök på muskel (Klar, publicerad 2026-11-01):** Byggd efter designkanvasens överlämning (Stretch med muskelkarta). En vy för Övningar (orange) och Stretch (turkos) med en realistisk anatomibild (AI-genererad med ChatGPT) och 13 muskler att trycka på, Fram/Bak, sökning och + för Dailys eller pass. Ersätter Övningsbiblioteket och Stretchguiden. Varje stretchövning har en egen sida med Töjs mest/också, upplägg, steg, Starta (Dailys-timern) och Lägg till.
+
+33. **Ta bort dubbla muskelknappar (Klar, kod uppdaterad 2026-11-01):** Den horisontella raden med muskelval under anatomibilden togs bort ur `muskelsok.js` på `main` (commit `1244bfa`). Muskelval på bilden behålls. Driftsättning via Cloudflare är inte separat verifierad.
+
+34. **MuscleWiki-länk (Klar, kod uppdaterad 2026-11-01):** En extern länk till MuscleWikis allmänna övningsbibliotek lades till under instruktionerna på stretchövningarnas detaljsidor (commit `51657dc`). Driftsättning via Cloudflare är inte separat verifierad.
+
+35. **Direktlänkar till rätt MuscleWiki-övning:** Dagens länk går till det allmänna biblioteket, inte till motsvarande övning. Kartlägg övningar och verifiera destinationer innan direkta länkar införs.
 
 ## Arbetsregler
 
