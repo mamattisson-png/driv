@@ -154,7 +154,7 @@ document.addEventListener("click", ev => {
   else if (ds.libclose !== undefined) libCtx = null;
   else if (ds.libtoday) libCtx.today = ds.libtoday === "true";
   else if (ds.mus !== undefined) {
-    msk.sel = ds.mus && ds.mus !== msk.sel ? ds.mus : null; msk.q = ""; msk.limit = 30;
+    msk.sel = ds.mus || null; msk.q = ""; msk.limit = 30;
     if (!msk.sel) { render(); return; }
     // Visa den sida där muskeln finns
     if (!ANAT[msk.view].regs.some(r => r[0] === ds.mus)) msk.view = msk.view === "f" ? "b" : "f";
