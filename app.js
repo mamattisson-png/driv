@@ -1146,7 +1146,7 @@ const VIEWS = {
     return `<div class="home3">
       <header class="homehead"><div class="brand"><img src="icons/icon-192-v2.png" alt=""><div class="ordbild"><span class="wordmark">DRIV</span><span class="slogan">Ditt mål. <em>Ditt driv.</em></span></div></div>
         <span class="row h3-hbtns"><button class="gear avbtn infobtn" data-tourstart aria-label="Visa appguiden">${icon("info", 20)}</button>
-        <button class="gear avbtn" data-tab="profil" aria-label="Inställningar">${GEAR_SVG}</button></span></header>
+        <button class="gear avbtn setbtn" data-tab="profil" aria-label="Inställningar">${GEAR_SVG}</button></span></header>
       ${S.tourAsked !== false ? "" : `<section class="tour-offer"><span class="h3-ic">${icon("info", 20)}</span><span class="grow"><b>Ny i Driv?</b><small>En kort rundtur visar var allt finns.</small></span>
         <button class="small primary" data-tourstart>Visa</button><button class="small ghost" data-tourskip>Inte nu</button></section>`}
       <div class="muted h3-date">${date}</div><h1 class="h3-greet">${greeting}</h1>
