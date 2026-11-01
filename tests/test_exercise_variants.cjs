@@ -17,6 +17,10 @@ const result = vm.runInContext(`(() => {
     const e = EX[id];
     if (!e || e.cues.length !== 3 || !e.aliases.length || !MW[id]) throw Error(id + ": incomplete metadata");
     if (!e.prim.length || !e.reps || !e.gear) throw Error(id + ": missing training metadata");
+    if (gearOf(id) !== e.gear || e.bw !== (e.gear === "bw")) throw Error(id + ": gear mismatch");
+    if (e.gear === "bw" && (e.hold || e.cable || e.plate || e.pad)) throw Error(id + ": invalid bodyweight props");
+    if (e.gear === "db" && e.hold !== "db" || e.gear === "bar" && e.hold !== "bar") throw Error(id + ": wrong weight props");
+    if (!AREA_IDS[areaOf(id)].split(" ").includes(id)) throw Error(id + ": missing area index");
     const svg = figure(id, "", true);
     if (!svg.includes("<svg") || /NaN|Infinity|undefined/.test(svg)) throw Error(id + ": invalid figure");
   }
