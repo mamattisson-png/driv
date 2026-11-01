@@ -10,7 +10,7 @@ for(const file of ["ovningar.js","styrka-extra.js","stretch-extra.js","ovningar-
 const n = vm.runInContext(`(() => {
  const names = Object.values(EX).map(e=>e.name.toLocaleLowerCase("sv").trim());
  if(new Set(names).size !== names.length) throw Error("Duplicate exercise names");
- if(EXTRA_DISTINCT_IDS.length !== 8) throw Error("Expected eight distinct exercises");
+ if(EXTRA_DISTINCT_IDS.length !== 14) throw Error("Expected fourteen distinct exercises");
  for(const id of EXTRA_DISTINCT_IDS){
   const e=EX[id];
   if(!e || !e.aliases?.length || e.cues?.length !== 3 || !e.reps || !MW[id]) throw Error(id+": incomplete");
@@ -19,5 +19,5 @@ const n = vm.runInContext(`(() => {
  }
  return EXTRA_DISTINCT_IDS.length;
 })()`,ctx);
-assert.equal(n,8);
-console.log("Eight distinct exercise records validated");
+assert.equal(n,14);
+console.log("Fourteen distinct exercise records validated");
