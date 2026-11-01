@@ -62,7 +62,6 @@ function muscleView() {
     <div class="msk-tabs" role="tablist"><button role="tab" aria-selected="${!st}" class="${st ? "" : "on"}" data-mskmode="ex">Övningar</button><button role="tab" aria-selected="${st}" class="${st ? "on" : ""}" data-mskmode="st">Stretch</button></div>
     <section class="msk-map"><div class="msk-side" role="radiogroup" aria-label="Sida"><button class="${msk.view === "f" ? "on" : ""}" data-mskview="f" aria-pressed="${msk.view === "f"}">Fram</button><button class="${msk.view === "b" ? "on" : ""}" data-mskview="b" aria-pressed="${msk.view === "b"}">Bak</button></div>
       ${anatSvg(msk.view, { strong: q ? [] : [msk.sel], mode: msk.mode })}</section>
-    <div class="exlib-chips msk-chips">${MUSKLER.map(([k, n]) => `<button class="${!q && msk.sel === k ? "on" : ""}" data-mus="${k}" aria-pressed="${msk.sel === k}">${n}</button>`).join("")}</div>
     <div class="psearch">${icon("search", 18)}<input id="mskq" type="search" placeholder="${st ? "Sök stretchövning" : "Sök övning"}" value="${esc(msk.q)}" autocomplete="off" aria-label="Sök"></div>
     <div class="row between sg-head"><h2>${title}</h2><span class="muted small">${list.length} ${st ? (list.length === 1 ? "stretch" : "stretchövningar") : (list.length === 1 ? "övning" : "övningar")}</span></div>
     ${rows ? `<section class="h3-list">${rows}</section>` : `<div class="muted sg-none">${q ? "Inga övningar matchar." : `Inga ${st ? "stretchövningar" : "övningar"} för ${title.toLowerCase()} än.`}</div>`}
