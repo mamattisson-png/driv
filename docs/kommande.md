@@ -44,6 +44,7 @@ Senast uppdaterad: 2026-11-01. Status bygger på dokumenterade publiceringar och
 | 40 | Nollställ allt börjar på välkomstsidan | Start | Medel | Klar |
 | 41 | Välkomstsidan: Skapa konto, Logga in eller utan konto, rundtur för nya | Start | Hög | Klar |
 | 42 | Kvinnlig figur i kroppskartan | Träning | Medel | Klar |
+| 43 | Ett namn, en plats: Övningar, kugghjul och samma tillbakaknapp | UX | Hög | Klar |
 
 ## Detaljer och acceptanskriterier
 
@@ -104,6 +105,7 @@ Senast uppdaterad: 2026-11-01. Status bygger på dokumenterade publiceringar och
 40. **Nollställ allt (Klar, publicerad 2026-11-01):** Efter Nollställ allt hamnar man på välkomstsidan som en ny användare, även inloggad.
 41. **Nytt välkomstflöde (Klar, publicerad 2026-11-01):** Välkomstsidan har samma utseende med en rad om Dailys och frasen Varför Driv? Det är enkelt. Tre vägar in: Skapa konto, Logga in och Fortsätt utan konto, där det sista visar en varning om att datan bara finns i telefonen. Nya användare erbjuds rundturen en gång på Hem när upplägget är klart. Avstånden anpassas efter skärmhöjden.
 42. **Kvinnlig figur (Klar, publicerad 2026-11-01):** Kroppskartan visar en kvinnlig anatomibild med egna muskelområden när man valt kvinna i profilen. Går att byta under Inställningar → Figur.
+43. **Ett namn, en plats (Klar, publicerad 2026-11-01):** Efter appkartan: biblioteket heter Övningar överallt, Annan träning, Vikt och Recept heter likadant på alla ställen. Kugghjulet till Inställningar finns på alla flikar och ligger innanför kanten. Alla undersidor har tillbakaknappen ‹ med namnet på vyn bakom.
 
 ## Arbetsregler
 
