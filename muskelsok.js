@@ -84,7 +84,7 @@ function stretchPage(id) {
     <div class="rstats three">${tile(secs ? `${secs} s` : esc(e.reps), secs ? "håll" : "reps")}${tile(`${e.sets} ×`, "gånger")}${tile(gearOf(id) ? "1" : "0", "utrustning")}</div>
     <section class="card msk-how"><div class="row" style="gap:14px;align-items:center"><span class="thumb msk-fig">${figure(id, "", true)}</span>
       <div><h2>Så här gör du</h2><span class="muted small">Det ska dra${most.length ? ` i ${MUSKEL_NAMN[most[0]].toLowerCase()}` : ""}, inte göra ont.</span></div></div>
-      <ol class="msk-steps">${(e.cues || []).map(c => `<li>${esc(c)}</li>`).join("")}</ol></section>
+      <ol class="msk-steps">${(e.cues || []).map(c => `<li>${esc(c)}</li>`).join("")}</ol><a href="https://musclewiki.com/exercises" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:7px;margin-top:18px;color:#12b7a5;font-weight:700;text-decoration:none">Visa fler övningar på MuscleWiki ↗</a></section>
     <div class="pagefoot row"><button class="grow ghost" data-sgadd="${id}">${icon("plus", 16)}Lägg till</button>
       <button class="primary grow bigbtn" data-dclockstart="${id}">${icon("timer", 18)}Starta${secs ? ` · ${secs} s` : ""}</button></div></div>`;
 }
