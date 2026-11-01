@@ -2212,6 +2212,9 @@ if (window.DRIV_TEST) {
   document.body.insertAdjacentHTML("afterbegin", `<div class="testbar" role="status"><b>Testläge</b>
     <span class="grow"><span class="testsub">· egen data, sparas inte på kontot</span></span>
     <button data-testseed>Exempeldata</button><button data-testreset>Börja om</button><button data-testexit>Lämna</button></div>`);
+  // Balken tar plats överst; vyer som fyller skärmen räknar bort den så att inget hamnar utanför
+  const tbh = () => document.documentElement.style.setProperty("--tb", `${document.querySelector(".testbar").offsetHeight}px`);
+  tbh(); addEventListener("resize", tbh);
   document.addEventListener("click", ev => {
     const t = ev.target.closest && ev.target.closest("[data-testseed],[data-testreset],[data-testexit]");
     if (!t) return;

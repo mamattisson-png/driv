@@ -641,11 +641,11 @@
   .subex input { flex: none; padding: 8px 10px; }
   /* Testläge */
   .testbar { position: sticky; top: 0; z-index: 8; display: flex; align-items: center; gap: 8px;
-    padding: calc(6px + env(safe-area-inset-top, 0px)) 16px 6px; background: var(--accent-strong); color: var(--on-accent); font-size: 13px; }
+    padding: calc(4px + env(safe-area-inset-top, 0px)) 12px 4px; background: var(--accent-strong); color: var(--on-accent); font-size: 12px; }
   .testbar b { font-weight: 600; }
   .testbar .grow { opacity: .85; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
   @media (max-width: 479px) { .testsub { display: none; } }
-  .testbar button { min-height: 36px; padding: 0 10px; font-size: 13px; border-radius: 10px; border-color: transparent;
+  .testbar button { min-height: 28px; padding: 0 9px; font-size: 12px; border-radius: 10px; border-color: transparent;
     background: rgba(0, 0, 0, .18); color: var(--on-accent); }
   /* ---------- Profil ---------- */
   .phead { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
@@ -736,7 +736,7 @@
   .actcard .krow + .krow { border-top: 1px solid var(--line); }
   /* ---------- Fokusläge ---------- */
   body.infocus { padding-bottom: calc(116px + env(safe-area-inset-bottom, 0px)); }
-  .focus { display: flex; flex-direction: column; gap: 16px; min-height: calc(100vh - 148px - env(safe-area-inset-bottom, 0px)); min-height: calc(100dvh - 148px - env(safe-area-inset-bottom, 0px)); }
+  .focus { display: flex; flex-direction: column; gap: 16px; min-height: calc(100vh - 148px - env(safe-area-inset-bottom, 0px) - var(--tb, 0px)); min-height: calc(100dvh - 148px - env(safe-area-inset-bottom, 0px) - var(--tb, 0px)); }
   .fhead { display: flex; align-items: center; gap: 12px; }
   .roundbtn { width: 44px; height: 44px; padding: 0; border-radius: 22px; flex: none; display: grid; place-items: center; }
   .fsteps { display: flex; flex-wrap: wrap; gap: 6px; margin-top: -6px; }
@@ -816,13 +816,13 @@
   body.infocus.resting .sheet { max-height: 88vh; }
 
   body.infocus, body.infocus.resting { height: 100dvh; overflow: hidden; padding-bottom: 0; }
-  body.infocus main { height: calc(100dvh - 96px - env(safe-area-inset-bottom, 0px)); padding-top: 12px; padding-bottom: 0; }
+  body.infocus main { height: calc(100dvh - 96px - env(safe-area-inset-bottom, 0px) - var(--tb, 0px)); padding-top: 12px; padding-bottom: 0; }
   body.infocus .focus { height: 100%; min-height: 0; display: grid; grid-template-rows: minmax(0, 1fr) auto; gap: 0; }
   .focus-scroll { min-height: 0; overflow-y: auto; overscroll-behavior: contain; display: flex; flex-direction: column; gap: 14px; padding-bottom: 12px; }
   .focus-controls { min-width: 0; padding-top: 8px; background: var(--bg); }
   body.infocus .fbar { position: static; margin-top: 0; }
-  @media (pointer: coarse) { body.infocus.typing main { height: 100dvh; }
-    body.infocus.set-editing main { height: var(--set-edit-height, 100dvh); } }
+  @media (pointer: coarse) { body.infocus.typing main { height: calc(100dvh - var(--tb, 0px)); }
+    body.infocus.set-editing main { height: calc(var(--set-edit-height, 100dvh) - var(--tb, 0px)); } }
 
   /* ---------- Muskelkartan ---------- */
   .mcard { display: flex; flex-direction: column; gap: 12px; }
@@ -886,7 +886,7 @@
   .av.addav { background: var(--card-2); color: var(--muted); border: 2px dashed var(--line-strong); box-sizing: border-box; }
   .invitecard .avs .av + .av { margin-left: -12px; }
   /* Pass klart: hela skärmen, utan meny */
-  .passdone { display: flex; flex-direction: column; gap: 18px; min-height: calc(100vh - 40px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+  .passdone { display: flex; flex-direction: column; gap: 18px; min-height: calc(100vh - 40px - var(--tb, 0px)); padding-bottom: env(safe-area-inset-bottom, 0px); }
   .pdhead { display: flex; justify-content: flex-end; }
   .pdtop { display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; }
   .pdtop h1 { margin: 0; font: 600 28px/1.1 "Unbounded", sans-serif; }
@@ -1155,7 +1155,7 @@
 
   /* Första besöket */
   body.onboard { padding-bottom: env(safe-area-inset-bottom); }
-  body.onboard main { min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; }
+  body.onboard main { min-height: calc(100vh - var(--tb, 0px)); min-height: calc(100dvh - var(--tb, 0px)); display: flex; flex-direction: column; }
   .welcome { position: relative; flex: 1; display: flex; flex-direction: column; }
   .welcome-glow { position: fixed; left: 0; right: 0; top: -260px; height: 560px; pointer-events: none;
     background: radial-gradient(ellipse 75% 50% at 50% 50%, color-mix(in srgb, var(--accent) 30%, transparent), transparent); }
