@@ -1072,7 +1072,7 @@ const VIEWS = {
   upplagg() {
     if (S.setupDone) return upplaggView();
     if (welcomeLogin && sbEnabled && account.step !== "in") return loginView();
-    if (account.step === "in" && !onb) onb = 1;
+    if (account.step === "in" && !onb && !welcomeAgain) onb = 1;
     return onb ? onbView() : welcomeView();
   },
 
@@ -2067,7 +2067,7 @@ document.addEventListener("click", ev => {
   else if (ds.import !== undefined) { document.getElementById("importfile").click(); return; }
   else if (ds.reset !== undefined) {
     if (!confirmReset) { confirmReset = true; render(); return; }
-    S = freshState(); tab = "upplagg"; draft = null;
+    S = freshState(); tab = "upplagg"; draft = null; onb = 0; welcomeAgain = true;
   }
   else return;
   confirmReset = false;
