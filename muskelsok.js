@@ -83,7 +83,7 @@ function muscleView() {
   const action = id => browse ? addBtn(id)
     : have.includes(id) && !replacing ? `<span class="sg-add have" aria-label="Finns redan">${icon("check", 18)}</span>`
     : `<button class="sg-add" data-libpick="${id}" aria-label="${replacing ? "Välj" : "Lägg till"} ${esc(EX[id].name)}">${icon(replacing ? "right" : "plus", 18)}</button>`;
-  const rows = list.slice(0, msk.limit).map(id => `<div class="h3-row sg-row msk-row ${have.includes(id) ? "have" : ""}"><button class="sg-open" ${st && browse ? `data-mskdetail="${id}"` : `data-info="${id}"`} aria-label="Visa ${esc(EX[id].name)}">
+  const rows = list.slice(0, msk.limit).map(id => `<div class="h3-row sg-row msk-row ${have.includes(id) ? "have" : ""}"><button class="sg-open" ${EX[id].cat === "stretch" && browse ? `data-mskdetail="${id}"` : `data-info="${id}"`} aria-label="Visa ${esc(EX[id].name)}">
       <span class="thumb exl">${figure(id)}</span><span class="grow"><b>${esc(EX[id].name)}</b><small>${EX[id].sets} × ${esc(EX[id].reps)} · ${esc(EX[id].muscles || "")}</small></span></button>${action(id)}</div>`).join("");
   const filters = `<div class="pfilters msk-filters">${st ? "" : `<label class="pfilter ${cat !== "alla" ? "on" : ""}"><span class="sr">Passtyp</span><select data-mskcat aria-label="Passtyp">
       <option value="alla">Alla passtyper</option>${Object.keys(PASS_FILTER).map(k => `<option value="${k}" ${cat === k ? "selected" : ""}>${areaLabel(k)}</option>`).join("")}</select>${icon("down", 16)}</label>`}
