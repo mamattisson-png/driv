@@ -1837,20 +1837,20 @@ button.h3-card.h3-head { background: var(--card); padding: 12px 14px; }
 .msk .pagefoot .primary { background: var(--stretch); border-color: var(--stretch); color: #0d0e10; }
 .msk .pagefoot .ghost { display: flex; align-items: center; justify-content: center; gap: 6px; min-height: 56px; }
 
-/* Appguiden: ett ljus över det som förklaras och ett kort med text och knappar */
-.h3-hbtns { gap: 8px; }
-.infobtn { color: var(--muted); }
+/* Appguiden: en lysande ram runt det som förklaras och ett kort med en pil som pekar på det. Ingen mörk slöja. */
 .tour { position: fixed; inset: 0; z-index: 60; }
-.tour-spot { position: fixed; border-radius: 18px; box-shadow: 0 0 0 9999px rgba(0, 0, 0, .66), 0 0 0 2px var(--accent); transition: all .25s ease; pointer-events: none; }
-.tour-card { position: fixed; left: 16px; right: 16px; max-width: 420px; margin: 0 auto; background: var(--card); border: 1px solid var(--line-strong); border-radius: 20px; padding: 14px 16px 16px; box-shadow: 0 12px 32px rgba(0, 0, 0, .45); transition: top .25s ease; }
-.tour-card h2 { margin: 6px 0 4px; font-size: 19px; }
-.tour-card p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.45; }
-.tour-dots { display: flex; gap: 4px; margin: 12px 0; }
-.tour-dots i { flex: 1; height: 3px; border-radius: 2px; background: var(--line); }
-.tour-dots i.done { background: var(--muted); }
-.tour-dots i.on { background: var(--accent); }
+.tour-ring { position: fixed; border-radius: 16px; border: 2px solid var(--accent); pointer-events: none;
+  box-shadow: 0 0 0 4px rgba(255, 107, 26, .22), 0 0 22px 2px rgba(255, 107, 26, .55); animation: tourglow 1.6s ease-in-out infinite; transition: all .25s ease; }
+@keyframes tourglow { 50% { box-shadow: 0 0 0 7px rgba(255, 107, 26, .12), 0 0 30px 6px rgba(255, 107, 26, .7); } }
+.tour-card { position: fixed; left: 16px; right: 16px; max-width: 420px; margin: 0 auto; background: var(--card); border: 1.5px solid var(--accent); border-radius: 18px; padding: 12px 14px 14px; box-shadow: 0 10px 28px rgba(0, 0, 0, .5); }
+.tour-arrow { position: absolute; left: calc(var(--ax, 50%) - 9px); width: 16px; height: 16px; background: var(--card); border: 1.5px solid var(--accent); transform: rotate(45deg); }
+.tour-card.under .tour-arrow { top: -9px; border-right: 0; border-bottom: 0; }
+.tour-card.over .tour-arrow { bottom: -9px; border-left: 0; border-top: 0; }
+.tour-card.free .tour-arrow { display: none; }
+.tour-card h2 { margin: 4px 0 4px; font-size: 18px; }
+.tour-card p { margin: 0 0 12px; color: var(--muted); font-size: 14px; line-height: 1.45; }
 .tour-btns { gap: 8px; }
-@media (prefers-reduced-motion: reduce) { .tour-spot, .tour-card { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .tour-ring { animation: none; transition: none; } }
 </style>
 </head>
 <body>
