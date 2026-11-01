@@ -33,6 +33,7 @@ Senast uppdaterad: 2026-10-30. Källa: gemensam förbättringslista i ChatGPT. D
 | 29 | Kroppskarta i bibliotek och stretchguide, alla övningar kan läggas till | Träning | Hög | Klar |
 | 30 | Sammanhängande Dailys-vy | Dailys | Medel | Klar |
 | 31 | Passet klart först när alla övningar är gjorda, och ångra genomfört pass | Träning | Hög | Klar |
+| 32 | Sök på muskel: övningar och stretch med realistisk anatomibild | Träning | Hög | Klar |
 
 ## Detaljer och acceptanskriterier
 
@@ -74,6 +75,8 @@ Senast uppdaterad: 2026-10-30. Källa: gemensam förbättringslista i ChatGPT. D
 30. **Sammanhängande Dailys-vy (Klar, publicerad 2026-11-01):** Ingen tillbakaknapp på fliken. En sammanfattning med ring och de sju senaste dagarna (grön prick när allt var klart, orange när något var gjort). Övningar och kosttillskott som två likadana listor med rund bock, liten startknapp och "Lägg till" som sista rad. Klara rader får grön bock och överstruket namn.
 
 31. **Passet klart först när alla övningar är gjorda, och ångra (Klar, publicerad 2026-11-01):** I fokusläget leder knappen efter en klar övning till nästa övning som inte är gjord (först efter, annars från början); Spara och avsluta visas först när alla är klara. Pass klart har "Ångra – passet är inte klart". Ett sparat pass kan öppnas igen eller tas bort helt med två tryck; det försvinner också ur vännernas flöde. Tipset för tidsövningar säger "håll i 30 s" i stället för att be om en vikt.
+
+32. **Sök på muskel (Klar, publicerad 2026-11-01):** Byggd efter designkanvasens överlämning (Stretch med muskelkarta). En vy för Övningar (orange) och Stretch (turkos) med en realistisk anatomibild (AI-genererad med ChatGPT) och 13 muskler att trycka på, Fram/Bak, sökning och + för Dailys eller pass. Ersätter Övningsbiblioteket och Stretchguiden. Varje stretchövning har en egen sida med Töjs mest/också, upplägg, steg, Starta (Dailys-timern) och Lägg till.
 
 ## Arbetsregler
 
