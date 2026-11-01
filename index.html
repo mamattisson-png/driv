@@ -282,7 +282,7 @@
   .stat-sm { font-size: 22px; }
   /* Kugghjul, ändra en tidigare dag */
   #app { position: relative; }
-  .gear { position: absolute; top: 2px; right: 0; width: 44px; height: 44px; padding: 0; border-radius: 22px; z-index: 2;
+  .gear { position: absolute; top: 2px; right: max(16px, env(safe-area-inset-right, 0px)); width: 44px; height: 44px; padding: 0; border-radius: 22px; z-index: 2;
     border: 1px solid var(--line); background: var(--card); color: var(--text); display: grid; place-items: center; }
   .gear.on { border-color: var(--text); }
   #app > h1 { padding-right: 52px; }

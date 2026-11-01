@@ -85,7 +85,7 @@ function traningView() {
     ${tiles}
     <div class="klabel h3-sec">Mer</div>
     <section class="h3-list">
-      ${row("search", "Övningsbibliotek", `${Object.keys(EX).length} övningar · sök och läs instruktioner`, "data-exlib")}
+      ${row("search", "Övningar", `${Object.keys(EX).length} övningar · sök och läs instruktioner`, "data-exlib")}
       ${row("upplagg", "Träningsupplägg", `${esc(PROGRAMS[S.plan.program || "ppl"].name)} · ${S.plan.count} pass i veckan`, 'data-tab="upplagg"')}
       ${row("aktivitet", "Annan träning", acts.length ? esc(acts.map(a => `${a.name} ${+a.min} min`).join(", ")) : "Padel, löpning, cykling …", `data-actnew="" data-actdate="${TODAY}"`, "plus")}
     </section>

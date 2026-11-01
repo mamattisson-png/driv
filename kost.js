@@ -878,7 +878,7 @@ function kostView() {
     ${lastOverviewRemoved && lastOverviewRemoved.date === logDate() && Date.now() - lastOverviewRemoved.at < 5000 ? `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;margin-bottom:12px;background:rgba(150,150,150,.12);border-radius:10px"><span class="small">Livsmedel borttaget</span><button data-overviewundo type="button" style="border:0;background:none;color:#ff7118;font-weight:700;padding:8px">Ångra</button></div>` : ""}
     <h2 class="ksec">Måltider</h2>
     <div class="kmeals" aria-label="Måltider">${MEALS.map((_, i) => mealCard(i, L, m)).join("")}${mealCard(-1, L, m)}</div>
-    <button class="kmcard krecept" data-rlist><span class="kmic">${icon("kost", 22)}</span><span class="grow col"><b>Dina recept</b>
+    <button class="kmcard krecept" data-rlist><span class="kmic">${icon("kost", 22)}</span><span class="grow col"><b>Recept</b>
       <span class="muted small">${recipes().length ? `${recipes().length} recept` : "Bygg en rätt, logga en portion"}</span></span><span class="chev">${icon("right", 18)}</span></button>`;
 }
 

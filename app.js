@@ -883,6 +883,7 @@ let draft = null;          // utkast i upplägg-vyn
 let confirmReset = false;
 let importMsg = "";
 
+const GEAR_SVG = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Z"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06-1.87 1.87-.06-.06A1.7 1.7 0 0 0 16 18.4a1.7 1.7 0 0 0-1 1.56V21h-6v-1.04A1.7 1.7 0 0 0 8 18.4a1.7 1.7 0 0 0-1.87.34l-.06.06-1.87-1.87.06-.06A1.7 1.7 0 0 0 4.6 15 1.7 1.7 0 0 0 3 14H2v-4h1a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.34-1.87L4.2 7.07 6.07 5.2l.06.06A1.7 1.7 0 0 0 8 5.6 1.7 1.7 0 0 0 9 4V3h6v1a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.87-.34l.06-.06 1.87 1.87-.06.06A1.7 1.7 0 0 0 19.4 9 1.7 1.7 0 0 0 21 10h1v4h-1a1.7 1.7 0 0 0-1.6 1Z"/></svg>`;
 function render() {
   if (libCtx && libCtx.tab !== tab) libCtx = null;   // en annan flik lämnar biblioteket
   const oldFocusScroll = document.querySelector(".focus-scroll");
@@ -899,7 +900,8 @@ function render() {
   const banner = editDate && (tab === "kost" || (tab === "pass" && focus && !editing))
     ? `<div class="editbar">Du ändrar <b>${dateLabel(editDate)}</b><button class="small" data-editdone>Klar</button></div>` : "";
   // Samma inställningsknapp på alla huvudvyer. Hem har knappen i sin egen header.
-  const gear = tab === "idag" || tab === "profil" || tab === "upplagg" || passDone ? "" : `<button class="gear" data-tab="profil" aria-label="Inställningar"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Z"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06-1.87 1.87-.06-.06A1.7 1.7 0 0 0 16 18.4a1.7 1.7 0 0 0-1 1.56V21h-6v-1.04A1.7 1.7 0 0 0 8 18.4a1.7 1.7 0 0 0-1.87.34l-.06.06-1.87-1.87.06-.06A1.7 1.7 0 0 0 4.6 15 1.7 1.7 0 0 0 3 14H2v-4h1a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.34-1.87L4.2 7.07 6.07 5.2l.06.06A1.7 1.7 0 0 0 8 5.6 1.7 1.7 0 0 0 9 4V3h6v1a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.87-.34l.06-.06 1.87 1.87-.06.06A1.7 1.7 0 0 0 19.4 9 1.7 1.7 0 0 0 21 10h1v4h-1a1.7 1.7 0 0 0-1.6 1Z"/></svg></button>`;
+  // Kugghjulet ligger på samma plats överallt; under ett pass har fokusvyn egna knappar där
+  const gear = tab === "idag" || tab === "profil" || tab === "upplagg" || passDone || (focus && tab === "pass" && !libCtx) ? "" : `<button class="gear" data-tab="profil" aria-label="Inställningar">${GEAR_SVG}</button>`;
   document.getElementById("app").innerHTML = passDone ? passDoneView()
     : gear + banner + (libCtx ? muscleView() : VIEWS[tab]()) + (modal ? renderModal() : "") + (actSheet ? actSheetView() : "") + (sgAdd && EX[sgAdd] ? stretchAddSheet(sgAdd) : "") + tourView();
   if (tab === "recept" && typeof filterRecipes === "function") filterRecipes();
@@ -1112,7 +1114,7 @@ const VIEWS = {
   },
   stretchguide() { return muscleView(); },
   vagning() {
-    return `<div class="weigh-page"><button class="ghost small" data-tab="idag">${icon("left",16)} Tillbaka</button><h1>Veckans vägning</h1><p class="muted">Registrera din vikt och följ utvecklingen.</p>${`<section class="card wrow"><div class="grow"><b>Registrera vikt</b><span class="muted small">Dagens datum · ${dateLabel(TODAY)}</span></div><input id="wkg" type="number" inputmode="decimal" step="0.1" placeholder="kg" aria-label="Vikt i kg" value="${weights()[TODAY]??""}"><button class="small" data-wsave data-wdate="${TODAY}">Spara</button></section>`}${weightChart()}</div>`;
+    return `<div class="weigh-page"><button class="backbtn" data-tab="idag">${icon("left", 18)}Hem</button><h1>Vikt</h1><p class="muted">Registrera din vikt och följ utvecklingen.</p>${`<section class="card wrow"><div class="grow"><b>Registrera vikt</b><span class="muted small">Dagens datum · ${dateLabel(TODAY)}</span></div><input id="wkg" type="number" inputmode="decimal" step="0.1" placeholder="kg" aria-label="Vikt i kg" value="${weights()[TODAY]??""}"><button class="small" data-wsave data-wdate="${TODAY}">Spara</button></section>`}${weightChart()}</div>`;
   },
   idag() {
     const m = macros(), e = eaten(), t = todaysPass(), d = t.d, w = t.w;
@@ -1144,7 +1146,7 @@ const VIEWS = {
     return `<div class="home3">
       <header class="homehead"><div class="brand"><img src="icons/icon-192-v2.png" alt=""><div class="ordbild"><span class="wordmark">DRIV</span><span class="slogan">Ditt mål. <em>Ditt driv.</em></span></div></div>
         <span class="row h3-hbtns"><button class="gear avbtn infobtn" data-tourstart aria-label="Visa appguiden">${icon("info", 20)}</button>
-        <button class="gear avbtn" data-tab="profil" aria-label="Inställningar">${icon("profil", 20)}</button></span></header>
+        <button class="gear avbtn" data-tab="profil" aria-label="Inställningar">${GEAR_SVG}</button></span></header>
       ${S.tourAsked !== false ? "" : `<section class="tour-offer"><span class="h3-ic">${icon("info", 20)}</span><span class="grow"><b>Ny i Driv?</b><small>En kort rundtur visar var allt finns.</small></span>
         <button class="small primary" data-tourstart>Visa</button><button class="small ghost" data-tourskip>Inte nu</button></section>`}
       <div class="muted h3-date">${date}</div><h1 class="h3-greet">${greeting}</h1>
@@ -1159,9 +1161,9 @@ const VIEWS = {
         <small>${total ? `${completed} av ${total} idag` : "Lägg till det du vill göra varje dag"}</small></span>${icon("right", 18)}</button>
       <div class="klabel h3-sec">Övrigt idag</div>
       <section class="h3-list">
-        ${row(stretchId ? figure(stretchId) : icon("utseende", 18), "Stretchguide", "Välj kroppsdel och få övningar", 'data-tab="stretchguide"')}
-        ${row(icon("aktivitet", 18), "Annan aktivitet", "Löpning, padel, promenad …", "data-homeactivity", "plus")}
-        ${row(icon("vikt", 18), weighed ? "Veckans vikt" : "Veckans vägning", weighed && avg ? `${fmtNum(avg)} kg den här veckan` : `Väg dig ${WD_LONG[weighDay()]}`, 'data-tab="vagning"')}
+        ${row(stretchId ? figure(stretchId) : icon("utseende", 18), "Stretch", "Övningar som töjer · välj kroppsdel", 'data-tab="stretchguide"')}
+        ${row(icon("aktivitet", 18), "Annan träning", "Löpning, padel, promenad …", "data-homeactivity", "plus")}
+        ${row(icon("vikt", 18), "Vikt", weighed && avg ? `${fmtNum(avg)} kg den här veckan` : `Väg dig ${WD_LONG[weighDay()]}`, 'data-tab="vagning"')}
         ${row(icon("vanner", 18), "Vänner", friendSub, 'data-tab="vanner"')}
       </section></div>`;
   },
@@ -1184,7 +1186,7 @@ const VIEWS = {
 
   vanner() { return friendsView(); },
 
-  kommande: () => `<div class="page-back-wrap"><button class="ghost small page-back" data-tab="profil">${icon("left",16)} Tillbaka</button></div>${upcomingFeaturesPage()}`,
+  kommande: () => `<button class="backbtn" data-tab="profil">${icon("left", 18)}Inställningar</button>${upcomingFeaturesPage()}`,
 
   profil() {
     checkPush();

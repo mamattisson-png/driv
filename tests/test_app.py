@@ -2064,7 +2064,7 @@ def test_ovningsbiblioteket(page):
     assert page.locator(".wkcard").count() == 3
     page.click("[data-exlib]")
     # Sök på muskel: Bröst visar bröstövningar; ett tryck på en etikett byter muskel
-    assert "Sök på muskel" in page.inner_text("h1")
+    assert "Övningar" in page.inner_text("h1")
     page.click('.an-lab[data-mus="biceps"] rect')
     assert "Biceps" in page.inner_text(".sg-head") and page.locator('.an-reg.on[data-mus="biceps"]').count() == 1
     # Baksidans muskler visar baksidan
@@ -2239,3 +2239,28 @@ def test_kvinnlig_figur_efter_kon_och_installning(page):
     assert page.evaluate("[S.figure, figK()]") == ["m", False]
     page.reload()
     assert page.evaluate("figK()") is False
+
+
+def test_ett_namn_och_en_tillbakaknapp(page):
+    start(page)
+    # Samma kugghjul till Inställningar på Hem och övriga flikar
+    assert "M12 8.5" in page.inner_html('.homehead [data-tab="profil"]')
+    for t in ("pass", "dailys", "kost", "historik"):
+        go(page, t)
+        g = page.locator("#app > .gear")
+        assert g.count() == 1
+        box = g.bounding_box()
+        assert box["x"] + box["width"] <= page.viewport_size["width"] - 8
+    # Samma namn på knappen som överst i vyn
+    go(page, "pass")
+    page.click("[data-exlib]")
+    assert page.inner_text(".msk h1") == "Övningar"
+    go(page, "idag")
+    assert "Vikt" in page.inner_text("#app") and "Annan träning" in page.inner_text("#app")
+    page.click('[data-tab="vagning"]')
+    assert page.inner_text("#app h1") == "Vikt"
+    # Tillbaka säger vart: ‹ Hem
+    assert page.inner_text(".backbtn").strip() == "Hem"
+    page.click(".backbtn")
+    page.click('.h3-row[data-tab="vanner"]')
+    assert page.inner_text(".backbtn").strip() == "Hem"

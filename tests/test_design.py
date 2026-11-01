@@ -127,7 +127,7 @@ def views(page):
     page.click("[data-ringadd]")
     yield "Recept", "#app"
     page.evaluate("recipeEdit = null; S.recipes = [{ name: 'Lasagne', portions: 4, items: [{ name: 'Nötfärs', text: '500 g', kcal: 1100, protein: 95, fat: 60, fiber: 0 }] }, { name: 'Tacos', portions: 4, items: [] }, { name: 'Chili', portions: 4, items: [] }, { name: 'Gryta', portions: 4, items: [] }]; render()")
-    yield "Dina recept", "#app"
+    yield "Recept", "#app"
     page.evaluate("recipeOpen = { idx: 0, n: 1 }; render()")
     yield "Ett recept", "#app"
     page.evaluate("recipeOpen = null; tab = 'kost'; render()")

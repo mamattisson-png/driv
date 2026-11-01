@@ -119,7 +119,9 @@ function friendLast(f) {
 }
 const myWeek = () => social.feed.filter(a => a.mine && a.day >= weekStart(TODAY)).length;
 function friendsHead(back, title, extra = "") {
-  return `<header class="phead"><button class="roundbtn" ${back} aria-label="Tillbaka">${icon("left", 20)}</button><h1 class="grow">${title}</h1>${extra}</header>`;
+  const to = (back.match(/data-tab="([a-z]+)"/) || [])[1];
+  const label = { idag: "Hem", pass: "Träna", dailys: "Dailys", kost: "Kost", historik: "Historik", profil: "Inställningar" }[to] || "Vänner";
+  return `<button class="backbtn" ${back}>${icon("left", 18)}${label}</button><header class="phead"><h1 class="grow">${title}</h1>${extra}</header>`;
 }
 function friendsView() {
   if (friendsPage === "lista" && social.profile) return friendsListPage();
