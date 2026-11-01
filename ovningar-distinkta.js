@@ -21,7 +21,7 @@ const EXTRA_DISTINCT_IDS = (() => {
   for (const [code,name,english,baseId,gear,cat,area,source,reps,cues] of entries) {
     const id = "dst_" + code, base = EX[baseId];
     if (!base || EX[id]) throw Error("Okänd grundövning eller dubbelt id: " + id);
-    if (Object.values(EX).some(e => e.name.toLocaleLowerCase("sv") === name.toLocaleLowerCase("sv"))) throw Error("Dubbelt övningsnamn: " + name);
+    if (Object.values(EX).some(e => e.name.toLocaleLowerCase("sv").trim() === name.toLocaleLowerCase("sv").trim())) throw Error("Dubbelt övningsnamn: " + name);
     EX[id] = { ...base, name, aliases:[english], cat, gear, bw:true, hold:null,
       cable:null, plate:null, pad:false, sets:3, reps, cues,
       prim:[...(base.prim || [])], sec:[...(base.sec || [])] };
