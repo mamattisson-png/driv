@@ -150,9 +150,11 @@ const EXTRA_VARIANT_IDS = [];
     const id = "vtx_" + code, base = EX[baseId];
     if (!base || EX[id]) throw new Error("Ogiltig eller dubblerad övningsvariant: " + id);
     EX[id] = { ...base, name, aliases: [english], gear, bw: gear === "bw",
-      sets: 3, reps, cues, prim: [...(base.prim || [])], sec: [...(base.sec || [])] };
-    // Behåll rörelsefamiljens befintliga streckfigur. Den visar inte paustid eller tempo.
-    if (gear === "bw") EX[id].hold = null;
+      sets: 3, reps, cues, prim: [...(base.prim || [])], sec: [...(base.sec || [])],
+      hold: gear === "bar" ? "bar" : gear === "db" ? "db" : null,
+      cable: null, plate: null, pad: false };
+    // Behåll rörelsefamiljens streckfigur, men ärv inte fel utrustningsrekvisita.
+    // Paustid, grepp och tempo förklaras i texten, inte genom påhittade poser.
     MW[id] = source;
     const area = areaOf(baseId);
     AREA_IDS[area] = ((AREA_IDS[area] || "") + " " + id).trim();
