@@ -783,30 +783,6 @@ const EX = {
 };
 
 
-// Ytterligare sökbara varianter. Illustrationerna återanvänder närliggande rörelsemönster.
-// MuskelWiki-länkar läggs först när exakta målsidor har verifierats.
-Object.assign(EX, {
-  neutral_hantelpress: SAME("hantelpress", { name: "Hantelpress med neutralt grepp", cat: "push", muscles: "Bröst, triceps", sets: 3, reps: "8–12", cues: ["Håll handflatorna mot varandra genom hela pressen.","Sänk hantlarna kontrollerat vid bröstet.","Pressa upp utan att slå ihop hantlarna."] }),
-  enarms_hantelpress: SAME("hantelpress", { name: "Enarms hantelpress", cat: "push", muscles: "Bröst, bål, triceps", sets: 3, reps: "8–12", cues: ["Ligg stabilt med en hantel i ena handen.","Pressa upp utan att rotera överkroppen.","Byt sida efter varje set."] }),
-  pausbankpress: SAME("bankpress", { name: "Pausbänkpress", cat: "push", muscles: "Bröst, triceps", sets: 3, reps: "5–8", cues: ["Sänk stången kontrollerat mot bröstet.","Pausa kort utan att slappna av.","Pressa upp med bibehållen spänning."] }),
-  bred_armhavning: SAME("armhavningar", { name: "Breda armhävningar", cat: "push", muscles: "Bröst, triceps", sets: 3, reps: "8–15", cues: ["Placera händerna något bredare än normalt.","Håll kroppen rak och sänk kontrollerat.","Pressa upp utan att svanka."] }),
-  underhands_latsdrag: SAME("latsdrag", { name: "Latsdrag med underhandsgrepp", cat: "pull", muscles: "Rygg, biceps", sets: 3, reps: "8–12", cues: ["Greppa stången med handflatorna mot dig.","Dra mot övre bröstet med sänkta axlar.","Släpp upp kontrollerat."] }),
-  brett_latsdrag: SAME("latsdrag", { name: "Brett latsdrag", cat: "pull", muscles: "Rygg, baksida axlar", sets: 3, reps: "8–12", cues: ["Greppa stången lite bredare än axelbrett.","Dra ned mot övre bröstet.","Undvik att luta dig kraftigt bakåt."] }),
-  enarms_hantelcurl: SAME("hantelcurl", { name: "Enarms hantelcurl", cat: "pull", muscles: "Biceps", sets: 3, reps: "10–12", cues: ["Stå stadigt med hanteln vid sidan.","Böj armbågen utan att svinga kroppen.","Sänk långsamt och byt arm."] }),
-  omvand_skivstangscurl: SAME("bicepscurl", { name: "Omvänd skivstångscurl", cat: "pull", muscles: "Underarmar, biceps", sets: 3, reps: "10–15", cues: ["Håll stången med överhandsgrepp.","Böj armbågarna nära kroppen.","Sänk långsamt utan att gunga."] }),
-  pausknaboj: SAME("knaboj", { name: "Pausknäböj", cat: "legs", muscles: "Framsida lår, säte", sets: 3, reps: "5–8", cues: ["Sänk dig till ett stabilt bottenläge.","Pausa kort med spänd bål.","Res dig kontrollerat."] }),
-  smal_knaboj: SAME("knaboj", { name: "Knäböj med smal fotställning", cat: "legs", muscles: "Framsida lår, säte", sets: 3, reps: "8–12", cues: ["Stå något smalare än axelbrett.","Böj knän och höfter så djupt du kontrollerar.","Tryck dig upp med hela foten i golvet."] }),
-  enbens_hip_thrust: SAME("hip_thrust", { name: "Enbens hip thrust", cat: "legs", muscles: "Säte, baksida lår", sets: 3, reps: "8–12", cues: ["Placera övre ryggen mot en bänk.","Pressa upp höften med ena benet.","Håll bäckenet stabilt och byt sida."] }),
-  enbens_glute_bridge: SAME("glute_bridge", { name: "Enbens höftlyft", cat: "legs", muscles: "Säte, baksida lår", sets: 3, reps: "10–15", cues: ["Ligg på rygg med ena foten i golvet.","Lyft höften utan att rotera bäckenet.","Sänk kontrollerat och byt ben."] }),
-  sidoplanka_hoftlyft: SAME("sidoplanka", { name: "Sidoplanka med höftlyft", cat: "core", muscles: "Sneda magmuskler, bål", sets: 3, reps: "10–15", cues: ["Ställ dig i sidoplanka på underarmen.","Sänk höften lite mot golvet.","Lyft tillbaka till rak kroppslinje."] }),
-  dead_bug_utstrackt: SAME("dead_bug", { name: "Dead bug med raka ben", cat: "core", muscles: "Djupa magmuskler, bål", sets: 3, reps: "8–12", cues: ["Ligg på rygg med armarna uppåt.","Sträck motsatt arm och ben kontrollerat.","Behåll ländryggen stabil mot underlaget."] }),
-  liggande_broststretch: SAME("brost_dorr", { name: "Liggande bröststretch", cat: "stretch", muscles: "Bröst, framsida axlar", sets: 3, reps: "30 sek", cues: ["Ligg på mage med ena armen ut åt sidan.","Rotera försiktigt kroppen bort från armen.","Håll utan att pressa in i smärta."] }),
-  staende_vadstretch_bojt_kna: SAME("vadstretch", { name: "Vadstretch med böjt knä", cat: "stretch", muscles: "Djupa vadmuskeln", sets: 3, reps: "30 sek", cues: ["Stå med händerna mot en vägg.","Böj bakre knät med hälen kvar i golvet.","Håll och byt sida."] }),
-  hoftbojare_stretch_arm: SAME("hoftbojare_stretch", { name: "Höftböjarstretch med armlyft", cat: "stretch", muscles: "Höftböjare, framsida höft", sets: 3, reps: "30 sek", cues: ["Stå i halvknästående utfallsposition.","Spänn sätet och för höften lätt framåt.","Lyft armen på samma sida som bakre benet."] }),
-  sittande_fjarilsstretch: SAME("fjarilen", { name: "Sittande fjärilsstretch", cat: "stretch", muscles: "Insida lår, höft", sets: 3, reps: "30 sek", cues: ["Sitt med fotsulorna mot varandra.","Håll ryggen lång och låt knäna sjunka ut.","Luta dig försiktigt framåt vid behov."] }),
-  sidliggande_quadricepsstretch: SAME("framsida_lar_stretch", { name: "Sidliggande framsida lår-stretch", cat: "stretch", muscles: "Framsida lår", sets: 3, reps: "30 sek", cues: ["Ligg på sidan med höfter staplade.","Ta tag i översta foten och för hälen mot sätet.","Håll knäna nära varandra och byt sida."] }),
-});
-
 // ---------- Fler övningar ----------
 // Varianter som rör sig som en befintlig övning lånar dess figur.
 const SAME = (id, extra) => Object.assign({ A: EX[id].A, B: EX[id].B, scene: EX[id].scene, view: EX[id].view }, extra);
@@ -1315,3 +1291,28 @@ for (const [id, s] of Object.entries(PRIM_SEC)) {
   EX[id].prim = p.split(" ").filter(Boolean);
   EX[id].sec = q.split(" ").filter(Boolean);
 }
+
+// Ytterligare sökbara varianter. Illustrationerna återanvänder närliggande rörelsemönster.
+// MuskelWiki-länkar läggs först när exakta målsidor har verifierats.
+Object.assign(EX, {
+  neutral_hantelpress: SAME("hantelpress", { name: "Hantelpress med neutralt grepp", cat: "push", muscles: "Bröst, triceps", sets: 3, reps: "8–12", cues: ["Håll handflatorna mot varandra genom hela pressen.","Sänk hantlarna kontrollerat vid bröstet.","Pressa upp utan att slå ihop hantlarna."] }),
+  enarms_hantelpress: SAME("hantelpress", { name: "Enarms hantelpress", cat: "push", muscles: "Bröst, bål, triceps", sets: 3, reps: "8–12", cues: ["Ligg stabilt med en hantel i ena handen.","Pressa upp utan att rotera överkroppen.","Byt sida efter varje set."] }),
+  pausbankpress: SAME("bankpress", { name: "Pausbänkpress", cat: "push", muscles: "Bröst, triceps", sets: 3, reps: "5–8", cues: ["Sänk stången kontrollerat mot bröstet.","Pausa kort utan att slappna av.","Pressa upp med bibehållen spänning."] }),
+  bred_armhavning: SAME("armhavningar", { name: "Breda armhävningar", cat: "push", muscles: "Bröst, triceps", sets: 3, reps: "8–15", cues: ["Placera händerna något bredare än normalt.","Håll kroppen rak och sänk kontrollerat.","Pressa upp utan att svanka."] }),
+  underhands_latsdrag: SAME("latsdrag", { name: "Latsdrag med underhandsgrepp", cat: "pull", muscles: "Rygg, biceps", sets: 3, reps: "8–12", cues: ["Greppa stången med handflatorna mot dig.","Dra mot övre bröstet med sänkta axlar.","Släpp upp kontrollerat."] }),
+  brett_latsdrag: SAME("latsdrag", { name: "Brett latsdrag", cat: "pull", muscles: "Rygg, baksida axlar", sets: 3, reps: "8–12", cues: ["Greppa stången lite bredare än axelbrett.","Dra ned mot övre bröstet.","Undvik att luta dig kraftigt bakåt."] }),
+  enarms_hantelcurl: SAME("hantelcurl", { name: "Enarms hantelcurl", cat: "pull", muscles: "Biceps", sets: 3, reps: "10–12", cues: ["Stå stadigt med hanteln vid sidan.","Böj armbågen utan att svinga kroppen.","Sänk långsamt och byt arm."] }),
+  omvand_skivstangscurl: SAME("bicepscurl", { name: "Omvänd skivstångscurl", cat: "pull", muscles: "Underarmar, biceps", sets: 3, reps: "10–15", cues: ["Håll stången med överhandsgrepp.","Böj armbågarna nära kroppen.","Sänk långsamt utan att gunga."] }),
+  pausknaboj: SAME("knaboj", { name: "Pausknäböj", cat: "legs", muscles: "Framsida lår, säte", sets: 3, reps: "5–8", cues: ["Sänk dig till ett stabilt bottenläge.","Pausa kort med spänd bål.","Res dig kontrollerat."] }),
+  smal_knaboj: SAME("knaboj", { name: "Knäböj med smal fotställning", cat: "legs", muscles: "Framsida lår, säte", sets: 3, reps: "8–12", cues: ["Stå något smalare än axelbrett.","Böj knän och höfter så djupt du kontrollerar.","Tryck dig upp med hela foten i golvet."] }),
+  enbens_hip_thrust: SAME("hip_thrust", { name: "Enbens hip thrust", cat: "legs", muscles: "Säte, baksida lår", sets: 3, reps: "8–12", cues: ["Placera övre ryggen mot en bänk.","Pressa upp höften med ena benet.","Håll bäckenet stabilt och byt sida."] }),
+  enbens_glute_bridge: SAME("glute_bridge", { name: "Enbens höftlyft", cat: "legs", muscles: "Säte, baksida lår", sets: 3, reps: "10–15", cues: ["Ligg på rygg med ena foten i golvet.","Lyft höften utan att rotera bäckenet.","Sänk kontrollerat och byt ben."] }),
+  sidoplanka_hoftlyft: SAME("sidoplanka", { name: "Sidoplanka med höftlyft", cat: "core", muscles: "Sneda magmuskler, bål", sets: 3, reps: "10–15", cues: ["Ställ dig i sidoplanka på underarmen.","Sänk höften lite mot golvet.","Lyft tillbaka till rak kroppslinje."] }),
+  dead_bug_utstrackt: SAME("dead_bug", { name: "Dead bug med raka ben", cat: "core", muscles: "Djupa magmuskler, bål", sets: 3, reps: "8–12", cues: ["Ligg på rygg med armarna uppåt.","Sträck motsatt arm och ben kontrollerat.","Behåll ländryggen stabil mot underlaget."] }),
+  liggande_broststretch: SAME("brost_dorr", { name: "Liggande bröststretch", cat: "stretch", muscles: "Bröst, framsida axlar", sets: 3, reps: "30 sek", cues: ["Ligg på mage med ena armen ut åt sidan.","Rotera försiktigt kroppen bort från armen.","Håll utan att pressa in i smärta."] }),
+  staende_vadstretch_bojt_kna: SAME("vadstretch", { name: "Vadstretch med böjt knä", cat: "stretch", muscles: "Djupa vadmuskeln", sets: 3, reps: "30 sek", cues: ["Stå med händerna mot en vägg.","Böj bakre knät med hälen kvar i golvet.","Håll och byt sida."] }),
+  hoftbojare_stretch_arm: SAME("hoftbojare_stretch", { name: "Höftböjarstretch med armlyft", cat: "stretch", muscles: "Höftböjare, framsida höft", sets: 3, reps: "30 sek", cues: ["Stå i halvknästående utfallsposition.","Spänn sätet och för höften lätt framåt.","Lyft armen på samma sida som bakre benet."] }),
+  sittande_fjarilsstretch: SAME("fjarilen", { name: "Sittande fjärilsstretch", cat: "stretch", muscles: "Insida lår, höft", sets: 3, reps: "30 sek", cues: ["Sitt med fotsulorna mot varandra.","Håll ryggen lång och låt knäna sjunka ut.","Luta dig försiktigt framåt vid behov."] }),
+  sidliggande_quadricepsstretch: SAME("framsida_lar_stretch", { name: "Sidliggande framsida lår-stretch", cat: "stretch", muscles: "Framsida lår", sets: 3, reps: "30 sek", cues: ["Ligg på sidan med höfter staplade.","Ta tag i översta foten och för hälen mot sätet.","Håll knäna nära varandra och byt sida."] }),
+});
+
