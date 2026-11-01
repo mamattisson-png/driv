@@ -171,6 +171,8 @@ function makeDays(prog, count, old = []) {
   });
 }
 
+function exerciseModel() { return S.exerciseModel==="f"||S.exerciseModel==="m" ? S.exerciseModel : (S.profile?.sex==="f"?"f":"m"); }
+
 function freshState() {
   return {
     v: 2, setupDone: false,
@@ -1620,7 +1622,7 @@ function renderModal() {
     const e = EX[modal.info];
     return `<div class="overlay" data-close><div class="sheet">${modal.back ? `<button class="small ghost backlink" data-infoback>‹ Tillbaka till övningarna</button>` : ""}
       <div class="row between"><h2>${esc(e.name)}</h2><button class="small ghost iconbtn" data-close aria-label="Stäng">${icon("close", 18)}</button></div>
-      ${figure(modal.info, "big", true)}<div class="muted">${esc(e.muscles)}</div>
+      <div class="exercise-model-switch" role="group" aria-label="Välj anatomisk modell"><span>Modell</span><button class="${exerciseModel()==="m"?"on":""}" data-exmodel="m" aria-pressed="${exerciseModel()==="m"}">Man</button><button class="${exerciseModel()==="f"?"on":""}" data-exmodel="f" aria-pressed="${exerciseModel()==="f"}">Kvinna</button></div>${figure(modal.info, "big", true)}<div class="muted">${esc(e.muscles)}</div>
       ${gearOf(modal.info) ? `<div class="gearbox"><b>${GEAR[gearOf(modal.info)][0]}</b><div>${GEAR[gearOf(modal.info)][1]}</div></div>` : ""}
       <ol>${e.cues.map(c => `<li>${esc(c)}</li>`).join("")}</ol>
       ${mwUrl(modal.info) ? `<a class="mwlink" href="${mwUrl(modal.info)}" target="_blank" rel="noopener">${MW[modal.info].startsWith("exercises/") ? "Liknande övningar på MuscleWiki" : "Mer om övningen på MuscleWiki"} <span aria-hidden="true">↗</span></a>` : ""}</div></div>`;
@@ -1911,6 +1913,7 @@ document.addEventListener("click", ev => {
       socialAction(() => socialRpc("driv_profile_save", { p_name: name, p_sharing: social.profile ? social.profile.sharing : true }));
     return;
   }
+  if (ds.exmodel) { S.exerciseModel=ds.exmodel==="f"?"f":"m"; save(); render(); return; }
   if (ds.info) { modal = { info: ds.info, back: modal && modal.pick ? modal : null }; render(); return; }
   if (ds.infoback !== undefined) { modal = modal.back; render(); filterPicker(); return; }
   if (ds.chart) { modal = { chart: ds.chart }; render(); return; }
