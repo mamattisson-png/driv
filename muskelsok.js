@@ -57,7 +57,7 @@ function anatSvg(side, { strong = [], soft = [], labels = true, mode = "ex", vb,
 let libCtx = null;
 // Öppna biblioteket från ett pass eller Dailys: listan börjar på passets typ, eller den övning som ska bytas
 function openLibrary(ctx) {
-  libCtx = ctx;
+  libCtx = { ...ctx, tab };
   const list = exList(ctx.target), orig = ctx.replace != null ? list[ctx.replace] : null;
   const d = ctx.kind === "workout" ? (ctx.target.startsWith("draft:") ? draft.days[+ctx.target.slice(6)] : dayById(ctx.target)) : null;
   const typeCat = d && { push: "push", cpush: "push", pull: "pull", cpull: "pull", legs: "legs", lower: "legs", clegs: "legs" }[d.type];
@@ -128,6 +128,8 @@ function stretchPage(id) {
       <button class="primary grow bigbtn" data-dclockstart="${id}">${icon("timer", 18)}Starta${secs ? ` · ${secs} s` : ""}</button></div></div>`;
 }
 
+// Menyn lämnar alltid biblioteket, även till fliken man kom från
+document.addEventListener("click", ev => { if (libCtx && ev.target.closest && ev.target.closest("#nav [data-tab]")) libCtx = null; }, true);
 document.addEventListener("change", ev => {
   const ds = ev.target.dataset || {};
   if (ds.mskcat !== undefined) msk.cat = ev.target.value; else if (ds.mskgear !== undefined) msk.gear = ev.target.value; else return;
