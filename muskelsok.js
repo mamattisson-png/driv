@@ -71,11 +71,11 @@ function muscleView() {
   const have = browse ? [] : exList(ctx.target).map(e => e.id);
   const replacing = !browse && ctx.replace != null ? exList(ctx.target)[ctx.replace] : null;
   // Kondition passar i Dailys men inte i ett pass; stretch finns under sin egen flik
-  const pool = Object.keys(EX).filter(id => (st ? EX[id].cat === "stretch" : EX[id].cat !== "stretch") && (ctx.kind !== "workout" || EX[id].cat !== "cardio"));
+  const pool = Object.keys(EX).filter(id => (q || (st ? EX[id].cat === "stretch" : EX[id].cat !== "stretch")) && (ctx.kind !== "workout" || EX[id].cat !== "cardio"));
   const list = pool.filter(id => (!replacing || id !== replacing.id) && (!q || norm(EX[id].name + " " + (EX[id].aliases || []).join(" ") + " " + (EX[id].muscles || "") + " " + (PASS_WORDS[EX[id].cat] || "")).includes(q))
     && (q || !msk.sel || (st ? stretchMuscles(id).includes(msk.sel) : trainsMuscle(id, msk.sel)))
-    && (st || cat === "alla" || EX[id].cat === cat) && (gear === "alla" || gearGroup(id) === gear));
-  const title = q ? "Sökresultat" : msk.sel ? MUSKEL_NAMN[msk.sel] : st ? "Alla stretchövningar" : cat !== "alla" ? `Alla ${areaLabel(cat).toLowerCase()}-övningar` : "Alla övningar";
+    && (q || st || cat === "alla" || EX[id].cat === cat) && (gear === "alla" || gearGroup(id) === gear));
+  const title = q ? "Sökresultat – styrka och stretch" : msk.sel ? MUSKEL_NAMN[msk.sel] : st ? "Alla stretchövningar" : cat !== "alla" ? `Alla ${areaLabel(cat).toLowerCase()}-övningar` : "Alla övningar";
   const heading = replacing ? `Byt ut ${esc(EX[replacing.id].name)}` : ctx.kind === "daily" ? "Lägg till daily" : ctx.kind === "workout" ? `Lägg till i ${esc(libTargetName(ctx.target))}` : "Sök på muskel";
   const back = browse ? `<button class="backbtn" ${msk.back === "idag" ? 'data-tab="idag"' : "data-exlibclose"}>${icon("left", 18)}${msk.back === "idag" ? "Hem" : "Träna"}</button>`
     : `<button class="backbtn" data-libclose>${icon("left", 18)}${ctx.kind === "daily" ? "Dailys" : esc(libTargetName(ctx.target))}</button>`;
