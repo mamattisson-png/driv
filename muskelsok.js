@@ -72,7 +72,7 @@ function muscleView() {
   const replacing = !browse && ctx.replace != null ? exList(ctx.target)[ctx.replace] : null;
   // Kondition passar i Dailys men inte i ett pass; stretch finns under sin egen flik
   const pool = Object.keys(EX).filter(id => (st ? EX[id].cat === "stretch" : EX[id].cat !== "stretch") && (ctx.kind !== "workout" || EX[id].cat !== "cardio"));
-  const list = pool.filter(id => (!replacing || id !== replacing.id) && (!q || norm(EX[id].name + " " + (EX[id].muscles || "") + " " + (PASS_WORDS[EX[id].cat] || "")).includes(q))
+  const list = pool.filter(id => (!replacing || id !== replacing.id) && (!q || norm(EX[id].name + " " + (EX[id].aliases || []).join(" ") + " " + (EX[id].muscles || "") + " " + (PASS_WORDS[EX[id].cat] || "")).includes(q))
     && (q || !msk.sel || (st ? stretchMuscles(id).includes(msk.sel) : trainsMuscle(id, msk.sel)))
     && (st || cat === "alla" || EX[id].cat === cat) && (gear === "alla" || gearGroup(id) === gear));
   const title = q ? "Sökresultat" : msk.sel ? MUSKEL_NAMN[msk.sel] : st ? "Alla stretchövningar" : cat !== "alla" ? `Alla ${areaLabel(cat).toLowerCase()}-övningar` : "Alla övningar";
