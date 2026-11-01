@@ -42,6 +42,7 @@ Senast uppdaterad: 2026-11-01. Status bygger på dokumenterade publiceringar och
 | 38 | Hela kroppen i Sök på muskel | Träning | Medel | Klar |
 | 39 | Menyn lämnar övningsbiblioteket | Träning | Hög | Klar |
 | 40 | Nollställ allt börjar på välkomstsidan | Start | Medel | Klar |
+| 41 | Välkomstsidan: Skapa konto, Logga in eller utan konto, rundtur för nya | Start | Hög | Klar |
 
 ## Detaljer och acceptanskriterier
 
@@ -100,6 +101,7 @@ Senast uppdaterad: 2026-11-01. Status bygger på dokumenterade publiceringar och
 39. **Menyn lämnar biblioteket (Klar, publicerad 2026-11-01):** Öppnat från Dailys eller ett pass låg biblioteket kvar över alla flikar. Nu stänger ett tryck i menyn biblioteket.
 
 40. **Nollställ allt (Klar, publicerad 2026-11-01):** Efter Nollställ allt hamnar man på välkomstsidan som en ny användare, även inloggad.
+41. **Nytt välkomstflöde (Klar, publicerad 2026-11-01):** Välkomstsidan har samma utseende med en rad om Dailys och frasen Varför Driv? Det är enkelt. Tre vägar in: Skapa konto, Logga in och Fortsätt utan konto, där det sista visar en varning om att datan bara finns i telefonen. Nya användare erbjuds rundturen en gång på Hem när upplägget är klart. Avstånden anpassas efter skärmhöjden.
 
 ## Arbetsregler
 
