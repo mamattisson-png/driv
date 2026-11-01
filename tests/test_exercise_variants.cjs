@@ -11,7 +11,7 @@ for (const file of ["ovningar.js", "styrka-extra.js", "stretch-extra.js", "ovnin
 const result = vm.runInContext(`(() => {
   const ids = EXTRA_VARIANT_IDS;
   const names = Object.values(EX).map(e => e.name.toLocaleLowerCase("sv").trim());
-  if (ids.length !== 22) throw Error("Expected twenty-two new variants");
+  if (ids.length !== 32) throw Error("Expected thirty-two new variants");
   if (new Set(ids).size !== ids.length || new Set(names).size !== names.length) throw Error("Duplicate exercise id or name");
   for (const id of ids) {
     const e = EX[id];
@@ -26,5 +26,5 @@ const result = vm.runInContext(`(() => {
   }
   return ids.length;
 })()`, ctx);
-assert.equal(result, 22);
-console.log("22 new exercise variants: unique names, metadata, and figures verified.");
+assert.equal(result, 32);
+console.log("32 new exercise variants: unique names, metadata, and figures verified.");
