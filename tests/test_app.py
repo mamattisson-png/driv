@@ -2171,3 +2171,18 @@ def test_appguiden_gar_igenom_alla_flikar(page):
     go(page, "profil")
     page.click(".prow [data-tourstart]")
     assert page.evaluate("tour") == 0 and not page.errors
+
+
+def test_nollstall_allt_borjar_pa_valkomstsidan(page):
+    start(page)
+    # Även inloggad hamnar man på välkomstsidan, precis som en ny användare
+    page.evaluate("account.step = 'in'; account.email = 'a@b.se'; cloud.status = 'cloud'")
+    go(page, "profil")
+    page.click('[data-psec="konto"]')
+    page.click("[data-reset]")
+    page.click("[data-reset]")
+    assert page.evaluate("[tab, onb, S.setupDone]") == ["upplagg", 0, False]
+    assert page.locator('[data-onb="1"]').count() == 1 and "Hur vill du träna" not in page.inner_text("#app")
+    assert page.locator("[data-welcomelogin]").count() == 0
+    page.click('[data-onb="1"]')
+    assert "Hur vill du träna" in page.inner_text("#app")

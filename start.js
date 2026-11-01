@@ -5,6 +5,7 @@
 // Laddas före app.js; funktionerna anropas först när appen ritas.
 
 let onb = 0;            // 0 välkomst, 1 program, 2 pass och dagar, 3 mål
+let welcomeAgain = false;   // efter Nollställ allt börjar man på välkomstsidan, även inloggad
 let daysOpen = false;   // veckodagarna är utfällda i Upplägg
 
 function ensureDraft() {
@@ -31,7 +32,7 @@ function welcomeView() {
       ${pt("kost", "Håll koll på maten", "Ett kalorimål som passar dig")}
       ${pt("vanner", "Peppa varandra", "Se när vännerna har tränat")}</div>
     <div class="welcome-cta"><button class="primary wide bigbtn" data-onb="1">Kom igång</button>
-      ${sbEnabled ? `<button class="wide bigbtn" data-welcomelogin="login">Jag har redan ett konto</button>` : ""}
+      ${sbEnabled && account.step !== "in" ? `<button class="wide bigbtn" data-welcomelogin="login">Jag har redan ett konto</button>` : ""}
       <span class="muted small">Tar ungefär en minut. Allt går att ändra sen.</span></div></div>`;
 }
 
