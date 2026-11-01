@@ -2150,3 +2150,34 @@ def test_alla_ovningar_kan_laggas_till(page):
     page.click(".sg-infoadd")
     page.click('[data-sgto="daily"]')
     assert page.evaluate("S.daily.some(e => e.id === 'hantelrodd')") and not page.errors
+
+
+def test_passet_blir_inte_klart_av_sista_ovningen(page):
+    start(page)
+    go(page, "pass")
+    d = page.evaluate("S.plan.days[0].id")
+    page.click(f'[data-focusstart="{d}"]')
+    # Bara sista övningen gjord: knappen leder till första övningen som inte är klar
+    page.evaluate(f"""(() => {{ const d = dayById('{d}'), last = d.ex.at(-1);
+      for (let i = 0; i < last.sets; i++) {{ const st = setAt(d, last.id, i); st.reps = 10; st.kg = 10; st.ok = true; }}
+      focus.idx = d.ex.length - 1; render(); }})()""")
+    first = page.evaluate(f"EX[dayById('{d}').ex[0].id].name")
+    assert f"Nästa: {first}" in page.inner_text(".fbar") and "Spara och avsluta" not in page.inner_text(".fbar")
+    assert page.evaluate(f"!workoutOn(TODAY, '{d}').done")
+
+
+def test_angra_genomfort_pass(page):
+    start(page)
+    go(page, "pass")
+    d = page.evaluate("S.plan.days[0].id")
+    page.evaluate(f"""(() => {{ const dd = dayById('{d}'); for (const x of dd.ex) for (let i = 0; i < x.sets; i++) {{ const st = setAt(dd, x.id, i); st.reps = 8; st.kg = 20; st.ok = true; }}
+      workoutFor(dd).done = true; passDone = {{ dayId: '{d}', date: TODAY }}; save(); render(); }})()""")
+    # Från Pass klart: ångra gör passet oklart igen och visar passet
+    page.click(f'[data-passreopen="{d}"]')
+    assert page.evaluate(f"!workoutOn(TODAY, '{d}').done") and page.evaluate("passOpen && tab === 'pass'")
+    # Ett sparat pass kan tas bort helt, med två tryck
+    page.evaluate(f"workoutFor(dayById('{d}')).done = true; render()")
+    page.click(f'[data-passundo="{d}"]')
+    assert "Tryck igen" in page.inner_text(f'[data-passundo="{d}"]')
+    page.click(f'[data-passundo="{d}"]')
+    assert page.evaluate(f"!workoutOn(TODAY, '{d}')") and not page.errors

@@ -225,11 +225,15 @@ function focusView() {
   })() : "";
   const prevTop = prev && topSet(prev);
   const tip = target ? `${prevTop ? `Förra gången ${fmt(prevTop)}. ` : ""}Prova <b>${fmtTarget(target, ex.id)}</b>.`
-    : `Första gången: välj en vikt du klarar ${esc(String(ex.reps).replace(/-/g, "–"))} ${timed ? "sekunder" : "gånger"}.`;
+    : timed ? `Första gången: håll i ${esc(String(ex.reps).replace(/-/g, "–").replace(/\s*(s|sek(under)?)\b/, " s"))}.`
+    : bw ? `Första gången: gör ${esc(String(ex.reps).replace(/-/g, "–"))} reps.`
+    : `Första gången: välj en vikt du klarar ${esc(String(ex.reps).replace(/-/g, "–"))} gånger.`;
   const allDone = active < 0;
   const resting = rest.el && rest.end > Date.now();
   const restBox = restSettings().on ? `<div class="frest ${resting ? "on" : ""}" aria-label="Vilotimer">${icon("timer", 18)}<span class="frest-time">${restText(resting ? Math.ceil((rest.end - Date.now()) / 1000) : restFor(ex.id))}</span></div>` : "";
-  const nextIdx = g ? g[1] + 1 : focus.idx + 1, next = d.ex[nextIdx];
+  // Nästa övning som inte är klar: först efter den här, annars någon tidigare. Passet är klart först när alla är gjorda.
+  const after = g ? g[1] + 1 : focus.idx + 1, undone = k => k !== focus.idx && !(g && k >= g[0] && k <= g[1]) && !exDone(w, d.ex[k]);
+  const nextIdx = [...d.ex.keys()].filter(k => k >= after).find(undone) ?? [...d.ex.keys()].find(undone), next = nextIdx != null ? d.ex[nextIdx] : null;
   const main = !allDone
     ? `<div class="fbar-action grow">${setAction}</div>`
     : next ? `<button class="primary grow" data-focusgo="${nextIdx}">Nästa: ${esc(EX[next.id].name)}</button>`

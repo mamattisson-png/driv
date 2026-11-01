@@ -141,6 +141,29 @@ document.addEventListener("click", ev => {
   render(); filterExLib();
 });
 
+// Ångra ett genomfört pass: ta bort det ur dagens logg (två tryck, så att det inte sker av misstag)
+let undoArm = null;
+document.addEventListener("click", ev => {
+  const t = ev.target.closest && ev.target.closest("[data-passundo],[data-passreopen]");
+  if (!t) return;
+  ev.stopImmediatePropagation();
+  const id = t.dataset.passundo || t.dataset.passreopen, d = dayById(id), date = (passDone && passDone.date) || logDate();
+  const L = S.log[date], w = L && L.workouts.find(x => x.dayId === id);
+  if (t.dataset.passreopen) {
+    // Från Pass klart: passet blir inte klart, och man kommer tillbaka till det
+    if (w) w.done = false;
+    shareWorkout(d, date, false);
+    passDone = null; tab = "pass"; chosenDay = id; passOpen = true;
+  } else if (undoArm !== id) { undoArm = id; render(); return; }
+  else {
+    if (L) L.workouts = L.workouts.filter(x => x.dayId !== id);
+    shareWorkout(d, date, false);
+    undoArm = null;
+    toast(`${d.name} borttaget från ${date === TODAY ? "idag" : dateLabel(date)}`);
+  }
+  save(); render(); window.scrollTo(0, 0);
+});
+
 function dailysSheet() {
   const n = S.daily.length, done = S.daily.filter(e => dailyDone(logDate(), e.id)).length;
   return `<div class="overlay" data-trsheet=""><div class="sheet dsheet" role="dialog" aria-label="Dailys">
@@ -169,7 +192,8 @@ function passetView(d) {
   const bottom = !d.ex.length ? ""
     : w && w.done ? `<div class="card done-card"><b>${icon("check", 16)}Bra jobbat, passet är sparat!</b>
         <div class="muted small">Det räknas in i veckans pass och jämförelsen med förra veckan.</div>
-        <button class="small" style="margin-top:8px" data-finish="${d.id}">Öppna passet igen</button></div>`
+        <div class="row" style="margin-top:8px;gap:8px"><button class="small" data-finish="${d.id}">Öppna igen</button>
+          <button class="small ghost dangertext" data-passundo="${d.id}">${undoArm === d.id ? "Tryck igen för att ta bort" : "Ta bort passet"}</button></div></div>`
     : logged ? `<button class="primary wide bigbtn" data-focusstart="${d.id}">${icon("play", 18)}Fortsätt ${esc(d.name)}</button>
         <button class="wide" data-finish="${d.id}">Spara passet · ${done} av ${d.ex.length} klara</button>
         <div class="muted small finish-note">Passet räknas även om du inte hunnit alla övningar.</div>`

@@ -1607,7 +1607,8 @@ function passDoneView() {
       <input type="checkbox" role="switch" class="switch" data-pdshare ${passDone.shared === false ? "" : "checked"} aria-label="Dela passet med vänner"></label>` : ""}
     ${inviteCard()}
     <div class="pdspace"></div>
-    <button class="wide bigbtn lightbtn" data-passdoneclose>Klar</button></div>`;
+    <button class="wide bigbtn lightbtn" data-passdoneclose>Klar</button>
+    <button class="wide ghost pdundo" data-passreopen="${d.id}">Ångra – passet är inte klart</button></div>`;
 }
 
 function renderModal() {
