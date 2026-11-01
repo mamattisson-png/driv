@@ -74,7 +74,7 @@ function exerciseSearchText(id) {
 function exerciseMatches(id, query) {
   if (!query) return true;
   const haystack = exerciseSearchText(id);
-  return query.split(/\\s+/).filter(Boolean).every(word => haystack.includes(word));
+  return query.split(/\s+/).filter(Boolean).every(word => haystack.includes(word));
 }
 
 function muscleView() {
