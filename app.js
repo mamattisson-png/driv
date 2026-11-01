@@ -925,7 +925,7 @@ function dailySeconds(e) {
 }
 function dailyClockView() {
   if (!dailyClock) return "";
-  const c = dailyClock, e = S.daily.find(x => x.id === c.id);
+  const c = dailyClock, e = S.daily.find(x => x.id === c.id) || (EX[c.id] && { id: c.id, sets: EX[c.id].sets, reps: EX[c.id].reps });
   if (!e) return "";
   const left = c.paused ? Math.ceil(c.remaining / 1000) : Math.max(0, Math.ceil((c.end - Date.now()) / 1000));
   const fmt = n => String(Math.floor(n/60)).padStart(2,"0")+":"+String(n%60).padStart(2,"0");
@@ -958,7 +958,7 @@ function dailyClockAdvance() {
   dailyClockSound();
   if (c.phase === "work") {
     if (c.set >= c.total) {
-      day().dailies[c.id] = true;
+      if (S.daily.some(x => x.id === c.id)) day().dailies[c.id] = true;
       c.phase = "done"; clearInterval(dailyClockTick); dailyClockTick = null;
       save(); render(); return;
     }
@@ -997,7 +997,7 @@ document.addEventListener("click", ev => {
   ev.stopImmediatePropagation();
   const d = t.dataset;
   if (d.dclockstart) {
-    const e = S.daily.find(x => x.id === d.dclockstart); if (!e) return;
+    const e = S.daily.find(x => x.id === d.dclockstart) || (EX[d.dclockstart] && { id: d.dclockstart, sets: EX[d.dclockstart].sets, reps: EX[d.dclockstart].reps }); if (!e) return;
     const timed = /\d+\s*(?:sek|s)\b/i.test(e.reps || "");
     const work = dailySeconds(e);
     dailyClock = {id:e.id,work,timed,reps:e.reps||"",rest:30,total:Math.max(1,+e.sets||1),set:1,phase:"work",end:Date.now()+work*1000,paused:false};
@@ -1098,7 +1098,7 @@ const VIEWS = {
       <section class="h3-list">${supp}${supplementEditing === null ? addRow("data-suppadd", "Lägg till kosttillskott") : ""}</section>
       ${supplementForm()}</div>`;
   },
-  stretchguide() { return stretchGuideView(); },
+  stretchguide() { return muscleView(); },
   vagning() {
     return `<div class="weigh-page"><button class="ghost small" data-tab="idag">${icon("left",16)} Tillbaka</button><h1>Veckans vägning</h1><p class="muted">Registrera din vikt och följ utvecklingen.</p>${`<section class="card wrow"><div class="grow"><b>Registrera vikt</b><span class="muted small">Dagens datum · ${dateLabel(TODAY)}</span></div><input id="wkg" type="number" inputmode="decimal" step="0.1" placeholder="kg" aria-label="Vikt i kg" value="${weights()[TODAY]??""}"><button class="small" data-wsave data-wdate="${TODAY}">Spara</button></section>`}${weightChart()}</div>`;
   },
@@ -1157,7 +1157,7 @@ const VIEWS = {
     const d = currentPassDay();
     if (editing) return editView(d) + (exSheet != null && d.ex[exSheet] ? exSheetView(d) : "");
     if (passOpen && chosenDay) return passetView(d);
-    if (exLib) return exLibView();
+    if (exLib) return muscleView();
     return traningView();
   },
 

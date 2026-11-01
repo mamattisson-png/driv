@@ -2083,15 +2083,17 @@ def test_ovningsbiblioteket(page):
     go(page, "pass")
     assert page.locator(".wkcard").count() == 3
     page.click("[data-exlib]")
-    total = page.evaluate("Object.keys(EX).length")
-    assert page.inner_text("#exlibn").startswith(f"{total} ")
-    page.click('[data-exlibf="pull"]')
-    pulls = page.evaluate("Object.keys(EX).filter(id => EX[id].cat === 'pull').length")
-    assert page.inner_text("#exlibn").startswith(f"{pulls} ")
-    page.fill("#exlibq", "rodd")
-    shown = page.evaluate("[...document.querySelectorAll('.exlib-row')].filter(e => !e.hidden).map(e => e.dataset.cat)")
-    assert shown and set(shown) == {"pull"}
-    page.click(".exlib-row:not([hidden]) >> nth=0")
+    # Sök på muskel: Bröst visar bröstövningar; ett tryck på en etikett byter muskel
+    assert "Sök på muskel" in page.inner_text("h1")
+    page.click('.an-lab[data-mus="biceps"] rect')
+    assert "Biceps" in page.inner_text(".sg-head") and page.locator('.an-reg.on[data-mus="biceps"]').count() == 1
+    # Baksidans muskler visar baksidan
+    page.click('.msk-chips [data-mus="lar_bak"]')
+    assert page.locator('.an-reg.on[data-mus="lar_bak"]').count() == 1
+    # Sökning letar bland alla övningar, även passtyper
+    page.fill("#mskq", "rodd")
+    assert "Sökresultat" in page.inner_text(".sg-head") and page.evaluate("document.activeElement.id") == "mskq"
+    page.click(".msk-row [data-info] >> nth=0")
     assert page.locator(".mwlink, .sheet .fig").count() > 0
     page.click(".sheet [data-close] >> nth=0")
     page.click("[data-exlibclose]")
@@ -2101,26 +2103,20 @@ def test_ovningsbiblioteket(page):
 def test_stretchguide_omraden_och_lagg_till(page):
     start(page)
     page.click('[data-tab="stretchguide"]')
-    # Alla stretchövningar hör till minst ett område, och de nya finns med
-    assert page.evaluate("Object.keys(EX).filter(id => EX[id].cat === 'stretch').every(id => Object.keys(STRETCH_AREAS).some(a => stretchInArea(id, a)))")
-    assert page.evaluate("Object.keys(EX).filter(id => id.startsWith('strg_')).length") >= 16
-    # Ett tryck på kroppen väljer området
-    page.click('.bm-reg[data-sarea="hamstrings"] polygon >> nth=0')
+    # Stretch-läget, och alla stretchövningar hör till minst en muskel
+    assert page.locator('[data-mskmode="st"][aria-selected="true"]').count() == 1
+    assert page.evaluate("Object.keys(EX).filter(id => EX[id].cat === 'stretch').every(id => stretchMuscles(id).length)")
+    page.click('.msk-chips [data-mus="lar_bak"]')
     assert "Baksida lår" in page.inner_text(".sg-head")
-    first = page.get_attribute("[data-sgadd] >> nth=0", "data-sgadd")
-    # Lägg till i Dailys och i ett pass; det som redan finns markeras
-    page.click("[data-sgadd] >> nth=0")
+    first = page.get_attribute(".msk-row [data-sgadd] >> nth=0", "data-sgadd")
+    page.click(".msk-row [data-sgadd] >> nth=0")
     page.click('[data-sgto="daily"]')
     assert page.evaluate(f"S.daily.some(e => e.id === '{first}')")
-    page.click("[data-sgadd] >> nth=0")
-    assert page.locator('[data-sgto="daily"][disabled]').count() == 1
-    day0 = page.evaluate("S.plan.days[0].id")
-    page.click(f'[data-sgto="{day0}"]')
-    assert page.evaluate(f"S.plan.days[0].ex.some(e => e.id === '{first}')")
-    # Sökningen behåller fokus medan listan filtreras
-    page.click('[data-sarea="all"]')
-    page.fill("#sgq", "duvan")
-    assert page.evaluate("document.activeElement.id") == "sgq" and "Duvan" in page.inner_text(".h3-list")
+    # Stretchens egen sida: vad som töjs och Starta
+    page.click(".msk-row [data-mskdetail] >> nth=0")
+    assert page.locator(".msk-tchip.on").count() == 1 and page.locator(".an-reg.on").count() >= 1
+    page.click("[data-dclockstart]")
+    assert page.evaluate("dailyClock && dailyClock.id") == first
     assert not page.errors
 
 
@@ -2128,25 +2124,22 @@ def test_kroppskartan_i_biblioteket(page):
     start(page)
     go(page, "pass")
     page.click("[data-exlib]")
-    page.click('.bm-label[data-exlibf="brost"] rect')
-    assert page.locator('.bm-reg.on[data-exlibf="brost"]').count() == 1
-    shown = page.evaluate("[...document.querySelectorAll('.exlib-row')].filter(e => !e.hidden).map(e => e.dataset.area)")
-    assert shown and set(shown) == {"brost"}
+    page.click('.an-lab[data-mus="brost"] rect')
+    ids = page.evaluate("[...document.querySelectorAll('.msk-row [data-sgadd]')].map(b => b.dataset.sgadd)")
+    assert ids and page.evaluate(f"{ids!r}.every(id => EX[id].prim.includes('brost'))")
 
 
 def test_alla_ovningar_kan_laggas_till(page):
     start(page)
     go(page, "pass")
     page.click("[data-exlib]")
-    # Varje övning i biblioteket har ett plus
-    assert page.evaluate("document.querySelectorAll('.exlib-row [data-sgadd]').length") == page.evaluate("Object.keys(EX).length")
-    page.fill("#exlibq", "hantelrodd")
-    page.click(".exlib-row:not([hidden]) [data-sgadd] >> nth=0")
+    page.fill("#mskq", "hantelrodd")
+    page.click(".msk-row [data-sgadd] >> nth=0")
     day1 = page.evaluate("S.plan.days[1].id")
     page.click(f'[data-sgto="{day1}"]')
     assert page.evaluate("S.plan.days[1].ex.some(e => e.id === 'hantelrodd')")
     # Även från instruktionen
-    page.click(".exlib-row:not([hidden]) [data-info] >> nth=0")
+    page.click(".msk-row [data-info] >> nth=0")
     page.click(".sg-infoadd")
     page.click('[data-sgto="daily"]')
     assert page.evaluate("S.daily.some(e => e.id === 'hantelrodd')") and not page.errors
