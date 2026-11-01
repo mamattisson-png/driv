@@ -871,6 +871,7 @@ const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;",
 const TABS = [["idag", "hem", "Hem"], ["pass", "trana", "Träna"], ["dailys", "check", "Dailys"], ["kost", "kost", "Kost"], ["historik", "historik", "Historik"]];
 let tab = S.setupDone ? "idag" : "upplagg";
 let profBack = "idag";   // fliken man kom från, dit tillbaka-pilen i Profil går
+let vikBack = "idag";   // dit tillbaka-pilen på Vikt går
 let vannerBack = "idag"; // dit tillbaka-pilen på vänsidan går
 let passDone = null;     // { dayId, date } medan skärmen för ett avslutat pass visas
 let chosenDay = null;
@@ -1114,7 +1115,18 @@ const VIEWS = {
   },
   stretchguide() { return muscleView(); },
   vagning() {
-    return `<div class="weigh-page"><button class="backbtn" data-tab="idag">${icon("left", 18)}Hem</button><h1>Vikt</h1><p class="muted">Registrera din vikt och följ utvecklingen.</p>${`<section class="card wrow"><div class="grow"><b>Registrera vikt</b><span class="muted small">Dagens datum · ${dateLabel(TODAY)}</span></div><input id="wkg" type="number" inputmode="decimal" step="0.1" placeholder="kg" aria-label="Vikt i kg" value="${weights()[TODAY]??""}"><button class="small" data-wsave data-wdate="${TODAY}">Spara</button></section>`}${weightChart()}</div>`;
+    const back = { pass: "Träna", dailys: "Dailys", kost: "Kost", historik: "Historik", profil: "Inställningar" }[vikBack] || "Hem";
+    const days = Object.keys(weights()).sort().reverse().slice(0, 5);
+    return `<div class="weigh-page"><button class="backbtn" data-tab="${vikBack}">${icon("left", 18)}${back}</button><h1>Vikt</h1>
+      <p class="muted">Väg dig ${WD_LONG[weighDay()]} och följ utvecklingen. Allt om vikten finns här.</p>
+      <section class="card wrow"><div class="grow"><b>Registrera vikt</b><span class="muted small">${dateLabel(TODAY)}</span></div><input id="wkg" type="number" inputmode="decimal" step="0.1" placeholder="kg" aria-label="Vikt i kg" value="${weights()[TODAY] ?? ""}"><button class="small" data-wsave data-wdate="${TODAY}">Spara</button></section>
+      ${weightChart()}
+      ${days.length ? `<h3 class="klabel" style="margin-top:18px">Senaste vägningarna</h3><section class="card wlist">${days.map(d => `<div class="row between"><span>${dateLabel(d)}</span><b>${fmtNum(weights()[d])} kg</b></div>`).join("")}</section>` : ""}
+      <h3 class="klabel" style="margin-top:18px">Vägning</h3>
+      <section class="card">
+        <label class="field">Vägningsdag<select data-weighday>${WD.map((w, i) => `<option value="${i}" ${weighDay() === i ? "selected" : ""}>${WD_LONG[i].replace(/^./, c => c.toUpperCase())}</option>`).join("")}</select></label>
+        <label class="row" style="margin-top:12px"><input type="checkbox" data-showweight ${S.hideWeight ? "" : "checked"}><span>Visa vikt på Hem och i Historik</span></label>
+        <div class="muted small" style="margin-top:4px">Döljer du vikten används den ändå i kalorimålet, och sparade vägningar finns kvar.</div></section></div>`;
   },
   idag() {
     const m = macros(), e = eaten(), t = todaysPass(), d = t.d, w = t.w;
@@ -1234,10 +1246,8 @@ const VIEWS = {
           <div class="muted">Protein ${m.protein} g · Fett ${m.fat} g · Kolhydrater ${m.carbs} g</div>
           <label class="field" style="margin-top:10px">Eget kalorimål (lämna tomt för beräknat)
             <input type="number" inputmode="numeric" id="override" value="${S.kcalOverride || ""}" placeholder="${m.kcal}"></label>`)}
-        ${profRow("vikt", "vikt", "Vikt", S.hideWeight ? "Dold" : `Vägning varje ${WD_LONG[weighDay()]}`, `
-          <label class="row"><input type="checkbox" data-showweight ${S.hideWeight ? "" : "checked"}><span>Visa vikt på Hem och i Historik</span></label>
-          <label class="field" style="margin-top:8px">Vägningsdag<select data-weighday>${WD.map((w, i) => `<option value="${i}" ${weighDay() === i ? "selected" : ""}>${WD_LONG[i].replace(/^./, c => c.toUpperCase())}</option>`).join("")}</select></label>
-          <div class="muted small" style="margin-top:4px">Döljer du vikten används vikten i Kalorimål, och sparade vägningar finns kvar.</div>`)}`)}
+        <div class="prow" id="p-vikt"><div class="prow-line"><button class="prow-head" data-tab="vagning"><span class="pic">${icon("vikt", 20)}</span><span class="grow"><b>Vikt</b>
+          <span class="muted small">${S.hideWeight ? "Dold" : `Vägning varje ${WD_LONG[weighDay()]}`}</span></span><span class="chev">${icon("right", 18)}</span></button></div></div>`)}
       ${group(sbEnabled ? "Vänner och notiser" : "Notiser", `${sbEnabled ? `<div class="prow" id="p-vanner"><div class="prow-line"><button class="prow-head" data-tab="vanner"><span class="pic">${icon("vanner", 20)}</span><span class="grow"><b>Vänner</b>
           <span class="muted small">${friends}</span></span><span class="chev">${icon("right", 18)}</span></button></div></div>` : ""}
         ${profRow("notiser", "bell", "Notiser", pushSummary(), pushBody(), pushSwitch)}
@@ -1904,6 +1914,7 @@ document.addEventListener("click", ev => {
   if (ds.passdoneclose !== undefined) { passDone = null; tab = "idag"; render(); window.scrollTo(0, 0); return; }
   if (ds.tab) {
     if (ds.tab === "vanner" && tab !== "vanner") vannerBack = tab;
+    if (ds.tab === "vagning" && tab !== "vagning") vikBack = tab;
     passDone = null;
     if (ds.tab === "pass" && focus) focus.suspended = false;
     tab = ds.tab; editing = false; dailyEditing = false; draft = null; editDate = null; histDay = null;

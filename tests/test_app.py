@@ -33,6 +33,9 @@ def prof(page, sec):
     if sec == "vanner":
         page.click('#p-vanner [data-tab="vanner"]')
         return
+    if sec == "vikt":
+        page.click('#p-vikt [data-tab="vagning"]')
+        return
     if page.locator(f"#p-{sec}.open").count() == 0:
         page.click(f'[data-psec="{sec}"]')
 
@@ -2264,3 +2267,26 @@ def test_ett_namn_och_en_tillbakaknapp(page):
     page.click(".backbtn")
     page.click('.h3-row[data-tab="vanner"]')
     assert page.inner_text(".backbtn").strip() == "Hem"
+
+
+
+def test_allt_om_vikten_pa_ett_stalle(page):
+    start(page)
+    seed(page, "S.weights['2026-01-05'] = 82; S.weights['2026-01-12'] = 81.4")
+    # Från Inställningar: raden leder till Vikt, och tillbaka går till Inställningar
+    prof(page, "vikt")
+    assert page.inner_text("#app h1") == "Vikt" and page.inner_text(".backbtn").strip() == "Inställningar"
+    assert "81,4 kg" in page.inner_text(".wlist")
+    # Vägningsdagen och visningen ställs in här
+    page.select_option("[data-weighday]", "3")
+    assert page.evaluate("weighDay()") == 3
+    page.fill("#wkg", "80.5")
+    page.click("[data-wsave]")
+    assert page.evaluate("S.weights[TODAY]") == 80.5
+    page.click(".backbtn")
+    assert page.evaluate("tab") == "profil"
+    # Från Historik → Utveckling leder vikten hit och tillbaka
+    go(page, "historik")
+    page.click('[data-hview="utveckling"]') if page.locator('[data-hview="utveckling"]').count() else page.evaluate("histView = 'utveckling'; render()")
+    page.click('.wlink[data-tab="vagning"]')
+    assert page.inner_text("#app h1") == "Vikt" and page.inner_text(".backbtn").strip() == "Historik"

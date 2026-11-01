@@ -156,11 +156,14 @@ function actSummary() {
     ${rows.map(([n, e]) => `<div class="krow"><span class="hricon">${actIcon(n)}</span><span class="grow"><b>${esc(n)}</b>
       <span class="muted small">${e.n} ${e.n === 1 ? "gång" : "gånger"} · ${fmtNum(e.min / 60)} timmar</span></span></div>`).join("")}</section>`;
 }
+// Vikten visas i Utveckling även innan man sparat pass, och leder till sidan Vikt
+const weightSection = (w, wFirst, wLast) => !S.hideWeight && w.length ? `<section class="card kmeal"><button class="khead wlink" data-tab="vagning"><span class="grow">Vikt</span><span>${fmtNum(wLast)} kg ${icon("right", 16)}</span></button>
+      <div class="kbody">${w.length > 1 ? `<div style="margin-bottom:8px">${weightBadge(wLast - wFirst)} <span class="muted small">sedan ${shortDate(w[0])}</span></div>` : ""}${weightChart()}</div></section>` : "";
 function progressView() {
   const p = progressData(), recent = [0, 1, 2, 3].reduce((a, k) => a + weekSummary(shift(weekStart(TODAY), -7 * k)).passes, 0);
-  if (!p.ex.length && !p.passes) return `<div class="card"><h2>Här växer din utveckling fram</h2>
-    <div class="muted">När du sparat några pass visas dina personbästa, hur mycket du ökat och hur ofta du tränar.</div></div>`;
   const w = Object.keys(weights()).sort(), wFirst = w.length ? weights()[w[0]] : null, wLast = w.length ? weights()[w[w.length - 1]] : null;
+  if (!p.ex.length && !p.passes) return `<div class="card"><h2>Här växer din utveckling fram</h2>
+    <div class="muted">När du sparat några pass visas dina personbästa, hur mycket du ökat och hur ofta du tränar.</div></div>${weightSection(w, wFirst, wLast)}`;
   const rows = p.ex.map(e => `<button class="krow" data-chart="${e.id}"><span class="thumb xs" aria-hidden="true">${figure(e.id)}</span>
       <span class="grow"><b>${esc(EX[e.id].name)}</b><span class="muted small">${e.times > 1 ? `Första gången ${fmtSet(e.first, e.id)} · ${shortDate(e.firstDate)}` : `Loggad en gång · ${shortDate(e.firstDate)}`}</span></span>
       <span class="pbcol"><b>${fmtSet(e.best, e.id)}</b>${e.times > 1 ? gain(e) : ""}</span></button>`).join("");
@@ -171,8 +174,8 @@ function progressView() {
     ${rows ? `<section class="card kmeal exlist"><div class="khead"><span class="grow">Personbästa</span><span>${p.ex.length} övningar</span></div>${rows}
       <div class="muted small kfoot">Tryck på en övning för att se grafen vecka för vecka.</div></section>` : ""}
     ${actSummary()}
-    ${!S.hideWeight && w.length ? `<section class="card kmeal"><div class="khead"><span class="grow">Kroppsvikt</span><span>${fmtNum(wLast)} kg</span></div>
-      <div class="kbody">${w.length > 1 ? `<div style="margin-bottom:8px">${weightBadge(wLast - wFirst)} <span class="muted small">sedan ${shortDate(w[0])}</span></div>` : ""}${weightChart()}</div></section>` : ""}`;
+
+    ${weightSection(w, wFirst, wLast)}`;
 }
 
 function historikView() {
