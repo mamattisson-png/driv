@@ -1159,16 +1159,19 @@
   .welcome { position: relative; flex: 1; display: flex; flex-direction: column; }
   .welcome-glow { position: fixed; left: 0; right: 0; top: -260px; height: 560px; pointer-events: none;
     background: radial-gradient(ellipse 75% 50% at 50% 50%, color-mix(in srgb, var(--accent) 30%, transparent), transparent); }
-  .welcome-brand { position: relative; display: flex; flex-direction: column; align-items: center; text-align: center; padding-top: 64px; }
+  .welcome-brand { position: relative; display: flex; flex-direction: column; align-items: center; text-align: center; padding-top: clamp(10px, 10dvh - 40px, 64px); }
   .welcome-brand img { width: 104px; height: 104px; border-radius: 28px; box-shadow: 0 16px 40px color-mix(in srgb, var(--accent) 30%, transparent); }
   .welcome-brand .ordbild { margin: 26px 0 0; display: inline-flex; flex-direction: column; gap: 12px; line-height: 1; min-height: 0; }
   .welcome-brand .wordmark { font: 300 40px "Unbounded", sans-serif; letter-spacing: .4466em; margin-right: -.4466em; }
   .welcome-brand .slogan { font: 300 20px "Lexend", sans-serif; }
   .welcome-brand .slogan em { font-style: normal; color: var(--accent-text); }
-  .wpoints { position: relative; display: flex; flex-direction: column; gap: 8px; margin: 44px 0 24px; }
-  .wpoint { display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-radius: 20px; background: var(--card); border: 1px solid var(--line); }
+  .wpoints { position: relative; display: flex; flex-direction: column; gap: clamp(6px, 1dvh, 8px); margin: clamp(14px, 5dvh - 12px, 44px) 0 clamp(8px, 2.4dvh - 6px, 24px); }
+  .wpoint { display: flex; align-items: center; gap: 14px; padding: clamp(7px, 1.6dvh - 3px, 14px) 16px; border-radius: 20px; background: var(--card); border: 1px solid var(--line); }
   .wpoint b { display: block; font-weight: 600; }
   .wic { width: 40px; height: 40px; border-radius: 20px; flex: none; background: var(--card-2); color: var(--accent-text); display: grid; place-items: center; }
+  /* Låga skärmar: lite mindre logga så att knapparna syns utan att scrolla */
+  @media (max-height: 880px) { .welcome-brand img { width: 88px; height: 88px; border-radius: 24px; } .welcome-brand .ordbild { margin-top: 20px; } .welcome-cta { gap: 8px; } }
+  @media (max-height: 760px) { .welcome-brand img { width: 68px; height: 68px; border-radius: 19px; } .welcome-brand .ordbild { margin-top: 14px; gap: 8px; } .welcome-brand .wordmark { font-size: 32px; } }
   .wwhy { position: relative; margin: 0 0 4px; text-align: center; font: 300 16px "Lexend", sans-serif; color: var(--muted); }
   .wwhy em { font-style: normal; font-weight: 400; color: var(--text); }
   .wnoacct { min-height: 40px; color: var(--muted); font-size: 15px; }

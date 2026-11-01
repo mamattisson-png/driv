@@ -30,6 +30,7 @@ function welcomeView() {
     ${brandBig()}
     <div class="wpoints">${pt("trana", "Träna efter ett upplägg", "Passen, vikterna och vad som är nästa")}
       ${pt("kost", "Håll koll på maten", "Ett kalorimål som passar dig")}
+      ${pt("check", "Bygg dina vanor", "Dailys: små saker att bocka av varje dag")}
       ${pt("vanner", "Peppa varandra", "Se när vännerna har tränat")}</div>
     <p class="wwhy">Varför Driv? <em>Det är enkelt.</em></p>
     <div class="welcome-cta">${sbEnabled && account.step !== "in"
