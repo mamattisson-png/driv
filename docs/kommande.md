@@ -14,7 +14,7 @@ Senast uppdaterad: 2026-11-01. Status bygger på dokumenterade publiceringar och
 | 8 | Smart grönmarkering av måltider | Kost | Medel | Klar |
 | 9 | Tydligare avklarade aktiviteter | Design | Hög | Klar |
 | 10 | Körbara tränings-Dailys | Dailys | Hög | Ej påbörjad |
-| 11 | Frivillig appguide | Ny funktion | Medel | Ej påbörjad |
+| 11 | Frivillig appguide | Ny funktion | Medel | Klar |
 | 12 | Enhetlig profil- och inställningsikon | Design | Medel | Ej påbörjad |
 | 13 | Färdigställ uppvärmningsset | Träning | Medel | Ej påbörjad |
 | 14 | Lägg till övning under pågående pass | Träning | Hög | Ej påbörjad |
@@ -86,6 +86,8 @@ Senast uppdaterad: 2026-11-01. Status bygger på dokumenterade publiceringar och
 34. **MuscleWiki-länk (Klar, kod uppdaterad 2026-11-01):** En extern länk till MuscleWikis allmänna övningsbibliotek lades till under instruktionerna på stretchövningarnas detaljsidor (commit `51657dc`). Driftsättning via Cloudflare är inte separat verifierad.
 
 35. **Direktlänkar till rätt MuscleWiki-övning:** Dagens länk går till det allmänna biblioteket, inte till motsvarande övning. Kartlägg övningar och verifiera destinationer innan direkta länkar införs.
+
+11. **Frivillig appguide (Klar, publicerad 2026-11-01):** Startas med i-knappen på Hem eller under Inställningar → Appen, aldrig av sig själv. Nio steg: de fem flikarna, uppvärmning, supersets och dailys under passet, och var guiden startas igen. Varje steg visar det verkliga elementet med en lysande ram och ett kort med pil, utan mörk slöja. Stegen ligger i `guide.js`; testet `test_appguiden_gar_igenom_alla_flikar` faller om ett steg pekar på något som inte längre finns.
 
 ## Arbetsregler
 
