@@ -126,6 +126,7 @@ function holds(ex, A, B, still) {
 function figure(id, cls = "", animate = false) {
   const ex = EX[id];
   if (!ex) return "";
+  const model = typeof exerciseModel === "function" ? exerciseModel() : "m";
   const front = ex.view === "front";
   const J = front ? frontJoints : sideJoints;
   const A = J(ex.A), B = J(ex.B || ex.A);
@@ -134,8 +135,8 @@ function figure(id, cls = "", animate = false) {
   let body = poly(A.leg2, B.leg2, far, still) + poly(A.arm2, B.arm2, far, still);
   if (front) body += poly(A.hips, B.hips, "fb", still) + poly(A.shoulders, B.shoulders, "fb", still);
   body += poly(A.torso, B.torso, "fb", still) + poly(A.leg, B.leg, "fb", still) +
-    circ(A.head, B.head, BODY.head, "fh", still) + poly(A.arm, B.arm, "fb", still);
-  return `<svg class="fig ${cls}" viewBox="0 -16 120 116" role="img" aria-label="${ex.name}">` +
+    circ(A.head, B.head, model === "f" ? 5.1 : BODY.head, "fh", still) + poly(A.arm, B.arm, "fb", still);
+  return `<svg class="fig ${cls} fig-${model}" viewBox="0 -16 120 116" role="img" aria-label="${ex.name}">` +
     `<line class="ffloor" x1="2" y1="${FLOOR + 2.5}" x2="118" y2="${FLOOR + 2.5}"/>` +
     (ex.scene || []).map(sceneShape).join("") + body + holds(ex, A, B, still) + "</svg>";
 }
