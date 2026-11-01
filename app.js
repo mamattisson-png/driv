@@ -148,6 +148,18 @@ const GOALS = { cut: ["Gå ner (−400 kcal)", -400], keep: ["Behålla", 0], bul
 const KEY = window.DRIV_TEST ? "driv-test" : "ppl-traning-v2";
 const KEY_V1 = window.DRIV_TEST ? "driv-test-v1" : "ppl-traning-v1";
 
+// Lägg till en övning i ett pass eller Dailys, eller byt ut övningen på plats replace. Används av övningsbiblioteket.
+function addExercise(target, id, replace, today) {
+  const list = exList(target);
+  if (replace != null) {
+    const orig = list[replace], e = exEntry(id);
+    if (orig.ss) e.ss = true;
+    list[replace] = e;
+    // Bara i dag: det gamla läggs tillbaka i passet när det sparas (eller nästa dag)
+    if (today) { const w = workoutFor(dayById(target)); (w.swap = w.swap || []).push({ id: e.id, orig }); }
+  }
+  else if (!list.some(e => e.id === id)) list.push(exEntry(id));
+}
 function exEntry(spec) {
   const [id, sr] = spec.split("@");
   const e = { id, sets: EX[id].sets, reps: EX[id].reps };
@@ -888,13 +900,11 @@ function render() {
   // Samma inställningsknapp på alla huvudvyer. Hem har knappen i sin egen header.
   const gear = tab === "idag" || tab === "profil" || tab === "upplagg" || passDone ? "" : `<button class="gear" data-tab="profil" aria-label="Inställningar"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Z"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06-1.87 1.87-.06-.06A1.7 1.7 0 0 0 16 18.4a1.7 1.7 0 0 0-1 1.56V21h-6v-1.04A1.7 1.7 0 0 0 8 18.4a1.7 1.7 0 0 0-1.87.34l-.06.06-1.87-1.87.06-.06A1.7 1.7 0 0 0 4.6 15 1.7 1.7 0 0 0 3 14H2v-4h1a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.34-1.87L4.2 7.07 6.07 5.2l.06.06A1.7 1.7 0 0 0 8 5.6 1.7 1.7 0 0 0 9 4V3h6v1a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.87-.34l.06-.06 1.87 1.87-.06.06A1.7 1.7 0 0 0 19.4 9 1.7 1.7 0 0 0 21 10h1v4h-1a1.7 1.7 0 0 0-1.6 1Z"/></svg></button>`;
   document.getElementById("app").innerHTML = passDone ? passDoneView()
-    : gear + banner + VIEWS[tab]() + (modal ? renderModal() : "") + (actSheet ? actSheetView() : "") + (sgAdd && EX[sgAdd] ? stretchAddSheet(sgAdd) : "") + tourView();
-  if (modal && modal.pick) filterPicker();
+    : gear + banner + (libCtx ? muscleView() : VIEWS[tab]()) + (modal ? renderModal() : "") + (actSheet ? actSheetView() : "") + (sgAdd && EX[sgAdd] ? stretchAddSheet(sgAdd) : "") + tourView();
   if (tab === "recept" && typeof filterRecipes === "function") filterRecipes();
   const focusScroll = document.querySelector(".focus-scroll");
   if (focusScroll && focus) focusScroll.scrollTop = focus.scrollTop || 0;
   afterFocusRender();
-  if (exLib && tab === "pass") filterExLib();
   if (tour != null) requestAnimationFrame(positionTour);
   updateBadge();
 }
@@ -1635,79 +1645,21 @@ function renderModal() {
   }
   if (modal.info) {
     const e = EX[modal.info];
-    return `<div class="overlay" data-close><div class="sheet">${modal.back ? `<button class="small ghost backlink" data-infoback>‹ Tillbaka till övningarna</button>` : ""}
+    return `<div class="overlay" data-close><div class="sheet">
       <div class="row between"><h2>${esc(e.name)}</h2><button class="small ghost iconbtn" data-close aria-label="Stäng">${icon("close", 18)}</button></div>
       ${figure(modal.info, "big", true)}<div class="muted">${esc(e.muscles)}</div>
       ${gearOf(modal.info) ? `<div class="gearbox"><b>${GEAR[gearOf(modal.info)][0]}</b><div>${GEAR[gearOf(modal.info)][1]}</div></div>` : ""}
       <ol>${e.cues.map(c => `<li>${esc(c)}</li>`).join("")}</ol>
-      ${modal.back ? "" : `<button class="wide sg-infoadd" data-sgadd="${modal.info}">${icon("plus", 16)}Lägg till i Dailys eller ett pass</button>`}
+      ${libCtx ? "" : `<button class="wide sg-infoadd" data-sgadd="${modal.info}">${icon("plus", 16)}Lägg till i Dailys eller ett pass</button>`}
       ${mwUrl(modal.info) ? `<a class="mwlink" href="${mwUrl(modal.info)}" target="_blank" rel="noopener">${MW[modal.info].startsWith("exercises/") ? "Liknande övningar på MuscleWiki" : "Mer om övningen på MuscleWiki"} <span aria-hidden="true">↗</span></a>` : ""}</div></div>`;
   }
-  const list = exList(modal.pick);
-  const replacing = modal.replace != null ? list[modal.replace] : null;
-  const forDaily = modal.pick === "daily";
-  // Kroppsdelar; kondition bara för dailys. Startar där man troligen letar.
-  const areas = Object.keys(AREAS).filter(a => forDaily || a !== "kondition");
-  if (!modal.area) {
-    const t = forDaily ? null : (modal.pick.startsWith("draft:") ? draft.days[+modal.pick.slice(6)] : dayById(modal.pick)).type;
-    modal.area = replacing ? areaOf(replacing.id) : forDaily ? "mage" : { push: "push", cpush: "push", pull: "pull", cpull: "pull", legs: "legs", lower: "legs", clegs: "legs" }[t] || "alla";
-  }
-  modal.gear = modal.gear || "alla";
-  const have = list.map(e => e.id);
-  const ids = Object.keys(EX).filter(id => forDaily || EX[id].cat !== "cardio");
-  const row = id => `<div class="pick ${have.includes(id) ? "have" : ""}" data-area="${areaOf(id)}" data-cat="${EX[id].cat}" data-gear="${gearGroup(id)}"
-      data-q="${esc(norm(EX[id].name + " " + EX[id].muscles + " " + AREAS[areaOf(id)] + " " + (PASS_WORDS[EX[id].cat] || "") + " " + (gearOf(id) ? GEAR[gearOf(id)][0] : "")))}">
-      ${thumb(id, "pt")}<div class="grow"><div class="pname">${esc(EX[id].name)}</div><div class="muted small">${esc(EX[id].muscles)}</div></div>
-      ${have.includes(id) ? `<span class="pickhave" aria-label="Finns redan">${icon("check", 18)}</span>`
-        : `<button class="pickadd" data-add="${id}" aria-label="${replacing ? "Välj" : "Lägg till"} ${esc(EX[id].name)}">${icon(replacing ? "right" : "plus", 20)}</button>`}</div>`;
-  return `<div class="overlay" data-close><div class="sheet picksheet"><div class="row between">
-      <h2>${replacing ? `Byt ut ${esc(EX[replacing.id].name)}` : forDaily ? "Lägg till daily" : "Lägg till övning"}</h2><button class="small ghost iconbtn" data-close aria-label="Stäng">${icon("close", 18)}</button></div>
-    ${modal.today != null ? `<div class="tseg pswapwhen" role="radiogroup" aria-label="Hur länge">${[[true, "Bara i dag"], [false, "Även framåt"]].map(([v, n]) =>
-      `<button role="radio" data-swapwhen="${v}" class="${modal.today === v ? "on" : ""}" aria-checked="${modal.today === v}">${n}</button>`).join("")}</div>` : ""}
-    <div class="psearch">${icon("search", 18)}<input id="exsearch" type="search" placeholder="Sök övning eller muskel" value="${esc(modal.q || "")}" autocomplete="off" aria-label="Sök övning"></div>
-    <div class="pfilters">
-      <label class="pfilter ${modal.area !== "alla" ? "on" : ""}"><span class="sr">Kroppsdel</span><select data-areasel aria-label="Kroppsdel">
-        <option value="alla">Alla övningar</option>
-        <optgroup label="Pass">${Object.entries(PASS_FILTER).map(([k, n]) => `<option value="${k}" ${modal.area === k ? "selected" : ""}>${n}</option>`).join("")}</optgroup>
-        <optgroup label="Kroppsdel">${areas.map(a => `<option value="${a}" ${modal.area === a ? "selected" : ""}>${AREAS[a]}</option>`).join("")}</optgroup></select>${icon("down", 16)}</label>
-      <label class="pfilter ${modal.gear !== "alla" ? "on" : ""}"><span class="sr">Utrustning</span><select data-gearsel aria-label="Utrustning">
-        <option value="alla">All utrustning</option>${Object.entries(GEAR_FILTER).map(([k, n]) => `<option value="${k}" ${modal.gear === k ? "selected" : ""}>${n}</option>`).join("")}</select>${icon("down", 16)}</label></div>
-    <div class="picklist">${areas.map(a => {
-      const group = ids.filter(id => areaOf(id) === a);
-      return group.length ? `<section class="pgroup2" data-group="${a}"><h3 class="klabel">${AREAS[a]}</h3>${group.map(row).join("")}</section>` : "";
-    }).join("")}</div>
-    <div class="muted" id="nohits" hidden><span></span><button class="small" data-pickall hidden></button></div></div></div>`;
+  return "";
 }
 
-document.addEventListener("click", ev => {
-  if (!ev.target.closest || !ev.target.closest("[data-pickall]") || !modal || !modal.pick) return;
-  modal.area = "alla"; render(); filterPicker();
-});
 // Passtyper att filtrera på, och ord som gör att sökningen hittar dem ("pull" ger alla dragövningar)
 const PASS_FILTER = { push: "Push: bröst, axlar, triceps", pull: "Pull: rygg, biceps", legs: "Ben: lår, säte, vader" };
 const PASS_WORDS = { push: "push overkropp", pull: "pull overkropp", legs: "legs ben underkropp", core: "core bal" };
-const inArea = (el, a) => a === "alla" || (PASS_FILTER[a] ? el.dataset.cat === a : el.dataset.area === a);
 const areaLabel = a => PASS_FILTER[a] ? PASS_FILTER[a].split(":")[0] : AREAS[a];
-// Sökningen gäller inom vald kroppsdel och utrustning. Finns inget där men i andra kroppsdelar
-// erbjuds en knapp som söker i alla.
-function filterPicker() {
-  const q = norm((modal && modal.q || "").trim());
-  let shown = 0, elsewhere = 0;
-  for (const el of document.querySelectorAll(".pick")) {
-    const match = (!q || el.dataset.q.includes(q)) && (modal.gear === "alla" || el.dataset.gear === modal.gear);
-    const hit = match && inArea(el, modal.area);
-    el.hidden = !hit;
-    if (hit) shown++; else if (match) elsewhere++;
-  }
-  for (const g of document.querySelectorAll(".pgroup2")) g.hidden = !g.querySelector(".pick:not([hidden])");
-  const none = document.getElementById("nohits");
-  if (!none) return;
-  none.hidden = shown > 0;
-  const btn = none.querySelector("[data-pickall]");
-  none.firstChild.textContent = elsewhere && modal.area !== "alla" ? `Inget i ${areaLabel(modal.area)} matchar.` : "Inga övningar matchar. Prova en annan kroppsdel eller utrustning.";
-  btn.hidden = !(elsewhere && modal.area !== "alla");
-  btn.textContent = `Visa ${elsewhere} bland alla övningar`;
-}
 
 // ---------- Logg ----------
 function workoutFor(d) {
@@ -1933,13 +1885,12 @@ document.addEventListener("click", ev => {
       socialAction(() => socialRpc("driv_profile_save", { p_name: name, p_sharing: social.profile ? social.profile.sharing : true }));
     return;
   }
-  if (ds.info) { modal = { info: ds.info, back: modal && modal.pick ? modal : null }; render(); return; }
-  if (ds.infoback !== undefined) { modal = modal.back; render(); filterPicker(); return; }
+  if (ds.info) { modal = { info: ds.info }; render(); return; }
   if (ds.chart) { modal = { chart: ds.chart }; render(); return; }
   if (ds.letter) { modal = { letter: ds.letter }; render(); return; }
-  if (ds.openpick) { modal = { pick: ds.openpick }; render(); return; }
-  if (ds.swap) { exSheet = null; modal = { pick: ds.swap, replace: +ds.idx }; render(); filterPicker(); return; }
-  if (ds.swapwhen) { modal.today = ds.swapwhen === "true"; render(); filterPicker(); return; }
+  // Lägg till och byt övning sker i det gemensamma övningsbiblioteket (muskelsok.js)
+  if (ds.openpick) { modal = null; openLibrary({ kind: ds.openpick === "daily" ? "daily" : "workout", target: ds.openpick }); render(); return; }
+  if (ds.swap) { exSheet = null; openLibrary({ kind: "workout", target: ds.swap, replace: +ds.idx }); render(); return; }
   if (ds.askai !== undefined) { askClaude(); return; }
   if (ds.passdoneclose !== undefined) { passDone = null; tab = "idag"; render(); window.scrollTo(0, 0); return; }
   if (ds.tab) {
@@ -2085,18 +2036,6 @@ document.addEventListener("click", ev => {
     [list[i], list[j]] = [list[j], list[i]];
   }
   else if (ds.ss) { const e = exList(ds.ss)[+ds.idx]; if (e.ss) delete e.ss; else e.ss = true; }
-  else if (ds.add) {
-    const list = exList(modal.pick);
-    if (modal.replace != null) {
-      const orig = list[modal.replace], e = exEntry(ds.add);
-      if (orig.ss) e.ss = true;
-      list[modal.replace] = e;
-      // Bara i dag: det gamla läggs tillbaka i passet när det sparas (eller nästa dag)
-      if (modal.today) { const w = workoutFor(dayById(modal.pick)); (w.swap = w.swap || []).push({ id: e.id, orig }); }
-    }
-    else list.push(exEntry(ds.add));
-    modal = null;
-  }
   else if (ds.count) {
     draft.count = Math.max(1, Math.min(7, +ds.count));
     draft.days = makeDays(draft.program, draft.count, draft.days);
@@ -2141,14 +2080,6 @@ document.addEventListener("click", ev => {
 
 document.addEventListener("change", ev => {
   const t = ev.target, ds = t.dataset;
-  // Väljarens filter: sökningen står kvar och gäller inom vald kroppsdel; listan börjar högst upp
-  if ((ds.areasel !== undefined || ds.gearsel !== undefined) && modal && modal.pick) {
-    if (ds.areasel !== undefined) modal.area = t.value; else modal.gear = t.value;
-    render(); filterPicker();
-    const s = document.querySelector(".picksheet");
-    if (s && ds.areasel !== undefined) s.scrollTop = 0;
-    return;
-  }
   if (ds.set) {
     const d = currentPassDay(), v = t.value === "" ? "" : clampSet(ds.set, ds.f, +t.value || 0);
     if (v !== "" && v !== +t.value) {
@@ -2232,8 +2163,7 @@ async function askClaude(logAfter = false) {
 
 document.addEventListener("input", ev => {
   const t = ev.target;
-  if (t.id === "exsearch") { modal.q = t.value; filterPicker(); }
-  else if (t.id === "fname") foodPreview();
+  if (t.id === "fname") foodPreview();
   else if (["fkcal", "fprot", "ffat", "ffiber"].includes(t.id)) updateFoodBtn();
 });
 

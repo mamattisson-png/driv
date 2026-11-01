@@ -227,7 +227,6 @@
   .sheet { background: var(--card); width: 100%; max-width: 640px; max-height: 88vh; overflow-y: auto;
     border-radius: 18px 18px 0 0; padding: 16px 16px calc(20px + env(safe-area-inset-bottom)); }
   /* Välj övning: sök, kroppsdel, utrustning och en lista med rubriker */
-  .picksheet { padding-top: 12px; }
   .psearch { position: relative; margin: 6px 0 10px; }
   .psearch .ic { position: absolute; left: 14px; top: 13px; color: var(--muted); }
   .psearch input { padding-left: 42px; height: 46px; border-radius: 14px; background: var(--card-2); border-color: transparent; }
@@ -239,17 +238,8 @@
   .pfilter.on select { background: var(--text); color: var(--bg); border-color: var(--text); font-weight: 600; }
   .pfilter.on .ic { color: var(--bg); }
   .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
-  .picklist { margin-top: 6px; }
-  .pgroup2 h3 { margin: 14px 2px 4px; }
-  .pick { display: flex; align-items: center; gap: 12px; padding: 8px 0; border-top: 1px solid var(--line); }
-  .pgroup2 h3 + .pick { border-top: 0; }
   .thumb.pt { width: 56px; height: 56px; border-radius: 14px; background: var(--card-2); border: 0; }
-  .pick .grow { min-width: 0; }
-  .pick .muted { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .pickadd { width: 44px; height: 44px; flex: none; padding: 0; border-radius: 22px; display: grid; place-items: center;
     background: var(--accent-strong); border-color: var(--accent-strong); color: var(--on-accent); }
-  .pickhave { width: 44px; height: 44px; flex: none; display: grid; place-items: center; color: var(--ok-text); }
-  .pick.have .pname { color: var(--muted); }
   .pname { font-weight: 500; font-size: 15px; }
 
   .chips { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -1710,18 +1700,7 @@ button.h3-card.h3-head { background: var(--card); padding: 12px 14px; }
 .wkcard.next .wkdot { border-color: var(--accent); }
 .wkcard.next .pst { color: var(--accent-text); }
 /* Övningsbiblioteket */
-.exlib > .backbtn { margin-bottom: 2px; }
-.exlib h1 { margin: 0 0 10px; }
-.exlib .psearch { margin-bottom: 10px; }
-.exlib-chips { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; margin: 0 -16px 6px; padding: 0 16px; }
-.exlib-chips::-webkit-scrollbar { display: none; }
-.exlib-chips button { flex: none; min-height: 36px; padding: 0 14px; border-radius: 18px; border: 0; background: var(--card-2); color: var(--muted); font-size: 14px; }
-.exlib-chips button.on { background: var(--accent-soft); color: var(--text); box-shadow: inset 0 0 0 1.5px var(--accent); font-weight: 600; }
-.exlib-sep { flex: none; width: 1px; background: var(--line); margin: 6px 2px; }
-.exlib-count { margin: 4px 4px 0; }
 .exlib .thumb.exl, .sguide .thumb.exl, .msk .thumb.exl { width: 46px; height: 46px; border-radius: 12px; flex: none; pointer-events: none; }
-.exlib-row { min-height: 60px; }
-.exlib-none { margin: 20px 4px; }
 
 /* Stretchguiden: kroppskarta, områden och övningar som kan läggas till i Dailys eller pass */
 .sguide > .backbtn { margin-bottom: 2px; }

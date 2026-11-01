@@ -413,7 +413,7 @@ document.addEventListener("click", ev => {
   if (t.classList.contains("overlay") && ev.target !== t) return;   // klick inne i fönstret
   const ds = t.dataset;
   if (ds.fdopen !== undefined || ds.fdclose !== undefined) { focusDailies = ds.fdopen !== undefined; dailyEditing = false; render(); return; }
-  if (ds.fswap !== undefined) { modal = { pick: focus.dayId, replace: +ds.fswap, today: true }; render(); filterPicker(); return; }
+  if (ds.fswap !== undefined) { openLibrary({ kind: "workout", target: focus.dayId, replace: +ds.fswap, today: true }); render(); return; }
   if (ds.fend !== undefined || ds.fendclose !== undefined) { focusEnd = ds.fend !== undefined; render(); return; }
   if (ds.fstepsall !== undefined) { focus.allSteps = !focus.allSteps; render(); return; }
   if (ds.forder !== undefined || ds.forderclose !== undefined) { focusOrder = ds.forder !== undefined; render(); return; }

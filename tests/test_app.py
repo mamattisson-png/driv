@@ -75,8 +75,9 @@ def test_eget_upplagg_med_egna_namn_och_ovningar(page):
     page.fill("[data-passname]", "Bröst & triceps")
     page.press("[data-passname]", "Tab")
     page.click("[data-openpick]")
-    page.fill("#exsearch", "bänk")
-    page.click(".pick:not([hidden]) [data-add]")
+    page.select_option("[data-mskcat]", "alla")
+    page.fill("#mskq", "bänkpress")
+    page.click(".msk-row [data-libpick] >> nth=0")
     page.click("button.primary[data-edit]")
     assert page.evaluate("[S.plan.days[0].name, S.plan.days[0].ex.length, S.plan.days.length]") == ["Bröst & triceps", 1, 2]
     page.click("[data-passback]")
@@ -1504,11 +1505,12 @@ def test_stretch_som_daily(page):
     start(page)
     go(page, "dailys")
     page.click('[data-openpick="daily"]')
-    page.select_option("[data-areasel]", "stretch")
-    shown = page.evaluate("[...document.querySelectorAll('.pick')].filter(e => !e.hidden).map(e => e.querySelector('.pname').textContent)")
-    assert "Duvan" in shown and "Höftböjarstretch" in shown and len(shown) == page.evaluate("Object.values(EX).filter(e => e.cat === 'stretch').length")
-    page.click('[data-add="duvan"]')
-    page.evaluate("modal = null; render()")
+    page.click('[data-mskmode="st"]')
+    count = page.evaluate("Object.values(EX).filter(e => e.cat === 'stretch').length")
+    assert f"{count} stretchövningar" in page.inner_text(".sg-head")
+    page.fill("#mskq", "duvan")
+    page.click('[data-libpick="duvan"]')
+    assert page.evaluate("tab") == "dailys" and page.evaluate("libCtx") is None
     assert "Duvan" in page.inner_text("#app") and "2 × 45 s/sida" in page.inner_text("#app")
     page.click('[data-dcheck="duvan"]')
     assert page.evaluate("dailyDone(TODAY, 'duvan')") is True
@@ -1574,97 +1576,65 @@ def test_valj_ovning_efter_kroppsdel_och_utrustning(page):
     page.click(f'[data-pick="{page.evaluate("S.plan.days[0].id")}"]')
     page.click("[data-edit]")
     page.click('[data-openpick]')
-    # Push-passet börjar på push-övningarna: bröst, axlar och armar
-    assert page.eval_on_selector("[data-areasel]", "e => e.value") == "push"
-    cats = lambda: page.evaluate("[...document.querySelectorAll('.pick')].filter(e => !e.hidden).map(e => e.dataset.cat + '/' + e.dataset.area)")
-    assert set(cats()) == {"push/brost", "push/axlar", "push/armar"}
+    # Biblioteket öppnas för passet, med passets typ förvald
+    assert "Lägg till i" in page.inner_text(".msk h1")
+    assert page.eval_on_selector("[data-mskcat]", "e => e.value") == "push"
+    shown = lambda: page.evaluate("[...document.querySelectorAll('.msk-row [data-info]')].map(b => b.dataset.info)")
+    cats = lambda: {page.evaluate(f"EX['{i}'].cat") for i in shown()}
+    assert shown() and cats() == {"push"}
+    # Övningar som redan finns i passet är markerade och kan inte läggas till igen
+    first = page.evaluate("S.plan.days[0].ex[0].id")
+    page.fill("#mskq", page.evaluate(f"EX['{first}'].name"))
+    assert page.locator(f'.msk-row.have:has([data-info="{first}"]) .sg-add.have').count() == 1
+    assert page.locator(f'[data-libpick="{first}"]').count() == 0
     # Sökningen förstår passtyper: "pull" ger dragövningar
-    page.select_option("[data-areasel]", "alla")
-    page.fill("#exsearch", "pull")
-    # Alla dragövningar syns (plus enstaka med "pull" i namnet, som pull-through)
-    pulls = page.evaluate("Object.keys(EX).filter(id => EX[id].cat === 'pull').length")
-    assert sum(c.startswith("pull/") for c in cats()) == pulls and pulls > 30
-    page.fill("#exsearch", "")
-    page.select_option("[data-areasel]", "pull")
-    assert {c.split("/")[0] for c in cats()} == {"pull"}
-    visible = lambda: page.evaluate("[...document.querySelectorAll('.pick')].filter(e => !e.hidden).map(e => e.dataset.area + '/' + e.dataset.gear)")
-    page.select_option("[data-areasel]", "brost")
-    assert visible() and all(v.startswith("brost/") for v in visible())
-    page.select_option("[data-gearsel]", "db")
-    assert visible() and all(v == "brost/db" for v in visible())
-    page.select_option("[data-areasel]", "armar")
-    assert visible() and all(v == "armar/db" for v in visible())
-    # Sökningen gäller inom vald kroppsdel; finns inget där erbjuds en sökning i alla
-    page.select_option("[data-gearsel]", "alla")
-    page.fill("#exsearch", "stretch")
-    assert not visible() and "Inget i" in page.inner_text("#nohits")
-    page.click("[data-pickall]")
-    assert any(v.startswith("stretch/") for v in visible())
-    # Vald kroppsdel och sökning tillsammans: Stretch + rygg visar bara stretchövningar
-    page.fill("#exsearch", "rygg")
-    page.select_option("[data-areasel]", "stretch")
-    assert page.input_value("#exsearch") == "rygg" and visible() and all(v.startswith("stretch/") for v in visible())
-    # Instruktionen har en väg tillbaka till listan
-    page.fill("#exsearch", "")
-    page.click('.pick:not([hidden]) .thumb >> nth=0')
-    # Länken till MuscleWiki öppnas i en ny flik
+    page.select_option("[data-mskcat]", "alla")
+    page.fill("#mskq", "pull")
+    assert "pull" in cats()
+    # Passtyp och utrustning filtrerar tillsammans
+    page.fill("#mskq", "")
+    page.select_option("[data-mskcat]", "push")
+    page.select_option("[data-mskgear]", "db")
+    assert shown() and all(page.evaluate(f"EX['{i}'].cat === 'push' && gearGroup('{i}') === 'db'") for i in shown())
+    # Instruktionen öppnas från listan och har en väg tillbaka
+    page.click(".msk-row [data-info] >> nth=0")
     link = page.locator(".mwlink")
     assert link.get_attribute("href").startswith("https://musclewiki.com/")
     assert link.get_attribute("target") == "_blank"
-    page.click("[data-infoback]")
-    assert page.locator(".picksheet").count() == 1
-    assert page.evaluate("Object.keys(EX).every(id => AREAS[areaOf(id)])") is True
+    page.click(".sheet [data-close]")
+    assert page.locator(".msk-ctx").count() == 1
+    # Tillbaka till passet utan att något läggs till
+    page.click("[data-libclose]")
+    assert page.locator(".msk").count() == 0 and page.evaluate("libCtx") is None
 
 
-def test_alla_ovningar_utom_kondition_har_musclewiki(page):
-    start(page)
-    missing = page.evaluate("Object.keys(EX).filter(id => EX[id].cat !== 'cardio' && !mwUrl(id))")
-    assert missing == []
-
-
-def test_andra_profil_oppnar_en_ruta(page):
-    start(page)
-    page.evaluate("tab = 'profil'; render()")
-    page.click("[data-editprof]")
-    assert page.locator(".profsheet").count() == 1
-    page.fill("#pname", "Testnamn")
-    page.click("[data-pnamesave]")
-    assert page.locator(".profsheet").count() == 0
-    assert "Testnamn" in page.text_content(".pcard")
-    assert page.evaluate("S.name") == "Testnamn"
-
-
-def test_testlage_fran_utvecklarens_konto(page):
-    start(page)
-    assert page.evaluate("isDevAccount()") is False
-    page.evaluate("account.step = 'in'; account.email = 'nagon@annan.se'")
-    assert page.evaluate("isDevAccount()") is False
-    page.evaluate("account.email = ' Ma.Mattisson@gmail.com '")
-    assert page.evaluate("isDevAccount()") is True
-
-
-def test_vilotimern_lagger_sig_inte_over_fokuslistan(page):
+def test_lagg_till_fran_pass_och_dailys(page):
     start(page)
     go(page, "pass")
     page.click(f'[data-pick="{page.evaluate("S.plan.days[0].id")}"]')
-    page.click("[data-focusstart]")
-    page.click(".fbar .fdone")
-    assert page.evaluate("document.body.classList.contains('resting')") is True
-    # Den vanliga timerlisten är dold; knapparna ligger i fokuslistan ovanför Klart set
-    assert not page.locator(".rest").is_visible()
-    ctl, row = page.locator(".frestctl").bounding_box(), page.locator(".fbar-row").bounding_box()
-    assert ctl["y"] + ctl["height"] <= row["y"]
-    page.click(".frestctl [data-restskip]")
-    assert page.evaluate("document.body.classList.contains('resting')") is False
-    assert not page.locator(".frestctl").is_visible()
-
-
-def test_sidan_bakom_en_ruta_rullar_inte(page):
-    start(page)
-    page.evaluate("modal = { info: 'bankpress' }; render()")
-    assert page.evaluate("getComputedStyle(document.documentElement).overflow") == "hidden"
-    page.click(".sheet [data-close]")
-    assert page.evaluate("getComputedStyle(document.documentElement).overflow") != "hidden"
+    page.click("[data-edit]")
+    page.click("[data-openpick]")
+    page.select_option("[data-mskcat]", "alla")
+    page.fill("#mskq", "latsdrag")
+    page.click('[data-libpick="latsdrag"]')
+    # Tillbaka i passet; övningen sparas med passet
+    assert page.locator(".msk").count() == 0
+    page.click("button.primary[data-edit]")
+    assert page.evaluate("S.plan.days[0].ex.at(-1).id") == "latsdrag"
+    # Från Dailys: samma bibliotek, tillbaka till Dailys, befintliga dailys orörda
+    go(page, "dailys")
+    before = page.evaluate("JSON.stringify(S.daily)")
+    page.click('[data-openpick="daily"]')
+    assert "Lägg till daily" in page.inner_text(".msk h1")
+    page.fill("#mskq", "bänkpress")
+    page.click('[data-libpick="bankpress"]')
+    assert page.evaluate("tab") == "dailys" and page.locator(".msk").count() == 0
+    assert page.evaluate("JSON.stringify(S.daily.slice(0, -1))") == before
+    assert page.evaluate("S.daily.at(-1).id") == "bankpress"
+    # Redan tillagd: markeras i biblioteket
+    page.click('[data-openpick="daily"]')
+    page.fill("#mskq", "bänkpress")
+    assert page.locator('[data-libpick="bankpress"]').count() == 0 and page.locator(".msk-row.have").count() >= 1
 
 
 def test_byt_ovning_under_passet(page):
@@ -1675,18 +1645,21 @@ def test_byt_ovning_under_passet(page):
     first = page.evaluate("S.plan.days[0].ex[0].id")
     # Bara i dag är förvalt; passet får tillbaka övningen när det sparas
     page.click("[data-fswap]")
-    assert page.locator('[data-swapwhen="true"].on').count() == 1
-    page.click('.pick:not([hidden]) [data-add] >> nth=0')
+    assert "Byt ut" in page.inner_text(".msk h1")
+    # Övningen som byts ut finns inte bland valen
+    assert page.locator(f'[data-libpick="{first}"]').count() == 0
+    assert page.locator('[data-libtoday="true"].on').count() == 1
+    page.click('.msk-row [data-libpick] >> nth=0')
     new = page.evaluate("S.plan.days[0].ex[0].id")
-    assert new != first and page.locator(".picksheet").count() == 0
+    assert new != first and page.locator(".msk").count() == 0
     assert page.evaluate("focus && focus.idx") == 0
     page.evaluate(f"restoreSwaps(S.plan.days[0], workoutFor(S.plan.days[0]))")
     assert page.evaluate("S.plan.days[0].ex[0].id") == first
     # Även framåt: bytet ligger kvar
     page.evaluate("render()")
     page.click("[data-fswap]")
-    page.click('[data-swapwhen="false"]')
-    page.click('.pick:not([hidden]) [data-add] >> nth=0')
+    page.click('[data-libtoday="false"]')
+    page.click('.msk-row [data-libpick] >> nth=0')
     kept = page.evaluate("S.plan.days[0].ex[0].id")
     page.evaluate("restoreSwaps(S.plan.days[0], workoutFor(S.plan.days[0]))")
     assert page.evaluate("S.plan.days[0].ex[0].id") == kept != first

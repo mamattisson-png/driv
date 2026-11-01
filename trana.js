@@ -93,52 +93,13 @@ function traningView() {
     ${trSheet === "dailys" ? dailysSheet() : ""}`;
 }
 
-// Övningsbiblioteket: alla övningar att bläddra bland, med samma kroppsdelar och passtyper som när man väljer övning
-let exLib = null;   // { q, f } när biblioteket är öppet; f är "alla", en passtyp (push/pull/legs) eller en kroppsdel
-function exLibView() {
-  const f = exLib.f;
-  const chips = [["alla", "Alla"], ...Object.entries(PASS_FILTER).map(([k, n]) => [k, n.split(":")[0]]), null, ...Object.entries(AREAS).map(([k, n]) => [k, n])];
-  const groups = Object.keys(AREAS).map(a => {
-    const ids = Object.keys(EX).filter(id => areaOf(id) === a);
-    return ids.length ? `<section class="exlib-group" data-group="${a}"><div class="klabel h3-sec">${AREAS[a]}</div><div class="h3-list">${ids.map(id => `<div class="h3-row sg-row exlib-row" data-area="${a}" data-cat="${EX[id].cat}"
-      data-q="${esc(norm(EX[id].name + " " + EX[id].muscles + " " + AREAS[a] + " " + (PASS_WORDS[EX[id].cat] || "")))}"><button class="sg-open" data-info="${id}" aria-label="Visa ${esc(EX[id].name)}"><span class="thumb exl">${figure(id)}</span><span class="grow"><b>${esc(EX[id].name)}</b><small>${esc(EX[id].muscles)}</small></span></button>
-      ${addBtn(id)}</div>`).join("")}</div></section>` : "";
-  }).join("");
-  return `<div class="exlib"><button class="backbtn" data-exlibclose>${icon("left", 18)}Träna</button><h1>Övningar</h1>
-    <div class="psearch">${icon("search", 18)}<input id="exlibq" type="search" placeholder="Sök övning eller muskel" value="${esc(exLib.q)}" autocomplete="off" aria-label="Sök övning"></div>
-    <section class="sg-map">${exLibMap(f)}</section>
-    <div class="exlib-chips" role="radiogroup" aria-label="Visa">${chips.map(c => c ? `<button role="radio" class="${f === c[0] ? "on" : ""}" aria-checked="${f === c[0]}" data-exlibf="${c[0]}">${c[1]}</button>` : `<span class="exlib-sep" aria-hidden="true"></span>`).join("")}</div>
-    <div class="muted small exlib-count" id="exlibn"></div>
-    ${groups}<div class="muted exlib-none" hidden>Inga övningar matchar.</div></div>`;
-}
-// Kroppen överst i biblioteket: ett tryck på en muskel väljer kroppsdelen
-const EXLIB_KEY = { chest: "brost", shoulders: "axlar", arms: "armar", upper_back: "rygg", hips: "ben", quads: "ben", hamstrings: "ben", calves: "ben" };
-function exLibMap(f) {
-  return bodyMap({ sel: f, attr: "data-exlibf", labels: [["front", "shoulders", "Axlar"], ["front", "chest", "Bröst"], ["front", "arms", "Armar"], ["front", "lower_back", "Mage"], ["front", "quads", "Ben"],
-    ["back", "upper_back", "Rygg"], ["back", "lower_back", "Ländrygg"], ["back", "hips", "Säte"], ["back", "calves", "Vader"]],
-    keyOf: (side, a) => a === "lower_back" ? (side === "front" ? "mage" : "rygg") : EXLIB_KEY[a] || null, name: k => AREAS[k] });
-}
-// Sökning och filter utan att sidan ritas om, så att tangentbordet stannar
-function filterExLib() {
-  if (!exLib) return;
-  const q = norm(exLib.q.trim()), f = exLib.f;
-  let n = 0;
-  for (const el of document.querySelectorAll(".exlib-row")) {
-    const hit = (!q || el.dataset.q.includes(q)) && (f === "alla" || (PASS_FILTER[f] ? el.dataset.cat === f : el.dataset.area === f));
-    el.hidden = !hit; if (hit) n++;
-  }
-  for (const g of document.querySelectorAll(".exlib-group")) g.hidden = !g.querySelector(".exlib-row:not([hidden])");
-  const c = $("exlibn"); if (c) c.textContent = `${n} ${n === 1 ? "övning" : "övningar"}`;
-  const none = document.querySelector(".exlib-none"); if (none) none.hidden = n > 0;
-}
-document.addEventListener("input", ev => { if (ev.target.id === "exlibq" && exLib) { exLib.q = ev.target.value; filterExLib(); } });
+// Övningsbiblioteket (muskelsok.js) är öppet när man bläddrar från Träna
+let exLib = null;
 document.addEventListener("click", ev => {
-  const b = ev.target.closest && ev.target.closest("[data-exlib],[data-exlibclose],[data-exlibf]");
+  const b = ev.target.closest && ev.target.closest("[data-exlibclose]");
   if (!b) return;
-  if (b.dataset.exlib !== undefined) { exLib = { q: "", f: "alla" }; tab = "pass"; passOpen = false; window.scrollTo(0, 0); }
-  else if (b.dataset.exlibclose !== undefined) exLib = null;
-  else { exLib.f = b.dataset.exlibf; }
-  render(); filterExLib();
+  exLib = null;
+  render();
 });
 
 // Ångra ett genomfört pass: ta bort det ur dagens logg (två tryck, så att det inte sker av misstag)
