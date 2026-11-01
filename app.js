@@ -888,13 +888,14 @@ function render() {
   // Samma inställningsknapp på alla huvudvyer. Hem har knappen i sin egen header.
   const gear = tab === "idag" || tab === "profil" || tab === "upplagg" || passDone ? "" : `<button class="gear" data-tab="profil" aria-label="Inställningar"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Z"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06-1.87 1.87-.06-.06A1.7 1.7 0 0 0 16 18.4a1.7 1.7 0 0 0-1 1.56V21h-6v-1.04A1.7 1.7 0 0 0 8 18.4a1.7 1.7 0 0 0-1.87.34l-.06.06-1.87-1.87.06-.06A1.7 1.7 0 0 0 4.6 15 1.7 1.7 0 0 0 3 14H2v-4h1a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.34-1.87L4.2 7.07 6.07 5.2l.06.06A1.7 1.7 0 0 0 8 5.6 1.7 1.7 0 0 0 9 4V3h6v1a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.87-.34l.06-.06 1.87 1.87-.06.06A1.7 1.7 0 0 0 19.4 9 1.7 1.7 0 0 0 21 10h1v4h-1a1.7 1.7 0 0 0-1.6 1Z"/></svg></button>`;
   document.getElementById("app").innerHTML = passDone ? passDoneView()
-    : gear + banner + VIEWS[tab]() + (modal ? renderModal() : "") + (actSheet ? actSheetView() : "") + (sgAdd && EX[sgAdd] ? stretchAddSheet(sgAdd) : "");
+    : gear + banner + VIEWS[tab]() + (modal ? renderModal() : "") + (actSheet ? actSheetView() : "") + (sgAdd && EX[sgAdd] ? stretchAddSheet(sgAdd) : "") + tourView();
   if (modal && modal.pick) filterPicker();
   if (tab === "recept" && typeof filterRecipes === "function") filterRecipes();
   const focusScroll = document.querySelector(".focus-scroll");
   if (focusScroll && focus) focusScroll.scrollTop = focus.scrollTop || 0;
   afterFocusRender();
   if (exLib && tab === "pass") filterExLib();
+  if (tour != null) requestAnimationFrame(positionTour);
   updateBadge();
 }
 
@@ -1131,7 +1132,8 @@ const VIEWS = {
     const friendSub = others.length ? `${esc(others[0].name)} körde ${esc(others[0].pass)} · peppa` : "Träna tillsammans och följ varandra";
     return `<div class="home3">
       <header class="homehead"><div class="brand"><img src="icons/icon-192-v2.png" alt=""><div class="ordbild"><span class="wordmark">DRIV</span><span class="slogan">Ditt mål. <em>Ditt driv.</em></span></div></div>
-        <button class="gear avbtn" data-tab="profil" aria-label="Inställningar">${icon("profil", 20)}</button></header>
+        <span class="row h3-hbtns"><button class="gear avbtn infobtn" data-tourstart aria-label="Visa appguiden">${icon("info", 20)}</button>
+        <button class="gear avbtn" data-tab="profil" aria-label="Inställningar">${icon("profil", 20)}</button></span></header>
       <div class="muted h3-date">${date}</div><h1 class="h3-greet">${greeting}</h1>
       <div class="muted h3-sub">${sub} · ${passes} av ${S.plan.count} pass i veckan</div>
       <section class="h3-card ${done ? "done" : ""}"><button class="h3-head" data-seepass="${d.id}" aria-label="Dagens pass: ${esc(d.name)}">${no(1, done)}
@@ -1224,6 +1226,7 @@ const VIEWS = {
         ${profRow("notiser", "bell", "Notiser", pushSummary(), pushBody(), pushSwitch)}
         ${S.daily.length ? profRow("paminnelse", "kalender", "Påminnelse i kalendern", r ? `För dina dailys · kl. ${esc(r.time)}` : "För dina dailys · ingen vald", reminderCard()) : ""}`)}
       ${group("Appen", `${profRow("utseende", "utseende", "Utseende", "", null, themeSeg)}
+        ${profRow("guide", "info", "Appguide", "En kort rundtur genom flikarna", null, `<button class="small" data-tourstart>Starta</button>`)}
         ${profRow("konto", "data", sbEnabled ? "Konto och data" : "Data", account.step === "in" ? esc(account.email) : sbEnabled ? "Inloggning, exportera, importera" : "Exportera, importera",
           `${accountCard()}${data}`)}
         <div class="prow"><div class="prow-line"><button class="prow-head" data-tab="kommande"><span class="pic">${icon("idea", 20)}</span><span class="grow"><b>Kommande funktioner</b>

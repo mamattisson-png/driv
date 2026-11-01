@@ -2088,7 +2088,8 @@ def test_ovningsbiblioteket(page):
     page.click('.an-lab[data-mus="biceps"] rect')
     assert "Biceps" in page.inner_text(".sg-head") and page.locator('.an-reg.on[data-mus="biceps"]').count() == 1
     # Baksidans muskler visar baksidan
-    page.click('.msk-chips [data-mus="lar_bak"]')
+    page.click('[data-mskview="b"]')
+    page.click('.an-lab[data-mus="lar_bak"] rect')
     assert page.locator('.an-reg.on[data-mus="lar_bak"]').count() == 1
     # Sökning letar bland alla övningar, även passtyper
     page.fill("#mskq", "rodd")
@@ -2106,7 +2107,8 @@ def test_stretchguide_omraden_och_lagg_till(page):
     # Stretch-läget, och alla stretchövningar hör till minst en muskel
     assert page.locator('[data-mskmode="st"][aria-selected="true"]').count() == 1
     assert page.evaluate("Object.keys(EX).filter(id => EX[id].cat === 'stretch').every(id => stretchMuscles(id).length)")
-    page.click('.msk-chips [data-mus="lar_bak"]')
+    page.click('[data-mskview="b"]')
+    page.click('.an-lab[data-mus="lar_bak"] rect')
     assert "Baksida lår" in page.inner_text(".sg-head")
     first = page.get_attribute(".msk-row [data-sgadd] >> nth=0", "data-sgadd")
     page.click(".msk-row [data-sgadd] >> nth=0")
@@ -2174,3 +2176,25 @@ def test_angra_genomfort_pass(page):
     assert "Tryck igen" in page.inner_text(f'[data-passundo="{d}"]')
     page.click(f'[data-passundo="{d}"]')
     assert page.evaluate(f"!workoutOn(TODAY, '{d}')") and not page.errors
+
+
+def test_appguiden_gar_igenom_alla_flikar(page):
+    start(page)
+    # Startar aldrig av sig själv
+    assert page.locator(".tour").count() == 0
+    page.click("[data-tourstart]")
+    tabs = []
+    for _ in range(page.evaluate("TOUR.length")):
+        sel = page.evaluate("TOUR[tour].sel")
+        assert page.locator(sel).count() > 0, sel   # varje steg pekar på något som finns
+        tabs.append(page.evaluate("tab"))
+        page.click("[data-tournext]")
+    assert {"idag", "pass", "dailys", "kost", "historik"} <= set(tabs)
+    assert page.evaluate("tour") is None and page.locator(".tour").count() == 0
+    # Kan avslutas när som helst, och startas igen från Inställningar
+    page.click("[data-tourstart]")
+    page.click("[data-tourend] >> nth=0")
+    assert page.evaluate("tour") is None
+    go(page, "profil")
+    page.click(".prow [data-tourstart]")
+    assert page.evaluate("tour") == 0 and not page.errors
