@@ -157,7 +157,7 @@ function actSummary() {
       <span class="muted small">${e.n} ${e.n === 1 ? "gång" : "gånger"} · ${fmtNum(e.min / 60)} timmar</span></span></div>`).join("")}</section>`;
 }
 // Vikten visas i Utveckling även innan man sparat pass, och leder till sidan Vikt
-const weightSection = (w, wFirst, wLast) => !S.hideWeight && w.length ? `<section class="card kmeal"><button class="khead wlink" data-tab="vagning"><span class="grow">Vikt</span><span>${fmtNum(wLast)} kg ${icon("right", 16)}</span></button>
+const weightSection = (w, wFirst, wLast) => !S.hideWeight && w.length ? `<section class="card kmeal"><button class="khead wlink" data-tab="vagning"><span class="grow">Vikt</span><span class="wl-kg">${fmtNum(wLast)} kg${icon("right", 16)}</span></button>
       <div class="kbody">${w.length > 1 ? `<div style="margin-bottom:8px">${weightBadge(wLast - wFirst)} <span class="muted small">sedan ${shortDate(w[0])}</span></div>` : ""}${weightChart()}</div></section>` : "";
 function progressView() {
   const p = progressData(), recent = [0, 1, 2, 3].reduce((a, k) => a + weekSummary(shift(weekStart(TODAY), -7 * k)).passes, 0);
