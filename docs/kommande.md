@@ -37,6 +37,7 @@ Senast uppdaterad: 2026-11-01. Status bygger på dokumenterade publiceringar och
 | 33 | Ta bort dubbla muskelknappar under kroppskartan | UX | Låg | Klar |
 | 34 | MuscleWiki-länk från stretchövningens detaljsida | Stretch | Medel | Klar |
 | 35 | Direktlänkar till rätt MuscleWiki-övning | Stretch | Medel | Ej påbörjad |
+| 36 | Gemensamt övningsbibliotek för pass, Dailys och byten | Träning | Hög | Klar |
 
 ## Detaljer och acceptanskriterier
 
@@ -88,6 +89,7 @@ Senast uppdaterad: 2026-11-01. Status bygger på dokumenterade publiceringar och
 35. **Direktlänkar till rätt MuscleWiki-övning:** Dagens länk går till det allmänna biblioteket, inte till motsvarande övning. Kartlägg övningar och verifiera destinationer innan direkta länkar införs.
 
 11. **Frivillig appguide (Klar, publicerad 2026-11-01):** Startas med i-knappen på Hem eller under Inställningar → Appen, aldrig av sig själv. Nio steg: de fem flikarna, uppvärmning, supersets och dailys under passet, och var guiden startas igen. Varje steg visar det verkliga elementet med en lysande ram och ett kort med pil, utan mörk slöja. Stegen ligger i `guide.js`; testet `test_appguiden_gar_igenom_alla_flikar` faller om ett steg pekar på något som inte längre finns.
+36. **Gemensamt övningsbibliotek (Klar, publicerad 2026-11-01, PR #28):** Lägg till övning i ett pass, Lägg till i Dailys och Byt övning (i redigeringen och under passet) öppnar samma muskelbibliotek med sök, kroppskarta, filter för passtyp och utrustning, figurer och instruktioner. Plus lägger till direkt och tar en tillbaka; övningar som redan finns är markerade med en bock. Vid byte under passet väljs Bara i dag eller Även framåt. Den separata väljaren och det gamla övningsbiblioteket är borttagna. Granskad via Cloudflare-preview innan publicering.
 
 ## Arbetsregler
 
