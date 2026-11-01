@@ -782,6 +782,7 @@ const EX = {
   },
 };
 
+
 // ---------- Fler övningar ----------
 // Varianter som rör sig som en befintlig övning lånar dess figur.
 const SAME = (id, extra) => Object.assign({ A: EX[id].A, B: EX[id].B, scene: EX[id].scene, view: EX[id].view }, extra);
@@ -1289,4 +1290,171 @@ for (const [id, s] of Object.entries(PRIM_SEC)) {
   const [p, q] = s.split("|");
   EX[id].prim = p.split(" ").filter(Boolean);
   EX[id].sec = q.split(" ").filter(Boolean);
+}
+
+// Sökalias är egen metadata; inga externa API-texter eller medier kopieras.
+const EX_SEARCH_ALIASES = {
+  "bankpress": [
+    "bench press",
+    "barbell bench press"
+  ],
+  "hantelpress": [
+    "dumbbell bench press",
+    "dumbbell chest press"
+  ],
+  "knaboj": [
+    "squat",
+    "barbell squat"
+  ],
+  "marklyft": [
+    "deadlift"
+  ],
+  "rumansk_marklyft": [
+    "romanian deadlift",
+    "rdl"
+  ],
+  "armhavningar": [
+    "push up",
+    "push-up"
+  ],
+  "chins": [
+    "chin up",
+    "chin-up"
+  ],
+  "pullups": [
+    "pull up",
+    "pull-up"
+  ],
+  "latsdrag": [
+    "lat pulldown"
+  ],
+  "skivstangsrodd": [
+    "barbell row",
+    "bent over row"
+  ],
+  "hantelrodd": [
+    "dumbbell row"
+  ],
+  "hip_thrust": [
+    "hip thrust"
+  ],
+  "glute_bridge": [
+    "glute bridge"
+  ],
+  "sidolyft": [
+    "lateral raise",
+    "side raise"
+  ],
+  "militarpress": [
+    "overhead press",
+    "shoulder press"
+  ],
+  "bicepscurl": [
+    "bicep curl",
+    "barbell curl"
+  ],
+  "triceps_pushdown": [
+    "tricep pushdown",
+    "cable pushdown"
+  ],
+  "plankan": [
+    "plank"
+  ],
+  "sidoplanka": [
+    "side plank"
+  ],
+  "dead_bug": [
+    "dead bug"
+  ],
+  "pallof": [
+    "pallof press"
+  ],
+  "hoftbojare_stretch": [
+    "hip flexor stretch"
+  ],
+  "framsida_lar_stretch": [
+    "quad stretch",
+    "quadriceps stretch"
+  ],
+  "vadstretch": [
+    "calf stretch"
+  ],
+  "barnets_position": [
+    "child pose",
+    "child's pose"
+  ],
+  "katt_ko": [
+    "cat cow",
+    "cat-cow"
+  ],
+  "fjarilen": [
+    "butterfly stretch"
+  ],
+  "duvan": [
+    "pigeon pose"
+  ],
+  "kobran": [
+    "cobra stretch"
+  ],
+  "neutral_hantelpress": [
+    "neutral grip dumbbell bench press"
+  ],
+  "enarms_hantelpress": [
+    "single arm dumbbell press"
+  ],
+  "pausbankpress": [
+    "paused bench press"
+  ],
+  "bred_armhavning": [
+    "wide push up"
+  ],
+  "underhands_latsdrag": [
+    "reverse grip lat pulldown"
+  ],
+  "brett_latsdrag": [
+    "wide grip lat pulldown"
+  ],
+  "enarms_hantelcurl": [
+    "single arm dumbbell curl"
+  ],
+  "omvand_skivstangscurl": [
+    "reverse barbell curl"
+  ],
+  "pausknaboj": [
+    "pause squat"
+  ],
+  "smal_knaboj": [
+    "narrow stance squat"
+  ],
+  "enbens_hip_thrust": [
+    "single leg hip thrust"
+  ],
+  "enbens_glute_bridge": [
+    "single leg glute bridge"
+  ],
+  "sidoplanka_hoftlyft": [
+    "side plank hip lift"
+  ],
+  "dead_bug_utstrackt": [
+    "straight leg dead bug"
+  ],
+  "liggande_broststretch": [
+    "lying chest stretch"
+  ],
+  "staende_vadstretch_bojt_kna": [
+    "bent knee calf stretch",
+    "soleus stretch"
+  ],
+  "hoftbojare_stretch_arm": [
+    "kneeling hip flexor stretch"
+  ],
+  "sittande_fjarilsstretch": [
+    "seated butterfly stretch"
+  ],
+  "sidliggande_quadricepsstretch": [
+    "side lying quad stretch"
+  ]
+};
+for (const [id, aliases] of Object.entries(EX_SEARCH_ALIASES)) {
+  if (EX[id]) EX[id].aliases = aliases;
 }

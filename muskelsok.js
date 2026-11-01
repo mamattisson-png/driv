@@ -72,18 +72,31 @@ function openLibrary(ctx) {
 }
 const libTargetName = t => t === "daily" ? "Dailys" : t.startsWith("draft:") ? draft.days[+t.slice(6)].name : dayById(t).name;
 
+// Sökindex för hela katalogen: svenska namn, alias och specifika MuscleWiki-övningssluggar.
+// Kategorilänkar används inte som sökord eftersom de annars ger irrelevanta träffar.
+function exerciseSearchText(id) {
+  const e = EX[id], slug = typeof MW !== "undefined" && MW[id] && MW[id].startsWith("exercise/")
+    ? MW[id].slice("exercise/".length).replace(/-/g, " ") : "";
+  return norm([e.name, ...(e.aliases || []), e.muscles || "", PASS_WORDS[e.cat] || "", slug].join(" ").replace(/[-–—_/]/g, " "));
+}
+function exerciseMatches(id, query) {
+  if (!query) return true;
+  const haystack = exerciseSearchText(id);
+  return query.split(/\s+/).filter(Boolean).every(word => haystack.includes(word));
+}
+
 function muscleView() {
   if (mskDetail && EX[mskDetail]) return stretchPage(mskDetail);
   const ctx = libCtx || { kind: "browse" }, browse = ctx.kind === "browse";
-  const st = msk.mode === "st", q = norm(msk.q.trim()), cat = msk.cat || "alla", gear = msk.gear || "alla";
+  const st = msk.mode === "st", q = norm(msk.q.trim().replace(/[-–—_/]/g, " ")), cat = msk.cat || "alla", gear = msk.gear || "alla";
   const have = browse ? [] : exList(ctx.target).map(e => e.id);
   const replacing = !browse && ctx.replace != null ? exList(ctx.target)[ctx.replace] : null;
   // Kondition passar i Dailys men inte i ett pass; stretch finns under sin egen flik
-  const pool = Object.keys(EX).filter(id => (st ? EX[id].cat === "stretch" : EX[id].cat !== "stretch") && (ctx.kind !== "workout" || EX[id].cat !== "cardio"));
-  const list = pool.filter(id => (!replacing || id !== replacing.id) && (!q || norm(EX[id].name + " " + (EX[id].muscles || "") + " " + (PASS_WORDS[EX[id].cat] || "")).includes(q))
+  const pool = Object.keys(EX).filter(id => (q || (st ? EX[id].cat === "stretch" : EX[id].cat !== "stretch")) && (ctx.kind !== "workout" || EX[id].cat !== "cardio"));
+  const list = pool.filter(id => (!replacing || id !== replacing.id) && exerciseMatches(id, q)
     && (q || !msk.sel || (st ? stretchMuscles(id).includes(msk.sel) : trainsMuscle(id, msk.sel)))
-    && (st || cat === "alla" || EX[id].cat === cat) && (gear === "alla" || gearGroup(id) === gear));
-  const title = q ? "Sökresultat" : msk.sel ? MUSKEL_NAMN[msk.sel] : st ? "Alla stretchövningar" : cat !== "alla" ? `Alla ${areaLabel(cat).toLowerCase()}-övningar` : "Alla övningar";
+    && (q || st || cat === "alla" || EX[id].cat === cat) && (q || gear === "alla" || gearGroup(id) === gear));
+  const title = q ? "Sökresultat – styrka och stretch" : msk.sel ? MUSKEL_NAMN[msk.sel] : st ? "Alla stretchövningar" : cat !== "alla" ? `Alla ${areaLabel(cat).toLowerCase()}-övningar` : "Alla övningar";
   const heading = replacing ? `Byt ut ${esc(EX[replacing.id].name)}` : ctx.kind === "daily" ? "Lägg till daily" : ctx.kind === "workout" ? `Lägg till i ${esc(libTargetName(ctx.target))}` : "Sök på muskel";
   const back = browse ? `<button class="backbtn" ${msk.back === "idag" ? 'data-tab="idag"' : "data-exlibclose"}>${icon("left", 18)}${msk.back === "idag" ? "Hem" : "Träna"}</button>`
     : `<button class="backbtn" data-libclose>${icon("left", 18)}${ctx.kind === "daily" ? "Dailys" : esc(libTargetName(ctx.target))}</button>`;
@@ -91,7 +104,7 @@ function muscleView() {
   const action = id => browse ? addBtn(id)
     : have.includes(id) && !replacing ? `<span class="sg-add have" aria-label="Finns redan">${icon("check", 18)}</span>`
     : `<button class="sg-add" data-libpick="${id}" aria-label="${replacing ? "Välj" : "Lägg till"} ${esc(EX[id].name)}">${icon(replacing ? "right" : "plus", 18)}</button>`;
-  const rows = list.slice(0, msk.limit).map(id => `<div class="h3-row sg-row msk-row ${have.includes(id) ? "have" : ""}"><button class="sg-open" ${st && browse ? `data-mskdetail="${id}"` : `data-info="${id}"`} aria-label="Visa ${esc(EX[id].name)}">
+  const rows = list.slice(0, msk.limit).map(id => `<div class="h3-row sg-row msk-row ${have.includes(id) ? "have" : ""}"><button class="sg-open" ${EX[id].cat === "stretch" && browse ? `data-mskdetail="${id}"` : `data-info="${id}"`} aria-label="Visa ${esc(EX[id].name)}">
       <span class="thumb exl">${figure(id)}</span><span class="grow"><b>${esc(EX[id].name)}</b><small>${EX[id].sets} × ${esc(EX[id].reps)} · ${esc(EX[id].muscles || "")}</small></span></button>${action(id)}</div>`).join("");
   const filters = `<div class="pfilters msk-filters">${st ? "" : `<label class="pfilter ${cat !== "alla" ? "on" : ""}"><span class="sr">Passtyp</span><select data-mskcat aria-label="Passtyp">
       <option value="alla">Alla passtyper</option>${Object.keys(PASS_FILTER).map(k => `<option value="${k}" ${cat === k ? "selected" : ""}>${areaLabel(k)}</option>`).join("")}</select>${icon("down", 16)}</label>`}
@@ -106,7 +119,7 @@ function muscleView() {
       ${anatSvg(msk.view, { strong: q ? [] : msk.sel ? [msk.sel] : MUSKLER.map(m => m[0]), whole: !q && !msk.sel, mode: msk.mode })}</section>
     <div class="psearch">${icon("search", 18)}<input id="mskq" type="search" placeholder="${st ? "Sök stretchövning" : "Sök övning eller muskel"}" value="${esc(msk.q)}" autocomplete="off" aria-label="Sök"></div>
     ${filters}
-    <div class="row between sg-head"><h2>${title}</h2><span class="muted small">${list.length} ${st ? (list.length === 1 ? "stretch" : "stretchövningar") : (list.length === 1 ? "övning" : "övningar")}${msk.sel && !q ? ` · <button class="link small" data-mus="">Visa alla</button>` : ""}</span></div>
+    <div class="row between sg-head"><h2>${title}</h2><span class="muted small">${list.length} ${q ? (list.length === 1 ? "träff" : "träffar") : st ? (list.length === 1 ? "stretch" : "stretchövningar") : (list.length === 1 ? "övning" : "övningar")}${msk.sel && !q ? ` · <button class="link small" data-mus="">Visa alla</button>` : ""}</span></div>
     ${rows ? `<section class="h3-list">${rows}</section>` : `<div class="muted sg-none">${q ? "Inga övningar matchar." : `Inga ${st ? "stretchövningar" : "övningar"} matchar. Prova en annan muskel eller utrustning.`}</div>`}
     ${list.length > msk.limit ? `<button class="wide sg-more" data-mskmore>Visa fler (${list.length - msk.limit})</button>` : ""}</div>`;
 }

@@ -76,3 +76,6 @@ const orderContext=vm.createContext({window:{matchMedia:()=>({matches:false})}})
 for(const file of ['ovningar.js','styrka-extra.js','figur.js']) vm.runInContext(fs.readFileSync(path.join(root,file),'utf8'),orderContext);
 assert.equal(vm.runInContext('EXTRA_STRENGTH_IDS.every(id=>!!figure(id))',orderContext),true);
 console.log('240 strength exercises: data, gear, muscles, links, SVG and preservation verified.');
+
+// CI invokes this file; include the new distinct-movement regression suite.
+require('./test_distinct_exercises.cjs');
