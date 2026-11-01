@@ -64,6 +64,19 @@ function openLibrary(ctx) {
 }
 const libTargetName = t => t === "daily" ? "Dailys" : t.startsWith("draft:") ? draft.days[+t.slice(6)].name : dayById(t).name;
 
+// Sökindex för hela katalogen: svenska namn, alias och specifika MuscleWiki-övningssluggar.
+// Kategorilänkar används inte som sökord eftersom de annars ger irrelevanta träffar.
+function exerciseSearchText(id) {
+  const e = EX[id], slug = typeof MW !== "undefined" && MW[id] && MW[id].startsWith("exercise/")
+    ? MW[id].slice("exercise/".length).replace(/-/g, " ") : "";
+  return norm([e.name, ...(e.aliases || []), e.muscles || "", PASS_WORDS[e.cat] || "", slug].join(" ").replace(/[-–—_/]/g, " "));
+}
+function exerciseMatches(id, query) {
+  if (!query) return true;
+  const haystack = exerciseSearchText(id);
+  return query.split(/\\s+/).filter(Boolean).every(word => haystack.includes(word));
+}
+
 function muscleView() {
   if (mskDetail && EX[mskDetail]) return stretchPage(mskDetail);
   const ctx = libCtx || { kind: "browse" }, browse = ctx.kind === "browse";
@@ -72,7 +85,7 @@ function muscleView() {
   const replacing = !browse && ctx.replace != null ? exList(ctx.target)[ctx.replace] : null;
   // Kondition passar i Dailys men inte i ett pass; stretch finns under sin egen flik
   const pool = Object.keys(EX).filter(id => (q || (st ? EX[id].cat === "stretch" : EX[id].cat !== "stretch")) && (ctx.kind !== "workout" || EX[id].cat !== "cardio"));
-  const list = pool.filter(id => (!replacing || id !== replacing.id) && (!q || norm(EX[id].name + " " + (EX[id].aliases || []).join(" ") + " " + (EX[id].muscles || "") + " " + (PASS_WORDS[EX[id].cat] || "")).includes(q))
+  const list = pool.filter(id => (!replacing || id !== replacing.id) && exerciseMatches(id, q)
     && (q || !msk.sel || (st ? stretchMuscles(id).includes(msk.sel) : trainsMuscle(id, msk.sel)))
     && (q || st || cat === "alla" || EX[id].cat === cat) && (q || gear === "alla" || gearGroup(id) === gear));
   const title = q ? "Sökresultat – styrka och stretch" : msk.sel ? MUSKEL_NAMN[msk.sel] : st ? "Alla stretchövningar" : cat !== "alla" ? `Alla ${areaLabel(cat).toLowerCase()}-övningar` : "Alla övningar";
