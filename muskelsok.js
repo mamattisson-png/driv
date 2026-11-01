@@ -80,7 +80,7 @@ function exerciseMatches(id, query) {
 function muscleView() {
   if (mskDetail && EX[mskDetail]) return stretchPage(mskDetail);
   const ctx = libCtx || { kind: "browse" }, browse = ctx.kind === "browse";
-  const st = msk.mode === "st", q = norm(msk.q.trim()), cat = msk.cat || "alla", gear = msk.gear || "alla";
+  const st = msk.mode === "st", q = norm(msk.q.trim().replace(/[-–—_/]/g, " ")), cat = msk.cat || "alla", gear = msk.gear || "alla";
   const have = browse ? [] : exList(ctx.target).map(e => e.id);
   const replacing = !browse && ctx.replace != null ? exList(ctx.target)[ctx.replace] : null;
   // Kondition passar i Dailys men inte i ett pass; stretch finns under sin egen flik
