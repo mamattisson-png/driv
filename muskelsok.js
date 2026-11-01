@@ -37,12 +37,16 @@ let mskDetail = null;   // stretchövningen vars sida är öppen
 
 const accOf = mode => mode === "st" ? "var(--stretch)" : "var(--accent)";
 // Anatomibilden för en sida. strong/soft: muskler som färgas starkt/svagt; labels: etiketter att trycka på.
-function anatSvg(side, { strong = [], soft = [], labels = true, mode = "ex", vb, label }) {
+// Var etiketten Hela kroppen står: en egen ruta i vänsterspalten, under de andra
+const ANAT_ALL = { f: [-228, 850], b: [317, 850] };
+function anatSvg(side, { strong = [], soft = [], labels = true, mode = "ex", vb, label, whole = false }) {
   const A = ANAT[side], c = A.clip, id = "anclip-" + side + (labels ? "" : "-d");
   const regs = A.regs.map(([k, d]) => `<path d="${d}" class="an-reg ${strong.includes(k) ? "on" : soft.includes(k) ? "soft" : ""}" ${labels ? `data-mus="${k}"` : ""}><title>${MUSKEL_NAMN[k]}</title></path>`).join("");
   const labs = labels ? A.labels.map(([k, l, dot, r, t, text]) => { const on = strong.includes(k);
     return `<g class="an-lab ${on ? "on" : ""}" data-mus="${k}" role="button" tabindex="0" aria-label="${text}" aria-pressed="${on}"><line x1="${l[0]}" y1="${l[1]}" x2="${l[2]}" y2="${l[3]}"/><circle cx="${dot[0]}" cy="${dot[1]}" r="9"/>
-      <rect x="${r[0]}" y="${r[1]}" width="${r[2]}" height="${r[3]}" rx="52"/><text x="${t[0]}" y="${t[1]}" text-anchor="middle">${text}</text></g>`; }).join("") : "";
+      <rect x="${r[0]}" y="${r[1]}" width="${r[2]}" height="${r[3]}" rx="52"/><text x="${t[0]}" y="${t[1]}" text-anchor="middle">${text}</text></g>`; }).join("")
+    + `<g class="an-lab an-all ${whole ? "on" : ""}" data-mus="" role="button" tabindex="0" aria-label="Hela kroppen" aria-pressed="${whole}"><rect x="${ANAT_ALL[side][0]}" y="${ANAT_ALL[side][1]}" width="300" height="104" rx="52"/>
+      <text x="${ANAT_ALL[side][0] + 150}" y="${ANAT_ALL[side][1] + 66}" text-anchor="middle">Hela kroppen</text></g>` : "";
   return `<svg class="anat ${mode === "st" ? "st" : ""}" viewBox="${vb || A.vb}" role="img" aria-label="${label || (side === "f" ? "Kroppen framifrån" : "Kroppen bakifrån")}">
     <clipPath id="${id}"><rect x="${c[0]}" y="${c[1]}" width="${c[2]}" height="${c[3]}"/></clipPath>
     <image href="icons/anatomi.webp" x="0" y="0" width="1254" height="1254" clip-path="url(#${id})"/>${regs}${labs}</svg>`;
@@ -95,7 +99,7 @@ function muscleView() {
       `<button role="radio" data-libtoday="${v}" class="${ctx.today === v ? "on" : ""}" aria-checked="${ctx.today === v}">${n}</button>`).join("")}</div>` : ""}
     <div class="msk-tabs" role="tablist"><button role="tab" aria-selected="${!st}" class="${st ? "" : "on"}" data-mskmode="ex">Övningar</button><button role="tab" aria-selected="${st}" class="${st ? "on" : ""}" data-mskmode="st">Stretch</button></div>
     <section class="msk-map"><div class="msk-side" role="radiogroup" aria-label="Sida"><button class="${msk.view === "f" ? "on" : ""}" data-mskview="f" aria-pressed="${msk.view === "f"}">Fram</button><button class="${msk.view === "b" ? "on" : ""}" data-mskview="b" aria-pressed="${msk.view === "b"}">Bak</button></div>
-      ${anatSvg(msk.view, { strong: q || !msk.sel ? [] : [msk.sel], mode: msk.mode })}</section>
+      ${anatSvg(msk.view, { strong: q ? [] : msk.sel ? [msk.sel] : MUSKLER.map(m => m[0]), whole: !q && !msk.sel, mode: msk.mode })}</section>
     <div class="psearch">${icon("search", 18)}<input id="mskq" type="search" placeholder="${st ? "Sök stretchövning" : "Sök övning eller muskel"}" value="${esc(msk.q)}" autocomplete="off" aria-label="Sök"></div>
     ${filters}
     <div class="row between sg-head"><h2>${title}</h2><span class="muted small">${list.length} ${st ? (list.length === 1 ? "stretch" : "stretchövningar") : (list.length === 1 ? "övning" : "övningar")}${msk.sel && !q ? ` · <button class="link small" data-mus="">Visa alla</button>` : ""}</span></div>

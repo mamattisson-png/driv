@@ -2102,6 +2102,12 @@ def test_kroppskartan_i_biblioteket(page):
     page.click('.an-lab[data-mus="brost"] rect')
     ids = page.evaluate("[...document.querySelectorAll('.msk-row [data-sgadd]')].map(b => b.dataset.sgadd)")
     assert ids and page.evaluate(f"{ids!r}.every(id => EX[id].prim.includes('brost'))")
+    # Hela kroppen: alla muskler tänds och alla övningar visas
+    page.click(".an-all rect")
+    assert page.evaluate("msk.sel") is None and page.locator(".an-all.on").count() == 1
+    assert page.locator(".an-reg.on").count() == page.locator(".an-reg").count()
+    n = page.evaluate("Object.keys(EX).filter(id => EX[id].cat !== 'stretch').length")
+    assert f"{n} övningar" in page.inner_text(".sg-head")
 
 
 def test_alla_ovningar_kan_laggas_till(page):
