@@ -2009,7 +2009,8 @@ document.addEventListener("click", ev => {
     s.ok = !s.ok;
     const idx = d.ex.findIndex(x => x.id === ds.ok), inRound = s.ok && ssNext(d, idx, +ds.i) != null;
     // I ett superset vilar man först när varvet är klart
-    const exo = d.ex[idx], toDrop = exo && exo.last === "drop" && +ds.i === exo.sets - 1;   // dropen körs direkt, utan vila
+    const wk = workoutFor(d), nd = exo0 => Math.max(1, +((wk.drops || {})[exo0.id]) || 1);
+    const exo = d.ex[idx], toDrop = exo && exo.last === "drop" && +ds.i >= exo.sets - 1 && +ds.i < exo.sets - 1 + nd(exo);   // dropen körs direkt, utan vila   // dropen körs direkt, utan vila
     if (s.ok) { fillFromHint(d, ds.ok, +ds.i); checkRecord(ds.ok, s); if (!editDate && !inRound && !toDrop) startRest(ds.ok); }
     syncDone(d);
     if (s.ok) focusAfterSet(d, idx, +ds.i);
@@ -2048,6 +2049,13 @@ document.addEventListener("click", ev => {
     else if (w.done) { passDone = { dayId: ds.finish, date: logDate() }; tab = "idag"; }
   }
   // Uppvärmning under passet: ett lättare set läggs före arbetsseten och blir det man står på
+  // Dropset: en drop till, ytterligare ca 25 % lättare
+  else if (ds.dropmore) {
+    const d = currentPassDay(), w = workoutFor(d);
+    w.drops = w.drops || {}; w.drops[ds.dropmore] = (+w.drops[ds.dropmore] || 1) + 1;
+    if (focus) focus.sel = null;
+    if (typeof stopRest === "function") stopRest();   // dropen körs direkt, utan vila
+  }
   else if (ds.warmadd) {
     const d = currentPassDay(), ex = d.ex.find(x => x.id === ds.warmadd);
     ex.warm = Math.min(5, (+ex.warm || 0) + 1);

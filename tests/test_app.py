@@ -2407,3 +2407,40 @@ def test_vikt_kan_stallas_in_for_ovningen(page):
     page.fill("[data-exkg]", "62,5")
     page.press("[data-exkg]", "Tab")
     assert page.evaluate("S.plan.days[0].ex[0].kg") == 62.5
+
+
+def test_dropset_och_max_reps_pa_sista_setet(page):
+    start(page)
+    go(page, "pass")
+    d = page.evaluate("S.plan.days[0].id")
+    page.click(f'[data-editpass="{d}"]')
+    page.click('[data-exsheet="0"]')
+    page.click('[data-exlast="drop"]')
+    page.click('.exsheet .lightbtn[data-exsheetclose]')
+    assert "dropset" in page.inner_text(".elist")
+    page.evaluate("editing = false; editSnap = null; render()")
+    page.click(f'[data-focusstart="{d}"]')
+    ex = page.evaluate("S.plan.days[0].ex[0].id")
+    n = page.evaluate("S.plan.days[0].ex[0].sets")
+    page.evaluate(f"const D=S.plan.days[0]; for (let i=0;i<{n}-1;i++) Object.assign(setAt(D,'{ex}',i), {{kg:60, reps:8, ok:true}}); Object.assign(setAt(D,'{ex}',{n}-1), {{kg:60, reps:8}}); focus.sel=null; render()")
+    # Sista setet går direkt till dropen: ingen vila, och dropen är ca 25 % lättare
+    assert "direkt till drop" in page.inner_text(".fdone")
+    page.click(f'.fdone[data-ok="{ex}"][data-i="{n-1}"]')
+    assert page.evaluate("rest.end > Date.now()") is False
+    assert page.get_attribute(f'[data-set="{ex}"][data-i="{n}"][data-f="kg"]', "placeholder") == "45"
+    # En drop till efter den här, ytterligare lättare och fortfarande utan vila
+    page.click(f'[data-dropmore="{ex}"]')
+    page.fill(f'[data-set="{ex}"][data-i="{n}"][data-f="kg"]', "45")
+    page.press(f'[data-set="{ex}"][data-i="{n}"][data-f="kg"]', "Tab")
+    page.click(f'.fdone[data-ok="{ex}"][data-i="{n}"]')
+    assert page.evaluate("rest.end > Date.now()") is False
+    assert page.get_attribute(f'[data-set="{ex}"][data-i="{n+1}"][data-f="kg"]', "placeholder") in ("32.5", "35")
+    page.click(f'.fdone[data-ok="{ex}"][data-i="{n+1}"]')
+    assert page.evaluate("focus.idx") == 1
+    # Max reps på sista setet i nästa övning
+    page.evaluate("S.plan.days[0].ex[1].last = 'amrap'; focus.idx = 1; focus.sel = null; render()")
+    ex1 = page.evaluate("S.plan.days[0].ex[1].id")
+    n1 = page.evaluate("S.plan.days[0].ex[1].sets")
+    page.evaluate(f"const D=S.plan.days[0]; for (let i=0;i<{n1}-1;i++) Object.assign(setAt(D,'{ex1}',i), {{kg:20, reps:9, ok:true}}); render()")
+    assert "Max reps" in page.inner_text(".fset.active")
+    assert page.get_attribute(f'[data-set="{ex1}"][data-i="{n1-1}"][data-f="reps"]', "placeholder") == "max"

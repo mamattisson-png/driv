@@ -34,6 +34,8 @@ function cancelPassSheet(target) {
 
 // Efter ett avbockat set: är övningen klar går fokus vidare till nästa medan vilan räknar ned
 // I ett superset växlar fokus till nästa övning i varvet, och efter varvet tillbaka till gruppens början
+// Dropset: övningen är inte färdig förrän dropen efter sista setet är gjord
+const dropPending = (w, ex) => ex.last === "drop" && !(((w && w.sets[ex.id]) || [])[ex.sets + Math.max(1, +((w && w.drops) || {})[ex.id] || 1) - 1] || {}).ok;
 function focusAfterSet(d, idx = focus && focus.idx, i = 0) {
   if (editDate || !focus || focus.suspended || focus.dayId !== d.id) return;
   const w = workoutOn(logDate(), d.id), g = ssGroup(d, focus.idx), from = focus.idx;
@@ -44,7 +46,7 @@ function focusAfterSet(d, idx = focus && focus.idx, i = 0) {
       const open = d.ex.findIndex((x, k) => k >= g[0] && k <= g[1] && !exDone(w, x));
       focus.idx = open >= 0 ? open : Math.min(g[1] + 1, d.ex.length - 1);
     }
-  } else if (exDone(w, d.ex[focus.idx]) && focus.idx < d.ex.length - 1) focus.idx++;
+  } else if (exDone(w, d.ex[focus.idx]) && !dropPending(w, d.ex[focus.idx]) && focus.idx < d.ex.length - 1) focus.idx++;
   focus.scroll = focus.idx !== from ? "top" : "active";
   focus.sel = null;
 }
@@ -178,7 +180,10 @@ function focusView() {
   // Alla set i ordning: uppvärmningen först, sedan arbetsseten
   const all = [...Array.from({ length: nW }, (_, i) => ({ w: true, i })), ...Array.from({ length: ex.sets }, (_, i) => ({ w: false, i }))];
   // Dropset: när sista setet är klart dyker en drop upp direkt efter, lättare och utan vila
-  if (ex.last === "drop" && sets[ex.sets - 1] && sets[ex.sets - 1].ok) all.push({ w: false, i: ex.sets, drop: true });
+  // Fler drops läggs till med "+ En drop till" (w.drops); varje drop visas när den före är klar
+  const nDrops = ex.last === "drop" ? Math.max(1, +((w && w.drops) || {})[ex.id] || 1) : 0;
+  for (let k = 0; k < nDrops; k++) if (sets[ex.sets - 1 + k] && sets[ex.sets - 1 + k].ok) all.push({ w: false, i: ex.sets + k, drop: true, k }); else break;
+  const lastDrop = all.length && all[all.length - 1].drop ? all[all.length - 1] : null;
   const amrapAt = s => ex.last === "amrap" && !s.w && !s.drop && s.i === ex.sets - 1;
   const dropAt = s => ex.last === "drop" && !s.w && !s.drop && s.i === ex.sets - 1;
   const stOf = s => (s.w ? warm[s.i] : sets[s.i]) || {};
@@ -191,7 +196,7 @@ function focusView() {
   let setAction = "";
   const rows = all.map((s, k) => {
     const v = stOf(s), h = s.w ? warmHint(d, ex, s.i) : liveHint(d, ex, s.i), p = !s.w && !s.drop && prev ? hintSet(prev, s.i) : null;
-    if (s.drop) { const st = stepFor(ex.id, "kg"), top = +((sets[ex.sets - 1] || {}).kg) || +h.kg || 0; h.kg = top ? Math.max(st, Math.round(top * 0.75 / st) * st) : h.kg; }
+    if (s.drop) { const st = stepFor(ex.id, "kg"), top = +((sets[s.i - 1] || {}).kg) || +h.kg || 0; h.kg = top ? Math.max(st, Math.round(top * 0.75 / st) * st) : h.kg; }
     const cls = `fset ${v.ok ? "done" : ""} ${s.w ? "warm" : ""} ${k === sel ? "active" : ""}`;
     if (k === sel) {
       const kg = bigStepper(ex.id, s.i, "kg", v.kg, h.kg || 0, bw ? "Extra vikt" : "Vikt", "kg", s.w);
@@ -202,10 +207,11 @@ function focusView() {
       const doneTxt = v.ok ? "" : s.w ? "Klar med uppvärmning" : s.drop ? "Klar med drop" : dropAt(s) ? "Klar · direkt till drop" : g ? (inRound ? "Klar · nästa i varvet" : "Klar · vila efter varvet") : "Klar med set";
       const btn = v.ok
         ? (active >= 0 ? `<button class="wide fdone ghostbtn" data-fsel="${active}">Till ${all[active].w ? "uppvärmning" : "set"} ${badge(all[active])}</button>` : "")
-        : `<button class="primary wide fdone" ${okAttrs(s)}>${doneTxt}</button>`;
+        : (s.drop && s === lastDrop && s.k < 3 ? `<button class="chipbtn dropmore" data-dropmore="${ex.id}">${icon("plus", 14)}En drop till efter den här</button>` : "") +
+          `<button class="primary wide fdone" ${okAttrs(s)}>${s.drop && s.k + 1 < nDrops ? "Klar · direkt till nästa drop" : doneTxt}</button>`;
       setAction = btn;
       return `<li class="${cls}"><div class="fsethead"><button class="fcheck ${v.ok ? "on" : ""}" ${okAttrs(s)} aria-pressed="${!!v.ok}" aria-label="${s.w ? "Uppvärmning" : "Set"} ${s.i + 1} klart">${v.ok ? icon("check", 14) : `<span class="fb">${badge(s)}</span>`}</button>
-        <b class="grow">${s.w ? `Uppvärmning ${s.i + 1}` : s.drop ? `Drop` : `Set ${s.i + 1}`}${amrapAt(s) ? ` <span class="settag">Max reps</span>` : dropAt(s) ? ` <span class="settag">Dropset</span>` : ""}</b>${note ? `<span class="muted small">${note}</span>` : ""}</div>
+        <b class="grow">${s.w ? `Uppvärmning ${s.i + 1}` : s.drop ? `Drop${nDrops > 1 ? ` ${s.k + 1}` : ""}` : `Set ${s.i + 1}`}${amrapAt(s) ? ` <span class="settag">Max reps</span>` : dropAt(s) ? ` <span class="settag">Dropset</span>` : ""}</b>${note ? `<span class="muted small">${note}</span>` : ""}</div>
         ${fields}</li>`;
     }
     const val = v.ok && hasData(v) ? fmt(v) : hasData(h) ? fmt(h) : "";
