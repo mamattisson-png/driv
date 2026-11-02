@@ -2321,3 +2321,24 @@ def test_firande_nar_alla_dailys_ar_klara(page):
     page.reload()
     go(page, "dailys")
     assert page.locator(".burst").count() == 0
+
+
+def test_reps_foljer_med_till_nasta_set(page):
+    start(page)
+    go(page, "pass")
+    page.click(f'[data-focusstart="{page.evaluate("S.plan.days[0].id")}"]')
+    ex = page.evaluate("S.plan.days[0].ex[0].id")
+    page.fill(f'[data-set="{ex}"][data-i="0"][data-f="kg"]', "20")
+    page.fill(f'[data-set="{ex}"][data-i="0"][data-f="reps"]', "8")
+    page.press(f'[data-set="{ex}"][data-i="0"][data-f="reps"]', "Tab")
+    page.click(f'.fdone[data-ok="{ex}"][data-i="0"]')
+    # Set 2 föreslår samma vikt och samma reps, och listan visar dem för senare set
+    assert page.get_attribute(f'[data-set="{ex}"][data-i="1"][data-f="reps"]', "placeholder") == "8"
+    assert page.get_attribute(f'[data-set="{ex}"][data-i="1"][data-f="kg"]', "placeholder") == "20"
+    assert "8 reps" in page.inner_text(".fset:not(.active):not(.done) .fsel >> nth=0")
+    # Ett set man själv ställt in behåller sitt värde
+    page.evaluate(f"setAt(S.plan.days[0], '{ex}', 3).reps = 5; render()")
+    page.click(f'.fdone[data-ok="{ex}"][data-i="1"]')
+    page.click(f'.fdone[data-ok="{ex}"][data-i="2"]')
+    assert page.evaluate(f"workoutsOn(TODAY)[0].sets['{ex}'][2].reps") == 8
+    assert page.evaluate(f"workoutsOn(TODAY)[0].sets['{ex}'][3].reps") == 5

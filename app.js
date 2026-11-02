@@ -1879,6 +1879,9 @@ function liveHint(d, ex, i) {
   const h = past && hasData(past) ? { kg: past.kg, reps: past.reps } : { ...setHint(ex, i) };
   const w = workoutOn(logDate(), d.id), sets = (w && w.sets[ex.id]) || [];
   for (let j = i - 1; j >= 0; j--) if (sets[j] && sets[j].kg !== undefined && sets[j].kg !== "") { h.kg = sets[j].kg; break; }
+  // Reps följer med från setet före på samma sätt; ett set man själv ställt in behåller sitt eget värde
+  for (let j = i - 1; j >= 0; j--) if (sets[j] && sets[j].reps !== undefined && sets[j].reps !== "") { h.reps = sets[j].reps; break; }
+  if ((h.reps === undefined || h.reps === "" || !+h.reps) && typeof repRange === "function") h.reps = repRange(ex.reps).lo || h.reps;
   return h;
 }
 // Rimliga gränser, så att ett felskrivet tal inte förstör statistiken
@@ -2161,10 +2164,10 @@ document.addEventListener("change", ev => {
       toast(`Högst ${setMax(ds.set, ds.f)} ${ds.f === "kg" ? "kg" : isTimed(ds.set) ? "sekunder" : "reps"}`);
     }
     (ds.w !== undefined ? warmAt(d, ds.set, +ds.i) : setAt(d, ds.set, +ds.i))[ds.f] = v;
-    // Senare set utan egen vikt visar den nya vikten som förslag
+    // Senare set utan egen vikt eller egna reps visar det nya värdet som förslag
     const ex = d.ex.find(x => x.id === ds.set);
-    if (ds.f === "kg" && ex && ds.w === undefined) for (const inp of document.querySelectorAll(`[data-set="${ds.set}"][data-f="kg"]:not([data-w])`)) {
-      const k = +inp.dataset.i > +ds.i && liveHint(d, ex, +inp.dataset.i).kg;
+    if ((ds.f === "kg" || ds.f === "reps") && ex && ds.w === undefined) for (const inp of document.querySelectorAll(`[data-set="${ds.set}"][data-f="${ds.f}"]:not([data-w])`)) {
+      const k = +inp.dataset.i > +ds.i && liveHint(d, ex, +inp.dataset.i)[ds.f];
       if (k) inp.placeholder = k;
     }
     save();
