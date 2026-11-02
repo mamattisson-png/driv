@@ -1878,7 +1878,11 @@ function liveHint(d, ex, i) {
   const past = editDate && hintSet(lastSets(ex.id), i);
   const h = past && hasData(past) ? { kg: past.kg, reps: past.reps } : { ...setHint(ex, i) };
   const w = workoutOn(logDate(), d.id), sets = (w && w.sets[ex.id]) || [];
-  for (let j = i - 1; j >= 0; j--) if (sets[j] && sets[j].kg !== undefined && sets[j].kg !== "") { h.kg = sets[j].kg; break; }
+  const kgs = [];   // vikten i tidigare set, närmast först
+  for (let j = i - 1; j >= 0 && kgs.length < 2; j--) if (sets[j] && sets[j].kg !== undefined && sets[j].kg !== "") kgs.push(+sets[j].kg);
+  if (kgs.length) h.kg = kgs[0];
+  // Ökade man från setet innan (t.ex. +0,5 eller +1 kg) föreslås samma ökning igen
+  if (kgs.length === 2 && kgs[0] > kgs[1] && kgs[0] - kgs[1] <= 5) h.kg = Math.round((2 * kgs[0] - kgs[1]) * 100) / 100;
   // Reps följer med från setet före på samma sätt; ett set man själv ställt in behåller sitt eget värde
   for (let j = i - 1; j >= 0; j--) if (sets[j] && sets[j].reps !== undefined && sets[j].reps !== "") { h.reps = sets[j].reps; break; }
   if ((h.reps === undefined || h.reps === "" || !+h.reps) && typeof repRange === "function") h.reps = repRange(ex.reps).lo || h.reps;

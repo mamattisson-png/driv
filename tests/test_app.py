@@ -2358,3 +2358,17 @@ def test_uppvarmning_under_passet(page):
     assert page.evaluate(f"workoutsOn(TODAY)[0].warm['{ex}'][0].ok") is True
     # Uppvärmningen räknas inte som arbetsset
     assert page.evaluate(f"workoutsOn(TODAY)[0].sets['{ex}'].filter(s => s && s.ok).length") == 1
+
+
+def test_okning_mellan_set_foljer_med(page):
+    start(page)
+    go(page, "pass")
+    page.click(f'[data-focusstart="{page.evaluate("S.plan.days[0].id")}"]')
+    ex = page.evaluate("S.plan.days[0].ex[0].id")
+    page.evaluate(f"S.plan.days[0].ex[0].sets = 4; const d=S.plan.days[0]; Object.assign(setAt(d,'{ex}',0), {{kg: 4, reps: 12, ok: true}}); Object.assign(setAt(d,'{ex}',1), {{kg: 4.5, reps: 12, ok: true}}); focus.sel = null; render()")
+    # Ökade med 0,5 från set 1 till set 2: set 3 föreslår 5 kg, och set 4 följer på samma sätt
+    assert page.evaluate(f"liveHint(S.plan.days[0], S.plan.days[0].ex[0], 2).kg") == 5
+    assert page.get_attribute(f'[data-set="{ex}"][data-i="2"][data-f="kg"]', "placeholder") == "5"
+    # Samma vikt i två set: samma förslag, ingen ökning
+    page.evaluate(f"setAt(S.plan.days[0],'{ex}',1).kg = 4; render()")
+    assert page.evaluate(f"liveHint(S.plan.days[0], S.plan.days[0].ex[0], 2).kg") == 4
