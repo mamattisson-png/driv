@@ -1718,7 +1718,9 @@ button.h3-card.h3-head { background: var(--card); padding: 12px 14px; }
 .tpass.ok .tp-name { color: var(--muted); }
 .wkcard.sel { box-shadow: 0 0 0 2px var(--text) inset; }
 .wkcards.many { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 2px; }
-.wkcards.many .wkcard { flex: 0 0 31%; scroll-snap-align: start; }
+.wkcards.many .wkcard { flex: 0 0 calc(25% - 6px); min-height: 76px; gap: 12px; padding: 10px; scroll-snap-align: start; }
+.wkcards.many .wkcard b { font-size: 11px; letter-spacing: -.02em; overflow-wrap: normal; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wkcards.many .wkst { font-size: 11px; }
 .tp-top { margin-bottom: 4px; }
 .tp-top .pst { display: inline-flex; align-items: center; gap: 4px; }
 .tp-name { font: 700 22px "Unbounded", sans-serif; text-transform: uppercase; letter-spacing: -.01em; }
