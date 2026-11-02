@@ -51,6 +51,7 @@ Senast uppdaterad: 2026-11-01. Status bygger på dokumenterade publiceringar och
 | 47 | Firande när alla dailys är klara | Dailys | Låg | Klar |
 | 48 | Byt övning under passet går att scrolla | Bugg | Hög | Klar |
 | 49 | Uppvärmning under passet, reps och ökning följer med till nästa set | Träning | Hög | Klar |
+| 50 | Träna: välj pass, Starta och Ändra lika tydligt, Träningsschema | Träning | Hög | Klar |
 
 ## Detaljer och acceptanskriterier
 
@@ -119,6 +120,7 @@ Senast uppdaterad: 2026-11-01. Status bygger på dokumenterade publiceringar och
 47. **Firande i Dailys (Klar, publicerad 2026-11-02):** När sista dailyn eller kosttillskottet bockas i sprutar en liten konfetti ur bocken och ringen överst pulserar grönt en gång. Bara när man själv gör klart, och utan rörelse för den som valt minskade animationer.
 48. **Byt övning går att scrolla (Klar, publicerad 2026-11-02):** Under ett pågående pass låg passets skrollås kvar när Byt övning öppnade biblioteket, så övningarna gick inte att nå. Låset släpps nu medan biblioteket är öppet.
 49. **Smidigare set i passet (Klar, publicerad 2026-11-02):** Knappen + Uppvärmning lägger ett uppvärmningsset före arbetsseten under passet. Reps följer med till nästa set precis som vikten, och ökar man vikten mellan två set (t.ex. +0,5 kg) föreslås samma ökning igen. Ett set man själv ställt in behåller sitt värde.
+50. **Ny Träna-vy (Klar, publicerad 2026-11-02):** Träna skiljer sig nu från Hem. Överst Träningsschema med Ändra schema, sedan veckans pass som en rad med namn att välja bland. Det valda passet visar alla övningar med set × reps och lika tydliga knappar för Starta och Ändra. Allt ryms på en skärm även med sex pass. Upplägg heter nu Träningsschema i hela appen.
 
 ## Arbetsregler
 
