@@ -2,7 +2,7 @@
 import datetime
 
 import pytest
-from conftest import start, go
+from conftest import start, go, pick
 
 
 def active_workout(page):
@@ -132,7 +132,7 @@ def test_home_reflects_active_selected_workout_before_first_set(page):
     start(page)
     go(page, 'pass')
     selected = page.evaluate('({id:S.plan.days[2].id,name:S.plan.days[2].name})')
-    page.click(f'[data-pick="{selected["id"]}"]')
+    pick(page, selected["id"])
     page.click('[data-focusstart]')
     page.click('#nav [data-tab="idag"]')
     assert page.inner_text('.passtile .hname').lower() == selected['name'].lower()

@@ -1,5 +1,5 @@
 """Webbläsartester för Driv. Kör med: python -m pytest tests"""
-from conftest import finish_setup, go, open_app, start, to_step
+from conftest import finish_setup, go, open_app, start, to_step, pick
 
 KONTO = '.card:has(h2:text-is("Konto"))'
 
@@ -9,7 +9,7 @@ def open_ex(page, ex_id):
     if page.locator(".pastlog").count():
         return   # i efterhand syns alla övningar och set direkt
     if not page.locator(".focus, [data-focusex]").count():
-        page.click("[data-seepass]")   # från Träna: dagens pass
+        pick(page, page.evaluate("todaysPass().d.id"))   # från Träna: dagens pass
     i = page.evaluate(f"currentPassDay().ex.findIndex(x => x.id === '{ex_id}')")
     page.click(f'[data-focusgo="{i}"]' if page.locator(".focus").count() else f'[data-focusex="{i}"]')
 
@@ -72,7 +72,7 @@ def test_eget_upplagg_med_egna_namn_och_ovningar(page):
     finish_setup(page)
     # Passen döps och får övningar i Träna
     go(page, "pass")
-    page.click(f'[data-pick="{page.evaluate("S.plan.days[0].id")}"]')
+    pick(page, page.evaluate("S.plan.days[0].id"))
     assert "inga övningar" in page.inner_text(".empty")
     page.click(".empty [data-edit]")
     page.fill("[data-passname]", "Bröst & triceps")
@@ -98,9 +98,9 @@ def test_hem_visar_dagens_pass(page):
     assert page.locator("#app [data-pick], #app [data-focusstart]").count() == 0
     assert page.locator(".weekrow .wsegs i").count() == 3 and "0 av 3 pass" in page.inner_text(".weekrow")
     page.click(".passtile")
-    assert page.evaluate("tab") == "pass" and page.locator("[data-pick]").count() == 3
-    assert f'{d["title"]} · {d["n"]} övningar' in page.inner_text(".daypass")
-    page.click(".daypass [data-focusstart]")
+    assert page.evaluate("tab") == "pass" and page.locator("[data-trsel]").count() == 3
+    assert d["title"] in page.inner_text(".tpass") and f'{d["n"]} övningar' in page.inner_text(".tpass")
+    page.click(".tpass [data-focusstart]")
     assert page.locator(".focus").count() == 1
 
 def test_kort_start_och_paminnelse_om_kalorimal(page):
@@ -160,7 +160,7 @@ def test_vikt_jamfors_med_forra_veckan(page):
     start(page)
     seed(page, "S.log[shift(TODAY,-7)] = {workout:{dayId:S.plan.days[0].id,done:true,sets:{bankpress:[{kg:80,reps:8,ok:true}]}},dailies:{},food:[]}")
     go(page, "pass")
-    page.click("[data-pick]")
+    pick(page)
     open_ex(page, "bankpress")
     page.fill('[data-set=bankpress][data-i="0"][data-f=kg]', "82.5")
     page.press('[data-set=bankpress][data-i="0"][data-f=kg]', "Tab")
@@ -180,7 +180,7 @@ def test_kroppsvikt_ovningar_raknas_i_reps_och_sekunder(page):
     seed(page, """const d = S.plan.days[0]; S.log[shift(TODAY,-7)] = {workout:{dayId:d.id,done:true,sets:{
         armhavningar:[{reps:12,ok:true}], plankan:[{reps:45,ok:true}]}},dailies:{},food:[]}""")
     go(page, "pass")
-    page.click("[data-pick]")
+    pick(page)
     for ex, val in [("armhavningar", "15"), ("plankan", "60")]:
         open_ex(page, ex)
         sel = f'[data-set={ex}][data-i="0"][data-f=reps]'
@@ -195,7 +195,7 @@ def test_dagens_mal_fylls_i_och_pers_firas(page):
     start(page)
     seed(page, "S.log[shift(TODAY,-7)] = {workout:{dayId:S.plan.days[0].id,done:true,sets:{bankpress:[{kg:80,reps:8,ok:true}],dips:[{reps:10,ok:true}]}},dailies:{},food:[]}")
     go(page, "pass")
-    page.click("[data-pick]")
+    pick(page)
     # Listan visar förra gången; förslaget för idag står i fokusläget
     assert "Förra gången\n80 kg · 8 reps" in page.locator(".exlist .exrow2", has_text="Bänkpress").inner_text()
     assert "Förra gången\n10 reps" in page.locator(".exlist .exrow2", has_text="Dips").inner_text()
@@ -219,7 +219,7 @@ def test_spara_pass_och_oppna_igen(page):
     assert "1 av 6 klara" in page.inner_text("button[data-finish]")
     page.click("button[data-finish]")
     go(page, "pass")
-    page.click("[data-pick]")
+    pick(page)
     assert "passet är sparat" in page.inner_text(".done-card")
     page.click(".done-card [data-finish]")
     assert page.inner_text("button[data-finish]").startswith("Spara passet")
@@ -233,7 +233,7 @@ def test_fokuslage_en_ovning_i_taget(page):
     start(page, WAKELOCK_MOCK)
     seed(page, "S.log[shift(TODAY,-7)] = {workouts:[{dayId:S.plan.days[0].id,done:true,sets:{bankpress:[{kg:80,reps:8,ok:true},{kg:80,reps:7,ok:true}]}}],dailies:{},food:[]}")
     go(page, "pass")
-    page.click(f'[data-pick="{page.evaluate("S.plan.days[0].id")}"]')
+    pick(page, page.evaluate("S.plan.days[0].id"))
     page.click("[data-focusstart]")
     assert page.evaluate("tab") == "pass" and page.locator(".focus").count() == 1
     assert "Bänkpress" in page.inner_text(".focus h2")
@@ -276,7 +276,7 @@ def test_ovningar_visar_utrustning_och_hur_vikten_skrivs(page):
 def test_upplagg_har_tillbaka_till_trana(page):
     start(page)
     go(page, "pass")
-    page.click('.trprog [data-tab="upplagg"]')
+    page.click('.tschema [data-tab="upplagg"]')
     page.click(".backlink")
     assert page.evaluate("tab") == "pass" and page.evaluate("draft") is None
     # Upplägget finns inte i Inställningar
@@ -301,7 +301,7 @@ def test_upplagg_och_ovningar_andras_pa_ett_stalle(page):
     start(page)
     # Upplägget nås från Träna och är bara program, antal pass och dagar
     go(page, "pass")
-    page.click('.trprog [data-tab="upplagg"]')
+    page.click('.tschema [data-tab="upplagg"]')
     assert page.evaluate("tab") == "upplagg" and "Träna" in page.inner_text(".backlink")
     assert page.locator("[data-openpick^=draft], [data-prof], [data-dedit]").count() == 0
     page.click('[data-count="4"]')
@@ -310,7 +310,7 @@ def test_upplagg_och_ovningar_andras_pa_ett_stalle(page):
     page.click("[data-savesetup]")
     assert page.evaluate("tab") == "pass" and page.evaluate("[S.plan.count, S.plan.mode]") == [4, "fixed"]
     # Övningarna ändras i passet: ett blad per övning, Avbryt ångrar och Spara sparar
-    page.click("[data-seepass]")
+    pick(page, page.evaluate("todaysPass().d.id"))
     d = page.evaluate("currentPassDay().id")
     ex = page.evaluate(f"dayById('{d}').ex.map(x => [x.id, x.sets, x.reps])")
     page.click("[data-edit]")
@@ -339,7 +339,7 @@ def test_eget_pass_kan_doptas_i_trana(page):
     page.click('[data-prog="eget"]')
     finish_setup(page)
     go(page, "pass")
-    page.click("[data-pick]")
+    pick(page)
     page.click("[data-edit]")
     page.fill("[data-passname]", "Rygg & armar")
     page.press("[data-passname]", "Tab")
@@ -421,7 +421,7 @@ def test_forslag_sorteras_efter_maltiden_och_har_tak(page):
 def test_superset_vaxlar_och_vilar_efter_varvet(page):
     start(page)
     go(page, "pass")
-    page.click(f'[data-pick="{page.evaluate("S.plan.days[0].id")}"]')
+    pick(page, page.evaluate("S.plan.days[0].id"))
     page.click("[data-edit]")
     page.click('[data-exsheet="0"]')
     page.click('.sheet [data-ss][data-idx="0"]')   # bänkpress + lutande hantelpress
@@ -496,7 +496,7 @@ def test_dailys_under_passet(page):
     start(page)
     seed(page, "S.daily = [{id:'plankan',sets:3,reps:'45 sek'},{id:'lop',sets:1,reps:''}]")
     go(page, "pass")
-    page.click(f'[data-pick="{page.evaluate("S.plan.days[0].id")}"]')
+    pick(page, page.evaluate("S.plan.days[0].id"))
     page.click("[data-focusstart]")
     assert "Dailys 0 av 2" in page.inner_text("[data-fdopen]")
     page.click("[data-fdopen]")
@@ -512,7 +512,7 @@ def test_dailys_under_passet(page):
 def test_vikten_foljer_med_och_orimliga_tal_begransas(page):
     start(page)
     go(page, "pass")
-    page.click(f'[data-pick="{page.evaluate("S.plan.days[0].id")}"]')
+    pick(page, page.evaluate("S.plan.days[0].id"))
     page.click("[data-focusstart]")
     page.click('[data-focusgo="1"]')   # Lutande hantelpress, första gången
     kg = lambda i: page.locator(f'[data-set=lutande_hantelpress][data-f=kg][data-i="{i}"]')
@@ -537,7 +537,7 @@ def test_bilder_ar_stilla_i_listor_men_animeras_ensamma(page):
     start(page)
     go(page, "pass")
     assert page.locator(".thumb animate").count() == 0
-    page.click("[data-seepass]")
+    pick(page, page.evaluate("todaysPass().d.id"))
     page.click('[data-focusex="0"]')
     page.click(".focus .thumb")
     assert page.locator(".sheet .fig animate").count() > 0
@@ -554,7 +554,7 @@ def test_forslag_i_efterhand_tar_narmaste_gangen(page):
     go(page, "historik")
     page.click('[data-histday="2026-10-08"]')
     page.click("[data-hpass='']")
-    page.click(f'[data-pick="{page.evaluate("S.plan.days[0].id")}"]')
+    pick(page, page.evaluate("S.plan.days[0].id"))
     open_ex(page, "militarpress")
     assert page.get_attribute('[data-set=militarpress][data-f=kg][data-i="0"]', "placeholder") == "40"
     # Förslagen är det som faktiskt lyftes närmast före (eller efter), inte en höjning
@@ -1175,19 +1175,19 @@ def test_tva_pass_samma_dag_och_gammalt_format(page):
     assert page.evaluate("S.log['2026-01-05'].workouts.length") == 1
     assert page.evaluate("'workout' in S.log['2026-01-05']") is False
     go(page, "pass")
-    page.click(f'[data-pick="{page.evaluate("S.plan.days[0].id")}"]')
+    pick(page, page.evaluate("S.plan.days[0].id"))
     open_ex(page, "bankpress")
     page.click('[data-ok=bankpress][data-i="0"]')
     to_list(page)
     page.click("[data-passback]")
-    page.click(f'[data-pick="{page.evaluate("S.plan.days[1].id")}"]')
+    pick(page, page.evaluate("S.plan.days[1].id"))
     open_ex(page, "marklyft")
     page.click('[data-ok=marklyft][data-i="0"]')
     to_list(page)
     assert page.evaluate("workoutsOn(TODAY).map(w => Object.keys(w.sets)[0])") == ["bankpress", "marklyft"]
     page.click("[data-passback]")
     for d in page.evaluate("S.plan.days.slice(0, 2).map(d => d.id)"):
-        page.click(f'[data-pick="{d}"]')
+        pick(page, d)
         page.click(f'[data-finish="{d}"]')
         go(page, "pass")
     assert page.evaluate("weekSummary(weekStart(TODAY)).passes") == 2
@@ -1269,7 +1269,7 @@ def test_historik_andra_en_tidigare_dag(page):
     # Ett pass i efterhand
     page.click("[data-hpass='']")
     assert page.evaluate("[tab, logDate()]") == ["pass", "2026-10-21"]
-    page.click(f'[data-pick="{page.evaluate("S.plan.days[1].id")}"]')
+    pick(page, page.evaluate("S.plan.days[1].id"))
     open_ex(page, "marklyft")
     page.click('[data-ok=marklyft][data-i="0"]')
     to_list(page)
@@ -1524,7 +1524,7 @@ def test_stretch_som_daily(page):
 def test_valj_ovning_till_superset_och_se_passet(page):
     start(page)
     go(page, "pass")
-    page.click(f'[data-pick="{page.evaluate("S.plan.days[0].id")}"]')
+    pick(page, page.evaluate("S.plan.days[0].id"))
     page.click("[data-focusstart]")
     # Raden överst visar alla övningar med namn, den aktuella markerad
     names = page.evaluate("S.plan.days[0].ex.map(x => EX[x.id].name)")
@@ -1543,7 +1543,7 @@ def test_valj_ovning_till_superset_och_se_passet(page):
 def test_alla_ovningar_syns_och_ordningen_kan_andras(page):
     start(page)
     go(page, "pass")
-    page.click(f'[data-pick="{page.evaluate("S.plan.days[0].id")}"]')
+    pick(page, page.evaluate("S.plan.days[0].id"))
     page.click("[data-focusstart]")
     # Alla övningar ryms i bredd utan att raden rullar
     assert page.evaluate("(r => r.scrollWidth <= r.clientWidth)(document.querySelector('.fsteps'))") is True
@@ -1576,7 +1576,7 @@ def test_strombrytaren_ser_ut_som_en_strombrytare(page):
 def test_valj_ovning_efter_kroppsdel_och_utrustning(page):
     start(page)
     go(page, "pass")
-    page.click(f'[data-pick="{page.evaluate("S.plan.days[0].id")}"]')
+    pick(page, page.evaluate("S.plan.days[0].id"))
     page.click("[data-edit]")
     page.click('[data-openpick]')
     # Biblioteket öppnas för passet, med passets typ förvald
@@ -1614,7 +1614,7 @@ def test_valj_ovning_efter_kroppsdel_och_utrustning(page):
 def test_lagg_till_fran_pass_och_dailys(page):
     start(page)
     go(page, "pass")
-    page.click(f'[data-pick="{page.evaluate("S.plan.days[0].id")}"]')
+    pick(page, page.evaluate("S.plan.days[0].id"))
     page.click("[data-edit]")
     page.click("[data-openpick]")
     page.select_option("[data-mskcat]", "alla")
@@ -1650,7 +1650,7 @@ def test_lagg_till_fran_pass_och_dailys(page):
 def test_byt_ovning_under_passet(page):
     start(page)
     go(page, "pass")
-    page.click(f'[data-pick="{page.evaluate("S.plan.days[0].id")}"]')
+    pick(page, page.evaluate("S.plan.days[0].id"))
     page.click("[data-focusstart]")
     first = page.evaluate("S.plan.days[0].ex[0].id")
     # Bara i dag är förvalt; passet får tillbaka övningen när det sparas
@@ -1694,7 +1694,7 @@ def test_pass_klart_visar_set_och_nytt_pb(page):
     start(page)
     seed(page, "S.log[shift(TODAY,-7)] = {workouts:[{dayId:S.plan.days[0].id,done:true,sets:{bankpress:[{kg:80,reps:8,ok:true}]}}],dailies:{},food:[]}")
     go(page, "pass")
-    page.click(f'[data-pick="{page.evaluate("S.plan.days[0].id")}"]')
+    pick(page, page.evaluate("S.plan.days[0].id"))
     page.evaluate("const w = workoutFor(S.plan.days[0]); w.sets.bankpress = [{kg: 82.5, reps: 8, ok: true}, {kg: 80, reps: 8, ok: true}]; save(); render()")
     page.click("button[data-finish]")
     text = page.inner_text(".passdone")
@@ -1717,7 +1717,7 @@ def test_inbjudan_efter_passet_utan_vanner(page):
     go(page, "idag")
     assert page.locator(".friendsrow").count() == 0
     go(page, "pass")
-    page.click(f'[data-pick="{page.evaluate("S.plan.days[0].id")}"]')
+    pick(page, page.evaluate("S.plan.days[0].id"))
     page.evaluate("const w = workoutFor(S.plan.days[0]); w.sets.bankpress = [{kg: 80, reps: 8, ok: true}]; save(); render()")
     page.click("button[data-finish]")
     assert "Vill en kompis se när du tränar?" in page.inner_text(".invitecard")
@@ -1760,7 +1760,7 @@ def test_muskelkarta_forslag_roda_forst_och_lagg_till(page):
     assert cal and all(page.evaluate(f"!!EX['{s}'].bw") for s in cal)
     # Kortet syns när man ändrar övningar, och ett förslag läggs till med standardset
     go(page, "pass")
-    page.click(f'[data-pick="{page.evaluate("S.plan.days[0].id")}"]')
+    pick(page, page.evaluate("S.plan.days[0].id"))
     page.evaluate("S.plan.days[0].ex = [{ id: 'kabelflyes', sets: 3, reps: '12' }]; editing = true; render()")
     assert "Push tränar" in page.text_content(".mcard")
     assert "Lägg till en övning för axlar och triceps." in page.inner_text(".mrec")
@@ -1787,7 +1787,7 @@ def test_uppvarmning_fore_arbetsseten(page):
     start(page)
     seed(page, "S.log[shift(TODAY,-7)] = {workouts:[{dayId:S.plan.days[0].id,done:true,sets:{bankpress:[{kg:80,reps:8,ok:true}]}}],dailies:{},food:[]}; S.plan.days[0].ex[0].warm = 2")
     go(page, "pass")
-    page.click(f'[data-pick="{page.evaluate("S.plan.days[0].id")}"]')
+    pick(page, page.evaluate("S.plan.days[0].id"))
     assert "+2 uppv." in page.inner_text(".exlist .exrow2 >> nth=0")
     page.click("[data-focusstart]")
     # Uppvärmningen kommer först, med ett förslag under arbetsvikten (82,5 kg idag)

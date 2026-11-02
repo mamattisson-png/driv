@@ -1,6 +1,6 @@
 """Nya övningar ska gå att hitta, lägga till och logga med rätt utrustning."""
 import pytest
-from conftest import start, go
+from conftest import start, go, pick
 
 
 @pytest.mark.parametrize('exercise,area,gear',[
@@ -10,7 +10,7 @@ from conftest import start, go
 ])
 def test_ny_ovning_kan_valjas_och_loggas(page,exercise,area,gear):
     start(page);go(page,'pass')
-    page.click(f'[data-pick="{page.evaluate("S.plan.days[0].id")}"]')
+    pick(page, page.evaluate("S.plan.days[0].id"))
     page.click('[data-edit]');page.click('[data-openpick]')
     page.select_option('[data-mskcat]','alla')
     page.select_option('[data-mskgear]',gear)

@@ -1,6 +1,6 @@
 """Utökat innehåll ska fungera i befintlig väljare, dailys och träningslogg."""
 import pytest
-from conftest import start,go
+from conftest import start,go, pick
 
 
 def test_biblioteket_laddas_med_flera_hundra_nya_ovningar(page):
@@ -32,7 +32,7 @@ def test_utokad_ovning_kan_valjas_och_loggas_i_pass(page,kind):
     exercise=page.evaluate('''kind => kind==='strength' ? EXTRA_STRENGTH_IDS.find(id=>!isTimed(id)) :
       EXTRA_STRETCH_IDS.find(id=>isTimed(id)===(kind==='static_stretch'))''',kind)
     assert exercise
-    go(page,'pass');page.click(f'[data-pick="{page.evaluate("S.plan.days[0].id")}"]')
+    go(page,'pass');pick(page, page.evaluate("S.plan.days[0].id"))
     page.click('[data-edit]');page.click('[data-openpick]')
     if kind.endswith('stretch'): page.click('[data-mskmode="st"]')
     else: page.select_option('[data-mskcat]','alla')
