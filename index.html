@@ -1712,6 +1712,19 @@ button.h3-card.h3-head { background: var(--card); padding: 12px 14px; }
 .h3-ic .fig { width: 32px; height: 32px; }
 /* Träna: veckans pass som kort med status */
 .wkcards { display: grid; gap: 8px; margin-bottom: 4px; }
+.tplist { display: flex; flex-direction: column; gap: 10px; margin-bottom: 6px; }
+.tpass { display: flex; flex-direction: column; gap: 4px; width: 100%; padding: 14px 16px 12px; border: 1px solid var(--line); border-radius: 20px; background: var(--card); color: var(--text); text-align: left; font: inherit; cursor: pointer; }
+.tpass.next { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+.tpass.ok { opacity: .72; }
+.tp-top { margin-bottom: 4px; }
+.tp-top .pst { display: inline-flex; align-items: center; gap: 4px; }
+.tp-name { font: 700 22px "Unbounded", sans-serif; text-transform: uppercase; letter-spacing: -.01em; }
+.tp-ex { list-style: none; margin: 10px 0 4px; padding: 10px 0 0; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 7px; }
+.tp-ex li { display: flex; align-items: center; gap: 10px; font-size: 14px; }
+.tp-n { width: 22px; height: 22px; border-radius: 7px; flex: none; display: grid; place-items: center; background: var(--card-2); color: var(--muted); font-size: 11px; font-weight: 600; }
+.tp-n .sstag { font-style: normal; color: var(--accent-text); }
+.tp-sr { color: var(--muted); font-size: 12.5px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.tp-open { align-self: flex-end; display: inline-flex; align-items: center; gap: 4px; margin-top: 4px; color: var(--accent-text); font-size: 13px; font-weight: 600; }
 .wkcard { display: flex; flex-direction: column; justify-content: space-between; gap: 18px; min-height: 88px; padding: 12px; border: 0; border-radius: 18px; background: var(--card); color: var(--text); text-align: left; font: inherit; }
 .wkcard b { font: 700 15px "Unbounded", sans-serif; text-transform: uppercase; overflow-wrap: anywhere; }
 .wkst { display: flex; align-items: center; gap: 6px; min-width: 0; }
