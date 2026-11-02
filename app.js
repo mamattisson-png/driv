@@ -2037,6 +2037,12 @@ document.addEventListener("click", ev => {
     if (w.done && editDate) { histDay = editDate; editDate = null; tab = "historik"; }
     else if (w.done) { passDone = { dayId: ds.finish, date: logDate() }; tab = "idag"; }
   }
+  // Uppvärmning under passet: ett lättare set läggs före arbetsseten och blir det man står på
+  else if (ds.warmadd) {
+    const d = currentPassDay(), ex = d.ex.find(x => x.id === ds.warmadd);
+    ex.warm = Math.min(5, (+ex.warm || 0) + 1);
+    if (focus) focus.sel = null;
+  }
   else if (ds.setcount) {
     const d = currentPassDay(), ex = d.ex.find(x => x.id === ds.ex);
     ex.sets = Math.max(1, ex.sets + +ds.setcount);

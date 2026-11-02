@@ -2321,3 +2321,19 @@ def test_firande_nar_alla_dailys_ar_klara(page):
     page.reload()
     go(page, "dailys")
     assert page.locator(".burst").count() == 0
+
+
+def test_uppvarmning_under_passet(page):
+    start(page)
+    go(page, "pass")
+    page.click(f'[data-focusstart="{page.evaluate("S.plan.days[0].id")}"]')
+    ex = page.evaluate("S.plan.days[0].ex[0].id")
+    # Ett arbetsset är redan gjort; uppvärmningen läggs före och blir det man står på
+    page.click(f'[data-ok="{ex}"][data-i="0"]:not([data-w])')
+    page.click(f'[data-warmadd="{ex}"]')
+    assert page.evaluate("S.plan.days[0].ex[0].warm") == 1
+    assert page.locator(".fset.warm.active").count() == 1
+    page.click(f'[data-ok="{ex}"][data-i="0"][data-w="1"]')
+    assert page.evaluate(f"workoutsOn(TODAY)[0].warm['{ex}'][0].ok") is True
+    # Uppvärmningen räknas inte som arbetsset
+    assert page.evaluate(f"workoutsOn(TODAY)[0].sets['{ex}'].filter(s => s && s.ok).length") == 1
