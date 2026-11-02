@@ -207,12 +207,11 @@ function focusView() {
       const doneTxt = v.ok ? "" : s.w ? "Klar med uppvärmning" : s.drop ? "Klar med drop" : dropAt(s) ? "Klar · direkt till drop" : g ? (inRound ? "Klar · nästa i varvet" : "Klar · vila efter varvet") : "Klar med set";
       const btn = v.ok
         ? (active >= 0 ? `<button class="wide fdone ghostbtn" data-fsel="${active}">Till ${all[active].w ? "uppvärmning" : "set"} ${badge(all[active])}</button>` : "")
-        : (s.drop && s === lastDrop && s.k < 3 ? `<button class="chipbtn dropmore" data-dropmore="${ex.id}">${icon("plus", 14)}En drop till efter den här</button>` : "") +
-          `<button class="primary wide fdone" ${okAttrs(s)}>${s.drop && s.k + 1 < nDrops ? "Klar · direkt till nästa drop" : doneTxt}</button>`;
+        : `<button class="primary wide fdone" ${okAttrs(s)}>${s.drop && s.k + 1 < nDrops ? "Klar · direkt till nästa drop" : doneTxt}</button>`;
       setAction = btn;
       return `<li class="${cls}"><div class="fsethead"><button class="fcheck ${v.ok ? "on" : ""}" ${okAttrs(s)} aria-pressed="${!!v.ok}" aria-label="${s.w ? "Uppvärmning" : "Set"} ${s.i + 1} klart">${v.ok ? icon("check", 14) : `<span class="fb">${badge(s)}</span>`}</button>
         <b class="grow">${s.w ? `Uppvärmning ${s.i + 1}` : s.drop ? `Drop${nDrops > 1 ? ` ${s.k + 1}` : ""}` : `Set ${s.i + 1}`}${amrapAt(s) ? ` <span class="settag">Max reps</span>` : dropAt(s) ? ` <span class="settag">Dropset</span>` : ""}</b>${note ? `<span class="muted small">${note}</span>` : ""}</div>
-        ${fields}</li>`;
+        ${fields}${s.drop && s === lastDrop && s.k < 3 && !v.ok ? `<button class="chipbtn dropmore" data-dropmore="${ex.id}">${icon("plus", 14)}En drop till efter den här</button>` : ""}</li>`;
     }
     const val = v.ok && hasData(v) ? fmt(v) : hasData(h) ? fmt(h) : "";
     return `<li class="${cls}"><button class="fcheck ${v.ok ? "on" : ""}" ${okAttrs(s)} aria-pressed="${!!v.ok}" aria-label="${s.w ? "Uppvärmning" : "Set"} ${s.i + 1} klart">${v.ok ? icon("check", 14) : `<span class="fb">${badge(s)}</span>`}</button>
