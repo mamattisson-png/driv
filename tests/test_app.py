@@ -2290,3 +2290,18 @@ def test_allt_om_vikten_pa_ett_stalle(page):
     page.click('[data-hview="utveckling"]') if page.locator('[data-hview="utveckling"]').count() else page.evaluate("histView = 'utveckling'; render()")
     page.click('.wlink[data-tab="vagning"]')
     assert page.inner_text("#app h1") == "Vikt" and page.inner_text(".backbtn").strip() == "Historik"
+
+
+def test_halsningen_efter_tid_och_pass(page):
+    start(page)
+    import json
+    g = lambda hr, **k: page.evaluate(f"homeGreeting({hr}, {{ done: false, dailysOk: false, started: false, rest: false, passes: 0, goal: 3, ...{json.dumps(k)} }})")
+    assert g(1) == "God natt" and g(7) == "God morgon" and g(13) == "God dag" and g(19) == "God kväll" and g(22) == "Dags att varva ner"
+    assert g(1, started=True) == "Fortsätt där du var"
+    assert g(9, done=True) == "Passet är gjort" and g(15, done=True) == "Bra jobbat idag"
+    assert g(16, done=True, dailysOk=True) == "Allt klart för idag" and g(23, done=True, dailysOk=True) == "Allt klart, sov gott"
+    assert g(14, passes=3) == "Veckans pass är klara"
+    assert g(8, rest=True) == "God morgon" and g(14, rest=True) == "Ta det lugnt idag"
+    # Hem visar hälsningen för klockan just nu
+    hr = page.evaluate("new Date().getHours()")
+    assert page.inner_text(".h3-greet") == g(hr)

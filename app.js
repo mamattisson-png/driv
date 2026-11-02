@@ -1137,8 +1137,8 @@ const VIEWS = {
     const total = dailyEx.length + supp.length, dailysOk = total > 0 && completed === total;
     const foodOk = m.kcal > 0 && e.kcal >= m.kcal;
     const hr = new Date().getHours();
-    const greeting = done && dailysOk ? "Allt klart för idag" : done ? "Bra jobbat idag" : started ? "Fortsätt där du var" : hr < 10 ? "God morgon" : hr < 17 ? "God dag" : hr < 21 ? "God kväll" : "Dags att varva ner";
     const passes = weekSummary(weekStart(TODAY)).passes;
+    const greeting = homeGreeting(hr, { done, dailysOk, started, rest: !!t.rest, passes, goal: S.plan.count });
     const sub = t.rest ? "Vilodag idag" : done ? "Dagens pass är klart" : started ? `${esc(d.name)} är påbörjat` : `${esc(d.name)} står på schemat`;
     const date = cap(new Date().toLocaleDateString("sv-SE", { weekday: "long", day: "numeric", month: "long" }));
     // Siffran blir en grön bock när steget är klart; orange bara för det man trycker på
@@ -1301,6 +1301,17 @@ let profOpen = null;
 const fnvHash = str => { let h = 0x811c9dc5; for (const b of new TextEncoder().encode(str)) h = Math.imul((h ^ b) >>> 0, 0x01000193) >>> 0; return h.toString(16).padStart(8, "0"); };
 const isDevAccount = () => account.step === "in" && fnvHash(String(account.email || "").trim().toLowerCase()) === "b24ae646";
 // Namnet i profilen: det vännerna ser, annars det sparade, annars början på e-posten
+// Hälsningen på Hem: dagens läge först (klart, påbörjat, vilodag, veckan klar), annars tiden på dygnet
+function homeGreeting(hr, { done, dailysOk, started, rest, passes, goal }) {
+  const night = hr < 5, eve = hr >= 21;
+  if (done && dailysOk) return eve || night ? "Allt klart, sov gott" : "Allt klart för idag";
+  if (done) return hr < 12 ? "Passet är gjort" : "Bra jobbat idag";
+  if (started) return "Fortsätt där du var";
+  if (night) return "God natt";
+  if (goal && passes >= goal) return "Veckans pass är klara";
+  if (rest) return eve ? "Dags att varva ner" : hr < 10 ? "God morgon" : "Ta det lugnt idag";
+  return hr < 10 ? "God morgon" : hr < 17 ? "God dag" : eve ? "Dags att varva ner" : "God kväll";
+}
 const profName = () => (social.profile && social.profile.name) || S.name || (account.step === "in" ? account.email.split("@")[0] : "Du");
 // body null: raden fälls inte ut (valet ligger direkt i raden). extra: en kontroll till höger, t.ex. en strömbrytare.
 function profRow(id, ic, title, summary, body, extra = "") {
