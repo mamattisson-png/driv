@@ -247,6 +247,10 @@ function exSheetView(d) {
       <button class="stp" data-exstep="reps" data-dir="-1" aria-label="Färre reps">${icon("minus", 20)}</button>
       <input class="exval exreps" type="text" inputmode="numeric" value="${esc(String(e.reps).replace(/(\d)\s*-\s*(\d)/g, "$1–$2"))}" data-ed="${i}" data-t="${d.id}" data-f="reps" aria-label="Reps per set">
       <button class="stp" data-exstep="reps" data-dir="1" aria-label="Fler reps">${icon("plus", 20)}</button></div>
+    ${isTimed(e.id) || EX[e.id].cat === "stretch" || EX[e.id].cat === "cardio" ? "" : `<div class="exset"><span class="grow col"><span>${EX[e.id].bw ? "Extra vikt" : "Vikt"}</span><span class="muted small">${+e.kg ? "Startvikt i passet" : "Tomt: förslag från förra gången"}</span></span>
+      <button class="stp" data-exstep="kg" data-dir="-1" ${+e.kg ? "" : "disabled"} aria-label="Lägre vikt">${icon("minus", 20)}</button>
+      <span class="exval">${+e.kg ? `${fmtNum(+e.kg)}<small> kg</small>` : "–"}</span>
+      <button class="stp" data-exstep="kg" data-dir="1" aria-label="Högre vikt">${icon("plus", 20)}</button></div>`}
     ${step("warm", "Uppvärmning", warmCount(e), 0, 5, "Lättare set före", true)}
     ${next ? `<div class="exset"><span class="grow col"><span>Superset med nästa</span><span class="muted small">${esc(EX[next.id].name)}, växelvis utan vila</span></span>
       <button class="swbtn ${g ? "on" : ""}" role="switch" aria-checked="${!!g}" data-ss="${d.id}" data-idx="${i}" aria-label="Superset med ${esc(EX[next.id].name)}"></button></div>` : ""}
@@ -282,6 +286,12 @@ document.addEventListener("click", ev => {
     if (ds.exstep === "sets") e.sets = Math.max(1, Math.min(10, e.sets + dir));
     else if (ds.exstep === "warm") { const n = Math.max(0, Math.min(5, warmCount(e) + dir)); if (n) e.warm = n; else delete e.warm; }
     else if (ds.exstep === "reps") e.reps = stepReps(e.reps, dir, e.id);
+    else if (ds.exstep === "kg") {
+      // Börjar från förslaget (förra gången) så att första trycket hamnar nära rätt vikt
+      const st = stepFor(e.id, "kg"), base = +e.kg || +(setHint({ ...e, kg: 0 }, 0) || {}).kg || 0;
+      const v = Math.max(0, Math.round(((+e.kg ? base + dir * st : base + (dir > 0 ? st : 0))) * 100) / 100);
+      if (v > 0) e.kg = v; else delete e.kg;
+    }
   }
   else if (ds.ordna !== undefined) ordna = !ordna;
   else if (ds.trsheet !== undefined) { trSheet = ds.trsheet || null; dailyEditing = false; }

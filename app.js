@@ -1778,7 +1778,9 @@ const fmtTarget = (t, id) => fmtSet2({ kg: +t.kg || 0, reps: t.reps }, id);
 // Exempelvärden för ett set: dagens mål om det finns, annars förra gångens set
 function setHint(ex, i) {
   const t = todayTarget(ex);
-  return t ? { kg: t.kg || "", reps: t.reps } : hintSet(lastSets(ex.id), i);
+  const h = t ? { kg: t.kg || "", reps: t.reps } : hintSet(lastSets(ex.id), i);
+  // En vikt man ställt in för övningen i passet gäller som startvikt
+  return +ex.kg ? { ...(h || {}), kg: +ex.kg } : h;
 }
 
 // Bästa set före den här veckan, för att kunna säga när man slår PB (personbästa)

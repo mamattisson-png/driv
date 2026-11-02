@@ -2385,3 +2385,21 @@ def test_byt_ovning_under_passet_gar_att_scrolla(page):
     assert page.evaluate("scrollY") > 300
     page.click("[data-libclose]")
     assert page.evaluate("document.body.classList.contains('infocus')") is True
+
+
+def test_vikt_kan_stallas_in_for_ovningen(page):
+    start(page)
+    go(page, "pass")
+    d = page.evaluate("S.plan.days[0].id")
+    page.click(f'[data-editpass="{d}"]')
+    page.click('[data-exsheet="0"]')
+    # Ingen vikt inställd: förslaget gäller. Plus ger en startvikt som blir passets förslag
+    assert "Tomt" in page.inner_text(".exsheet")
+    page.click('[data-exstep="kg"][data-dir="1"]')
+    page.click('[data-exstep="kg"][data-dir="1"]')
+    kg = page.evaluate("S.plan.days[0].ex[0].kg")
+    assert kg == 5
+    assert page.evaluate("setHint(S.plan.days[0].ex[0], 0).kg") == 5
+    page.click('[data-exstep="kg"][data-dir="-1"]')
+    page.click('[data-exstep="kg"][data-dir="-1"]')
+    assert page.evaluate("S.plan.days[0].ex[0].kg") is None
