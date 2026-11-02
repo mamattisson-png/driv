@@ -85,31 +85,44 @@ function traningView() {
     return `<li><span class="tp-n">${g ? `<i class="sstag">${String.fromCharCode(65 + ssIndex(p, g[0]))}${k - g[0] + 1}</i>` : k + 1}</span><span class="grow">${esc(EX[e.id] ? EX[e.id].name : e.id)}</span><span class="tp-sr">${e.sets} × ${esc(String(e.reps || "").replace(/(\d)\s*-\s*(\d)/g, "$1–$2"))}</span></li>`; };
   // Kompakt lista: varje pass på en rad med status, namn och övningarna som löptext,
   // så att hela veckan syns i en vy. Ett tryck öppnar passet.
+  // Varje pass: tryck på raden för att se passet, och lika tydliga knappar för att starta och ändra det
   const list = `<div class="tclist">${S.plan.days.map((p, i) => {
-    const ok = !!completedPassDate(p), next = p === d && !t.rest && !ok;
+    const ok = !!completedPassDate(p), next = p === d && !t.rest && !ok, going = p === d && started;
     const c = completedPassDate(p), st = ok ? `<span class="pst ok">${c === TODAY ? "Klar idag" : `Klar · ${WD[weekdayOf(c)].toLowerCase()}`}</span>` : status(p, i);
     const names = p.ex.map(e => EX[e.id] ? EX[e.id].name : e.id);
-    return `<button class="tcrow ${ok ? "ok" : next ? "next" : ""}" data-pick="${p.id}" aria-label="${esc(p.name)}, ${p.ex.length} övningar">
-      <span class="tcdot" aria-hidden="true">${ok ? icon("check", 12) : ""}</span>
-      <span class="grow tcmain"><span class="row between"><b>${esc(p.name)}</b>${st}</span>
-        <small>${names.length ? esc(names.join(" · ")) : "Inga övningar än"}</small></span>${icon("right", 16)}</button>`;
+    return `<div class="tcrow ${ok ? "ok" : next ? "next" : ""}">
+      <button class="tcopen" data-pick="${p.id}" aria-label="Visa ${esc(p.name)}"><span class="tcdot" aria-hidden="true">${ok ? icon("check", 12) : ""}</span>
+        <span class="grow tcmain"><span class="row between"><b>${esc(p.name)}</b>${st}</span>
+        <small>${names.length ? esc(names.join(" · ")) : "Inga övningar än"}</small></span></button>
+      <span class="tcacts">${p.ex.length ? `<button class="small ${next ? "primary" : ""}" data-focusstart="${p.id}" aria-label="Starta ${esc(p.name)}">${icon("play", 14)}${going ? "Fortsätt" : "Starta"}</button>` : ""}
+        <button class="small ghost" data-editpass="${p.id}" aria-label="Ändra ${esc(p.name)}">${icon("edit", 14)}Ändra</button></span></div>`;
   }).join("")}</div>`;
+  const wd = isFixed() ? S.plan.weekdays.map(x => WD[x].toLowerCase()).join(", ") : "";
+  const schema = `<section class="card tschema"><div class="grow"><span class="klabel">Träningsschema</span>
+      <b>${esc(PROGRAMS[S.plan.program || "ppl"].name)}</b><span class="muted small">${S.plan.count} pass i veckan${wd ? ` · ${wd}` : ""}</span></div>
+    <button class="small" data-tab="upplagg">${icon("edit", 14)}Ändra schema</button></section>`;
   const acts = actsOn(TODAY);
   const row = (ic, title, sub, attrs, end = "right") => `<button class="h3-row" ${attrs}><span class="h3-ic">${icon(ic, 18)}</span><span class="grow"><b>${title}</b><small>${sub}</small></span>${icon(end, 18)}</button>`;
   return `<div class="muted small toplabel">Vecka ${weekNo(TODAY)} · ${passes} av ${S.plan.count} pass</div><h1>Träna</h1>
-    <div class="row between trprog"><span class="klabel">Veckans pass</span>
-      <button class="linkbtn2" data-tab="upplagg">${esc(PROGRAMS[S.plan.program || "ppl"].name)}${icon("right", 14)}</button></div>
+    ${schema}
+    <div class="klabel h3-sec">Veckans pass</div>
     ${list}
     <div class="klabel h3-sec">Mer</div>
     <section class="h3-list">
       ${row("search", "Övningar", `${Object.keys(EX).length} övningar · sök och läs instruktioner`, "data-exlib")}
-      ${row("upplagg", "Träningsupplägg", `${esc(PROGRAMS[S.plan.program || "ppl"].name)} · ${S.plan.count} pass i veckan`, 'data-tab="upplagg"')}
       ${row("aktivitet", "Annan träning", acts.length ? esc(acts.map(a => `${a.name} ${+a.min} min`).join(", ")) : "Padel, löpning, cykling …", `data-actnew="" data-actdate="${TODAY}"`, "plus")}
     </section>
     ${acts.length ? `<div class="homeacts">${acts.map((a, i) => `<button class="dchip on" data-actedit="${i}" data-actdate="${TODAY}">${icon("check", 16)}${esc(a.name)} · ${+a.min} min</button>`).join("")}</div>` : ""}
     ${trSheet === "dailys" ? dailysSheet() : ""}`;
 }
 
+document.addEventListener("click", ev => {
+  const e = ev.target.closest && ev.target.closest("[data-editpass]");
+  if (!e) return;
+  ev.stopImmediatePropagation();
+  chosenDay = e.dataset.editpass; passOpen = true; editing = true; startEdit(dayById(chosenDay));
+  window.scrollTo(0, 0); render();
+}, true);
 document.addEventListener("click", ev => {
   const b = ev.target.closest && ev.target.closest("[data-trsel]");
   if (!b) return;

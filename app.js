@@ -53,7 +53,7 @@ const PROGRAMS = {
     2: ["hfull", "hfull"], 3: ["hfull", "hfull", "hfull"], 4: ["hfull", "hfull", "hfull", "hfull"] } },
   rumpa: { name: "Rumpa & ben", info: "Extra fokus på säte och baksida lår, plus ett överkroppspass.", days: {
     3: ["glutes", "upper", "lower"], 4: ["glutes", "upper", "glutes", "lower"] } },
-  eget: { name: "Eget upplägg", info: "Bygg helt själv: välj antal pass, döp dem och lägg till dina egna övningar.", days: {
+  eget: { name: "Eget schema", info: "Bygg helt själv: välj antal pass, döp dem och lägg till dina egna övningar.", days: {
     1: ["custom"], 2: ["custom", "custom"], 3: ["custom", "custom", "custom"], 4: ["custom", "custom", "custom", "custom"],
     5: ["custom", "custom", "custom", "custom", "custom"], 6: ["custom", "custom", "custom", "custom", "custom", "custom"] } },
 };
