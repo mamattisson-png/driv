@@ -107,8 +107,11 @@ function traningView() {
     <div class="klabel h3-sec">Veckans pass</div>
     ${tiles}
     ${list}
-    <div class="tmore"><button class="chipbtn" data-exlib>${icon("search", 16)}Övningar</button>
-      <button class="chipbtn" data-actnew="" data-actdate="${TODAY}">${icon("plus", 16)}Annan träning</button></div>
+    <div class="klabel h3-sec">Mer</div>
+    <section class="h3-list">
+      ${row("search", "Övningar", `${Object.keys(EX).length} övningar · sök och läs instruktioner`, "data-exlib")}
+      ${row("aktivitet", "Annan träning", acts.length ? esc(acts.map(a => `${a.name} ${+a.min} min`).join(", ")) : "Padel, löpning, cykling …", `data-actnew="" data-actdate="${TODAY}"`, "plus")}
+    </section>
     ${acts.length ? `<div class="homeacts">${acts.map((a, i) => `<button class="dchip on" data-actedit="${i}" data-actdate="${TODAY}">${icon("check", 16)}${esc(a.name)} · ${+a.min} min</button>`).join("")}</div>` : ""}
     ${trSheet === "dailys" ? dailysSheet() : ""}`;
 }
