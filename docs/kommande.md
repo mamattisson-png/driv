@@ -48,6 +48,7 @@ Senast uppdaterad: 2026-11-01. Status bygger på dokumenterade publiceringar och
 | 44 | Allt om vikten på sidan Vikt | UX | Medel | Klar |
 | 45 | Hälsningen följer tiden och dagens pass | Hem | Låg | Klar |
 | 46 | Muskelkortet med samma anatomibild som Övningar | Träning | Medel | Klar |
+| 47 | Firande när alla dailys är klara | Dailys | Låg | Klar |
 
 ## Detaljer och acceptanskriterier
 
@@ -113,6 +114,7 @@ Senast uppdaterad: 2026-11-01. Status bygger på dokumenterade publiceringar och
 45. **Hälsningen (Klar, publicerad 2026-11-02):** God natt efter midnatt, God morgon, God dag, God kväll och Dags att varva ner efter tiden. Dagens läge går före: Fortsätt där du var, Passet är gjort, Bra jobbat idag, Allt klart för idag, Veckans pass är klara och Ta det lugnt idag på vilodagar.
 
 46. **Muskelkortet (Klar, publicerad 2026-11-02):** Kortet Muskler på passet visar samma anatomibild som Övningar, fast liten, med musklerna färgade grönt, orange eller rött efter status. Följer vald figur.
+47. **Firande i Dailys (Klar, publicerad 2026-11-02):** När sista dailyn eller kosttillskottet bockas i sprutar en liten konfetti ur bocken och ringen överst pulserar grönt en gång. Bara när man själv gör klart, och utan rörelse för den som valt minskade animationer.
 
 ## Arbetsregler
 
