@@ -217,18 +217,17 @@ function editView(d) {
     const g = ssGroup(d, i), first = g && i === g[0], last = g && i === g[1];
     const sub = `${repsText(e)}${warmCount(e) ? ` · <span class="warmtag">+${warmCount(e)} uppvärmning</span>` : ""}`;
     const body = `<span class="grow"><b>${esc(EX[e.id].name)}</b><span class="muted small">${sub}</span></span>`;
-    const row = ordna
-      ? `<div class="erow ${g ? "ss" : ""}">${body}<button class="iconbtn small ghost" data-mv="-1" data-t="${d.id}" data-idx="${i}" ${i ? "" : "disabled"} aria-label="Flytta ${esc(EX[e.id].name)} upp">${icon("up", 18)}</button>
-          <button class="iconbtn small ghost" data-mv="1" data-t="${d.id}" data-idx="${i}" ${i < list.length - 1 ? "" : "disabled"} aria-label="Flytta ${esc(EX[e.id].name)} ned">${icon("down", 18)}</button></div>`
-      : `<button class="erow ${g ? "ss" : ""}" data-exsheet="${i}">${body}<span class="chev">${icon("right", 18)}</span></button>`;
+    // Pilarna för att flytta finns alltid; ett tryck på övningen öppnar dess blad
+    const row = `<div class="erow ${g ? "ss" : ""}"><button class="eopen" data-exsheet="${i}" aria-label="Ändra ${esc(EX[e.id].name)}">${body}</button>
+        <button class="iconbtn small ghost" data-mv="-1" data-t="${d.id}" data-idx="${i}" ${i ? "" : "disabled"} aria-label="Flytta ${esc(EX[e.id].name)} upp">${icon("up", 18)}</button>
+        <button class="iconbtn small ghost" data-mv="1" data-t="${d.id}" data-idx="${i}" ${i < list.length - 1 ? "" : "disabled"} aria-label="Flytta ${esc(EX[e.id].name)} ned">${icon("down", 18)}</button></div>`;
     return `${first ? `<div class="ssgroup"><div class="klabel sscap">${icon("swap", 13)}Superset</div>` : ""}${row}${last ? "</div>" : ""}`;
   }).join("");
   return `<div class="row between pvtop"><button class="backbtn" data-editcancel>Avbryt</button><span class="klabel accent">${esc(d.name)}</span><span class="pvspace"></span></div>
     <h1>Ändra övningar</h1>
     ${d.type === "custom" ? `<label class="field namefield">Namn på passet<input value="${esc(d.name)}" data-passname="${d.id}" placeholder="T.ex. Bröst & triceps"></label>` : ""}
     ${muscleCard(d.id, d.type, d.ex)}
-    <div class="row between sechead"><span class="klabel">${list.length} ${list.length === 1 ? "övning" : "övningar"}${ordna ? "" : " · tryck för att ändra"}</span>
-      ${list.length > 1 ? `<button class="linkbtn2" data-ordna>${ordna ? "Klar" : "Ordna"}</button>` : ""}</div>
+    <div class="row between sechead"><span class="klabel">${list.length} ${list.length === 1 ? "övning" : "övningar"} · tryck för att ändra, pilarna flyttar</span></div>
     ${list.length ? `<div class="card elist">${rows}</div>` : ""}
     <button class="addbtn" data-openpick="${d.id}">${icon("plus", 18)}Lägg till övning</button>
     <button class="primary wide bigbtn stickcta" data-edit>Spara</button>`;
