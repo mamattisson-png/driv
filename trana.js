@@ -97,8 +97,8 @@ function traningView() {
       <div class="tp-acts">${sel.ex.length ? `<button class="${sOk ? "" : "primary"} grow" data-focusstart="${sel.id}">${icon("play", 16)}${sGoing ? "Fortsätt" : sOk ? "Kör igen" : "Starta"} ${esc(sel.name)}</button>` : ""}
         <button class="${sel.ex.length ? "" : "primary grow"}" data-editpass="${sel.id}">${icon("edit", 16)}${sel.ex.length ? "Ändra" : "Lägg till övningar"}</button></div></section>`;
   const wd = isFixed() ? S.plan.weekdays.map(x => WD[x].toLowerCase()).join(", ") : "";
-  const schema = `<section class="card tschema"><div class="grow"><span class="klabel">Träningsschema</span>
-      <b>${esc(PROGRAMS[S.plan.program || "ppl"].name)}</b><span class="muted small">${S.plan.count} pass i veckan${wd ? ` · ${wd}` : ""}</span></div>
+  const schema = `<section class="tschema"><span class="grow"><span class="klabel">Träningsschema</span>
+      <b>${esc(PROGRAMS[S.plan.program || "ppl"].name)}</b><span class="muted small"> · ${S.plan.count} pass${wd ? ` · ${wd}` : ""}</span></span>
     <button class="small" data-tab="upplagg">${icon("edit", 14)}Ändra schema</button></section>`;
   const acts = actsOn(TODAY);
   const row = (ic, title, sub, attrs, end = "right") => `<button class="h3-row" ${attrs}><span class="h3-ic">${icon(ic, 18)}</span><span class="grow"><b>${title}</b><small>${sub}</small></span>${icon(end, 18)}</button>`;
@@ -107,11 +107,8 @@ function traningView() {
     <div class="klabel h3-sec">Veckans pass</div>
     ${tiles}
     ${list}
-    <div class="klabel h3-sec">Mer</div>
-    <section class="h3-list">
-      ${row("search", "Övningar", `${Object.keys(EX).length} övningar · sök och läs instruktioner`, "data-exlib")}
-      ${row("aktivitet", "Annan träning", acts.length ? esc(acts.map(a => `${a.name} ${+a.min} min`).join(", ")) : "Padel, löpning, cykling …", `data-actnew="" data-actdate="${TODAY}"`, "plus")}
-    </section>
+    <div class="tmore"><button class="chipbtn" data-exlib>${icon("search", 16)}Övningar</button>
+      <button class="chipbtn" data-actnew="" data-actdate="${TODAY}">${icon("plus", 16)}Annan träning</button></div>
     ${acts.length ? `<div class="homeacts">${acts.map((a, i) => `<button class="dchip on" data-actedit="${i}" data-actdate="${TODAY}">${icon("check", 16)}${esc(a.name)} · ${+a.min} min</button>`).join("")}</div>` : ""}
     ${trSheet === "dailys" ? dailysSheet() : ""}`;
 }
