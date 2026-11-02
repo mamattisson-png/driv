@@ -2321,3 +2321,16 @@ def test_firande_nar_alla_dailys_ar_klara(page):
     page.reload()
     go(page, "dailys")
     assert page.locator(".burst").count() == 0
+
+
+def test_byt_ovning_under_passet_gar_att_scrolla(page):
+    start(page)
+    go(page, "pass")
+    page.click(f'[data-focusstart="{page.evaluate("S.plan.days[0].id")}"]')
+    page.click("[data-fswap]")
+    # Passets skrollås släpps medan biblioteket är öppet, och kommer tillbaka efteråt
+    assert page.evaluate("document.body.classList.contains('infocus')") is False
+    page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+    assert page.evaluate("scrollY") > 300
+    page.click("[data-libclose]")
+    assert page.evaluate("document.body.classList.contains('infocus')") is True
