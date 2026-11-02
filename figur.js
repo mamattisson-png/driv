@@ -68,22 +68,47 @@ function frontJoints(p) {
 
 const pts = arr => arr.map(q => n1(q[0]) + "," + n1(q[1])).join(" ");
 
-function anim(attr, a, b, still) {
-  if (still || a === b) return "";
-  return `<animate attributeName="${attr}" values="${a};${b};${a}" dur="${DUR}s" repeatCount="indefinite" calcMode="spline" keyTimes="0;0.5;1" keySplines=".45 0 .55 1;.45 0 .55 1"/>`;
+// ---------- Rörelsen ----------
+// Poserna tonas över i hela kroppen, inte punkt för punkt: varje mellanläge räknas fram med
+// samma leder och längder, så att armar och ben aldrig töjs och lederna svänger i bågar.
+// Farten bromsas i vändlägena (cosinus), och rörelsen går fram och tillbaka.
+const FRAMES = 16;
+const lerp = (a, b, u) => a + (b - a) * u;
+const lerpP = (p, q, u) => [lerp(p[0], q[0], u), lerp(p[1], q[1], u)];
+const POSE_STEP = new Set(["eb", "kb", "eb2", "kb2"]);
+function lerpPose(A, B, u) {
+  if (!!A.s !== !!B.s) {   // den ena anger axeln, den andra bålens vinkel: räkna om till vinkel
+    const toT = P => P.s ? { ...P, t: angleOf(P.h, P.s), s: undefined } : P;
+    A = toT(A); B = toT(B);
+  }
+  const o = { ...A };
+  for (const k of new Set([...Object.keys(A), ...Object.keys(B)])) {
+    const a = A[k], b = B[k];
+    if (a == null || b == null || POSE_STEP.has(k)) o[k] = u < 0.5 ? (a ?? b) : (b ?? a);
+    else if (typeof a === "number") o[k] = lerp(a, b, u);
+    else if (Array.isArray(a[0])) o[k] = a.map((q, i) => lerpP(q, b[i] || q, u));
+    else o[k] = lerpP(a, b, u);
+  }
+  return o;
 }
-function poly(a, b, cls, still) {
-  const pa = pts(a), pb = pts(b);
-  return `<polyline class="${cls}" points="${pa}">${anim("points", pa, pb, still)}</polyline>`;
+function frames(J, A, B, n) {
+  return Array.from({ length: n + 1 }, (_, k) => J(lerpPose(A, B, 0.5 - 0.5 * Math.cos(2 * Math.PI * k / n))));
 }
-function circ(a, b, r, cls, still) {
-  return `<circle class="${cls}" cx="${n1(a[0])}" cy="${n1(a[1])}" r="${r}">` +
-    anim("cx", n1(a[0]), n1(b[0]), still) + anim("cy", n1(a[1]), n1(b[1]), still) + "</circle>";
+const anv = (attr, list) => list.every(v => v === list[0]) ? "" :
+  `<animate attributeName="${attr}" values="${list.join(";")}" dur="${DUR}s" repeatCount="indefinite"/>`;
+// Ritfunktioner som tar alla lägen (fr) och en funktion som plockar ut punkten ur ett läge
+function segF(fr, g1, g2, cls, w) {
+  const a = fr.map(g1), b = fr.map(g2);
+  return `<line class="${cls}"${w ? ` stroke-width="${w}"` : ""} x1="${n1(a[0][0])}" y1="${n1(a[0][1])}" x2="${n1(b[0][0])}" y2="${n1(b[0][1])}">` +
+    anv("x1", a.map(q => n1(q[0]))) + anv("y1", a.map(q => n1(q[1]))) + anv("x2", b.map(q => n1(q[0]))) + anv("y2", b.map(q => n1(q[1]))) + "</line>";
 }
-function seg(a1, a2, b1, b2, cls, still) {
-  return `<line class="${cls}" x1="${n1(a1[0])}" y1="${n1(a1[1])}" x2="${n1(a2[0])}" y2="${n1(a2[1])}">` +
-    anim("x1", n1(a1[0]), n1(b1[0]), still) + anim("y1", n1(a1[1]), n1(b1[1]), still) +
-    anim("x2", n1(a2[0]), n1(b2[0]), still) + anim("y2", n1(a2[1]), n1(b2[1]), still) + "</line>";
+function circF(fr, g, r, cls) {
+  const a = fr.map(g);
+  return `<circle class="${cls}" cx="${n1(a[0][0])}" cy="${n1(a[0][1])}" r="${r}">` + anv("cx", a.map(q => n1(q[0]))) + anv("cy", a.map(q => n1(q[1]))) + "</circle>";
+}
+function polyF(fr, g, cls) {
+  const a = fr.map(f => pts(g(f)));
+  return `<polyline class="${cls}" points="${a[0]}">${anv("points", a)}</polyline>`;
 }
 
 function sceneShape(s) {
@@ -94,74 +119,62 @@ function sceneShape(s) {
   return "";
 }
 
-// Ankarpunkten flyttas en bit bort från handen så att linjen syns tydligt
-function holds(ex, A, B, still) {
+// Det man håller i: stång, hantlar, kabel, viktskiva och dyna följer händer och fötter
+function holds(ex, fr) {
   let out = "";
-  const ha = A.arm[2], hb = B.arm[2], ha2 = A.arm2[2], hb2 = B.arm2[2];
-  // Framifrån syns stången som en linje mellan händerna, från sidan som en skiva
+  const h = f => f.arm[2], h2 = f => f.arm2[2];
   if (ex.hold === "bar" && ex.view === "front") {
-    out += seg(add(ha2, [-9, 0]), add(ha, [9, 0]), add(hb2, [-9, 0]), add(hb, [9, 0]), "fwbar", still);
-    // Viktskivor i stångens ändar
-    for (const [a, b, k] of [[ha2, hb2, -9], [ha, hb, 9]])
-      out += seg(add(a, [k, -4.5]), add(a, [k, 4.5]), add(b, [k, -4.5]), add(b, [k, 4.5]), "fwbar fwplate", still);
-  } else if (ex.hold === "bar") out += circ(ha, hb, 6.5, "fw", still);
+    out += segF(fr, f => add(h2(f), [-9, 0]), f => add(h(f), [9, 0]), "fwbar");
+    for (const [g, k] of [[h2, -9], [h, 9]]) out += segF(fr, f => add(g(f), [k, -4.5]), f => add(g(f), [k, 4.5]), "fwbar fwplate");
+  } else if (ex.hold === "bar") out += circF(fr, h, 6.5, "fw");
   if (ex.hold === "db") {
-    out += circ(ha, hb, 3.6, "fw", still);
-    if (pts([ha2]) !== pts([ha]) || pts([hb2]) !== pts([hb])) out += circ(ha2, hb2, 3.6, "fw", still);
+    out += circF(fr, h, 3.6, "fw");
+    if (fr.some(f => pts([h(f)]) !== pts([h2(f)]))) out += circF(fr, h2, 3.6, "fw");
   }
   if (ex.cable) {
     const c = ex.cable;
-    out = `<rect class="fe" x="${c[0] - 4}" y="${c[1] - 4}" width="8" height="8" rx="1.5"/>` +
-      seg(c, ha, c, hb, "fc", still) + out + circ(ha, hb, 2.4, "fw", still);
+    out = `<rect class="fe" x="${c[0] - 4}" y="${c[1] - 4}" width="8" height="8" rx="1.5"/>` + segF(fr, () => c, h, "fc") + out + circF(fr, h, 2.4, "fw");
   }
-  if (ex.plate) {
-    const pa = A.leg[3], pb = B.leg[3], v = ex.plate;
-    out += seg(add(pa, v, -1), add(pa, v), add(pb, v, -1), add(pb, v), "fe fplate", still);
-  }
-  if (ex.pad) out += circ(A.leg[2], B.leg[2], 3.4, "fp", still);
+  if (ex.plate) { const v = ex.plate; out += segF(fr, f => add(f.leg[3], v, -1), f => add(f.leg[3], v), "fe fplate"); }
+  if (ex.pad) out += circF(fr, f => f.leg[2], 3.4, "fp");
   return out;
 }
 
-// Ny stil: kroppen byggs av rundade lemmar med olika tjocklek (lår tjockare än underben osv.),
-// bortre sidan i en mörkare ton i stället för genomskinlig. Samma poser och leder som förut.
-const W = { ua: 5.6, fa: 4.6, th: 8, sh: 6.2, foot: 4, torso: 11.5, neck: 4.4, hand: 2.6 };
-function limb(A, B, i, w, cls, still) {
-  return seg(A[i], A[i + 1], B[i], B[i + 1], cls, still).replace("<line ", `<line stroke-width="${w}" `);
+// ---------- Kroppen ----------
+// Rundade lemmar med olika tjocklek (lår tjockare än underben osv.), bortre sidan i en mörkare ton.
+const LIMB_W = { ua: 5.6, fa: 4.6, th: 8, sh: 6.2, foot: 4, torso: 11.5, neck: 4.4, hand: 2.6 };
+function limbs(fr, part, cls, arm) {
+  const g = i => f => f[part][i];
+  return arm ? segF(fr, g(0), g(1), cls, LIMB_W.ua) + segF(fr, g(1), g(2), cls, LIMB_W.fa) + circF(fr, g(2), LIMB_W.hand, cls + "h")
+    : segF(fr, g(0), g(1), cls, LIMB_W.th) + segF(fr, g(1), g(2), cls, LIMB_W.sh) + (fr[0][part][3] ? segF(fr, g(2), g(3), cls, LIMB_W.foot) : "");
 }
-function limbs(A, B, cls, still, arm) {
-  return arm ? limb(A, B, 0, W.ua, cls, still) + limb(A, B, 1, W.fa, cls, still) + circ(A[2], B[2], W.hand, cls + "h", still)
-    : limb(A, B, 0, W.th, cls, still) + limb(A, B, 1, W.sh, cls, still) + (A[3] ? limb(A, B, 2, W.foot, cls, still) : "");
+// En mörk kant runt främre arm och ben, så att de syns även framför bålen (som i curl)
+function outline(fr, part) {
+  const g = i => f => f[part][i], k = 2.6, arm = part === "arm";
+  return segF(fr, g(0), g(1), "f2o", (arm ? LIMB_W.ua : LIMB_W.th) + k) + segF(fr, g(1), g(2), "f2o", (arm ? LIMB_W.fa : LIMB_W.sh) + k);
 }
-function body2(A, B, front, still) {
-  let out = limbs(A.leg2, B.leg2, "f2 f2far", still) + limbs(A.arm2, B.arm2, "f2 f2far", still, true);
-  if (front) out += limb(A.hips, B.hips, 0, 9, "f2", still) + limb(A.shoulders, B.shoulders, 0, 9, "f2", still);
-  out += limb(A.torso, B.torso, 0, W.torso, "f2", still) + limb(A.torso, B.torso, 1, W.neck, "f2", still) +
-    circ(A.head, B.head, BODY.head + 0.8, "f2h", still) + limbs(A.leg, B.leg, "f2", still) + limbs(A.arm, B.arm, "f2", still, true);
-  return out;
+function body(fr, front) {
+  let out = limbs(fr, "leg2", "f2 f2far") + limbs(fr, "arm2", "f2 f2far", true);
+  if (front) out += segF(fr, f => f.hips[0], f => f.hips[1], "f2", 9) + segF(fr, f => f.shoulders[0], f => f.shoulders[1], "f2", 9);
+  return out + segF(fr, f => f.torso[0], f => f.torso[1], "f2", LIMB_W.torso) + segF(fr, f => f.torso[1], f => f.torso[2], "f2", LIMB_W.neck) +
+    circF(fr, f => f.head, BODY.head + 0.8, "f2h") + outline(fr, "leg") + limbs(fr, "leg", "f2") + outline(fr, "arm") + limbs(fr, "arm", "f2", true);
 }
-const FIG_STYLE = { v: 2 };   // 1 = gamla streckgubben
 
-// Animeras bara där en övning visas ensam (övningsrutan, fokusläget); i listor är bilden stilla
+// Animeras bara där en övning visas ensam (övningsrutan, fokusläget); i listor är bilden stilla.
+// Stillbilden visar arbetsläget (botten i knäböj, toppen i curl), utom när man står och
+// startläget är det böjda (marklyft, good morning): då visas det.
 function figure(id, cls = "", animate = false) {
   const ex = EX[id];
   if (!ex) return "";
-  const front = ex.view === "front";
-  const J = front ? frontJoints : sideJoints;
+  const front = ex.view === "front", J = front ? frontJoints : sideJoints;
   const still = !ex.B || REDUCED || !animate;
-  // Stillbilden visar arbetsläget (botten i knäböj, toppen i curl), som säger mer än startläget
-  // utom när man står och startläget är det böjda (marklyft, good morning): då visas det
-  let A = J(ex.A); const B = J(ex.B || ex.A);
-  if (still && FIG_STYLE.v === 2 && ex.B && !(A.head[1] > B.head[1] + 8 && A.leg[2][1] > FLOOR - 4)) A = B;
-  const far = front ? "fb" : "fb ff";
-  let body;
-  if (FIG_STYLE.v === 2) body = body2(A, B, front, still);
+  let fr;
+  if (!still) fr = frames(J, ex.A, ex.B, FRAMES);
   else {
-    body = poly(A.leg2, B.leg2, far, still) + poly(A.arm2, B.arm2, far, still);
-    if (front) body += poly(A.hips, B.hips, "fb", still) + poly(A.shoulders, B.shoulders, "fb", still);
-    body += poly(A.torso, B.torso, "fb", still) + poly(A.leg, B.leg, "fb", still) +
-      circ(A.head, B.head, BODY.head, "fh", still) + poly(A.arm, B.arm, "fb", still);
+    const a = J(ex.A), b = ex.B ? J(ex.B) : a;
+    fr = [ex.B && !(a.head[1] > b.head[1] + 8 && a.leg[2][1] > FLOOR - 4) ? b : a];
   }
   return `<svg class="fig ${cls}" viewBox="0 -16 120 116" role="img" aria-label="${ex.name}">` +
     `<line class="ffloor" x1="2" y1="${FLOOR + 2.5}" x2="118" y2="${FLOOR + 2.5}"/>` +
-    (ex.scene || []).map(sceneShape).join("") + body + holds(ex, A, B, still) + "</svg>";
+    (ex.scene || []).map(sceneShape).join("") + body(fr, front) + holds(ex, fr) + "</svg>";
 }
