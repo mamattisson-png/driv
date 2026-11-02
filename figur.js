@@ -122,19 +122,45 @@ function holds(ex, A, B, still) {
   return out;
 }
 
+// Ny stil: kroppen byggs av rundade lemmar med olika tjocklek (lår tjockare än underben osv.),
+// bortre sidan i en mörkare ton i stället för genomskinlig. Samma poser och leder som förut.
+const W = { ua: 5.6, fa: 4.6, th: 8, sh: 6.2, foot: 4, torso: 11.5, neck: 4.4, hand: 2.6 };
+function limb(A, B, i, w, cls, still) {
+  return seg(A[i], A[i + 1], B[i], B[i + 1], cls, still).replace("<line ", `<line stroke-width="${w}" `);
+}
+function limbs(A, B, cls, still, arm) {
+  return arm ? limb(A, B, 0, W.ua, cls, still) + limb(A, B, 1, W.fa, cls, still) + circ(A[2], B[2], W.hand, cls + "h", still)
+    : limb(A, B, 0, W.th, cls, still) + limb(A, B, 1, W.sh, cls, still) + (A[3] ? limb(A, B, 2, W.foot, cls, still) : "");
+}
+function body2(A, B, front, still) {
+  let out = limbs(A.leg2, B.leg2, "f2 f2far", still) + limbs(A.arm2, B.arm2, "f2 f2far", still, true);
+  if (front) out += limb(A.hips, B.hips, 0, 9, "f2", still) + limb(A.shoulders, B.shoulders, 0, 9, "f2", still);
+  out += limb(A.torso, B.torso, 0, W.torso, "f2", still) + limb(A.torso, B.torso, 1, W.neck, "f2", still) +
+    circ(A.head, B.head, BODY.head + 0.8, "f2h", still) + limbs(A.leg, B.leg, "f2", still) + limbs(A.arm, B.arm, "f2", still, true);
+  return out;
+}
+const FIG_STYLE = { v: 2 };   // 1 = gamla streckgubben
+
 // Animeras bara där en övning visas ensam (övningsrutan, fokusläget); i listor är bilden stilla
 function figure(id, cls = "", animate = false) {
   const ex = EX[id];
   if (!ex) return "";
   const front = ex.view === "front";
   const J = front ? frontJoints : sideJoints;
-  const A = J(ex.A), B = J(ex.B || ex.A);
-  const still = !ex.B || REDUCED || !animate;   // utan animation visas startläget
+  const still = !ex.B || REDUCED || !animate;
+  // Stillbilden visar arbetsläget (botten i knäböj, toppen i curl), som säger mer än startläget
+  // utom när man står och startläget är det böjda (marklyft, good morning): då visas det
+  let A = J(ex.A); const B = J(ex.B || ex.A);
+  if (still && FIG_STYLE.v === 2 && ex.B && !(A.head[1] > B.head[1] + 8 && A.leg[2][1] > FLOOR - 4)) A = B;
   const far = front ? "fb" : "fb ff";
-  let body = poly(A.leg2, B.leg2, far, still) + poly(A.arm2, B.arm2, far, still);
-  if (front) body += poly(A.hips, B.hips, "fb", still) + poly(A.shoulders, B.shoulders, "fb", still);
-  body += poly(A.torso, B.torso, "fb", still) + poly(A.leg, B.leg, "fb", still) +
-    circ(A.head, B.head, BODY.head, "fh", still) + poly(A.arm, B.arm, "fb", still);
+  let body;
+  if (FIG_STYLE.v === 2) body = body2(A, B, front, still);
+  else {
+    body = poly(A.leg2, B.leg2, far, still) + poly(A.arm2, B.arm2, far, still);
+    if (front) body += poly(A.hips, B.hips, "fb", still) + poly(A.shoulders, B.shoulders, "fb", still);
+    body += poly(A.torso, B.torso, "fb", still) + poly(A.leg, B.leg, "fb", still) +
+      circ(A.head, B.head, BODY.head, "fh", still) + poly(A.arm, B.arm, "fb", still);
+  }
   return `<svg class="fig ${cls}" viewBox="0 -16 120 116" role="img" aria-label="${ex.name}">` +
     `<line class="ffloor" x1="2" y1="${FLOOR + 2.5}" x2="118" y2="${FLOOR + 2.5}"/>` +
     (ex.scene || []).map(sceneShape).join("") + body + holds(ex, A, B, still) + "</svg>";

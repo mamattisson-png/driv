@@ -42,7 +42,7 @@
     --line: #e3e0da; --line-strong: #c9c5be; --mhead: #efede9; --accent: #ff6b1a; --accent-soft: #fde6d6;
     --ok: #1f9d55; --ok-soft: #dcf3e5; --bad: #d23b3b; --bad-soft: #fbe3e3;
     --push: #c94800; --pull: #2f6fdb; --legs: #8a4fd6; --upper: #c2410c; --lower: #0e7c86; --full: #4d7c0f;
-    --equip: #9aa1ab;
+    --equip: #9aa1ab; --fig-near: var(--text); --fig-far: color-mix(in srgb, var(--text) 40%, var(--card));
     /* Fyllda ytor har samma klara orange som mörkt läge, med mörk text (6,4:1). Mörk orange bara för text och länkar. */
     --accent-strong: #ff6b1a; --accent-text: #b03f00; --ok-text: #157a40; --bad-text: #b42323; --on-color: #141518; --ok-strong: #157a40;
     --on-accent: #141518;
@@ -218,6 +218,10 @@
   .fp { fill: var(--equip); }
   .fc { stroke: var(--equip); stroke-width: 1.2; }
   .ffloor { stroke: var(--line); stroke-width: 2; }
+  .f2 { stroke: var(--fig-near); stroke-linecap: round; fill: none; }
+  .f2.f2far { stroke: var(--fig-far); }
+  .f2h, .f2h.f2far, .f2farh { fill: var(--fig-near); stroke: none; }
+  .f2farh { fill: var(--fig-far); }
 
   /* Dialog */
   .overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, .45); z-index: 10; display: flex; align-items: flex-end; justify-content: center; }
