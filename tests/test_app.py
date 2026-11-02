@@ -2314,10 +2314,10 @@ def test_firande_nar_alla_dailys_ar_klara(page):
     page.evaluate("S.supplements = []; render()")
     for i in ids[:-1]:
         page.click(f'[data-dcheck="{i}"]')
-        assert page.locator(".cheer").count() == 0
+        assert page.locator(".burst").count() == 0
     page.click(f'[data-dcheck="{ids[-1]}"]')
-    assert page.locator(".cheer").count() == 1 and "Alla dailys klara" in page.inner_text(".cheer")
+    assert page.locator(".burst").count() == 1 and page.locator(".dlx-ring.pulse").count() == 1
     # Öppnas appen igen med allt klart blir det inget nytt firande
     page.reload()
     go(page, "dailys")
-    assert page.locator(".cheer").count() == 0
+    assert page.locator(".burst").count() == 0

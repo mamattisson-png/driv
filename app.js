@@ -890,24 +890,30 @@ const GEAR_SVG = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" st
 const allDailysToday = () => { const a = S.supplements || [], ex = S.daily || [];
   return ex.length + a.length > 0 && ex.every(e => dailyDone(logDate(), e.id)) && a.every(x => day().dailies["supp:" + x.id]); };
 let cheerState = null;   // { date, done } från förra ritningen
-const CHEERS = ["Bra jobbat!", "Snyggt, allt avbockat!", "Starkt jobbat idag!", "Där satt den!", "Grymt, alla dailys klara!"];
+let lastCheck = null;   // bocken man senast tryckte på, så att konfettin kommer därifrån
+document.addEventListener("click", ev => { const b = ev.target.closest && ev.target.closest("[data-dcheck],[data-suppcheck]"); if (b) lastCheck = b.dataset.dcheck ? `[data-dcheck="${b.dataset.dcheck}"]` : `[data-suppcheck="${b.dataset.suppcheck}"]`; }, true);
 function cheerCheck() {
   const date = logDate(), done = allDailysToday();
   if (cheerState && cheerState.date === date && !cheerState.done && done) celebrate();
   cheerState = { date, done };
 }
+// Litet och på plats: konfetti ur bocken man tryckte på, och ringen överst pulserar en gång
 function celebrate() {
-  const st = streakOf(d => { const ex = S.daily || []; return ex.length > 0 && ex.every(e => dailyDone(d, e.id)); });
-  const msg = CHEERS[Math.floor(Math.random() * CHEERS.length)];
-  const el = document.createElement("div");
-  el.className = "cheer"; el.setAttribute("role", "status");
-  el.innerHTML = `${confetti()}<span class="cheer-check" aria-hidden="true">${icon("check", 30)}</span><b></b><span class="cheer-sub"></span>`;
-  el.querySelector("b").textContent = msg;
-  el.querySelector(".cheer-sub").textContent = st > 1 ? `Alla dailys klara · ${st} dagar i rad` : "Alla dailys klara för idag";
-  document.querySelectorAll(".cheer, .toast").forEach(t => t.remove());
-  document.body.appendChild(el);
+  const btn = lastCheck && [...document.querySelectorAll(lastCheck)].find(e => e.getClientRects().length);
+  const ring = document.querySelector(".dlx-ring");
+  if (ring) ring.classList.add("pulse");
+  const at = (btn || ring);
+  if (at) {
+    const r = at.getBoundingClientRect(), el = document.createElement("div");
+    el.className = "burst"; el.setAttribute("aria-hidden", "true");
+    el.style.cssText = `left:${r.left + r.width / 2}px;top:${r.top + r.height / 2}px`;
+    const cols = ["#ff6b1a", "#6fd99a", "#fbbf24", "#5e95ff", "#ff8a47", "#b17cff"];
+    el.innerHTML = Array.from({ length: 22 }, (_, i) => { const a = i / 22 * Math.PI * 2 + Math.random() * .3, d = 38 + Math.random() * 44;
+      return `<i style="--dx:${(Math.cos(a) * d).toFixed(0)}px;--dy:${(Math.sin(a) * d - 14).toFixed(0)}px;--r:${Math.round(Math.random() * 360)}deg;background:${cols[i % cols.length]};${i % 3 ? "" : "width:6px;height:6px;border-radius:50%;"}"></i>`; }).join("");
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 1200);
+  }
   if (navigator.vibrate) try { navigator.vibrate(30); } catch (e) { /* inte tillåtet */ }
-  setTimeout(() => el.remove(), 2600);
 }
 function render() {
   if (libCtx && libCtx.tab !== tab) libCtx = null;   // en annan flik lämnar biblioteket
