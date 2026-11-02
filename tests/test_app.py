@@ -2403,3 +2403,7 @@ def test_vikt_kan_stallas_in_for_ovningen(page):
     page.click('[data-exstep="kg"][data-dir="-1"]')
     page.click('[data-exstep="kg"][data-dir="-1"]')
     assert page.evaluate("S.plan.days[0].ex[0].kg") is None
+    # Vikten kan också skrivas in
+    page.fill("[data-exkg]", "62,5")
+    page.press("[data-exkg]", "Tab")
+    assert page.evaluate("S.plan.days[0].ex[0].kg") == 62.5

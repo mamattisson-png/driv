@@ -249,7 +249,7 @@ function exSheetView(d) {
       <button class="stp" data-exstep="reps" data-dir="1" aria-label="Fler reps">${icon("plus", 20)}</button></div>
     ${isTimed(e.id) || EX[e.id].cat === "stretch" || EX[e.id].cat === "cardio" ? "" : `<div class="exset"><span class="grow col"><span>${EX[e.id].bw ? "Extra vikt" : "Vikt"}</span><span class="muted small">${+e.kg ? "Startvikt i passet" : "Tomt: förslag från förra gången"}</span></span>
       <button class="stp" data-exstep="kg" data-dir="-1" ${+e.kg ? "" : "disabled"} aria-label="Lägre vikt">${icon("minus", 20)}</button>
-      <span class="exval">${+e.kg ? `${fmtNum(+e.kg)}<small> kg</small>` : "–"}</span>
+      <label class="exval exkg"><input type="text" inputmode="decimal" value="${+e.kg ? fmtNum(+e.kg) : ""}" placeholder="–" data-exkg aria-label="Vikt i kg"><small>kg</small></label>
       <button class="stp" data-exstep="kg" data-dir="1" aria-label="Högre vikt">${icon("plus", 20)}</button></div>`}
     ${step("warm", "Uppvärmning", warmCount(e), 0, 5, "Lättare set före", true)}
     ${next ? `<div class="exset"><span class="grow col"><span>Superset med nästa</span><span class="muted small">${esc(EX[next.id].name)}, växelvis utan vila</span></span>
@@ -259,6 +259,15 @@ function exSheetView(d) {
       <button class="ghost wide dangertext" data-xdel="${d.id}" data-idx="${i}">Ta bort ur passet</button>
       <button class="wide lightbtn" data-exsheetclose>Klar</button></div></div></div>`;
 }
+// Vikten kan också skrivas in; tomt eller 0 betyder förslaget från förra gången
+document.addEventListener("change", ev => {
+  if (ev.target.dataset.exkg === undefined) return;
+  const d = currentPassDay(), e = d && d.ex[exSheet];
+  if (!e) return;
+  const v = Math.min(500, Math.max(0, +String(ev.target.value).replace(",", ".") || 0));
+  if (v > 0) e.kg = Math.round(v * 100) / 100; else delete e.kg;
+  save(); render();
+});
 // Reps stegas med alla tal i texten: "6–8" blir "7–9", "45 s" blir "50 s"
 function stepReps(r, dir, id) {
   const s = /\d/.test(String(r || "")) ? String(r) : "10";
