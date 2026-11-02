@@ -2305,3 +2305,19 @@ def test_halsningen_efter_tid_och_pass(page):
     # Hem visar hälsningen för klockan just nu
     hr = page.evaluate("new Date().getHours()")
     assert page.inner_text(".h3-greet") == g(hr)
+
+
+def test_firande_nar_alla_dailys_ar_klara(page):
+    start(page)
+    go(page, "dailys")
+    ids = page.evaluate("S.daily.map(e => e.id)")
+    page.evaluate("S.supplements = []; render()")
+    for i in ids[:-1]:
+        page.click(f'[data-dcheck="{i}"]')
+        assert page.locator(".cheer").count() == 0
+    page.click(f'[data-dcheck="{ids[-1]}"]')
+    assert page.locator(".cheer").count() == 1 and "Alla dailys klara" in page.inner_text(".cheer")
+    # Öppnas appen igen med allt klart blir det inget nytt firande
+    page.reload()
+    go(page, "dailys")
+    assert page.locator(".cheer").count() == 0

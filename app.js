@@ -885,6 +885,30 @@ let confirmReset = false;
 let importMsg = "";
 
 const GEAR_SVG = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Z"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06-1.87 1.87-.06-.06A1.7 1.7 0 0 0 16 18.4a1.7 1.7 0 0 0-1 1.56V21h-6v-1.04A1.7 1.7 0 0 0 8 18.4a1.7 1.7 0 0 0-1.87.34l-.06.06-1.87-1.87.06-.06A1.7 1.7 0 0 0 4.6 15 1.7 1.7 0 0 0 3 14H2v-4h1a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.34-1.87L4.2 7.07 6.07 5.2l.06.06A1.7 1.7 0 0 0 8 5.6 1.7 1.7 0 0 0 9 4V3h6v1a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.87-.34l.06-.06 1.87 1.87-.06.06A1.7 1.7 0 0 0 19.4 9 1.7 1.7 0 0 0 21 10h1v4h-1a1.7 1.7 0 0 0-1.6 1Z"/></svg>`;
+// Uppmuntran: när sista dailyn bockas i firas det med konfetti och ett peppande besked.
+// Jämför med förra ritningen, så att det bara sker när man själv gör klart, inte när appen öppnas.
+const allDailysToday = () => { const a = S.supplements || [], ex = S.daily || [];
+  return ex.length + a.length > 0 && ex.every(e => dailyDone(logDate(), e.id)) && a.every(x => day().dailies["supp:" + x.id]); };
+let cheerState = null;   // { date, done } från förra ritningen
+const CHEERS = ["Bra jobbat!", "Snyggt, allt avbockat!", "Starkt jobbat idag!", "Där satt den!", "Grymt, alla dailys klara!"];
+function cheerCheck() {
+  const date = logDate(), done = allDailysToday();
+  if (cheerState && cheerState.date === date && !cheerState.done && done) celebrate();
+  cheerState = { date, done };
+}
+function celebrate() {
+  const st = streakOf(d => { const ex = S.daily || []; return ex.length > 0 && ex.every(e => dailyDone(d, e.id)); });
+  const msg = CHEERS[Math.floor(Math.random() * CHEERS.length)];
+  const el = document.createElement("div");
+  el.className = "cheer"; el.setAttribute("role", "status");
+  el.innerHTML = `${confetti()}<span class="cheer-check" aria-hidden="true">${icon("check", 30)}</span><b></b><span class="cheer-sub"></span>`;
+  el.querySelector("b").textContent = msg;
+  el.querySelector(".cheer-sub").textContent = st > 1 ? `Alla dailys klara · ${st} dagar i rad` : "Alla dailys klara för idag";
+  document.querySelectorAll(".cheer, .toast").forEach(t => t.remove());
+  document.body.appendChild(el);
+  if (navigator.vibrate) try { navigator.vibrate(30); } catch (e) { /* inte tillåtet */ }
+  setTimeout(() => el.remove(), 2600);
+}
 function render() {
   if (libCtx && libCtx.tab !== tab) libCtx = null;   // en annan flik lämnar biblioteket
   const oldFocusScroll = document.querySelector(".focus-scroll");
@@ -911,6 +935,7 @@ function render() {
   afterFocusRender();
   if (tour != null) requestAnimationFrame(positionTour);
   updateBadge();
+  cheerCheck();
 }
 
 // Med reachGood är det bra att nå eller passera målet (protein); annars blir det rött över målet
