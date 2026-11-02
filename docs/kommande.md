@@ -10,7 +10,7 @@ Senast uppdaterad: 2026-11-01. Status bygger på dokumenterade publiceringar och
 | 4 | Facelift av hemskärmen | Design | Hög | Klar |
 | 5 | Tillskott och hälsorutiner i Dailys | Dailys | Medel | I test |
 | 6 | Interaktiv stretchguide | Dailys | Medel | Klar |
-| 7 | Tydligare övningsfigurer och animationer | Design | Hög | Ej påbörjad |
+| 7 | Tydligare övningsfigurer och animationer | Design | Hög | I test |
 | 8 | Smart grönmarkering av måltider | Kost | Medel | Klar |
 | 9 | Tydligare avklarade aktiviteter | Design | Hög | Klar |
 | 10 | Körbara tränings-Dailys | Dailys | Hög | Ej påbörjad |
@@ -60,7 +60,7 @@ Senast uppdaterad: 2026-11-01. Status bygger på dokumenterade publiceringar och
 4. **Facelift av hemskärmen:** Förenkla och förtydliga enligt tidigare designplan. Bevara DRIV-logga och befintliga övningsfigurer. Väntar på Claude-krediter.
 5. **Tillskott och hälsorutiner i Dailys:** Publicerad i separat testversion: https://feat-health-dailys.driv-test.pages.dev/ . Öppna Träna → Dailys → Ändra dailys. Egen sektion för hälsorutiner med Kreatin, Vitaminer, Omega-3, Vatten och egna namn/anteckningar. Redigering, borttagning, daglig avprickning och läsbara arkiverade rutiner i historiken. 19 riktade tester för hälsorutiner, synk och service worker passerar. Lägga till och bocka av Kreatin verifierat i publicerad testvy. Ingen produktionsimplementation publicerad. Serverns påminnelseregel är förberedd i grenen men inte driftsatt. Den breda testsuiten har ytterligare fel som behöver utredas före produktionspublicering.
 6. **Interaktiv stretchguide:** Välj stel kroppsdel, få relevanta övningar med demonstration och möjlighet att lägga till i Dailys eller pass.
-7. **Tydligare övningsfigurer och animationer:** Förbättra befintlig stil, liten ikon och förstorat läge, i både ljust och mörkt tema. Ändra inte loggan.
+7. **Tydligare övningsfigurer och animationer (I test, gren figurer-j1):** Nya figurer med fyllda kroppsformer och tre höjdkurvor runt kroppen (stil J1). Musklerna som övningen tränar (huvudmuskler i övningsdatan) är orange. Varje övning beskärs efter sin egen storlek så att små bilder blir större. I övningsrutan rör sig händer och fötter i bågar runt lederna, så armar och ben behåller sin längd. Redskap (skivstång, hantlar, kablar, fotplattor, dynor och bänkar) ritas i samma stil. Fungerar i ljust och mörkt tema. Ändra inte loggan.
 8. **Smart grönmarkering av måltider (Klar):** Publicerad hemskärmslogik visar grönt för Kost först när det faktiska dagsmålet för kalorier har nåtts, inte bara när mat har registrerats. Detaljerad markering av enskilda måltider kan vidareutvecklas separat.
 9. **Tydligare avklarade aktiviteter (Klar):** Publicerad hemskärm visar gröna bockar för avklarade steg och Dailys visar avklarade rader med bock och överstruket namn.
 10. **Körbara tränings-Dailys:** Exempel plankan 3×45 s med timer, vila, nästa set och automatiskt avslut; använd befintlig träningslogik där möjligt.
