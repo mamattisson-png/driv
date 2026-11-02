@@ -1747,6 +1747,18 @@ button.h3-card.h3-head { background: var(--card); padding: 12px 14px; }
 .tp-n { width: 22px; height: 22px; border-radius: 7px; flex: none; display: grid; place-items: center; background: var(--card-2); color: var(--muted); font-size: 11px; font-weight: 600; }
 .tp-n .sstag { font-style: normal; color: var(--accent-text); }
 .tp-sr { color: var(--muted); font-size: 12.5px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+/* Träna: färre rutor och ramar. Passen väljs som en rad med namn, det valda får en mjuk bakgrund */
+.tsel { display: flex; flex-wrap: wrap; gap: 4px; margin: 2px 0 6px; }
+.wkcards.tsel .wkcard { flex-direction: row; align-items: center; min-height: 0; gap: 8px; padding: 8px 12px; background: none; box-shadow: none; border-radius: 99px; }
+.tsel .wkcard .pst { display: none; }
+.tsel .wkcard b { font-size: 13.5px; white-space: nowrap; overflow: visible; }
+.wkcards.tsel .wkcard.ok, .wkcards.tsel .wkcard.next { background: none; box-shadow: none; }
+.wkcards.tsel .wkcard.sel { background: var(--card); }
+.tsel .wkcard.next b { color: var(--accent-text); }
+.tsel .wkdot { width: 14px; height: 14px; }
+.tpass { background: none; border: 0; padding: 6px 2px 0; }
+.tpass.next { border: 0; box-shadow: none; }
+.tmore .chipbtn { border-color: transparent; background: var(--card); }
 .tmore { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
 .tmore .chipbtn { display: inline-flex; align-items: center; gap: 6px; }
 /* Träna: kompaktare så att schema, alla pass och det valda passet ryms på en skärm */

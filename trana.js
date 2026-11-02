@@ -73,7 +73,7 @@ function traningView() {
   // Veckans pass som kort: grön bock när det är gjort, orange ram på det som står på tur
   const cols = n <= 3 ? n : n === 4 ? 2 : 3;
   const selId = (S.plan.days.find(p => p.id === trSel) || d).id;
-  const tiles = `<div class="wkcards ${n > 3 ? "many" : ""}" ${n > 3 ? "" : `style="grid-template-columns:repeat(${cols},minmax(0,1fr))"`}>${S.plan.days.map((p, i) => {
+  const tiles = `<div class="wkcards tsel" role="tablist" aria-label="Veckans pass">${S.plan.days.map((p, i) => {
     const ok = !!completedPassDate(p), next = p === d && !t.rest && !ok;
     const c = completedPassDate(p), st = ok ? `<span class="pst ok">${n > 3 ? "Klar" : c === TODAY ? "Klar idag" : `Klar · ${WD[weekdayOf(c)].toLowerCase()}`}</span>` : status(p, i);
     return `<button class="wkcard ${ok ? "ok" : next ? "next" : ""} ${p.id === selId ? "sel" : ""}" data-trsel="${p.id}" aria-pressed="${p.id === selId}" aria-label="${esc(p.name)}"><span class="wkst"><span class="wkdot">${ok ? icon("check", 10) : ""}</span>${st}</span><b>${esc(p.name)}</b></button>`;
@@ -99,7 +99,7 @@ function traningView() {
   const wd = isFixed() ? S.plan.weekdays.map(x => WD[x].toLowerCase()).join(", ") : "";
   const schema = `<section class="tschema"><span class="grow"><span class="klabel">Träningsschema</span>
       <b>${esc(PROGRAMS[S.plan.program || "ppl"].name)}</b><span class="muted small"> · ${S.plan.count} pass${wd ? ` · ${wd}` : ""}</span></span>
-    <button class="small" data-tab="upplagg">${icon("edit", 14)}Ändra schema</button></section>`;
+    <button class="linkbtn2" data-tab="upplagg">Ändra schema${icon("right", 14)}</button></section>`;
   const acts = actsOn(TODAY);
   const row = (ic, title, sub, attrs, end = "right") => `<button class="h3-row" ${attrs}><span class="h3-ic">${icon(ic, 18)}</span><span class="grow"><b>${title}</b><small>${sub}</small></span>${icon(end, 18)}</button>`;
   return `<div class="muted small toplabel">Vecka ${weekNo(TODAY)} · ${passes} av ${S.plan.count} pass</div><h1>Träna</h1>
