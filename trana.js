@@ -13,6 +13,9 @@ let trSel = null;       // passet vars övningar visas under rutorna på Träna 
 
 // Set och reps utskrivet: "4 set · 6–8 reps", "3 set · 10 per ben", "3 set · 45 s"
 function repsText(ex) {
+  return repsText0(ex) + (ex.last === "drop" ? " · dropset" : ex.last === "amrap" ? " · max reps" : "");
+}
+function repsText0(ex) {
   const r = String(ex.reps || "").trim().replace(/(\d)\s*-\s*(\d)/g, "$1–$2");
   if (!r) return `${ex.sets} set`;
   if (isTimed(ex.id)) return `${ex.sets} set · ${r.replace(/\s*sek(under)?\b/, " s").replace(/\s*\/\s*/, " per ")}`;
@@ -252,6 +255,9 @@ function exSheetView(d) {
       <label class="exval exkg"><input type="text" inputmode="decimal" value="${+e.kg ? fmtNum(+e.kg) : ""}" placeholder="–" data-exkg aria-label="Vikt i kg"><small>kg</small></label>
       <button class="stp" data-exstep="kg" data-dir="1" aria-label="Högre vikt">${icon("plus", 20)}</button></div>`}
     ${step("warm", "Uppvärmning", warmCount(e), 0, 5, "Lättare set före", true)}
+    ${isTimed(e.id) || EX[e.id].cat === "stretch" || EX[e.id].cat === "cardio" ? "" : `<div class="exset"><span class="grow col"><span>Sista setet</span><span class="muted small">${e.last === "drop" ? "Sänk vikten och kör direkt igen" : e.last === "amrap" ? "Så många reps du klarar" : "Som de andra"}</span></span>
+      <div class="tseg lastseg" role="radiogroup" aria-label="Sista setet">${[["", "Vanligt"], ["drop", "Dropset"], ["amrap", "Max"]].map(([k, n]) =>
+        `<button role="radio" data-exlast="${k}" class="${(e.last || "") === k ? "on" : ""}" aria-checked="${(e.last || "") === k}">${n}</button>`).join("")}</div></div>`}
     ${next ? `<div class="exset"><span class="grow col"><span>Superset med nästa</span><span class="muted small">${esc(EX[next.id].name)}, växelvis utan vila</span></span>
       <button class="swbtn ${g ? "on" : ""}" role="switch" aria-checked="${!!g}" data-ss="${d.id}" data-idx="${i}" aria-label="Superset med ${esc(EX[next.id].name)}"></button></div>` : ""}
     <div class="col exbtns">
@@ -275,7 +281,7 @@ function stepReps(r, dir, id) {
 }
 
 document.addEventListener("click", ev => {
-  const t = ev.target.closest("[data-seepass],[data-passback],[data-editcancel],[data-exsheet],[data-exsheetclose],[data-exstep],[data-ordna],[data-trsheet]");
+  const t = ev.target.closest("[data-seepass],[data-passback],[data-editcancel],[data-exsheet],[data-exsheetclose],[data-exstep],[data-exlast],[data-ordna],[data-trsheet]");
   if (!t || t.disabled) return;
   if (t.classList.contains("overlay") && ev.target !== t) return;   // klick inne i fönstret
   const ds = t.dataset;
@@ -302,6 +308,7 @@ document.addEventListener("click", ev => {
       if (v > 0) e.kg = v; else delete e.kg;
     }
   }
+  else if (ds.exlast !== undefined) { const d = currentPassDay(), e = d && d.ex[exSheet]; if (e) { if (ds.exlast) e.last = ds.exlast; else delete e.last; } }
   else if (ds.ordna !== undefined) ordna = !ordna;
   else if (ds.trsheet !== undefined) { trSheet = ds.trsheet || null; dailyEditing = false; }
   save();

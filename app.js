@@ -2009,7 +2009,8 @@ document.addEventListener("click", ev => {
     s.ok = !s.ok;
     const idx = d.ex.findIndex(x => x.id === ds.ok), inRound = s.ok && ssNext(d, idx, +ds.i) != null;
     // I ett superset vilar man först när varvet är klart
-    if (s.ok) { fillFromHint(d, ds.ok, +ds.i); checkRecord(ds.ok, s); if (!editDate && !inRound) startRest(ds.ok); }
+    const exo = d.ex[idx], toDrop = exo && exo.last === "drop" && +ds.i === exo.sets - 1;   // dropen körs direkt, utan vila
+    if (s.ok) { fillFromHint(d, ds.ok, +ds.i); checkRecord(ds.ok, s); if (!editDate && !inRound && !toDrop) startRest(ds.ok); }
     syncDone(d);
     if (s.ok) focusAfterSet(d, idx, +ds.i);
   }

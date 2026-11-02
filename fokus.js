@@ -177,30 +177,35 @@ function focusView() {
   const bw = !!EX[ex.id].bw, timed = isTimed(ex.id), stretch = EX[ex.id].cat === "stretch";
   // Alla set i ordning: uppvärmningen först, sedan arbetsseten
   const all = [...Array.from({ length: nW }, (_, i) => ({ w: true, i })), ...Array.from({ length: ex.sets }, (_, i) => ({ w: false, i }))];
+  // Dropset: när sista setet är klart dyker en drop upp direkt efter, lättare och utan vila
+  if (ex.last === "drop" && sets[ex.sets - 1] && sets[ex.sets - 1].ok) all.push({ w: false, i: ex.sets, drop: true });
+  const amrapAt = s => ex.last === "amrap" && !s.w && !s.drop && s.i === ex.sets - 1;
+  const dropAt = s => ex.last === "drop" && !s.w && !s.drop && s.i === ex.sets - 1;
   const stOf = s => (s.w ? warm[s.i] : sets[s.i]) || {};
   const active = all.findIndex(s => !stOf(s).ok);
   const sel = focus.sel != null && all[focus.sel] ? focus.sel : active;
   const g = ssGroup(d, focus.idx);
   const fmt = v => fmtSet2({ kg: +v.kg || 0, reps: +v.reps || 0 }, ex.id);
-  const badge = s => s.w ? `U${s.i + 1}` : `${s.i + 1}`;
+  const badge = s => s.w ? `U${s.i + 1}` : s.drop ? "D" : `${s.i + 1}`;
   const okAttrs = s => `data-ok="${ex.id}" data-i="${s.i}"${s.w ? ' data-w="1"' : ""}`;
   let setAction = "";
   const rows = all.map((s, k) => {
-    const v = stOf(s), h = s.w ? warmHint(d, ex, s.i) : liveHint(d, ex, s.i), p = !s.w && prev ? hintSet(prev, s.i) : null;
+    const v = stOf(s), h = s.w ? warmHint(d, ex, s.i) : liveHint(d, ex, s.i), p = !s.w && !s.drop && prev ? hintSet(prev, s.i) : null;
+    if (s.drop) { const st = stepFor(ex.id, "kg"), top = +((sets[ex.sets - 1] || {}).kg) || +h.kg || 0; h.kg = top ? Math.max(st, Math.round(top * 0.75 / st) * st) : h.kg; }
     const cls = `fset ${v.ok ? "done" : ""} ${s.w ? "warm" : ""} ${k === sel ? "active" : ""}`;
     if (k === sel) {
       const kg = bigStepper(ex.id, s.i, "kg", v.kg, h.kg || 0, bw ? "Extra vikt" : "Vikt", "kg", s.w);
-      const reps = bigStepper(ex.id, s.i, "reps", v.reps, h.reps || repRange(ex.reps).lo || "", timed ? "Sekunder" : "Reps", timed ? "sek" : "reps", s.w);
+      const reps = bigStepper(ex.id, s.i, "reps", v.reps, amrapAt(s) ? "max" : h.reps || repRange(ex.reps).lo || "", timed ? "Sekunder" : "Reps", timed ? "sek" : "reps", s.w);
       const fields = stretch ? reps : bw ? reps + kg : kg + reps;
-      const note = s.w ? (hasData(h) ? `Förslag: ${fmt(h)}` : "Lättare set före") : p && hasData(p) ? `Förra gången: ${fmt(p)}` : "";
+      const note = s.w ? (hasData(h) ? `Förslag: ${fmt(h)}` : "Lättare set före") : s.drop ? "Ca 25 % lättare, ingen vila" : amrapAt(s) ? "Så många du klarar" : p && hasData(p) ? `Förra gången: ${fmt(p)}` : "";
       const inRound = !s.w && g && ssNext(d, focus.idx, s.i) != null;
-      const doneTxt = v.ok ? "" : s.w ? "Klar med uppvärmning" : g ? (inRound ? "Klar · nästa i varvet" : "Klar · vila efter varvet") : "Klar med set";
+      const doneTxt = v.ok ? "" : s.w ? "Klar med uppvärmning" : s.drop ? "Klar med drop" : dropAt(s) ? "Klar · direkt till drop" : g ? (inRound ? "Klar · nästa i varvet" : "Klar · vila efter varvet") : "Klar med set";
       const btn = v.ok
         ? (active >= 0 ? `<button class="wide fdone ghostbtn" data-fsel="${active}">Till ${all[active].w ? "uppvärmning" : "set"} ${badge(all[active])}</button>` : "")
         : `<button class="primary wide fdone" ${okAttrs(s)}>${doneTxt}</button>`;
       setAction = btn;
       return `<li class="${cls}"><div class="fsethead"><button class="fcheck ${v.ok ? "on" : ""}" ${okAttrs(s)} aria-pressed="${!!v.ok}" aria-label="${s.w ? "Uppvärmning" : "Set"} ${s.i + 1} klart">${v.ok ? icon("check", 14) : `<span class="fb">${badge(s)}</span>`}</button>
-        <b class="grow">${s.w ? `Uppvärmning ${s.i + 1}` : `Set ${s.i + 1}`}</b>${note ? `<span class="muted small">${note}</span>` : ""}</div>
+        <b class="grow">${s.w ? `Uppvärmning ${s.i + 1}` : s.drop ? `Drop` : `Set ${s.i + 1}`}${amrapAt(s) ? ` <span class="settag">Max reps</span>` : dropAt(s) ? ` <span class="settag">Dropset</span>` : ""}</b>${note ? `<span class="muted small">${note}</span>` : ""}</div>
         ${fields}</li>`;
     }
     const val = v.ok && hasData(v) ? fmt(v) : hasData(h) ? fmt(h) : "";
