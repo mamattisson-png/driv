@@ -75,7 +75,7 @@ function traningView() {
   const selId = (S.plan.days.find(p => p.id === trSel) || d).id;
   const tiles = `<div class="wkcards ${n > 3 ? "many" : ""}" ${n > 3 ? "" : `style="grid-template-columns:repeat(${cols},minmax(0,1fr))"`}>${S.plan.days.map((p, i) => {
     const ok = !!completedPassDate(p), next = p === d && !t.rest && !ok;
-    const c = completedPassDate(p), st = ok ? `<span class="pst ok">${c === TODAY ? "Klar idag" : `Klar · ${WD[weekdayOf(c)].toLowerCase()}`}</span>` : status(p, i);
+    const c = completedPassDate(p), st = ok ? `<span class="pst ok">${n > 3 ? "Klar" : c === TODAY ? "Klar idag" : `Klar · ${WD[weekdayOf(c)].toLowerCase()}`}</span>` : status(p, i);
     return `<button class="wkcard ${ok ? "ok" : next ? "next" : ""} ${p.id === selId ? "sel" : ""}" data-trsel="${p.id}" aria-pressed="${p.id === selId}" aria-label="${esc(p.name)}"><span class="wkst"><span class="wkdot">${ok ? icon("check", 10) : ""}</span>${st}</span><b>${esc(p.name)}</b></button>`;
   }).join("")}</div>`;
   // Veckans pass som en lista med alla övningar: hela veckans träning syns på en gång,
