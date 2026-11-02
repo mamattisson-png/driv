@@ -1493,6 +1493,17 @@ function muscleFigure(parts, status, side) {
     <g class="m-head"><circle cx="50" cy="14" r="9"/><rect x="46" y="23" width="8" height="7" rx="2"/></g>
     ${parts.map(([k, shapes]) => `<g class="m-${st[k] || "off"}">${shapes}</g>`).join("")}</svg><figcaption>${side === "Framsida" ? "Fram" : "Bak"}</figcaption></figure>`;
 }
+// Samma anatomibild som Övningar, fast liten: muskelgrupperna i passet färgas efter status
+const GROUP_TO_MUSKEL = { brost: ["brost"], axlar: ["axlar"], triceps: ["triceps"], biceps: ["biceps"], underarmar: ["biceps"], mage: ["mage"],
+  rygg: ["overrygg", "lats", "landrygg"], framsida_lar: ["lar_fram"], baksida_lar: ["lar_bak"], sate: ["sate"], vader: ["vader"] };
+function muscleFigureReal(status, side) {
+  const states = {};
+  for (const s of status) for (const k of GROUP_TO_MUSKEL[s.key] || []) states[k] = s.state;
+  const shown = status.filter(s => (GROUP_TO_MUSKEL[s.key] || []).some(k => (figK() ? ANAT_K : ANAT)[side === "Framsida" ? "f" : "b"].regs.some(r => r[0] === k)));
+  const label = `${side}: ${shown.length ? shown.map(s => `${MUSCLE_GROUPS[s.key].toLowerCase()} ${STATE_WORD[s.state]}`).join(", ") : "inga muskler i passet"}`;
+  const f = side === "Framsida";
+  return `<figure class="mfig mfig-real">${anatSvg(f ? "f" : "b", { labels: false, states, vb: f ? "40 20 560 1200" : "660 20 560 1200", label })}<figcaption>${f ? "Fram" : "Bak"}</figcaption></figure>`;
+}
 const STATE_ICON = { ok: '<path d="M5 12.5l4.5 4.5L19 7.5"/>', part: '<path d="M6 12h12"/>', miss: '<path d="M12 6v7M12 18v.5"/>' };
 // Kortet ovanför övningslistan när man ändrar ett pass
 function muscleCard(target, type, list) {
@@ -1500,7 +1511,7 @@ function muscleCard(target, type, list) {
   const status = muscleStatus(type, list), sugg = muscleSuggestions(type, list, status), allOk = status.every(s => s.state === "ok");
   const detail = s => s.state === "ok" ? `${s.prim} ${s.prim === 1 ? "övning" : "övningar"}` : s.state === "part" ? "Delvis, bara indirekt" : "Saknas";
   return `<section class="card mcard" aria-label="Muskler i passet">
-    <div class="mtop"><div class="mfigs">${muscleFigure(FIG_FRONT, status, "Framsida")}${muscleFigure(FIG_BACK, status, "Baksida")}</div>
+    <div class="mtop"><div class="mfigs">${muscleFigureReal(status, "Framsida")}${muscleFigureReal(status, "Baksida")}</div>
       <div class="mlist"><div class="klabel">${esc(TYPES[type].label)} tränar</div>
         ${status.map(s => `<div class="mrow"><span class="mdot ${s.state}" aria-hidden="true"><svg viewBox="0 0 24 24">${STATE_ICON[s.state]}</svg></span>
           <span class="grow"><b>${s.label}</b><span class="mdet ${s.state}">${detail(s)}</span></span></div>`).join("")}</div></div>

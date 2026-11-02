@@ -43,9 +43,9 @@ const accOf = mode => mode === "st" ? "var(--stretch)" : "var(--accent)";
 // Anatomibilden för en sida. strong/soft: muskler som färgas starkt/svagt; labels: etiketter att trycka på.
 // Var etiketten Hela kroppen står: en egen ruta i vänsterspalten, under de andra
 const ANAT_ALL = { f: [-228, 850], b: [317, 850] };
-function anatSvg(side, { strong = [], soft = [], labels = true, mode = "ex", vb, label, whole = false }) {
+function anatSvg(side, { strong = [], soft = [], labels = true, mode = "ex", vb, label, whole = false, states = null }) {
   const A = (figK() ? ANAT_K : ANAT)[side], c = A.clip, id = "anclip-" + side + (labels ? "" : "-d");
-  const regs = A.regs.map(([k, d]) => `<path d="${d}" class="an-reg ${strong.includes(k) ? "on" : soft.includes(k) ? "soft" : ""}" ${labels ? `data-mus="${k}"` : ""}><title>${MUSKEL_NAMN[k]}</title></path>`).join("");
+  const regs = A.regs.map(([k, d]) => `<path d="${d}" class="an-reg ${states ? (states[k] ? "st-" + states[k] : "") : strong.includes(k) ? "on" : soft.includes(k) ? "soft" : ""}" ${labels ? `data-mus="${k}"` : ""}><title>${MUSKEL_NAMN[k]}</title></path>`).join("");
   const labs = labels ? A.labels.map(([k, l, dot, r, t, text]) => { const on = strong.includes(k);
     return `<g class="an-lab ${on ? "on" : ""}" data-mus="${k}" role="button" tabindex="0" aria-label="${text}" aria-pressed="${on}"><line x1="${l[0]}" y1="${l[1]}" x2="${l[2]}" y2="${l[3]}"/><circle cx="${dot[0]}" cy="${dot[1]}" r="9"/>
       <rect x="${r[0]}" y="${r[1]}" width="${r[2]}" height="${r[3]}" rx="52"/><text x="${t[0]}" y="${t[1]}" text-anchor="middle">${text}</text></g>`; }).join("")

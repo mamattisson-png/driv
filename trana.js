@@ -139,7 +139,7 @@ function muscleSummary(d) {
   const status = muscleStatus(d.type, d.ex), allOk = status.every(s => s.state === "ok");
   const word = { ok: "", part: ", bara delvis", miss: " saknas" };
   return `<section class="card mcard msum" aria-label="Muskler i passet"><div class="mtop">
-      <div class="mfigs">${muscleFigure(FIG_FRONT, status, "Framsida")}${muscleFigure(FIG_BACK, status, "Baksida")}</div>
+      <div class="mfigs">${muscleFigureReal(status, "Framsida")}${muscleFigureReal(status, "Baksida")}</div>
       <div class="mlist"><div class="klabel">Muskler</div>
         ${status.map(s => `<div class="mrow"><span class="mdot ${s.state}" aria-hidden="true"><svg viewBox="0 0 24 24">${STATE_ICON[s.state]}</svg></span><span class="grow"><b class="${s.state === "ok" ? "" : "mdet " + s.state}">${s.label}${word[s.state]}</b></span></div>`).join("")}
         <div class="mrec small ${allOk ? "ok" : ""}">${muscleAdvice(d.type, status)}</div></div></div></section>`;
