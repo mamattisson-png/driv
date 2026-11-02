@@ -81,22 +81,21 @@ function traningView() {
   // Veckans pass som en lista med alla övningar: hela veckans träning syns på en gång,
   // och ett tryck på ett pass öppnar det (där det startas). Det stora startkortet finns på Hem.
   const mins = p => { const sets = p.ex.reduce((a, e) => a + (+e.sets || 0), 0); return sets ? `~${Math.max(5, Math.round(sets * 2.5 / 5) * 5)} min` : ""; };
-  const exLine = (p, e, k) => { const g = ssGroup(p, k);
-    return `<li><span class="tp-n">${g ? `<i class="sstag">${String.fromCharCode(65 + ssIndex(p, g[0]))}${k - g[0] + 1}</i>` : k + 1}</span><span class="grow">${esc(EX[e.id] ? EX[e.id].name : e.id)}</span><span class="tp-sr">${e.sets} × ${esc(String(e.reps || "").replace(/(\d)\s*-\s*(\d)/g, "$1–$2"))}</span></li>`; };
   // Kompakt lista: varje pass på en rad med status, namn och övningarna som löptext,
   // så att hela veckan syns i en vy. Ett tryck öppnar passet.
   // Varje pass: tryck på raden för att se passet, och lika tydliga knappar för att starta och ändra det
-  const list = `<div class="tclist">${S.plan.days.map((p, i) => {
-    const ok = !!completedPassDate(p), next = p === d && !t.rest && !ok, going = p === d && started;
-    const c = completedPassDate(p), st = ok ? `<span class="pst ok">${c === TODAY ? "Klar idag" : `Klar · ${WD[weekdayOf(c)].toLowerCase()}`}</span>` : status(p, i);
-    const names = p.ex.map(e => EX[e.id] ? EX[e.id].name : e.id);
-    return `<div class="tcrow ${ok ? "ok" : next ? "next" : ""}">
-      <button class="tcopen" data-pick="${p.id}" aria-label="Visa ${esc(p.name)}"><span class="tcdot" aria-hidden="true">${ok ? icon("check", 12) : ""}</span>
-        <span class="grow tcmain"><span class="row between"><b>${esc(p.name)}</b>${st}</span>
-        <small>${names.length ? esc(names.join(" · ")) : "Inga övningar än"}</small></span></button>
-      <span class="tcacts">${p.ex.length ? `<button class="small ${next ? "primary" : ""}" data-focusstart="${p.id}" aria-label="Starta ${esc(p.name)}">${icon("play", 14)}${going ? "Fortsätt" : "Starta"}</button>` : ""}
-        <button class="small ghost" data-editpass="${p.id}" aria-label="Ändra ${esc(p.name)}">${icon("edit", 14)}Ändra</button></span></div>`;
-  }).join("")}</div>`;
+  // Det valda passet: övningarna med set × reps, och lika tydliga knappar för att starta och ändra
+  const sel = S.plan.days.find(p => p.id === selId) || d, si = S.plan.days.indexOf(sel);
+  const exLine = (p, e, k) => { const g = ssGroup(p, k);
+    return `<li><span class="tp-n">${g ? `<i class="sstag">${String.fromCharCode(65 + ssIndex(p, g[0]))}${k - g[0] + 1}</i>` : k + 1}</span><span class="grow">${esc(EX[e.id] ? EX[e.id].name : e.id)}</span><span class="tp-sr">${e.sets} × ${esc(String(e.reps || "").replace(/(\d)\s*-\s*(\d)/g, "$1–$2"))}</span></li>`; };
+  const sOk = !!completedPassDate(sel), sNext = sel === d && !t.rest && !sOk, sGoing = sel === d && started;
+  const sets = sel.ex.reduce((a, e) => a + (+e.sets || 0), 0);
+  const list = `<section class="tpass ${sOk ? "ok" : sNext ? "next" : ""}" aria-label="${esc(sel.name)}">
+      <span class="row between tp-top">${sOk ? `<span class="pst ok">${icon("check", 12)}Klar</span>` : status(sel, si)}<span class="muted small">${sel.ex.length} ${sel.ex.length === 1 ? "övning" : "övningar"}${sets ? ` · ~${Math.max(5, Math.round(sets * 2.5 / 5) * 5)} min` : ""}</span></span>
+      <button class="tp-namebtn" data-pick="${sel.id}"><span class="tp-name">${esc(sel.name)}</span><span class="muted small tp-mus">${esc(passMuscles(sel))}</span></button>
+      ${sel.ex.length ? `<ol class="tp-ex">${sel.ex.map((e, k) => exLine(sel, e, k)).join("")}</ol>` : `<span class="muted small">Inga övningar än</span>`}
+      <div class="tp-acts">${sel.ex.length ? `<button class="${sOk ? "" : "primary"} grow" data-focusstart="${sel.id}">${icon("play", 16)}${sGoing ? "Fortsätt" : sOk ? "Kör igen" : "Starta"} ${esc(sel.name)}</button>` : ""}
+        <button class="${sel.ex.length ? "" : "primary grow"}" data-editpass="${sel.id}">${icon("edit", 16)}${sel.ex.length ? "Ändra" : "Lägg till övningar"}</button></div></section>`;
   const wd = isFixed() ? S.plan.weekdays.map(x => WD[x].toLowerCase()).join(", ") : "";
   const schema = `<section class="card tschema"><div class="grow"><span class="klabel">Träningsschema</span>
       <b>${esc(PROGRAMS[S.plan.program || "ppl"].name)}</b><span class="muted small">${S.plan.count} pass i veckan${wd ? ` · ${wd}` : ""}</span></div>
@@ -106,6 +105,7 @@ function traningView() {
   return `<div class="muted small toplabel">Vecka ${weekNo(TODAY)} · ${passes} av ${S.plan.count} pass</div><h1>Träna</h1>
     ${schema}
     <div class="klabel h3-sec">Veckans pass</div>
+    ${tiles}
     ${list}
     <div class="klabel h3-sec">Mer</div>
     <section class="h3-list">
