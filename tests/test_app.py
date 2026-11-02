@@ -2342,3 +2342,19 @@ def test_reps_foljer_med_till_nasta_set(page):
     page.click(f'.fdone[data-ok="{ex}"][data-i="2"]')
     assert page.evaluate(f"workoutsOn(TODAY)[0].sets['{ex}'][2].reps") == 8
     assert page.evaluate(f"workoutsOn(TODAY)[0].sets['{ex}'][3].reps") == 5
+
+
+def test_uppvarmning_under_passet(page):
+    start(page)
+    go(page, "pass")
+    page.click(f'[data-focusstart="{page.evaluate("S.plan.days[0].id")}"]')
+    ex = page.evaluate("S.plan.days[0].ex[0].id")
+    # Ett arbetsset är redan gjort; uppvärmningen läggs före och blir det man står på
+    page.click(f'[data-ok="{ex}"][data-i="0"]:not([data-w])')
+    page.click(f'[data-warmadd="{ex}"]')
+    assert page.evaluate("S.plan.days[0].ex[0].warm") == 1
+    assert page.locator(".fset.warm.active").count() == 1
+    page.click(f'[data-ok="{ex}"][data-i="0"][data-w="1"]')
+    assert page.evaluate(f"workoutsOn(TODAY)[0].warm['{ex}'][0].ok") is True
+    # Uppvärmningen räknas inte som arbetsset
+    assert page.evaluate(f"workoutsOn(TODAY)[0].sets['{ex}'].filter(s => s && s.ok).length") == 1
