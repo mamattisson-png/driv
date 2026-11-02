@@ -8,7 +8,8 @@ let passOpen = false;   // Passet visas i stället för översikten
 let editSnap = null;    // passets övningar när Ändra öppnades, för Avbryt
 let exSheet = null;     // index för övningen vars blad är öppet när man ändrar
 let ordna = false;      // pilar för att flytta övningarna
-let trSheet = null;     // "dailys" när dailys är öppet ovanpå Träna
+let trSheet = null;
+let trSel = null;       // passet vars övningar visas under rutorna på Träna (annars det som står på tur)     // "dailys" när dailys är öppet ovanpå Träna
 
 // Set och reps utskrivet: "4 set · 6–8 reps", "3 set · 10 per ben", "3 set · 45 s"
 function repsText(ex) {
@@ -71,17 +72,18 @@ function traningView() {
   };
   // Veckans pass som kort: grön bock när det är gjort, orange ram på det som står på tur
   const cols = n <= 3 ? n : n === 4 ? 2 : 3;
-  const tiles = `<div class="wkcards" style="grid-template-columns:repeat(${cols},minmax(0,1fr))">${S.plan.days.map((p, i) => {
+  const selId = (S.plan.days.find(p => p.id === trSel) || d).id;
+  const tiles = `<div class="wkcards ${n > 3 ? "many" : ""}" ${n > 3 ? "" : `style="grid-template-columns:repeat(${cols},minmax(0,1fr))"`}>${S.plan.days.map((p, i) => {
     const ok = !!completedPassDate(p), next = p === d && !t.rest && !ok;
     const c = completedPassDate(p), st = ok ? `<span class="pst ok">${c === TODAY ? "Klar idag" : `Klar · ${WD[weekdayOf(c)].toLowerCase()}`}</span>` : status(p, i);
-    return `<button class="wkcard ${ok ? "ok" : next ? "next" : ""}" data-pick="${p.id}" aria-label="${esc(p.name)}"><span class="wkst"><span class="wkdot">${ok ? icon("check", 10) : ""}</span>${st}</span><b>${esc(p.name)}</b></button>`;
+    return `<button class="wkcard ${ok ? "ok" : next ? "next" : ""} ${p.id === selId ? "sel" : ""}" data-trsel="${p.id}" aria-pressed="${p.id === selId}" aria-label="${esc(p.name)}"><span class="wkst"><span class="wkdot">${ok ? icon("check", 10) : ""}</span>${st}</span><b>${esc(p.name)}</b></button>`;
   }).join("")}</div>`;
   // Veckans pass som en lista med alla övningar: hela veckans träning syns på en gång,
   // och ett tryck på ett pass öppnar det (där det startas). Det stora startkortet finns på Hem.
   const mins = p => { const sets = p.ex.reduce((a, e) => a + (+e.sets || 0), 0); return sets ? `~${Math.max(5, Math.round(sets * 2.5 / 5) * 5)} min` : ""; };
   const exLine = (p, e, k) => { const g = ssGroup(p, k);
     return `<li><span class="tp-n">${g ? `<i class="sstag">${String.fromCharCode(65 + ssIndex(p, g[0]))}${k - g[0] + 1}</i>` : k + 1}</span><span class="grow">${esc(EX[e.id] ? EX[e.id].name : e.id)}</span><span class="tp-sr">${e.sets} × ${esc(String(e.reps || "").replace(/(\d)\s*-\s*(\d)/g, "$1–$2"))}</span></li>`; };
-  const list = `<div class="tplist">${S.plan.days.map((p, i) => {
+  const list = `<div class="tplist">${S.plan.days.map((p, i) => [p, i]).filter(([p]) => p.id === selId).map(([p, i]) => {
     const ok = !!completedPassDate(p), next = p === d && !t.rest && !ok;
     const c = completedPassDate(p), st = ok ? `<span class="pst ok">${icon("check", 12)}${c === TODAY ? "Klar idag" : `Klar · ${WD_LONG[weekdayOf(c)]}`}</span>` : status(p, i);
     return `<button class="tpass ${ok ? "ok" : next ? "next" : ""}" data-pick="${p.id}" aria-label="${esc(p.name)}, ${p.ex.length} övningar">
@@ -95,6 +97,7 @@ function traningView() {
   return `<div class="muted small toplabel">Vecka ${weekNo(TODAY)} · ${passes} av ${S.plan.count} pass</div><h1>Träna</h1>
     <div class="row between trprog"><span class="klabel">Veckans pass</span>
       <button class="linkbtn2" data-tab="upplagg">${esc(PROGRAMS[S.plan.program || "ppl"].name)}${icon("right", 14)}</button></div>
+    ${tiles}
     ${list}
     <div class="klabel h3-sec">Mer</div>
     <section class="h3-list">
@@ -105,6 +108,12 @@ function traningView() {
     ${acts.length ? `<div class="homeacts">${acts.map((a, i) => `<button class="dchip on" data-actedit="${i}" data-actdate="${TODAY}">${icon("check", 16)}${esc(a.name)} · ${+a.min} min</button>`).join("")}</div>` : ""}
     ${trSheet === "dailys" ? dailysSheet() : ""}`;
 }
+
+document.addEventListener("click", ev => {
+  const b = ev.target.closest && ev.target.closest("[data-trsel]");
+  if (!b) return;
+  ev.stopImmediatePropagation(); trSel = b.dataset.trsel; render();
+}, true);
 
 // Övningsbiblioteket (muskelsok.js) är öppet när man bläddrar från Träna
 let exLib = null;

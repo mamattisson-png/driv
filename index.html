@@ -1715,7 +1715,10 @@ button.h3-card.h3-head { background: var(--card); padding: 12px 14px; }
 .tplist { display: flex; flex-direction: column; gap: 10px; margin-bottom: 6px; }
 .tpass { display: flex; flex-direction: column; gap: 4px; width: 100%; padding: 14px 16px 12px; border: 1px solid var(--line); border-radius: 20px; background: var(--card); color: var(--text); text-align: left; font: inherit; cursor: pointer; }
 .tpass.next { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
-.tpass.ok { opacity: .72; }
+.tpass.ok .tp-name { color: var(--muted); }
+.wkcard.sel { box-shadow: 0 0 0 2px var(--text) inset; }
+.wkcards.many { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 2px; }
+.wkcards.many .wkcard { flex: 0 0 31%; scroll-snap-align: start; }
 .tp-top { margin-bottom: 4px; }
 .tp-top .pst { display: inline-flex; align-items: center; gap: 4px; }
 .tp-name { font: 700 22px "Unbounded", sans-serif; text-transform: uppercase; letter-spacing: -.01em; }
