@@ -2372,3 +2372,16 @@ def test_okning_mellan_set_foljer_med(page):
     # Samma vikt i två set: samma förslag, ingen ökning
     page.evaluate(f"setAt(S.plan.days[0],'{ex}',1).kg = 4; render()")
     assert page.evaluate(f"liveHint(S.plan.days[0], S.plan.days[0].ex[0], 2).kg") == 4
+
+
+def test_byt_ovning_under_passet_gar_att_scrolla(page):
+    start(page)
+    go(page, "pass")
+    page.click(f'[data-focusstart="{page.evaluate("S.plan.days[0].id")}"]')
+    page.click("[data-fswap]")
+    # Passets skrollås släpps medan biblioteket är öppet, och kommer tillbaka efteråt
+    assert page.evaluate("document.body.classList.contains('infocus')") is False
+    page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+    assert page.evaluate("scrollY") > 300
+    page.click("[data-libclose]")
+    assert page.evaluate("document.body.classList.contains('infocus')") is True

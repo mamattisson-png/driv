@@ -49,6 +49,8 @@ Senast uppdaterad: 2026-11-01. Status bygger på dokumenterade publiceringar och
 | 45 | Hälsningen följer tiden och dagens pass | Hem | Låg | Klar |
 | 46 | Muskelkortet med samma anatomibild som Övningar | Träning | Medel | Klar |
 | 47 | Firande när alla dailys är klara | Dailys | Låg | Klar |
+| 48 | Byt övning under passet går att scrolla | Bugg | Hög | Klar |
+| 49 | Uppvärmning under passet, reps och ökning följer med till nästa set | Träning | Hög | Klar |
 
 ## Detaljer och acceptanskriterier
 
@@ -115,6 +117,8 @@ Senast uppdaterad: 2026-11-01. Status bygger på dokumenterade publiceringar och
 
 46. **Muskelkortet (Klar, publicerad 2026-11-02):** Kortet Muskler på passet visar samma anatomibild som Övningar, fast liten, med musklerna färgade grönt, orange eller rött efter status. Följer vald figur.
 47. **Firande i Dailys (Klar, publicerad 2026-11-02):** När sista dailyn eller kosttillskottet bockas i sprutar en liten konfetti ur bocken och ringen överst pulserar grönt en gång. Bara när man själv gör klart, och utan rörelse för den som valt minskade animationer.
+48. **Byt övning går att scrolla (Klar, publicerad 2026-11-02):** Under ett pågående pass låg passets skrollås kvar när Byt övning öppnade biblioteket, så övningarna gick inte att nå. Låset släpps nu medan biblioteket är öppet.
+49. **Smidigare set i passet (Klar, publicerad 2026-11-02):** Knappen + Uppvärmning lägger ett uppvärmningsset före arbetsseten under passet. Reps följer med till nästa set precis som vikten, och ökar man vikten mellan två set (t.ex. +0,5 kg) föreslås samma ökning igen. Ett set man själv ställt in behåller sitt värde.
 
 ## Arbetsregler
 

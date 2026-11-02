@@ -922,7 +922,7 @@ function render() {
   if (TABS.some(([id]) => id === tab)) profBack = tab;
   const nav = document.getElementById("nav");
   // Menyn är tillgänglig även under ett pågående pass.
-  const inFocus = tab === "pass" && !!focus && !editing && !editDate && !focus.suspended;
+  const inFocus = tab === "pass" && !!focus && !editing && !editDate && !focus.suspended && !libCtx;   // biblioteket (Byt övning) ska gå att scrolla
   nav.classList.toggle("hidden", tab === "upplagg" || !!passDone);
   document.body.classList.toggle("onboard", tab === "upplagg" && !S.setupDone);
   document.body.classList.toggle("infocus", inFocus);
