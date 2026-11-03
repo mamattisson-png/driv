@@ -55,6 +55,8 @@ Senast uppdaterad: 2026-11-03. Status bygger på dokumenterade publiceringar och
 | 51 | Ändra pass: alltid pilar, vikt per övning, dropset och max reps | Träning | Hög | Klar |
 | 52 | Avslutat pass visar vikter, PB och sammanfattning | Träning | Medel | Klar |
 | 53 | Sparat pass är låst tills man öppnar det igen | Bugg | Medel | Klar |
+| 54 | Övningar får samma sida som stretch | Träning | Medel | Klar |
+| 55 | Inställningar: en sida per sak med samma upplägg | Design | Hög | Klar |
 
 ## Detaljer och acceptanskriterier
 
@@ -127,6 +129,9 @@ Senast uppdaterad: 2026-11-03. Status bygger på dokumenterade publiceringar och
 51. **Ändra pass och sista setet (Klar, publicerad 2026-11-03):** Pilarna för att flytta övningar finns alltid när man ändrar ett pass (Ordna behövs inte). Vikten kan ställas in per övning, med − och + eller genom att skriva in den, och blir startvikten i passet. Sista setet kan vara Dropset (en drop ca 25 % lättare utan vila, med En drop till efter den här) eller Max reps.
 52. **Avslutat pass (Klar, publicerad 2026-11-03):** Ett genomfört pass visar tid, set, total vikt och antal PB överst, och varje övning de set man gjorde som vikt × reps med PB-märke när toppsetet slog tidigare rekord.
 53. **Låst sparat pass (Klar, publicerad 2026-11-03):** Övningarna i ett avslutat pass går inte att trycka på. Man öppnar passet med Öppna igen först. Ändringar i efterhand görs som förut från Historik.
+54. **Övningens sida (Klar, publicerad 2026-11-03):** Ett tryck på en övning i biblioteket öppnar samma slags sida som en stretch: musklerna på kroppen, set, reps, utrustning, hur man gör och Lägg till. Länkarna till MuscleWiki är borttagna.
+
+55. **Nya Inställningar (Klar, publicerad 2026-11-03):** Varje rad öppnar en egen sida med tillbakaknapp, rubrik och en mening om vad den gör, i stället för att fällas ut. Brytare i stället för kryssrutor, Kalorimål visar målet stort, namn, inloggning och data på Konto och data, Träningsschema under Träning och en tillbakaknapp på Kommande funktioner.
 
 ## Arbetsregler
 
