@@ -108,7 +108,7 @@ const EXTRA_STRETCH_IDS = [];
     "lats shoulders", "lats", { h: [44, 59], t: 114, a: [101, 31], a2: [60, 76], f: [44, 95], f2: [30, 95] }, undefined, { scene: wall });
   add("puppy", "Valpens position", "Breda ryggmuskeln, bröstmuskler, axlar", "30 s",
     ["Börja på alla fyra och behåll höften ovanför knäna.", "Gå fram med händerna och sänk bröstet mot golvet.", "Stanna i ett bekvämt läge utan att pressa ned ländryggen."],
-    "lats chest shoulders", "lats", { h: [39, 66], s: [66, 81], a: [94, 94], f: [20, 94], kb: -1, eb: -1 } );
+    "lats chest shoulders", "exercise/puppy-pose", { h: [39, 66], s: [66, 81], a: [94, 94], f: [20, 94], kb: -1, eb: -1 } );
   add("upper_back_hug", "Sittande stretch mellan skulderbladen", "Rombmuskler, mellersta kappmuskeln", "25 s",
     ["Sitt stadigt och knäpp händerna framför bröstet.", "Sträck händerna framåt och låt skulderbladen glida isär.", "Håll nacken lång och andas lugnt utan att falla ihop över benen."],
     "upper_back shoulders", "shoulders", mod(seated, { t: 165, a: [82, 35], a2: [81, 36] }), undefined, { scene: chair });
@@ -125,7 +125,7 @@ const EXTRA_STRETCH_IDS = [];
     "triceps", "triceps", mod(supine, { a: [8, 69], a2: [25, 59], f: [78, 95], eb: -1 }));
   add("biceps_wall", "Bicepsstretch med rak arm mot vägg", "Biceps, framsida axlar", "25 s/arm",
     ["Stå med sidan mot en vägg och lägg handflatan bakom dig i axelhöjd.", "Håll armbågen nästan rak och vrid kroppen lite bort från handen.", "Stanna vid mild sträckning längs överarmen och byt sida."],
-    "biceps shoulders", "biceps", mod(standing, { a: [27, 25], a2: [62, 83] }), undefined, { scene: [["line", 26, 4, 26, 95]] });
+    "biceps shoulders", "exercise/biceps-stretch-variation-one", mod(standing, { a: [27, 25], a2: [62, 83] }), undefined, { scene: [["line", 26, 4, 26, 95]] });
   add("biceps_floor", "Sittande bicepsstretch med händer i golvet", "Biceps, framsida axlar, bröstmuskler", "25 s",
     ["Sitt med böjda knän och händerna i golvet bakom dig, fingrarna bort från kroppen.", "För sätet en liten bit framåt medan armarna förblir långa.", "Behåll bröstet öppet och avlasta händerna när du lämnar positionen."],
     "biceps shoulders chest", "biceps", { h: [49, 89], t: 192, a: [26, 95], f: [79, 95], kb: -1 } );
