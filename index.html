@@ -1187,6 +1187,55 @@
   .pbtag { flex: none; padding: 4px 10px; border-radius: 99px; background: var(--accent-soft); color: var(--accent-text); font-size: 12px; font-weight: 700; }
   .pdshare { display: flex; align-items: center; gap: 12px; padding: 14px 16px; margin: 0; }
   .passdone .lightbtn { margin: 0; }
+
+  /* Historik: dagen som sammanfattning */
+  .hsheet { display: flex; flex-direction: column; gap: 4px; }
+  .hsheet-top { margin-bottom: 6px; }
+  .hsheet-top h2 { margin: 0; }
+  .hpass { background: var(--card-2); border-radius: 18px; padding: 14px; margin: 6px 0 10px; display: flex; flex-direction: column; }
+  .hpass-top { margin-bottom: 4px; gap: 8px; flex-wrap: wrap; }
+  .hex { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 0; border: 0; border-top: 1px solid var(--line); background: none; color: inherit; text-align: left; border-radius: 0; min-height: 0; }
+  .hpass-top + .hex { border-top: 0; }
+  .hex .grow { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .hex b { font-size: 15px; display: flex; align-items: center; gap: 6px; }
+  .hex .pbtag { padding: 1px 7px; font-size: 11px; }
+  .hsets { font-size: 13px; color: var(--muted); }
+  .hgain { flex: none; font-size: 13px; font-weight: 600; }
+  .hgain.up { color: var(--ok-text, var(--ok)); } .hgain.down { color: var(--bad-text, var(--bad)); } .hgain.same { color: var(--muted); font-weight: 400; }
+  .hprev { padding-top: 6px; }
+  .hedit { align-self: flex-start; margin-top: 10px; display: inline-flex; align-items: center; gap: 6px; }
+  .hlines { display: flex; flex-direction: column; }
+  .hline { display: flex; align-items: center; gap: 12px; width: 100%; padding: 13px 0; border: 0; border-top: 1px solid var(--line); background: none; color: inherit; text-align: left; border-radius: 0; font-size: 15px; min-height: 0; }
+  .hline > .muted { font-size: 14px; text-align: right; }
+  .hline > svg:last-child { color: var(--muted); flex: none; }
+  .hl-ic { width: 22px; display: grid; place-items: center; flex: none; color: var(--muted); }
+  .hnone { padding: 8px 0 12px; }
+  .hadd { display: flex; gap: 18px; padding: 10px 0 4px; border-top: 1px solid var(--line); }
+  .hadd .linkbtn2 { gap: 4px; }
+  /* Historik: Utveckling */
+  .hper { display: flex; gap: 6px; margin: 2px 0 16px; flex-wrap: wrap; }
+  .hper button { min-height: 36px; padding: 0 14px; border-radius: 99px; border: 1px solid var(--line); background: none; color: var(--text); font-size: 14px; }
+  .hper button.on { background: var(--accent-strong); border-color: var(--accent-strong); color: var(--on-color); font-weight: 600; }
+  .hsec { margin: 0 0 8px; }
+  .hwins { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+  .hwin { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 16px; background: var(--ok-soft); }
+  .hwin b { font-size: 15px; }
+  .hwin-ic { width: 30px; height: 30px; flex: none; border-radius: 50%; display: grid; place-items: center; background: var(--ok-strong, var(--ok)); color: var(--card); font-weight: 700; font-size: 14px; }
+  .hstats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 18px; }
+  .hstat { display: flex; flex-direction: column; gap: 2px; background: var(--card); border-radius: 16px; padding: 12px; min-width: 0; }
+  .hstat b { font: 800 22px "Unbounded", sans-serif; }
+  .hblock { margin-bottom: 18px; }
+  .hblock > .ghost.wide { display: flex; align-items: center; justify-content: center; gap: 6px; }
+  .hsec2 { margin-bottom: 6px; align-items: baseline; }
+  .hsec2 h2 { margin: 0; }
+  .hstr { display: flex; align-items: center; gap: 12px; width: 100%; padding: 11px 0; border: 0; border-top: 1px solid var(--line); background: none; color: inherit; text-align: left; border-radius: 0; min-height: 0; }
+  .hsec2 + .hstr { border-top: 0; }
+  .hstr .grow { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .hstr b { font-size: 15px; }
+  .hstr-g { min-width: 64px; text-align: right; flex: none; }
+  .spark { width: 64px; height: 26px; flex: none; }
+  .spark polyline { fill: none; stroke: var(--muted); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+  .spark.up polyline { stroke: var(--ok); } .spark.down polyline { stroke: var(--bad); }
   .pdtplbtn { margin: 0; color: var(--muted); display: flex; align-items: center; justify-content: center; gap: 6px; }
   .pdtpl.naming { display: flex; flex-direction: column; gap: 10px; padding: 14px 16px; margin: 0; }
   .pdtpl.naming input { width: 100%; }
@@ -1998,8 +2047,11 @@ button.h3-card.h3-head { background: var(--card); padding: 12px 14px; }
 <script>
   // Tangentbordets höjd där sidan inte krymper av sig själv (iOS): rutor lägger sig ovanför
   if (window.visualViewport) {
-    const vv = window.visualViewport, kb = () => document.documentElement.style.setProperty("--kb", `${Math.max(0, Math.round(innerHeight - vv.height - vv.offsetTop))}px`);
+    // Bara när ett skrivfält har fokus: annars kan webbläsarens verktygsfält eller zoom ge ett glapp under rutorna
+    const vv = window.visualViewport, kb = () => { const a = document.activeElement, open = a && a.matches && a.matches("textarea, input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=button])");
+      document.documentElement.style.setProperty("--kb", `${open ? Math.max(0, Math.round(innerHeight - vv.height - vv.offsetTop)) : 0}px`); };
     vv.addEventListener("resize", kb); vv.addEventListener("scroll", kb); kb();
+    document.addEventListener("focusout", () => setTimeout(kb, 50)); document.addEventListener("focusin", kb);
   }
   // Skrivfält i fokus: menyn göms (se body.typing)
   const typing = el => el && el.matches && el.matches("textarea, input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=button])");

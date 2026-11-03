@@ -373,9 +373,12 @@ def test_utveckling_visar_personbasta_och_okning(page):
       S.log[shift(TODAY, -2)] = {{workouts:[{{dayId:'{d}',done:true,sets:{{bankpress:[{{kg:72.5,reps:6,ok:true}},{{kg:70,reps:8,ok:true}}]}}}}],dailies:{{}},food:[]}}""")
     go(page, "historik")
     page.click('[data-hview="utveckling"]')
-    row = page.locator('.krow[data-chart="bankpress"]')
-    assert "72,5 kg × 6" in row.inner_text() and "+12,5 kg" in row.inner_text() and "60 kg × 8" in row.inner_text()
-    assert "2" in page.inner_text(".kstat >> nth=0")
+    row = page.locator('.hstr[data-chart="bankpress"]')
+    assert "72,5 kg × 6" in row.inner_text() and "+12,5 kg" in row.inner_text()
+    # Framsteg: den största ökningen, med var man började
+    win = page.inner_text(".hwins")
+    assert "Bänkpress +12,5 kg" in win and "60 kg × 8" in win
+    assert "2" in page.inner_text(".hstat >> nth=0")
     row.click()
     assert page.locator(".sheet .chart").count() == 1
 
@@ -1250,12 +1253,17 @@ def test_historik_andra_en_tidigare_dag(page):
     go(page, "historik")
     assert page.locator('[data-histday="2026-10-20"].pass').count() == 1 and page.locator(".cday.pass").count() == 1
     assert page.locator('[data-histday="2026-10-23"]').is_disabled()
-    # Igår: dailys och vikt direkt i fönstret
+    # Igår: dailys och vikt ändras i samma fönster, via raderna
     page.click('[data-histday="2026-10-21"]')
     assert "Igår" in page.inner_text(".sheet h2")
+    page.click('.sheet [data-hsub="dailys"]')
     page.click(".sheet [data-dcheck=plankan]")
+    page.click('.sheet [data-hsub=""]')
+    assert "1 av" in page.inner_text('.sheet [data-hsub="dailys"]')
+    page.click('.sheet [data-hsub="vikt"]')
     page.fill(".sheet #wkg", "80.5")
     page.click(".sheet [data-wsave]")
+    assert "80,5 kg" in page.inner_text('.sheet [data-hsub="vikt"]')
     assert page.evaluate("S.log['2026-10-21'].dailies.plankan") is True
     assert page.evaluate("dailyDone('2026-10-22', 'plankan')") is False
     assert page.evaluate("S.weights['2026-10-21']") == 80.5
@@ -2558,3 +2566,32 @@ def test_passmall_byt_namn_och_ta_bort(page):
     page.click('[data-tpldel="tpl-a"]')
     assert page.evaluate("tpls().length") == 0
     assert page.locator('[data-trsheet="tpls"]').count() == 0
+
+
+def test_historik_dagen_visar_passet_med_set_pb_och_jamforelse(page):
+    start(page)
+    d = page.evaluate("S.plan.days[0].id")
+    seed(page, f"""S.log[shift(TODAY, -9)] = {{workouts:[{{dayId:'{d}',done:true,sets:{{bankpress:[{{kg:60,reps:8,ok:true}}]}}}}],dailies:{{}},food:[]}};
+      S.log[shift(TODAY, -2)] = {{workouts:[{{dayId:'{d}',done:true,start:1,end:1+52*60000,sets:{{bankpress:[{{kg:62.5,reps:8,ok:true}},{{kg:62.5,reps:7,ok:true}}]}}}}],dailies:{{}},food:[]}}""")
+    go(page, "historik")
+    page.evaluate("histDay = shift(TODAY, -2); render()")
+    p = page.inner_text(".hpass")
+    assert "52 min" in p and "2 set" in p
+    assert "62,5 × 8 · 62,5 × 7" in p and "PB" in p and "+2,5 kg" in p
+    assert "Jämfört med förra" in p
+    # Raderna för dagen, och ändra passet går till Träna
+    assert page.locator('.sheet [data-hfood]').count() == 1 and page.locator('.sheet [data-hpass="' + d + '"]').count() == 1
+
+
+def test_utveckling_period_och_tom_period(page):
+    start(page)
+    d = page.evaluate("S.plan.days[0].id")
+    seed(page, f"""S.log[shift(TODAY, -200)] = {{workouts:[{{dayId:'{d}',done:true,sets:{{bankpress:[{{kg:60,reps:8,ok:true}}]}}}}],dailies:{{}},food:[]}};
+      S.log[shift(TODAY, -190)] = {{workouts:[{{dayId:'{d}',done:true,sets:{{bankpress:[{{kg:65,reps:8,ok:true}}]}}}}],dailies:{{}},food:[]}}""")
+    go(page, "historik")
+    page.click('[data-hview="utveckling"]')
+    # 3 mån är förvalt: inget under perioden
+    assert "Inga övningar loggade under perioden" in page.inner_text("#app")
+    page.click('[data-hper="1y"]')
+    assert "+5 kg" in page.inner_text('.hstr[data-chart="bankpress"]')
+    assert page.evaluate("histPer") == "1y"
