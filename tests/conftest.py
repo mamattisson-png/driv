@@ -94,3 +94,12 @@ def go(page, tab):
     # Står man redan i vyn finns ingen knapp till den (Profil saknar profilknapp)
     # Inställningar nås från Hem (profilbilden), Kost och Historik; annars direkt
     page.evaluate(f"tab === '{tab}' && !focus && !editDate || (document.querySelector('[data-tab={tab}]') || {{ click() {{ passDone = null; editDate = null; tab = '{tab}'; render(); }} }}).click()")
+
+
+def pick(page, day_id=None):
+    """Öppnar ett pass från Träna: välj det bland veckans pass och tryck på det."""
+    if day_id is None:
+        day_id = page.evaluate("S.plan.days[0].id")
+    if page.locator(f'[data-trsel="{day_id}"]').count():
+        page.click(f'[data-trsel="{day_id}"]')
+    page.click(f'[data-pick="{day_id}"]')

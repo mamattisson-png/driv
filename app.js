@@ -53,7 +53,7 @@ const PROGRAMS = {
     2: ["hfull", "hfull"], 3: ["hfull", "hfull", "hfull"], 4: ["hfull", "hfull", "hfull", "hfull"] } },
   rumpa: { name: "Rumpa & ben", info: "Extra fokus på säte och baksida lår, plus ett överkroppspass.", days: {
     3: ["glutes", "upper", "lower"], 4: ["glutes", "upper", "glutes", "lower"] } },
-  eget: { name: "Eget upplägg", info: "Bygg helt själv: välj antal pass, döp dem och lägg till dina egna övningar.", days: {
+  eget: { name: "Eget schema", info: "Bygg helt själv: välj antal pass, döp dem och lägg till dina egna övningar.", days: {
     1: ["custom"], 2: ["custom", "custom"], 3: ["custom", "custom", "custom"], 4: ["custom", "custom", "custom", "custom"],
     5: ["custom", "custom", "custom", "custom", "custom"], 6: ["custom", "custom", "custom", "custom", "custom", "custom"] } },
 };
@@ -1778,7 +1778,9 @@ const fmtTarget = (t, id) => fmtSet2({ kg: +t.kg || 0, reps: t.reps }, id);
 // Exempelvärden för ett set: dagens mål om det finns, annars förra gångens set
 function setHint(ex, i) {
   const t = todayTarget(ex);
-  return t ? { kg: t.kg || "", reps: t.reps } : hintSet(lastSets(ex.id), i);
+  const h = t ? { kg: t.kg || "", reps: t.reps } : hintSet(lastSets(ex.id), i);
+  // En vikt man ställt in för övningen i passet gäller som startvikt
+  return +ex.kg ? { ...(h || {}), kg: +ex.kg } : h;
 }
 
 // Bästa set före den här veckan, för att kunna säga när man slår PB (personbästa)
@@ -2007,7 +2009,9 @@ document.addEventListener("click", ev => {
     s.ok = !s.ok;
     const idx = d.ex.findIndex(x => x.id === ds.ok), inRound = s.ok && ssNext(d, idx, +ds.i) != null;
     // I ett superset vilar man först när varvet är klart
-    if (s.ok) { fillFromHint(d, ds.ok, +ds.i); checkRecord(ds.ok, s); if (!editDate && !inRound) startRest(ds.ok); }
+    const wk = workoutFor(d), nd = exo0 => Math.max(1, +((wk.drops || {})[exo0.id]) || 1);
+    const exo = d.ex[idx], toDrop = exo && exo.last === "drop" && +ds.i >= exo.sets - 1 && +ds.i < exo.sets - 1 + nd(exo);   // dropen körs direkt, utan vila   // dropen körs direkt, utan vila
+    if (s.ok) { fillFromHint(d, ds.ok, +ds.i); checkRecord(ds.ok, s); if (!editDate && !inRound && !toDrop) startRest(ds.ok); }
     syncDone(d);
     if (s.ok) focusAfterSet(d, idx, +ds.i);
   }
@@ -2045,6 +2049,13 @@ document.addEventListener("click", ev => {
     else if (w.done) { passDone = { dayId: ds.finish, date: logDate() }; tab = "idag"; }
   }
   // Uppvärmning under passet: ett lättare set läggs före arbetsseten och blir det man står på
+  // Dropset: en drop till, ytterligare ca 25 % lättare
+  else if (ds.dropmore) {
+    const d = currentPassDay(), w = workoutFor(d);
+    w.drops = w.drops || {}; w.drops[ds.dropmore] = (+w.drops[ds.dropmore] || 1) + 1;
+    if (focus) focus.sel = null;
+    if (typeof stopRest === "function") stopRest();   // dropen körs direkt, utan vila
+  }
   else if (ds.warmadd) {
     const d = currentPassDay(), ex = d.ex.find(x => x.id === ds.warmadd);
     ex.warm = Math.min(5, (+ex.warm || 0) + 1);

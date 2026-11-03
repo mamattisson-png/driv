@@ -4,7 +4,7 @@ import datetime
 
 import pytest
 
-from conftest import finish_setup, go, open_app
+from conftest import finish_setup, go, open_app, pick
 
 # Räknar ut kontrasten för varje synlig text mot närmaste bakgrund och returnerar de som är för låga.
 # Vanlig text kräver 4,5:1; stor text (24 px, eller 18,7 px fet) 3:1. Inaktiva knappar räknas inte.
@@ -75,7 +75,7 @@ def views(page):
     page.click("[data-trsheet=dailys]")
     yield "Dailys", ".sheet"
     page.click(".sheet [data-trsheet='']")
-    page.click(f'[data-pick="{page.evaluate("S.plan.days[0].id")}"]')
+    pick(page, page.evaluate("S.plan.days[0].id"))
     yield "Passet", "#app"
     page.evaluate("chosenDay = S.plan.days[0].id; window.__ex = S.plan.days[0].ex; S.plan.days[0].ex = [{ id: 'kabelflyes', sets: 3, reps: '12', ss: true }, { id: 'lutande_hantelpress', sets: 3, reps: '10', warm: 2 }]; editing = true; render()")
     yield "Ändra övningar", "#app"

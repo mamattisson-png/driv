@@ -34,6 +34,8 @@ function cancelPassSheet(target) {
 
 // Efter ett avbockat set: är övningen klar går fokus vidare till nästa medan vilan räknar ned
 // I ett superset växlar fokus till nästa övning i varvet, och efter varvet tillbaka till gruppens början
+// Dropset: övningen är inte färdig förrän dropen efter sista setet är gjord
+const dropPending = (w, ex) => ex.last === "drop" && !(((w && w.sets[ex.id]) || [])[ex.sets + Math.max(1, +((w && w.drops) || {})[ex.id] || 1) - 1] || {}).ok;
 function focusAfterSet(d, idx = focus && focus.idx, i = 0) {
   if (editDate || !focus || focus.suspended || focus.dayId !== d.id) return;
   const w = workoutOn(logDate(), d.id), g = ssGroup(d, focus.idx), from = focus.idx;
@@ -44,7 +46,7 @@ function focusAfterSet(d, idx = focus && focus.idx, i = 0) {
       const open = d.ex.findIndex((x, k) => k >= g[0] && k <= g[1] && !exDone(w, x));
       focus.idx = open >= 0 ? open : Math.min(g[1] + 1, d.ex.length - 1);
     }
-  } else if (exDone(w, d.ex[focus.idx]) && focus.idx < d.ex.length - 1) focus.idx++;
+  } else if (exDone(w, d.ex[focus.idx]) && !dropPending(w, d.ex[focus.idx]) && focus.idx < d.ex.length - 1) focus.idx++;
   focus.scroll = focus.idx !== from ? "top" : "active";
   focus.sel = null;
 }
@@ -177,31 +179,39 @@ function focusView() {
   const bw = !!EX[ex.id].bw, timed = isTimed(ex.id), stretch = EX[ex.id].cat === "stretch";
   // Alla set i ordning: uppvärmningen först, sedan arbetsseten
   const all = [...Array.from({ length: nW }, (_, i) => ({ w: true, i })), ...Array.from({ length: ex.sets }, (_, i) => ({ w: false, i }))];
+  // Dropset: när sista setet är klart dyker en drop upp direkt efter, lättare och utan vila
+  // Fler drops läggs till med "+ En drop till" (w.drops); varje drop visas när den före är klar
+  const nDrops = ex.last === "drop" ? Math.max(1, +((w && w.drops) || {})[ex.id] || 1) : 0;
+  for (let k = 0; k < nDrops; k++) if (sets[ex.sets - 1 + k] && sets[ex.sets - 1 + k].ok) all.push({ w: false, i: ex.sets + k, drop: true, k }); else break;
+  const lastDrop = all.length && all[all.length - 1].drop ? all[all.length - 1] : null;
+  const amrapAt = s => ex.last === "amrap" && !s.w && !s.drop && s.i === ex.sets - 1;
+  const dropAt = s => ex.last === "drop" && !s.w && !s.drop && s.i === ex.sets - 1;
   const stOf = s => (s.w ? warm[s.i] : sets[s.i]) || {};
   const active = all.findIndex(s => !stOf(s).ok);
   const sel = focus.sel != null && all[focus.sel] ? focus.sel : active;
   const g = ssGroup(d, focus.idx);
   const fmt = v => fmtSet2({ kg: +v.kg || 0, reps: +v.reps || 0 }, ex.id);
-  const badge = s => s.w ? `U${s.i + 1}` : `${s.i + 1}`;
+  const badge = s => s.w ? `U${s.i + 1}` : s.drop ? "D" : `${s.i + 1}`;
   const okAttrs = s => `data-ok="${ex.id}" data-i="${s.i}"${s.w ? ' data-w="1"' : ""}`;
   let setAction = "";
   const rows = all.map((s, k) => {
-    const v = stOf(s), h = s.w ? warmHint(d, ex, s.i) : liveHint(d, ex, s.i), p = !s.w && prev ? hintSet(prev, s.i) : null;
+    const v = stOf(s), h = s.w ? warmHint(d, ex, s.i) : liveHint(d, ex, s.i), p = !s.w && !s.drop && prev ? hintSet(prev, s.i) : null;
+    if (s.drop) { const st = stepFor(ex.id, "kg"), top = +((sets[s.i - 1] || {}).kg) || +h.kg || 0; h.kg = top ? Math.max(st, Math.round(top * 0.75 / st) * st) : h.kg; }
     const cls = `fset ${v.ok ? "done" : ""} ${s.w ? "warm" : ""} ${k === sel ? "active" : ""}`;
     if (k === sel) {
       const kg = bigStepper(ex.id, s.i, "kg", v.kg, h.kg || 0, bw ? "Extra vikt" : "Vikt", "kg", s.w);
-      const reps = bigStepper(ex.id, s.i, "reps", v.reps, h.reps || repRange(ex.reps).lo || "", timed ? "Sekunder" : "Reps", timed ? "sek" : "reps", s.w);
+      const reps = bigStepper(ex.id, s.i, "reps", v.reps, amrapAt(s) ? "max" : h.reps || repRange(ex.reps).lo || "", timed ? "Sekunder" : "Reps", timed ? "sek" : "reps", s.w);
       const fields = stretch ? reps : bw ? reps + kg : kg + reps;
-      const note = s.w ? (hasData(h) ? `Förslag: ${fmt(h)}` : "Lättare set före") : p && hasData(p) ? `Förra gången: ${fmt(p)}` : "";
+      const note = s.w ? (hasData(h) ? `Förslag: ${fmt(h)}` : "Lättare set före") : s.drop ? "Ca 25 % lättare, ingen vila" : amrapAt(s) ? "Så många du klarar" : p && hasData(p) ? `Förra gången: ${fmt(p)}` : "";
       const inRound = !s.w && g && ssNext(d, focus.idx, s.i) != null;
-      const doneTxt = v.ok ? "" : s.w ? "Klar med uppvärmning" : g ? (inRound ? "Klar · nästa i varvet" : "Klar · vila efter varvet") : "Klar med set";
+      const doneTxt = v.ok ? "" : s.w ? "Klar med uppvärmning" : s.drop ? "Klar med drop" : dropAt(s) ? "Klar · direkt till drop" : g ? (inRound ? "Klar · nästa i varvet" : "Klar · vila efter varvet") : "Klar med set";
       const btn = v.ok
         ? (active >= 0 ? `<button class="wide fdone ghostbtn" data-fsel="${active}">Till ${all[active].w ? "uppvärmning" : "set"} ${badge(all[active])}</button>` : "")
-        : `<button class="primary wide fdone" ${okAttrs(s)}>${doneTxt}</button>`;
+        : `<button class="primary wide fdone" ${okAttrs(s)}>${s.drop && s.k + 1 < nDrops ? "Klar · direkt till nästa drop" : doneTxt}</button>`;
       setAction = btn;
       return `<li class="${cls}"><div class="fsethead"><button class="fcheck ${v.ok ? "on" : ""}" ${okAttrs(s)} aria-pressed="${!!v.ok}" aria-label="${s.w ? "Uppvärmning" : "Set"} ${s.i + 1} klart">${v.ok ? icon("check", 14) : `<span class="fb">${badge(s)}</span>`}</button>
-        <b class="grow">${s.w ? `Uppvärmning ${s.i + 1}` : `Set ${s.i + 1}`}</b>${note ? `<span class="muted small">${note}</span>` : ""}</div>
-        ${fields}</li>`;
+        <b class="grow">${s.w ? `Uppvärmning ${s.i + 1}` : s.drop ? `Drop${nDrops > 1 ? ` ${s.k + 1}` : ""}` : `Set ${s.i + 1}`}${amrapAt(s) ? ` <span class="settag">Max reps</span>` : dropAt(s) ? ` <span class="settag">Dropset</span>` : ""}</b>${note ? `<span class="muted small">${note}</span>` : ""}</div>
+        ${fields}${s.drop && s === lastDrop && s.k < 3 && !v.ok ? `<button class="chipbtn dropmore" data-dropmore="${ex.id}">${icon("plus", 14)}En drop till efter den här</button>` : ""}</li>`;
     }
     const val = v.ok && hasData(v) ? fmt(v) : hasData(h) ? fmt(h) : "";
     return `<li class="${cls}"><button class="fcheck ${v.ok ? "on" : ""}" ${okAttrs(s)} aria-pressed="${!!v.ok}" aria-label="${s.w ? "Uppvärmning" : "Set"} ${s.i + 1} klart">${v.ok ? icon("check", 14) : `<span class="fb">${badge(s)}</span>`}</button>
@@ -319,19 +329,25 @@ function ssIndex(d, start) {
 // Passet: en numrerad rad per övning med set och reps, och förra gången till höger.
 // Tryck på en rad för att öppna fokusläget på just den övningen.
 function passOverview(d, w) {
+  // Ett sparat pass är låst: övningarna öppnas först när man trycker Öppna igen
+  const locked = !!(w && w.done && !editDate);
   const next = w && !w.done ? d.ex.findIndex(x => !exDone(w, x)) : 0;
   return `<ol class="exlist">
     ${d.ex.map((ex, i) => {
       const sets = (w && w.sets[ex.id]) || [], n = sets.filter(x => x && x.ok).length, all = exDone(w, ex);
       const prev = lastSets(ex.id), top = prev && topSet(prev);
       const g = ssGroup(d, i), pos = g ? (i === g[0] ? "first" : i === g[1] ? "last" : "mid") : "";
+      // Det man faktiskt gjorde: varje set som vikt × reps, och PB när toppsetet slår allt före den här veckan
+      const okSets = sets.filter(x => x && x.ok && hasData(x));
+      const done1 = okSets.length ? okSets.map(x => +x.kg && !EX[ex.id].bw ? `${fmtNum(+x.kg)}×${+x.reps || 0}` : `${+x.reps || 0}${EX[ex.id].bw && +x.kg ? ` +${fmtNum(+x.kg)} kg` : ""}`).join(" · ") : "";
+      const best = okSets.length && bestBefore(ex.id, weekStart(logDate())), pb = okSets.length && (!best || betterSet(topSet(okSets), best)) && best;
       const right = n && !all ? `<span class="setcount">${n}/${ex.sets}</span>`
         : all ? `<span class="setcount ok">${icon("check", 16)}</span>`
         : top ? `<span class="exprev"><span class="muted small">Förra gången</span><b>${fmtSet2({ kg: +top.kg || 0, reps: +top.reps || 0 }, ex.id)}</b></span>` : "";
-      return `<li>${g && i === g[0] ? `<div class="klabel sscap">${icon("swap", 13)}Superset</div>` : ""}<button class="exrow2 ${all ? "done" : ""} ${g ? `ss ss-${pos}` : ""}" data-focusex="${i}">
+      return `<li>${g && i === g[0] ? `<div class="klabel sscap">${icon("swap", 13)}Superset</div>` : ""}<${locked ? "div" : "button"} class="exrow2 ${all ? "done" : ""} ${g ? `ss ss-${pos}` : ""}" ${locked ? "" : `data-focusex="${i}"`}>
         <span class="exnum ${i === next && !all ? "next" : ""}">${all ? icon("check", 16) : i + 1}</span>
-        <span class="grow"><b>${esc(EX[ex.id].name)}</b><span class="muted small">${g ? `<span class="sstag">${String.fromCharCode(65 + ssIndex(d, g[0]))}${i - g[0] + 1}</span> · ` : ""}${repsText(ex)}${warmCount(ex) ? ` <span class="warmtag">+${warmCount(ex)} uppv.</span>` : ""}</span></span>
-        ${right}</button></li>`;
+        <span class="grow"><b>${esc(EX[ex.id].name)}${pb ? ` <span class="pbtag">PB</span>` : ""}</b>${done1 ? `<span class="exdone-sets">${done1}${isTimed(ex.id) ? " s" : ""}</span>` : ""}<span class="muted small">${g ? `<span class="sstag">${String.fromCharCode(65 + ssIndex(d, g[0]))}${i - g[0] + 1}</span> · ` : ""}${repsText(ex)}${warmCount(ex) ? ` <span class="warmtag">+${warmCount(ex)} uppv.</span>` : ""}</span></span>
+        ${right}</${locked ? "div" : "button"}></li>`;
     }).join("")}
   </ol>`;
 }

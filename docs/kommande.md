@@ -1,6 +1,6 @@
 # DRIV – Kommande förbättringar
 
-Senast uppdaterad: 2026-11-01. Status bygger på dokumenterade publiceringar och kontrollerad kod. Ej verifierade funktioner behåller pågående status.
+Senast uppdaterad: 2026-11-03. Status bygger på dokumenterade publiceringar och kontrollerad kod. Ej verifierade funktioner behåller pågående status.
 
 | Nr | Förbättring | Kategori | Prioritet | Status |
 |---|---|---|---|---|
@@ -10,7 +10,7 @@ Senast uppdaterad: 2026-11-01. Status bygger på dokumenterade publiceringar och
 | 4 | Facelift av hemskärmen | Design | Hög | Klar |
 | 5 | Tillskott och hälsorutiner i Dailys | Dailys | Medel | I test |
 | 6 | Interaktiv stretchguide | Dailys | Medel | Klar |
-| 7 | Tydligare övningsfigurer och animationer | Design | Hög | I test |
+| 7 | Tydligare övningsfigurer och animationer | Design | Hög | Klar |
 | 8 | Smart grönmarkering av måltider | Kost | Medel | Klar |
 | 9 | Tydligare avklarade aktiviteter | Design | Hög | Klar |
 | 10 | Körbara tränings-Dailys | Dailys | Hög | Ej påbörjad |
@@ -51,6 +51,10 @@ Senast uppdaterad: 2026-11-01. Status bygger på dokumenterade publiceringar och
 | 47 | Firande när alla dailys är klara | Dailys | Låg | Klar |
 | 48 | Byt övning under passet går att scrolla | Bugg | Hög | Klar |
 | 49 | Uppvärmning under passet, reps och ökning följer med till nästa set | Träning | Hög | Klar |
+| 50 | Träna: välj pass, Starta och Ändra lika tydligt, Träningsschema | Träning | Hög | Klar |
+| 51 | Ändra pass: alltid pilar, vikt per övning, dropset och max reps | Träning | Hög | Klar |
+| 52 | Avslutat pass visar vikter, PB och sammanfattning | Träning | Medel | Klar |
+| 53 | Sparat pass är låst tills man öppnar det igen | Bugg | Medel | Klar |
 
 ## Detaljer och acceptanskriterier
 
@@ -60,7 +64,7 @@ Senast uppdaterad: 2026-11-01. Status bygger på dokumenterade publiceringar och
 4. **Facelift av hemskärmen:** Förenkla och förtydliga enligt tidigare designplan. Bevara DRIV-logga och befintliga övningsfigurer. Väntar på Claude-krediter.
 5. **Tillskott och hälsorutiner i Dailys:** Publicerad i separat testversion: https://feat-health-dailys.driv-test.pages.dev/ . Öppna Träna → Dailys → Ändra dailys. Egen sektion för hälsorutiner med Kreatin, Vitaminer, Omega-3, Vatten och egna namn/anteckningar. Redigering, borttagning, daglig avprickning och läsbara arkiverade rutiner i historiken. 19 riktade tester för hälsorutiner, synk och service worker passerar. Lägga till och bocka av Kreatin verifierat i publicerad testvy. Ingen produktionsimplementation publicerad. Serverns påminnelseregel är förberedd i grenen men inte driftsatt. Den breda testsuiten har ytterligare fel som behöver utredas före produktionspublicering.
 6. **Interaktiv stretchguide:** Välj stel kroppsdel, få relevanta övningar med demonstration och möjlighet att lägga till i Dailys eller pass.
-7. **Tydligare övningsfigurer och animationer (I test, gren figurer-j1):** Nya figurer med fyllda kroppsformer och tre höjdkurvor runt kroppen (stil J1). Musklerna som övningen tränar (huvudmuskler i övningsdatan) är orange. Varje övning beskärs efter sin egen storlek så att små bilder blir större. I övningsrutan rör sig händer och fötter i bågar runt lederna, så armar och ben behåller sin längd. Redskap (skivstång, hantlar, kablar, fotplattor, dynor och bänkar) ritas i samma stil. Fungerar i ljust och mörkt tema. Ändra inte loggan.
+7. **Tydligare övningsfigurer och animationer (Klar, publicerad 2026-11-03):** Nya figurer med fyllda kroppsformer och tre höjdkurvor runt kroppen (stil J1). Musklerna som övningen tränar (huvudmuskler i övningsdatan) är orange. Varje övning beskärs efter sin egen storlek så att små bilder blir större. I övningsrutan rör sig händer och fötter i bågar runt lederna, så armar och ben behåller sin längd. Redskap (skivstång, hantlar, kablar, fotplattor, dynor och bänkar) ritas i samma stil. Fungerar i ljust och mörkt tema. Ändra inte loggan.
 8. **Smart grönmarkering av måltider (Klar):** Publicerad hemskärmslogik visar grönt för Kost först när det faktiska dagsmålet för kalorier har nåtts, inte bara när mat har registrerats. Detaljerad markering av enskilda måltider kan vidareutvecklas separat.
 9. **Tydligare avklarade aktiviteter (Klar):** Publicerad hemskärm visar gröna bockar för avklarade steg och Dailys visar avklarade rader med bock och överstruket namn.
 10. **Körbara tränings-Dailys:** Exempel plankan 3×45 s med timer, vila, nästa set och automatiskt avslut; använd befintlig träningslogik där möjligt.
@@ -119,6 +123,10 @@ Senast uppdaterad: 2026-11-01. Status bygger på dokumenterade publiceringar och
 47. **Firande i Dailys (Klar, publicerad 2026-11-02):** När sista dailyn eller kosttillskottet bockas i sprutar en liten konfetti ur bocken och ringen överst pulserar grönt en gång. Bara när man själv gör klart, och utan rörelse för den som valt minskade animationer.
 48. **Byt övning går att scrolla (Klar, publicerad 2026-11-02):** Under ett pågående pass låg passets skrollås kvar när Byt övning öppnade biblioteket, så övningarna gick inte att nå. Låset släpps nu medan biblioteket är öppet.
 49. **Smidigare set i passet (Klar, publicerad 2026-11-02):** Knappen + Uppvärmning lägger ett uppvärmningsset före arbetsseten under passet. Reps följer med till nästa set precis som vikten, och ökar man vikten mellan två set (t.ex. +0,5 kg) föreslås samma ökning igen. Ett set man själv ställt in behåller sitt värde.
+50. **Ny Träna-vy (Klar, publicerad 2026-11-02):** Träna skiljer sig nu från Hem. Överst Träningsschema med Ändra schema, sedan veckans pass som en rad med namn att välja bland. Det valda passet visar alla övningar med set × reps och lika tydliga knappar för Starta och Ändra. Allt ryms på en skärm även med sex pass. Upplägg heter nu Träningsschema i hela appen.
+51. **Ändra pass och sista setet (Klar, publicerad 2026-11-03):** Pilarna för att flytta övningar finns alltid när man ändrar ett pass (Ordna behövs inte). Vikten kan ställas in per övning, med − och + eller genom att skriva in den, och blir startvikten i passet. Sista setet kan vara Dropset (en drop ca 25 % lättare utan vila, med En drop till efter den här) eller Max reps.
+52. **Avslutat pass (Klar, publicerad 2026-11-03):** Ett genomfört pass visar tid, set, total vikt och antal PB överst, och varje övning de set man gjorde som vikt × reps med PB-märke när toppsetet slog tidigare rekord.
+53. **Låst sparat pass (Klar, publicerad 2026-11-03):** Övningarna i ett avslutat pass går inte att trycka på. Man öppnar passet med Öppna igen först. Ändringar i efterhand görs som förut från Historik.
 
 ## Arbetsregler
 

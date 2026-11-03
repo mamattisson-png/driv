@@ -28,7 +28,7 @@ function welcomeView() {
   return `<div class="welcome">
     <div class="welcome-glow" aria-hidden="true"></div>
     ${brandBig()}
-    <div class="wpoints">${pt("trana", "Träna efter ett upplägg", "Passen, vikterna och vad som är nästa")}
+    <div class="wpoints">${pt("trana", "Träna efter ett schema", "Passen, vikterna och vad som är nästa")}
       ${pt("kost", "Håll koll på maten", "Ett kalorimål som passar dig")}
       ${pt("check", "Bygg dina vanor", "Dailys: små saker att bocka av varje dag")}
       ${pt("vanner", "Peppa varandra", "Se när vännerna har tränat")}</div>
@@ -55,7 +55,7 @@ function loginView() {
       <div class="row between muted small"><span>Ingen kod? Kolla skräpposten.</span><button class="linkbtn2" data-sendcode ${a.busy ? "disabled" : ""}>Skicka igen</button></div>
       ${msg}
       <div class="login-cta"><button class="primary wide bigbtn" data-verifycode ${a.busy ? "disabled" : ""}>Logga in</button>
-        <span class="muted small">Har kontot inget upplägg än får du välja ett först.</span></div></div>`;
+        <span class="muted small">Har kontot inget schema än får du välja ett först.</span></div></div>`;
   }
   return `<div class="login"><button class="backbtn" data-welcomelogin="">${icon("left", 18)}Tillbaka</button>
     <img class="loginlogo" src="icons/icon-192-v2.png" alt="">
@@ -63,7 +63,7 @@ function loginView() {
     <div class="muted lead">${welcomeLogin === "create" ? "Skriv din e-post, så skickar vi en kod. Inget lösenord behövs." : "Skriv e-posten du använde, så skickar vi en kod. Inget lösenord behövs."}</div>
     <label class="field">E-post<input id="acctemail" type="email" autocomplete="email" placeholder="din@epost.se" value="${esc(a.email)}"></label>
     <div class="muted small" style="margin:8px 4px 0">Din e-post används bara för att logga in, aldrig för reklam.</div>
-    <div class="note">${icon("data", 20)}<span class="muted">Allt du loggat finns på kontot: upplägg, pass, mat och vänner. Det följer med till alla enheter du loggar in på.</span></div>
+    <div class="note">${icon("data", 20)}<span class="muted">Allt du loggat finns på kontot: schema, pass, mat och vänner. Det följer med till alla enheter du loggar in på.</span></div>
     ${msg}
     <div class="login-cta"><button class="primary wide bigbtn" data-sendcode ${a.busy ? "disabled" : ""}>Skicka kod</button>
       <span class="muted small">${welcomeLogin === "create" ? `Har du redan ett konto? <button class="link" data-welcomelogin="login">Logga in</button>`
@@ -80,7 +80,7 @@ function accountNote() {
 const progTiles = sel => `<div class="progtiles">${Object.entries(PROGRAMS).filter(([id]) => id !== "eget").map(([id, pr]) =>
   `<button class="progtile ${sel === id ? "on" : ""}" data-prog="${id}" aria-pressed="${sel === id}"><b>${pr.name}</b><span>${pr.best} pass</span></button>`).join("")}</div>
   <button class="progtile own ${sel === "eget" ? "on" : ""}" data-prog="eget" aria-pressed="${sel === "eget"}"><span class="plusic">${icon("plus", 18)}</span>
-    <span class="grow col"><b>Eget upplägg</b><span class="muted small">Döp passen och välj övningar själv</span></span></button>`;
+    <span class="grow col"><b>Eget schema</b><span class="muted small">Döp passen och välj övningar själv</span></span></button>`;
 
 function daysPicker() {
   const n = draft.count, fixed = draft.mode === "fixed", ok = draftOk();
@@ -124,7 +124,7 @@ function upplaggView() {
   const pr = PROGRAMS[draft.program], n = draft.count, c = counts(draft.program), fixed = draft.mode === "fixed";
   const back = { idag: "Hem", pass: "Träna" }[setupFrom] || "Inställningar";
   return `<button class="backbtn backlink" data-cancelsetup>${icon("left", 18)}${back}</button>
-    <h1>Upplägg</h1>
+    <h1>Träningsschema</h1>
     <section class="card progcard" aria-label="Ditt program">
       <div class="row between"><span class="klabel accent">Ditt program</span><button class="linkbtn2" data-progtoggle aria-expanded="${progOpen}">${progOpen ? "Stäng" : "Byt program"}${icon(progOpen ? "up" : "right", 14)}</button></div>
       <div class="progname">${esc(pr.name)}</div>
@@ -140,7 +140,7 @@ function upplaggView() {
         <span class="udots" aria-label="${fixed ? draft.weekdays.slice().sort((a, b) => a - b).map(i => WD_LONG[i]).join(", ") : "Nästa pass i tur"}">${WD.map((w, i) => `<i class="${fixed && draft.weekdays.includes(i) ? "on" : ""}">${w[0]}</i>`).join("")}</span></button></div>
     ${daysOpen || (fixed && !draftOk()) ? `<div class="dayspick">${daysPicker()}</div>` : ""}
     <div class="muted small finish-note">Övningarna ändrar du i varje pass under Träna.</div>
-    <button class="primary wide bigbtn" data-savesetup ${draftOk() ? "" : "disabled"}>Spara upplägg</button>`;
+    <button class="primary wide bigbtn" data-savesetup ${draftOk() ? "" : "disabled"}>Spara schema</button>`;
 }
 
 document.addEventListener("click", ev => {
