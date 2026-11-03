@@ -30,15 +30,16 @@ def add_to(page, meal):
 def prof(page, sec):
     """Öppnar Profil och fäller ut en rad (om den inte redan är utfälld). Vänner har en egen sida."""
     go(page, "profil")
+    if page.evaluate("profOpen") != sec:
+        page.evaluate("profOpen = null; render()")
     if sec == "vanner":
         page.click('#p-vanner [data-tab="vanner"]')
         return
     if sec == "vikt":
         page.click('#p-vikt [data-tab="vagning"]')
         return
-    # Varje rad öppnar en egen sida; börja från listan
-    if page.evaluate("profOpen") != sec:
-        page.evaluate("profOpen = null; render()")
+    # Varje rad öppnar en egen sida; Utseende och Figur ändras direkt i listan
+    if page.evaluate("profOpen") != sec and page.locator(f'[data-psec="{sec}"]').count():
         page.click(f'[data-psec="{sec}"] >> nth=0')
 
 
@@ -281,9 +282,9 @@ def test_upplagg_har_tillbaka_till_trana(page):
     page.click('.tschema [data-tab="upplagg"]')
     page.click(".backlink")
     assert page.evaluate("tab") == "pass" and page.evaluate("draft") is None
-    # Upplägget finns inte i Inställningar
+    # Träningsschemat nås också från Inställningar, under Träning
     go(page, "profil")
-    assert page.locator('[data-tab="upplagg"]').count() == 0
+    assert page.locator('.pgroup [data-tab="upplagg"]').count() == 1
 
 
 def test_utseende_kan_valjas(page):
