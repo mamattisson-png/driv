@@ -17,7 +17,7 @@ Senast uppdaterad: 2026-11-03. Status bygger på dokumenterade publiceringar och
 | 11 | Frivillig appguide | Ny funktion | Medel | Klar |
 | 12 | Enhetlig profil- och inställningsikon | Design | Medel | Ej påbörjad |
 | 13 | Färdigställ uppvärmningsset | Träning | Medel | Ej påbörjad |
-| 14 | Lägg till övning under pågående pass | Träning | Hög | Ej påbörjad |
+| 14 | Lägg till övning under pågående pass | Träning | Hög | Klar |
 | 15 | Tydligare Historik och Utveckling | Historik | Hög | Ej påbörjad |
 | 16 | Numeriskt tangentbord för alla sifferfält | UX | Hög | Under arbete |
 | 17 | Ingen inloggningsblinkning vid uppdatering | Bugg | Hög | Klar |
