@@ -335,12 +335,16 @@ function passOverview(d, w) {
       const sets = (w && w.sets[ex.id]) || [], n = sets.filter(x => x && x.ok).length, all = exDone(w, ex);
       const prev = lastSets(ex.id), top = prev && topSet(prev);
       const g = ssGroup(d, i), pos = g ? (i === g[0] ? "first" : i === g[1] ? "last" : "mid") : "";
+      // Det man faktiskt gjorde: varje set som vikt × reps, och PB när toppsetet slår allt före den här veckan
+      const okSets = sets.filter(x => x && x.ok && hasData(x));
+      const done1 = okSets.length ? okSets.map(x => +x.kg && !EX[ex.id].bw ? `${fmtNum(+x.kg)}×${+x.reps || 0}` : `${+x.reps || 0}${EX[ex.id].bw && +x.kg ? ` +${fmtNum(+x.kg)} kg` : ""}`).join(" · ") : "";
+      const best = okSets.length && bestBefore(ex.id, weekStart(logDate())), pb = okSets.length && (!best || betterSet(topSet(okSets), best)) && best;
       const right = n && !all ? `<span class="setcount">${n}/${ex.sets}</span>`
         : all ? `<span class="setcount ok">${icon("check", 16)}</span>`
         : top ? `<span class="exprev"><span class="muted small">Förra gången</span><b>${fmtSet2({ kg: +top.kg || 0, reps: +top.reps || 0 }, ex.id)}</b></span>` : "";
       return `<li>${g && i === g[0] ? `<div class="klabel sscap">${icon("swap", 13)}Superset</div>` : ""}<button class="exrow2 ${all ? "done" : ""} ${g ? `ss ss-${pos}` : ""}" data-focusex="${i}">
         <span class="exnum ${i === next && !all ? "next" : ""}">${all ? icon("check", 16) : i + 1}</span>
-        <span class="grow"><b>${esc(EX[ex.id].name)}</b><span class="muted small">${g ? `<span class="sstag">${String.fromCharCode(65 + ssIndex(d, g[0]))}${i - g[0] + 1}</span> · ` : ""}${repsText(ex)}${warmCount(ex) ? ` <span class="warmtag">+${warmCount(ex)} uppv.</span>` : ""}</span></span>
+        <span class="grow"><b>${esc(EX[ex.id].name)}${pb ? ` <span class="pbtag">PB</span>` : ""}</b>${done1 ? `<span class="exdone-sets">${done1}${isTimed(ex.id) ? " s" : ""}</span>` : ""}<span class="muted small">${g ? `<span class="sstag">${String.fromCharCode(65 + ssIndex(d, g[0]))}${i - g[0] + 1}</span> · ` : ""}${repsText(ex)}${warmCount(ex) ? ` <span class="warmtag">+${warmCount(ex)} uppv.</span>` : ""}</span></span>
         ${right}</button></li>`;
     }).join("")}
   </ol>`;

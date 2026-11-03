@@ -724,7 +724,12 @@
     background: var(--card); border: 1px solid var(--line); color: var(--text); }
   .exrow2 .grow { display: flex; flex-direction: column; gap: 2px; }
   .exrow2 b { font-size: 16px; font-weight: 500; }
-  .exrow2.done b { color: var(--muted); }
+  .exrow2.done b { color: var(--text); }
+  .exdone-sets { font-size: 14px; font-weight: 600; color: var(--text); font-variant-numeric: tabular-nums; }
+  .pbtag { display: inline-block; margin-left: 6px; padding: 1px 7px; border-radius: 99px; background: var(--accent); color: var(--on-accent); font: 700 11px "Lexend", sans-serif; vertical-align: middle; }
+  .donesum { display: flex; flex-direction: column; gap: 12px; }
+  .donesum-head { display: flex; align-items: center; gap: 8px; color: var(--ok-text); }
+  .rstats.four { grid-template-columns: repeat(4, 1fr); }
   .exrow2.ss { box-shadow: inset 4px 0 0 var(--accent); }
   .exnum { width: 36px; height: 36px; flex: none; border-radius: 12px; background: var(--card-2); display: grid; place-items: center;
     font: 600 14px "Unbounded", sans-serif; }

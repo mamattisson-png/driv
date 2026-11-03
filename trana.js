@@ -184,6 +184,16 @@ function muscleSummary(d) {
         <div class="mrec small ${allOk ? "ok" : ""}">${muscleAdvice(d.type, status)}</div></div></div></section>`;
 }
 
+// Ett genomfört pass: tid, set, total vikt och antal PB i stället för muskelkortet
+function doneSummary(d, w) {
+  const all = d.ex.flatMap(x => ((w.sets[x.id]) || []).filter(s => s && s.ok && hasData(s)).map(s => ({ s, x })));
+  const vol = all.reduce((a, { s, x }) => a + (EX[x.id].bw || isTimed(x.id) ? 0 : (+s.kg || 0) * (+s.reps || 0)), 0);
+  const min = w.start && w.end ? Math.max(1, Math.round((w.end - w.start) / 60000)) : null;
+  const pbs = d.ex.filter(x => { const ok = ((w.sets[x.id]) || []).filter(s => s && s.ok && hasData(s)), b = ok.length && bestBefore(x.id, weekStart(logDate())); return b && betterSet(topSet(ok), b); }).length;
+  const tile = (v, l) => `<div><b>${v}</b><span>${l}</span></div>`;
+  return `<section class="card donesum"><div class="donesum-head">${icon("check", 18)}<b>Passet är klart</b></div>
+    <div class="rstats ${min ? "four" : "three"}">${min ? tile(min, "min") : ""}${tile(all.length, "set")}${tile(vol ? Math.round(vol).toLocaleString("sv-SE") : "–", "kg totalt")}${tile(pbs, pbs === 1 ? "PB" : "PB")}</div></section>`;
+}
 function passetView(d) {
   const w = workoutOn(logDate(), d.id), i = S.plan.days.indexOf(d);
   const done = d.ex.filter(x => exDone(w, x)).length, logged = w && Object.values(w.sets).some(a => a.some(hasData));
@@ -203,8 +213,8 @@ function passetView(d) {
     <div class="klabel accent">${when}</div>
     <h1 class="passname big">${esc(d.name)}</h1>
     <div class="muted pvsub">${esc(passMuscles(d))} · ${d.ex.length} ${d.ex.length === 1 ? "övning" : "övningar"}${sets ? ` · ${sets} set · ~${Math.max(5, Math.round(sets * 2.5 / 5) * 5)} min` : ""}</div>
-    ${muscleSummary(d)}
-    ${d.ex.length ? `<div class="klabel sechead">Övningar</div>${passOverview(d, w)}`
+    ${w && w.done ? doneSummary(d, w) : muscleSummary(d)}
+    ${d.ex.length ? `<div class="klabel sechead">${w && w.done ? "Det här gjorde du" : "Övningar"}</div>${passOverview(d, w)}`
       : `<div class="card empty"><b>Passet har inga övningar än.</b><button class="primary wide" style="margin-top:12px" data-edit>Lägg till övningar</button></div>`}
     ${bottom}${w && !w.end ? `<button class="ghost wide dangertext" data-passcancel="${d.id}">Avbryt passet utan att spara</button>` : ''}`;
 }
