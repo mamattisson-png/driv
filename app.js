@@ -158,7 +158,11 @@ function addExercise(target, id, replace, today) {
     // Bara i dag: det gamla läggs tillbaka i passet när det sparas (eller nästa dag)
     if (today) { const w = workoutFor(dayById(target)); (w.swap = w.swap || []).push({ id: e.id, orig }); }
   }
-  else if (!list.some(e => e.id === id)) list.push(exEntry(id));
+  else if (!list.some(e => e.id === id)) {
+    list.push(exEntry(id));
+    // Bara i dag: övningen tas bort ur passet igen nästa dag (eller om passet avbryts). Setten ligger kvar i loggen.
+    if (today) { const w = workoutFor(dayById(target)); (w.added = w.added || []).push(id); }
+  }
 }
 function exEntry(spec) {
   const [id, sr] = spec.split("@");
@@ -1932,9 +1936,18 @@ function restoreSwaps(d, w) {
   }
   delete w.swap;
 }
+// Övningar som lagts till bara för ett pass tas bort ur passet igen
+function dropAdded(d, w) {
+  if (!w.added) return;
+  if (d) d.ex = d.ex.filter(x => !w.added.includes(x.id));
+  delete w.added;
+}
 // Byten från tidigare dagar som aldrig sparades läggs också tillbaka
 function restoreOldSwaps() {
-  for (const [date, L] of Object.entries(S.log || {})) if (date < TODAY) for (const w of L.workouts || []) if (w.swap) restoreSwaps(dayById(w.dayId), w);
+  for (const [date, L] of Object.entries(S.log || {})) if (date < TODAY) for (const w of L.workouts || []) {
+    if (w.swap) restoreSwaps(dayById(w.dayId), w);
+    if (w.added) dropAdded(dayById(w.dayId), w);
+  }
 }
 function syncDone(d) {
   const w = workoutOn(logDate(), d.id);

@@ -255,6 +255,7 @@ function focusView() {
     <button class="chipbtn" data-setcount="-1" data-ex="${ex.id}" ${ex.sets > 1 ? "" : "disabled"} aria-label="Ett set färre">− Set</button>
     <button class="chipbtn" data-setcount="1" data-ex="${ex.id}" aria-label="Ett set till">+ Set</button>
     ${nW < 5 && !stretch && !timed ? `<button class="chipbtn" data-warmadd="${ex.id}" aria-label="Ett uppvärmningsset till">+ Uppvärmning</button>` : ""}
+    <button class="chipbtn" data-faddex aria-label="Lägg till en övning i passet">${icon("plus", 14)}Övning</button>
     ${!g && d.ex.length > 1 ? `<button class="chipbtn ${focus.ssPick ? "on" : ""}" data-sspick>${icon("plus", 14)}Superset</button>` : ""}
     ${d.ex.length > 1 ? `<button class="chipbtn" data-forder>Ordning</button>` : ""}
     ${S.daily.length ? `<button class="chipbtn" data-fdopen aria-label="Dailys, ${dDone} av ${S.daily.length} klara">Dailys ${dDone} av ${S.daily.length}</button>` : ""}</div>`;
@@ -414,7 +415,7 @@ document.addEventListener("click", ev => {
       const same = target && (w ? !w.end && w._id === target.workoutId : target.workoutId === null);
       if (target && !editDate && target.date === TODAY && same) {
         if (w) {
-          restoreSwaps(dayById(target.dayId), w);
+          restoreSwaps(dayById(target.dayId), w); dropAdded(dayById(target.dayId), w);
           day(target.date).workouts = workoutsOn(target.date).filter(x => x !== w);
         }
         if (!focus || focus.dayId === target.dayId) { endFocus(); stopRest(); }
@@ -425,11 +426,12 @@ document.addEventListener("click", ev => {
     }
     render(); return;
   }
-  const t = ev.target.closest("[data-step],[data-focusgo],[data-focusexit],[data-focusend],[data-focusstart],[data-focusex],[data-fdopen],[data-fdclose],[data-fsel],[data-sspick],[data-sspair],[data-forder],[data-forderclose],[data-fmove],[data-fstepsall],[data-fswap],[data-fend],[data-fendclose]");
+  const t = ev.target.closest("[data-step],[data-focusgo],[data-focusexit],[data-focusend],[data-focusstart],[data-focusex],[data-fdopen],[data-fdclose],[data-fsel],[data-sspick],[data-sspair],[data-forder],[data-forderclose],[data-fmove],[data-fstepsall],[data-fswap],[data-faddex],[data-fend],[data-fendclose]");
   if (!t || t.disabled) return;
   if (t.classList.contains("overlay") && ev.target !== t) return;   // klick inne i fönstret
   const ds = t.dataset;
   if (ds.fdopen !== undefined || ds.fdclose !== undefined) { focusDailies = ds.fdopen !== undefined; dailyEditing = false; render(); return; }
+  if (ds.faddex !== undefined) { openLibrary({ kind: "workout", target: focus.dayId, today: true }); render(); return; }
   if (ds.fswap !== undefined) { openLibrary({ kind: "workout", target: focus.dayId, replace: +ds.fswap, today: true }); render(); return; }
   if (ds.fend !== undefined || ds.fendclose !== undefined) { focusEnd = ds.fend !== undefined; render(); return; }
   if (ds.fstepsall !== undefined) { focus.allSteps = !focus.allSteps; render(); return; }

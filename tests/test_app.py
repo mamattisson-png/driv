@@ -2482,3 +2482,31 @@ def test_alla_musclewiki_lankar_har_ratt_format(page):
     start(page)
     bad = page.evaluate("""Object.keys(MW).filter(id => !/^(exercise\\/[a-z0-9-]+|exercises\\/[a-z]+\\/(bodyweight|barbell|dumbbells|cables|kettlebells|machine|stretches))$/.test(MW[id]))""")
     assert bad == []
+
+
+def test_lagg_till_ovning_under_passet(page):
+    start(page)
+    go(page, "pass")
+    pick(page, page.evaluate("S.plan.days[0].id"))
+    page.click("[data-focusstart]")
+    n = page.evaluate("S.plan.days[0].ex.length")
+    page.click("[data-faddex]")
+    assert "Lägg till i" in page.inner_text(".msk h1")
+    assert page.locator('[data-libtoday="true"].on').count() == 1
+    page.click('.msk-row [data-libpick] >> nth=0')
+    # Övningen ligger sist i passet och fokus hoppar dit
+    assert page.locator(".msk").count() == 0
+    assert page.evaluate("S.plan.days[0].ex.length") == n + 1
+    assert page.evaluate("focus.idx") == n
+    added = page.evaluate(f"S.plan.days[0].ex[{n}].id")
+    assert page.inner_text(".ftitle h2") == page.evaluate(f"EX['{added}'].name")
+    # Bara i dag: tas bort ur passet nästa dag, setten ligger kvar i loggen
+    page.evaluate("""() => { const w = workoutFor(S.plan.days[0]); S.log['2020-01-01'] = { workouts: [Object.assign({}, w, { sets: {} })], dailies: {}, food: [] }; delete w.added; restoreOldSwaps(); }""")
+    assert page.evaluate("S.plan.days[0].ex.length") == n
+    # Även framåt: övningen stannar
+    page.evaluate("render()")
+    page.click("[data-faddex]")
+    page.click('[data-libtoday="false"]')
+    page.click('.msk-row [data-libpick] >> nth=0')
+    page.evaluate("restoreOldSwaps()")
+    assert page.evaluate("S.plan.days[0].ex.length") == n + 1

@@ -170,8 +170,10 @@ document.addEventListener("click", ev => {
     // Lägg till (eller byt) med den vanliga logiken, och tillbaka dit man kom ifrån
     const c = libCtx, name = EX[ds.libpick].name;
     addExercise(c.target, ds.libpick, c.replace, c.today);
+    // Tillagd mitt i ett pass: gå direkt till den nya övningen
+    if (c.replace == null && focus && focus.dayId === c.target) { const k = exList(c.target).findIndex(e => e.id === ds.libpick); if (k >= 0) focus.idx = k; }
     libCtx = null; save(); render();
-    toast(c.replace != null ? `Bytt till ${name}` : `${name} tillagd i ${libTargetName(c.target)}`);
+    toast(c.replace != null ? `Bytt till ${name}` : `${name} tillagd i ${c.today ? "dagens pass" : libTargetName(c.target)}`);
     return;
   }
   else if (ds.libclose !== undefined) libCtx = null;
