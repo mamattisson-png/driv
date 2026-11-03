@@ -17,7 +17,7 @@ load('styrka-extra.js');
 assert.equal(run('EXTRA_STRENGTH_IDS.length'), 240, '240 hand-selected strength exercises');
 assert.equal(run('Object.keys(EX).length'), oldIds.length+240);
 assert.equal(run(`JSON.stringify(Object.fromEntries(${JSON.stringify(oldIds)}.map(id=>[id,EX[id]])))`),before,'old data unchanged');
-const normalizeFigureIds = svg => svg.replace(/fg\\d+/g, 'fgID');
+const normalizeFigureIds = svg => svg.replace(/fg\d+/g, 'fgID');
 oldIds.forEach((id,i)=>assert.equal(normalizeFigureIds(run(`figure(${JSON.stringify(id)}, '', true)`)),normalizeFigureIds(oldFigures[i]),id+' old SVG unchanged'));
 run(`(() => {
   const ids = EXTRA_STRENGTH_IDS;
