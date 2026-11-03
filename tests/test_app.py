@@ -1604,7 +1604,9 @@ def test_valj_ovning_efter_kroppsdel_och_utrustning(page):
     assert shown() and all(page.evaluate(f"EX['{i}'].cat === 'push' && gearGroup('{i}') === 'db'") for i in shown())
     # Instruktionen öppnas från listan och har en väg tillbaka
     page.click(".msk-row [data-info] >> nth=0")
-    assert page.locator(".sheet .fig").count() > 0
+    link = page.locator(".mwlink")
+    assert link.get_attribute("href").startswith("https://musclewiki.com/")
+    assert link.get_attribute("target") == "_blank"
     page.click(".sheet [data-close]")
     assert page.locator(".msk-ctx").count() == 1
     # Tillbaka till passet utan att något läggs till
@@ -2132,7 +2134,7 @@ def test_alla_ovningar_kan_laggas_till(page):
     assert page.evaluate("S.plan.days[1].ex.some(e => e.id === 'hantelrodd')")
     # Även från övningens sida, som ser ut som stretchens
     page.click(".msk-row [data-mskdetail] >> nth=0")
-    assert "Tränas mest" in page.inner_text(".msk") and page.locator(".mwlink").count() == 0
+    assert "Tränas mest" in page.inner_text(".msk") and page.get_attribute(".msk .mwlink", "href").startswith("https://musclewiki.com/")
     page.click('.pagefoot [data-sgadd]')
     page.click('[data-sgto="daily"]')
     assert page.evaluate("S.daily.some(e => e.id === 'hantelrodd')") and not page.errors
@@ -2473,3 +2475,10 @@ def test_sparat_pass_ar_last_tills_det_oppnas_igen(page):
     assert page.locator(".exlist [data-focusex]").count() == 0
     page.click('.done-card [data-finish]')
     assert page.locator(".exlist [data-focusex]").count() > 0
+
+
+
+def test_alla_musclewiki_lankar_har_ratt_format(page):
+    start(page)
+    bad = page.evaluate("""Object.keys(MW).filter(id => !/^(exercise\\/[a-z0-9-]+|exercises\\/[a-z]+\\/(bodyweight|barbell|dumbbells|cables|kettlebells|machine|stretches))$/.test(MW[id]))""")
+    assert bad == []
