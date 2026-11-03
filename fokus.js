@@ -329,6 +329,8 @@ function ssIndex(d, start) {
 // Passet: en numrerad rad per övning med set och reps, och förra gången till höger.
 // Tryck på en rad för att öppna fokusläget på just den övningen.
 function passOverview(d, w) {
+  // Ett sparat pass är låst: övningarna öppnas först när man trycker Öppna igen
+  const locked = !!(w && w.done && !editDate);
   const next = w && !w.done ? d.ex.findIndex(x => !exDone(w, x)) : 0;
   return `<ol class="exlist">
     ${d.ex.map((ex, i) => {
@@ -342,10 +344,10 @@ function passOverview(d, w) {
       const right = n && !all ? `<span class="setcount">${n}/${ex.sets}</span>`
         : all ? `<span class="setcount ok">${icon("check", 16)}</span>`
         : top ? `<span class="exprev"><span class="muted small">Förra gången</span><b>${fmtSet2({ kg: +top.kg || 0, reps: +top.reps || 0 }, ex.id)}</b></span>` : "";
-      return `<li>${g && i === g[0] ? `<div class="klabel sscap">${icon("swap", 13)}Superset</div>` : ""}<button class="exrow2 ${all ? "done" : ""} ${g ? `ss ss-${pos}` : ""}" data-focusex="${i}">
+      return `<li>${g && i === g[0] ? `<div class="klabel sscap">${icon("swap", 13)}Superset</div>` : ""}<${locked ? "div" : "button"} class="exrow2 ${all ? "done" : ""} ${g ? `ss ss-${pos}` : ""}" ${locked ? "" : `data-focusex="${i}"`}>
         <span class="exnum ${i === next && !all ? "next" : ""}">${all ? icon("check", 16) : i + 1}</span>
         <span class="grow"><b>${esc(EX[ex.id].name)}${pb ? ` <span class="pbtag">PB</span>` : ""}</b>${done1 ? `<span class="exdone-sets">${done1}${isTimed(ex.id) ? " s" : ""}</span>` : ""}<span class="muted small">${g ? `<span class="sstag">${String.fromCharCode(65 + ssIndex(d, g[0]))}${i - g[0] + 1}</span> · ` : ""}${repsText(ex)}${warmCount(ex) ? ` <span class="warmtag">+${warmCount(ex)} uppv.</span>` : ""}</span></span>
-        ${right}</button></li>`;
+        ${right}</${locked ? "div" : "button"}></li>`;
     }).join("")}
   </ol>`;
 }

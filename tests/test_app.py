@@ -2459,3 +2459,15 @@ def test_avslutat_pass_visar_vikter_och_pb(page):
     assert "62,5×8 · 65×6" in page.inner_text(".exlist li >> nth=0")
     assert page.locator(".exlist li >> nth=0").locator(".pbtag").count() == 1
     assert "45" in page.inner_text(".donesum") and "890" in page.inner_text(".donesum")
+
+
+def test_sparat_pass_ar_last_tills_det_oppnas_igen(page):
+    start(page)
+    page.evaluate("""const d=S.plan.days[0], e=d.ex[0];
+      S.log[TODAY] = {workouts:[{dayId:d.id, done:true, sets:{[e.id]:[{kg:60,reps:8,ok:true}]}}], dailies:{}, food:[]}; save()""")
+    page.reload()
+    go(page, "pass")
+    pick(page, page.evaluate("S.plan.days[0].id"))
+    assert page.locator(".exlist [data-focusex]").count() == 0
+    page.click('.done-card [data-finish]')
+    assert page.locator(".exlist [data-focusex]").count() > 0
