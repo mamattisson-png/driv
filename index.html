@@ -667,6 +667,18 @@
   .pstats > div { border-radius: 14px; background: var(--card-2); padding: 10px 12px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
   .pstats b { font: 600 18px/1.2 "Unbounded", sans-serif; }
   .pstats span { font-size: 12px; color: var(--muted); }
+  /* Inställningarnas undersidor: samma mall överallt */
+  .pintro { margin: -10px 0 16px; line-height: 1.45; }
+  .ppage { display: flex; flex-direction: column; gap: 12px; }
+  .ppage > .card { margin: 0; }
+  .ppage .card > h2:first-child { display: none; }
+  .psw { display: flex; align-items: center; gap: 14px; min-height: 60px; padding: 12px 16px; cursor: pointer; }
+  .psw .grow { line-height: 1.35; }
+  .card.psw .pic { flex: none; }
+  .psw .prow-head, .psw > .pic + .grow { flex: 1; }
+  .pbig { text-align: center; padding: 18px 16px; }
+  .pbig b { display: block; font: 600 34px "Unbounded", sans-serif; color: var(--accent-text); }
+  .pbig span { color: var(--muted); font-size: 13px; }
   .pgroup { display: flex; flex-direction: column; gap: 8px; margin-top: 18px; }
   .pgroup > .klabel { margin: 0 4px; font-weight: 500; }
   /* Knoppen ritas som bakgrund; webbläsare visar inte ::after på kryssrutor (Safari) */

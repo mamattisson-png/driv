@@ -617,8 +617,8 @@ function reminderCard() {
       <button class="small" data-remcal style="align-self:flex-end">Lägg till i kalendern</button></div>
     <div class="muted small" style="margin-top:6px">Kalendern påminner dig även när appen är stängd.</div>
     ${canNotify ? (perm === "granted"
-      ? `<label class="row" style="margin-top:10px"><input type="checkbox" data-remnotify ${r.notify ? "checked" : ""}>
-          <span>Notis när jag öppnar appen efter den tiden och något är ogjort</span></label>`
+      ? `<label class="card psw" style="margin-top:10px"><span class="grow">Notis när jag öppnar appen efter den tiden och något är ogjort</span>
+          <input type="checkbox" class="switch" data-remnotify ${r.notify ? "checked" : ""}></label>`
       : perm === "default" ? `<button class="small" style="margin-top:10px" data-remperm>Tillåt notiser från Driv</button>`
       : `<div class="muted small" style="margin-top:6px">Notiser är avstängda för Driv i telefonens inställningar.</div>`) : ""}</div>`;
 }
@@ -1156,7 +1156,7 @@ const VIEWS = {
       <h3 class="klabel" style="margin-top:18px">Vägning</h3>
       <section class="card">
         <label class="field">Vägningsdag<select data-weighday>${WD.map((w, i) => `<option value="${i}" ${weighDay() === i ? "selected" : ""}>${WD_LONG[i].replace(/^./, c => c.toUpperCase())}</option>`).join("")}</select></label>
-        <label class="row" style="margin-top:12px"><input type="checkbox" data-showweight ${S.hideWeight ? "" : "checked"}><span>Visa vikt på Hem och i Historik</span></label>
+        <label class="psw" style="margin-top:12px"><span class="grow">Visa vikt på Hem och i Historik</span><input type="checkbox" class="switch" data-showweight ${S.hideWeight ? "" : "checked"}></label>
         <div class="muted small" style="margin-top:4px">Döljer du vikten används den ändå i kalorimålet, och sparade vägningar finns kvar.</div></section></div>`;
   },
   idag() {
@@ -1229,10 +1229,10 @@ const VIEWS = {
 
   vanner() { return friendsView(); },
 
-  kommande: () => `<button class="backbtn" data-tab="profil">${icon("left", 18)}Inställningar</button>${upcomingFeaturesPage()}`,
+  kommande: () => upcomingFeaturesPage(),
 
   profil() {
-    checkPush();
+    checkPush(); PROF_PAGES = {};
     const p = S.profile, m = macros(), rs = restSettings(), r = S.reminder;
     const cloudText = {
       cloud: account.step === "in" ? `✓ Sparas på ditt konto (${esc(account.email)}).` : "✓ Sparas på ditt konto och följer med mellan mobil och dator.",
@@ -1256,27 +1256,30 @@ const VIEWS = {
       `<button role="radio" data-theme-set="${k}" class="${themeNow() === k ? "on" : ""}" aria-checked="${themeNow() === k}" aria-pressed="${themeNow() === k}">${k === "auto" ? "Auto" : n}</button>`).join("")}</div>`;
     const figSeg = `<div class="tseg" role="radiogroup" aria-label="Figur">${[["m", "Man"], ["k", "Kvinna"]].map(([k, n]) =>
       `<button role="radio" data-figure-set="${k}" class="${figK() === (k === "k") ? "on" : ""}" aria-checked="${figK() === (k === "k")}">${n}</button>`).join("")}</div>`;
-    return `<button class="backbtn" data-tab="${profBack}">${icon("left", 18)}${{ idag: "Hem", pass: "Träna", kost: "Kost", historik: "Historik" }[profBack] || "Tillbaka"}</button>
+    const main = `<button class="backbtn" data-tab="${profBack}">${icon("left", 18)}${{ idag: "Hem", pass: "Träna", kost: "Kost", historik: "Historik" }[profBack] || "Tillbaka"}</button>
       <h1 class="ptitle">Inställningar</h1>
       <section class="card pcard" aria-label="Du"><div class="row"><span class="avatar" aria-hidden="true">${esc(name.slice(0, 1).toUpperCase())}</span>
-          <div class="grow col"><b>${esc(name)}</b><span class="muted small">${cloud.status === "cloud" ? "Sparas på ditt konto" : "Sparas på den här enheten"}</span></div>
-          <button class="small" data-editprof>Ändra</button></div>
+          <div class="grow col"><b>${esc(name)}</b><span class="muted small">${account.step === "in" ? esc(account.email) : sbEnabled ? "Inte inloggad · sparas bara i telefonen" : "Sparas i den här telefonen"}</span></div>
+          <button class="linkbtn2" data-psec="konto">${account.step === "in" || !sbEnabled ? "Konto" : "Logga in"}${icon("right", 14)}</button></div>
         <div class="pstats"><div><b>${S.plan.count}</b><span>pass i veckan</span></div><div><b>${tnum(m.kcal)}</b><span>kcal om dagen</span></div>
           <div><b>${fmtNum(last ? last.kg : p.weight)}</b><span>kg senast</span></div></div></section>
-      ${group("Träning", `${profRow("vila", "timer", "Vilotimer", rs.on ? `På · ${rs.compound} / ${rs.iso} sek` : "Av", `
-          <label class="row"><input type="checkbox" data-resttoggle ${rs.on ? "checked" : ""}><span>Starta en vilotimer när jag bockar av ett set</span></label>
+      ${group("Träning", `<div class="prow"><div class="prow-line"><button class="prow-head" data-tab="upplagg"><span class="pic">${icon("upplagg", 20)}</span><span class="grow"><b>Träningsschema</b>
+          <span class="muted small">${esc(PROGRAMS[S.plan.program || "ppl"].name)} · ${S.plan.count} pass i veckan</span></span><span class="chev">${icon("right", 18)}</span></button></div></div>
+        ${profRow("vila", "timer", "Vilotimer", rs.on ? `På · ${rs.compound} / ${rs.iso} sek` : "Av", `
+          <label class="card psw"><span class="grow">Starta en vilotimer när jag bockar av ett set</span><input type="checkbox" class="switch" data-resttoggle ${rs.on ? "checked" : ""}></label>
           <div class="grid2" style="margin-top:10px">
             <label class="field">Basövningar (sek)<input type="number" inputmode="numeric" id="restcompound" value="${rs.compound}"></label>
             <label class="field">Isolering och mage (sek)<input type="number" inputmode="numeric" id="restiso" value="${rs.iso}"></label></div>`)}
         ${profRow("aktiviteter", "aktivitet", "Annan träning", [S.actCount !== false ? "Räknas som pass" : "", S.actKcal ? "kcal läggs till" : ""].filter(Boolean).join(" · ") || "Padel, vandring och annat", `
-          <label class="row"><input type="checkbox" data-actcount ${S.actCount !== false ? "checked" : ""}><span>En aktivitet på minst 45 minuter räknas som ett pass i veckan</span></label>
-          <label class="row" style="margin-top:8px"><input type="checkbox" data-actkcal ${S.actKcal ? "checked" : ""}><span>Lägg till förbrända kcal i dagens kalorimål</span></label>
+          <label class="card psw"><span class="grow">En aktivitet på minst 45 minuter räknas som ett pass i veckan</span><input type="checkbox" class="switch" data-actcount ${S.actCount !== false ? "checked" : ""}></label>
+          <label class="card psw"><span class="grow">Lägg till förbrända kcal i dagens kalorimål</span><input type="checkbox" class="switch" data-actkcal ${S.actKcal ? "checked" : ""}></label>
           <div class="muted small" style="margin-top:6px">Förbrända kcal är en uppskattning efter aktivitet, tid och din vikt. Den blir lätt för hög, därför är det avstängt från början.</div>`)}`)}
-      ${group("Kost och kropp", `${profRow("kalori", "kost", "Kalorimål", `${tnum(m.kcal)} kcal · ${GOALS[p.goal][0].split(" (")[0]}`, `${profileFields(p)}
+      ${group("Kost och kropp", `${profRow("kalori", "kost", "Kalorimål", `${tnum(m.kcal)} kcal · ${GOALS[p.goal][0].split(" (")[0]}`, `<section class="card pbig"><b>${tnum(m.kcal)}</b><span>kcal om dagen · Protein ${m.protein} g · Fett ${m.fat} g · Kolhydrater ${m.carbs} g</span></section>
+          <section class="card">${profileFields(p)}
           <div class="muted" style="margin-top:10px">Underhåll (TDEE): ${tdee(p)} kcal · Mål: ${m.kcal} kcal</div>
           <div class="muted">Protein ${m.protein} g · Fett ${m.fat} g · Kolhydrater ${m.carbs} g</div>
           <label class="field" style="margin-top:10px">Eget kalorimål (lämna tomt för beräknat)
-            <input type="number" inputmode="numeric" id="override" value="${S.kcalOverride || ""}" placeholder="${m.kcal}"></label>`)}
+            <input type="number" inputmode="numeric" id="override" value="${S.kcalOverride || ""}" placeholder="${m.kcal}"></label></section>`)}
         <div class="prow" id="p-vikt"><div class="prow-line"><button class="prow-head" data-tab="vagning"><span class="pic">${icon("vikt", 20)}</span><span class="grow"><b>Vikt</b>
           <span class="muted small">${S.hideWeight ? "Dold" : `Vägning varje ${WD_LONG[weighDay()]}`}</span></span><span class="chev">${icon("right", 18)}</span></button></div></div>`)}
       ${group(sbEnabled ? "Vänner och notiser" : "Notiser", `${sbEnabled ? `<div class="prow" id="p-vanner"><div class="prow-line"><button class="prow-head" data-tab="vanner"><span class="pic">${icon("vanner", 20)}</span><span class="grow"><b>Vänner</b>
@@ -1286,14 +1289,18 @@ const VIEWS = {
       ${group("Appen", `${profRow("utseende", "utseende", "Utseende", "", null, themeSeg)}
         ${profRow("figur", "profil", "Figur", "I kroppskartan", null, figSeg)}
         ${profRow("guide", "info", "Appguide", "En kort rundtur genom flikarna", null, `<button class="small" data-tourstart>Starta</button>`)}
-        ${profRow("konto", "data", sbEnabled ? "Konto och data" : "Data", account.step === "in" ? esc(account.email) : sbEnabled ? "Inloggning, exportera, importera" : "Exportera, importera",
-          `${accountCard()}${data}`)}
+        ${(profRow("konto", "data", sbEnabled ? "Konto och data" : "Data", "", `<section class="card"><div class="row"><span class="avatar" aria-hidden="true">${esc(name.slice(0, 1).toUpperCase())}</span>
+          <label class="field grow">Namn<input id="pname" maxlength="40" autocomplete="given-name" value="${esc(name === "Du" ? "" : name)}" placeholder="Ditt namn"></label></div>
+          ${sbEnabled ? `<div class="muted small" style="margin-top:6px">Namnet syns för dina vänner.</div>` : ""}
+          <button class="wide" style="margin-top:12px" data-pnamesave ${social.busy ? "disabled" : ""}>Spara namnet</button></section>
+          ${accountCard()}<section class="card">${data}</section>`), "")}
         <div class="prow"><div class="prow-line"><button class="prow-head" data-tab="kommande"><span class="pic">${icon("idea", 20)}</span><span class="grow"><b>Kommande funktioner</b>
           <span class="muted small">Se vad som är på gång i Driv</span></span><span class="chev">${icon("right", 18)}</span></button></div></div>
         ${sbEnabled ? profRow("tyck", "chat", "Tyck till", "Vad saknas, vad är krångligt?", feedbackCard()) : ""}
         ${isDevAccount() ? `<div class="prow"><div class="prow-line"><button class="prow-head" data-opentest><span class="pic">${icon("test", 20)}</span><span class="grow"><b>Testläge</b>
           <span class="muted small">Egen data som inte rör ditt konto</span></span><span class="chev">${icon("right", 18)}</span></button></div></div>` : ""}`)}
       ${account.step === "in" ? `<button class="wide plogout" data-signout>${icon("logout", 18)}Logga ut</button>` : ""}`;
+    return profOpen && PROF_PAGES[profOpen] ? profPage(profOpen) : main;
   },
 };
 
@@ -1345,20 +1352,33 @@ function homeGreeting(hr, { done, dailysOk, started, rest, passes, goal }) {
 }
 const profName = () => (social.profile && social.profile.name) || S.name || (account.step === "in" ? account.email.split("@")[0] : "Du");
 // body null: raden fälls inte ut (valet ligger direkt i raden). extra: en kontroll till höger, t.ex. en strömbrytare.
+// En rad i Inställningar. Har den innehåll (body) öppnar den en egen sida med samma upplägg som de andra;
+// annars är reglaget (extra) själva raden, som Utseende och Figur.
+let PROF_PAGES = {};
+const PROF_INTRO = {
+  vila: "Efter varje set räknar en timer ned vilan. Basövningar behöver längre vila än isolering och mage.",
+  aktiviteter: "Padel, löpning, vandring och annat som du loggar med tid.",
+  kalori: "Räknas fram från dig och ditt mål. Ändra det som inte stämmer.",
+  notiser: "Driv kan påminna dig även när appen är stängd.",
+  paminnelse: "En daglig påminnelse i telefonens kalender om dina dailys.",
+  konto: "Ditt namn, inloggning och säkerhetskopia av allt du loggat.",
+};
 function profRow(id, ic, title, summary, body, extra = "") {
-  const open = profOpen === id || body === null;
   const inner = `<span class="pic">${icon(ic, 20)}</span><span class="grow"><b>${title}</b>${summary ? `<span class="muted small">${summary}</span>` : ""}</span>`;
-  const head = body === null ? `<div class="prow-head">${inner}</div>`
-    : `<button class="prow-head" data-psec="${id}" aria-expanded="${open}">${inner}${extra ? "" : `<span class="chev">${icon("right", 18)}</span>`}</button>`;
-  return `<div class="prow ${open ? "open" : ""}" id="p-${id}"><div class="prow-line">${head}${extra}</div>
-    ${open && body ? `<div class="prow-body">${body}</div>` : ""}</div>`;
+  if (body === null) return `<div class="prow" id="p-${id}"><div class="prow-line"><div class="prow-head">${inner}</div>${extra}</div></div>`;
+  PROF_PAGES[id] = { title, body: (extra ? `<div class="card psw">${inner}${extra}</div>` : "") + body };
+  return `<div class="prow" id="p-${id}"><div class="prow-line"><button class="prow-head" data-psec="${id}">${inner}<span class="chev">${icon("right", 18)}</span></button></div></div>`;
+}
+function profPage(id) {
+  const p = PROF_PAGES[id];
+  return `<button class="backbtn" data-psec="">${icon("left", 18)}Inställningar</button>
+    <h1 class="ptitle">${p.title}</h1>${PROF_INTRO[id] ? `<p class="muted pintro">${PROF_INTRO[id]}</p>` : ""}
+    <div class="ppage">${p.body}</div>`;
 }
 function openProfRow(id, focusId) {
-  tab = "profil"; profOpen = id; render();
-  const el = document.getElementById(`p-${id}`);
-  if (el && el.scrollIntoView) el.scrollIntoView({ block: "start" });
+  tab = "profil"; profOpen = id; render(); window.scrollTo(0, 0);
   const f = focusId && document.getElementById(focusId);
-  if (f) f.focus({ preventScroll: true });
+  if (f) f.focus();
 }
 
 // Unika livsmedel/måltider från loggen, senast först
@@ -1986,7 +2006,7 @@ document.addEventListener("click", ev => {
   }
   else if (ds.themeSet) setTheme(ds.themeSet);
   else if (ds.figureSet) S.figure = ds.figureSet;
-  else if (ds.psec) profOpen = profOpen === ds.psec ? null : ds.psec;
+  else if (ds.psec !== undefined) { profOpen = ds.psec || null; window.scrollTo(0, 0); }
   else if (ds.go) { tab = ds.go; if (ds.day) chosenDay = ds.day; if (tab === "kost") { mealPage = null; foodSheet = null; foodItem = null; } }
   else if (ds.pick) { chosenDay = ds.pick; passOpen = true; if (!editDate) window.scrollTo(0, 0); }
   else if (ds.edit !== undefined) {
@@ -2172,7 +2192,7 @@ document.addEventListener("click", ev => {
   // En ny flik börjar högst upp
   if (tab !== prevTab) window.scrollTo(0, 0);
   // En utfälld rad längst ned rullas upp så att innehållet syns ovanför flikraden
-  if (ds.psec && profOpen) { const r = document.getElementById(`p-${profOpen}`); if (r && r.scrollIntoView) r.scrollIntoView({ block: "nearest" }); }
+
 });
 
 document.addEventListener("change", ev => {

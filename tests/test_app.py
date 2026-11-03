@@ -36,8 +36,10 @@ def prof(page, sec):
     if sec == "vikt":
         page.click('#p-vikt [data-tab="vagning"]')
         return
-    if page.locator(f"#p-{sec}.open").count() == 0:
-        page.click(f'[data-psec="{sec}"]')
+    # Varje rad öppnar en egen sida; börja från listan
+    if page.evaluate("profOpen") != sec:
+        page.evaluate("profOpen = null; render()")
+        page.click(f'[data-psec="{sec}"] >> nth=0')
 
 
 def seed(page, js):
@@ -139,8 +141,8 @@ def test_guide_for_hemskarmen_pa_iphone(page):
     page.click("[data-installlater]")
     assert page.locator(".nudge").count() == 0
     go(page, "profil")
-    page.click("[data-psec=konto]")
-    assert "Lägg till på hemskärmen" in page.inner_text("#p-konto")
+    page.click("[data-psec=konto] >> nth=0")
+    assert "Lägg till på hemskärmen" in page.inner_text(".ppage")
 
 def test_fasta_dagar_kraver_ratt_antal(page):
     open_app(page)
@@ -1378,7 +1380,7 @@ def test_notiser_slas_pa_och_av(page):
     page.wait_for_function("push.on && window.__social.push")
     saved = page.evaluate("window.__social.push")
     assert saved["p_endpoint"] == "https://push.example/abc" and saved["p_time"] == "18:00" and saved["p_kudos"] is True
-    assert "På · kl. 18:00" in page.inner_text("#p-notiser")
+    assert "På · kl. 18:00" in page.inner_text(".ppage")
     page.fill("#pushtime", "07:30")
     page.press("#pushtime", "Tab")
     page.wait_for_function("window.__social.push && window.__social.push.p_time === '07:30'")
@@ -2193,7 +2195,7 @@ def test_nollstall_allt_borjar_pa_valkomstsidan(page):
     # Även inloggad hamnar man på välkomstsidan, precis som en ny användare
     page.evaluate("account.step = 'in'; account.email = 'a@b.se'; cloud.status = 'cloud'")
     go(page, "profil")
-    page.click('[data-psec="konto"]')
+    page.click('[data-psec="konto"] >> nth=0')
     page.click("[data-reset]")
     page.click("[data-reset]")
     assert page.evaluate("[tab, onb, S.setupDone]") == ["upplagg", 0, False]

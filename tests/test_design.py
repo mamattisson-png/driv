@@ -151,9 +151,9 @@ def views(page):
     yield "Profil", "#app"
     page.evaluate("document.querySelector('[data-psec=kalori]').click()")
     yield "Profil, kalorimål", "#app"
-    page.evaluate("document.querySelector('[data-psec=konto]').click()")
+    page.evaluate("profOpen = 'konto'; render()")
     yield "Profil, konto", "#app"
-    page.evaluate("setupFrom = 'pass'; tab = 'upplagg'; daysOpen = true; render()")
+    page.evaluate("profOpen = null; setupFrom = 'pass'; tab = 'upplagg'; daysOpen = true; render()")
     yield "Upplägg", "#app"
     yield "Flikar", "#nav"
 
