@@ -22,7 +22,8 @@ const EXTRA_STRETCH_IDS = [];
     if (EX[id]) throw new Error("Övnings-id finns redan: " + id);
     EX[id] = Object.assign({ name, cat: "stretch", bw: true, muscles, sets: 2, reps, cues,
       stretchTargets: targets.split(" "), A }, B ? { B } : {}, extras);
-    MW[id] = list.startsWith("exercise/") ? list : "exercises/" + list + "/stretches";
+    // Länka bara till en specifik övningssida, aldrig en generell stretchlista.
+    if (list.startsWith("exercise/")) MW[id] = list;
     EXTRA_STRETCH_IDS.push(id);
   }
 
