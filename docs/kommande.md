@@ -54,6 +54,7 @@ Senast uppdaterad: 2026-11-01. Status bygger på dokumenterade publiceringar och
 | 50 | Träna: välj pass, Starta och Ändra lika tydligt, Träningsschema | Träning | Hög | Klar |
 | 51 | Ändra pass: alltid pilar, vikt per övning, dropset och max reps | Träning | Hög | Klar |
 | 52 | Avslutat pass visar vikter, PB och sammanfattning | Träning | Medel | Klar |
+| 53 | Sparat pass är låst tills man öppnar det igen | Bugg | Medel | Klar |
 
 ## Detaljer och acceptanskriterier
 
@@ -125,6 +126,7 @@ Senast uppdaterad: 2026-11-01. Status bygger på dokumenterade publiceringar och
 50. **Ny Träna-vy (Klar, publicerad 2026-11-02):** Träna skiljer sig nu från Hem. Överst Träningsschema med Ändra schema, sedan veckans pass som en rad med namn att välja bland. Det valda passet visar alla övningar med set × reps och lika tydliga knappar för Starta och Ändra. Allt ryms på en skärm även med sex pass. Upplägg heter nu Träningsschema i hela appen.
 51. **Ändra pass och sista setet (Klar, publicerad 2026-11-03):** Pilarna för att flytta övningar finns alltid när man ändrar ett pass (Ordna behövs inte). Vikten kan ställas in per övning, med − och + eller genom att skriva in den, och blir startvikten i passet. Sista setet kan vara Dropset (en drop ca 25 % lättare utan vila, med En drop till efter den här) eller Max reps.
 52. **Avslutat pass (Klar, publicerad 2026-11-03):** Ett genomfört pass visar tid, set, total vikt och antal PB överst, och varje övning de set man gjorde som vikt × reps med PB-märke när toppsetet slog tidigare rekord.
+53. **Låst sparat pass (Klar, publicerad 2026-11-03):** Övningarna i ett avslutat pass går inte att trycka på. Man öppnar passet med Öppna igen först. Ändringar i efterhand görs som förut från Historik.
 
 ## Arbetsregler
 
