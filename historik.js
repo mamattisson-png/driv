@@ -90,7 +90,7 @@ function daySheet() {
   if (histSub === "dailys") return `<div class="overlay" data-hclose><div class="sheet hsheet">${head(true)}${dailiesCard()}</div></div>`;
   if (histSub === "vikt") return `<div class="overlay" data-hclose><div class="sheet hsheet">${head(true)}<h3 class="sheet-sub">Vikt</h3>
     <div class="row"><input id="wkg" type="number" inputmode="decimal" step="0.1" placeholder="kg" aria-label="Vikt i kg" value="${weights()[d] ?? ""}"><button class="primary" data-wsave data-wdate="${d}">Spara</button></div></div></div>`;
-  const ws = workoutsOn(d).filter(w => w.done || Object.values(w.sets).some(a => a.some(hasData)));
+  const ws = workoutsOn(d);   // även påbörjade pass utan set, så att de går att fortsätta i efterhand
   const n = S.daily.length, done = S.daily.filter(x => dailyDone(d, x.id)).length;
   const line = (ic, name, val, attrs) => `<button class="hline" ${attrs}><span class="hl-ic">${ic}</span><span class="grow">${name}</span><span class="muted">${val}</span>${icon("right", 16)}</button>`;
   const ring = `<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="var(--line)" stroke-width="3"/>
