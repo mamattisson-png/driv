@@ -2444,3 +2444,18 @@ def test_dropset_och_max_reps_pa_sista_setet(page):
     page.evaluate(f"const D=S.plan.days[0]; for (let i=0;i<{n1}-1;i++) Object.assign(setAt(D,'{ex1}',i), {{kg:20, reps:9, ok:true}}); render()")
     assert "Max reps" in page.inner_text(".fset.active")
     assert page.get_attribute(f'[data-set="{ex1}"][data-i="{n1-1}"][data-f="reps"]', "placeholder") == "max"
+
+
+def test_avslutat_pass_visar_vikter_och_pb(page):
+    start(page)
+    page.evaluate("""const d=S.plan.days[0], e=d.ex[0];
+      S.log[shift(TODAY,-8)] = {workouts:[{dayId:d.id, done:true, sets:{[e.id]:[{kg:60,reps:8,ok:true}]}}], dailies:{}, food:[]};
+      S.log[TODAY] = {workouts:[{dayId:d.id, done:true, start:Date.now()-45*60000, end:Date.now(), sets:{[e.id]:[{kg:62.5,reps:8,ok:true},{kg:65,reps:6,ok:true}]}}], dailies:{}, food:[]}; save()""")
+    page.reload()
+    go(page, "pass")
+    pick(page, page.evaluate("S.plan.days[0].id"))
+    text = page.inner_text("#app")
+    assert "Passet är klart" in text and "DET HÄR GJORDE DU" in text.upper()
+    assert "62,5×8 · 65×6" in page.inner_text(".exlist li >> nth=0")
+    assert page.locator(".exlist li >> nth=0").locator(".pbtag").count() == 1
+    assert "45" in page.inner_text(".donesum") and "890" in page.inner_text(".donesum")
