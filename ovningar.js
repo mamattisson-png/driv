@@ -1172,7 +1172,7 @@ const MW = {
   framatfallning: "exercises/hamstrings/stretches", hoftbojare_stretch: "exercise/hip-flexor-stretch-kneeling-lunge-1",
   framsida_lar_stretch: "exercise/quads-stretch-variation-one", vadstretch: "exercise/calves-stretch-variation-two",
   barnets_position: "exercise/child-pose-arms-extended", katt_ko: "exercises/lowerback/stretches",
-  brost_dorr: "exercise/chest-stretch-variation-four", triceps_stretch: "exercises/triceps/stretches",
+   triceps_stretch: "exercises/triceps/stretches",
   fjarilen: "exercise/bodyweight-butterfly-stretch",
   kobran: "exercise/cobra-stretch-2",
   armhavningar_bank: "exercise/incline-push-up", nedlutande_bankpress: "exercise/dumbbell-decline-bench-press",
