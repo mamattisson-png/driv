@@ -73,7 +73,7 @@ const stretchInArea = (id, a) => stretchTargetsOf(id).some(t => STRETCH_AREAS[a]
     if (!src || EX[id]) continue;
     EX[id] = { name, cat: "stretch", bw: true, muscles, sets: 2, reps, cues, stretchTargets: targets.split(" "), A: src.A };
     for (const k of ["B", "scene", "view"]) if (src[k]) EX[id][k] = src[k];
-    if (typeof MW !== "undefined") MW[id] = `exercises/${list}/stretches`;
+    // Ingen MuscleWiki-länk utan verifierad direkt motsvarighet.\n    // Kategorilänkar leder inte till den valda stretchövningen.
     if (typeof AREA_IDS !== "undefined" && AREA_IDS.stretch && !AREA_IDS.stretch.includes(id)) AREA_IDS.stretch += " " + id;
   }
 })();
