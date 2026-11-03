@@ -131,10 +131,10 @@ const EXTRA_STRETCH_IDS = [];
     "biceps shoulders chest", "biceps", { h: [49, 89], t: 192, a: [26, 95], f: [79, 95], kb: -1 } );
   add("wrist_flexor", "Handledsböjarstretch med rak arm", "Handledens böjmuskler, fingrarnas böjmuskler", "25 s/arm",
     ["Sträck ena armen framåt med handflatan uppåt och mjuk armbåge.", "Böj handleden bakåt med andra handen så att fingrarna pekar nedåt.", "Använd lätt tryck och byt arm efter hålltiden."],
-    "forearms", "forearms", mod(standing, { a: [89, 26], a2: [88, 29], eb2: -1 }));
+    "forearms", "exercise/wrist-flexor-stretch-seated", mod(standing, { a: [89, 26], a2: [88, 29], eb2: -1 }));
   add("wrist_extensor", "Handledssträckarstretch med rak arm", "Handledens sträckmuskler", "25 s/arm",
     ["Sträck ena armen framåt med handryggen uppåt.", "Böj handleden nedåt och ge handen ett lätt stöd med andra handen.", "Låt axeln vara sänkt och byt arm utan att dra hårt i fingrarna."],
-    "forearms", "forearms", mod(standing, { a: [88, 34], a2: [87, 37], eb2: -1 }));
+    "forearms", "exercise/wrist-extensor-stretch-seated", mod(standing, { a: [88, 34], a2: [87, 37], eb2: -1 }));
   add("prayer", "Handflator ihop framför bröstet", "Handledens och fingrarnas böjmuskler", "25 s",
     ["Pressa handflatorna lätt mot varandra framför bröstet med fingrarna uppåt.", "Sänk händerna långsamt medan handflatorna behåller kontakt.", "Stanna när det sträcker milt i underarmarna och andas lugnt."],
     "forearms", "forearms", mod(standing, { a: [71, 39], a2: [71, 40], eb: 1, eb2: -1 }));
@@ -232,7 +232,7 @@ const EXTRA_STRETCH_IDS = [];
     "quads hip_flexors", "quads", mod(supine, { a: [51, 87], a2: [4, 89], f: [79, 95], f2: [51, 87], kb: 1, kb2: -1 }));
   add("quad_prone", "Magliggande framsida lårstretch", "Främre lårmusklerna, raka lårmuskeln", "30 s/ben",
     ["Ligg på magen och böj ena knät med låret kvar i golvet.", "Ta tag i fotleden och för hälen försiktigt mot sätet.", "Behåll bäckenet tungt och byt ben utan att svanka."],
-    "quads", "quads", mod(prone, { a: [59, 66], a2: [85, 93], f2: [59, 66], kb2: 1, eb: 1 }));
+    "quads", "exercise/quad-stretch-floor-prone", mod(prone, { a: [59, 66], a2: [85, 93], f2: [59, 66], kb2: 1, eb: 1 }));
   add("couch", "Couchstretch med bakre fot på bänk", "Raka lårmuskeln, höftböjare", "30 s/sida",
     ["Stå i halvt knästående med det bakre knät på en mjuk matta nära en låg bänk.", "Lägg bakre fotryggen på bänken och spänn samma sidas säte.", "Res bröstet utan att svanka och byt ben efter en mild hållen stretch."],
     "quads hip_flexors", "quads", mod(kneel, { f2: [27, 63], kb2: 1 }), undefined, { scene: [["rect", 8, 63, 27, 4], ["line", 13, 67, 13, 95]] });
