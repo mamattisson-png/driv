@@ -1170,6 +1170,7 @@ const MW = {
   mountain_climbers: "exercise/mountain-climber", dead_bug: "exercise/dead-bug", cykelcrunch: "exercise/bicycle-crunch",
   pallof: "exercise/cable-pallof-press", superman: "exercise/supermans",
    
+  figur_fyra: "exercise/reclining-pigeon-pose",
   framsida_lar_stretch: "exercise/quads-stretch-variation-one", vadstretch: "exercise/calves-stretch-variation-two",
   barnets_position: "exercise/child-pose-arms-extended", 
    
