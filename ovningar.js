@@ -1169,7 +1169,7 @@ const MW = {
   sittande_bencurl: "exercise/machine-seated-leg-curl", kettlebellsving: "exercise/kettlebell-swing", sidoplanka: "exercise/elbow-side-plank",
   mountain_climbers: "exercise/mountain-climber", dead_bug: "exercise/dead-bug", cykelcrunch: "exercise/bicycle-crunch",
   pallof: "exercise/cable-pallof-press", superman: "exercise/supermans",
-  framatfallning: "exercises/hamstrings/stretches", hoftbojare_stretch: "exercise/hip-flexor-stretch-kneeling-lunge-1",
+  framatfallning: "exercises/hamstrings/stretches", 
   framsida_lar_stretch: "exercise/quads-stretch-variation-one", vadstretch: "exercise/calves-stretch-variation-two",
   barnets_position: "exercise/child-pose-arms-extended", katt_ko: "exercises/lowerback/stretches",
    triceps_stretch: "exercises/triceps/stretches",
