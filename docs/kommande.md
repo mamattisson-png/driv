@@ -26,7 +26,7 @@ Senast uppdaterad: 2026-11-03. Status bygger på dokumenterade publiceringar och
 | 20 | Enhetliga DRIV-mejl med kod, länk och original-logga | Konto | Hög | Påbörjad |
 | 21 | Bekräfta viktinmatning med OK istället för att avsluta set | Träning | Hög | Klar |
 | 22 | Tydlig återkoppling när set avslutas och nästa öppnas | Träning | Hög | Hanteras av Claude |
-| 23 | Spara genomfört pass som namngiven passmall | Träning | Hög | Ej påbörjad |
+| 23 | Spara genomfört pass som namngiven passmall | Träning | Hög | Klar |
 | 24 | Testlägets extrabalk får inte skymma träningsvyn | Bugg | Hög | Ej påbörjad |
 | 27 | Sök och filtrera övningar på passtyp (Push, Pull, Ben) | Träning | Medel | Klar |
 | 28 | Träna som en sida och övningsbibliotek | Träning | Hög | Klar |

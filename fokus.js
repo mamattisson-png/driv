@@ -447,7 +447,7 @@ document.addEventListener("click", ev => {
     save(); render(); return;
   }
   if (ds.focusend !== undefined) { endFocus(); return; }   // själva sparandet sköts av data-finish
-  if (ds.focusstart) { tab = "pass"; editing = false; startFocus(ds.focusstart); }
+  if (ds.focusstart) { tab = "pass"; editing = false; if (typeof trSheet !== "undefined") trSheet = null; startFocus(ds.focusstart); }
   else if (ds.focusex !== undefined) { if (startFocus(currentPassDay().id)) focus.idx = +ds.focusex; }
   else if (ds.focusexit !== undefined) { stopRest(); endFocus(); passOpen = true; }
   else if (ds.focusgo !== undefined) { focus.idx = Math.max(0, +ds.focusgo); focus.sel = null; focus.ssPick = false; }

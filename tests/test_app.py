@@ -2510,3 +2510,51 @@ def test_lagg_till_ovning_under_passet(page):
     page.click('.msk-row [data-libpick] >> nth=0')
     page.evaluate("restoreOldSwaps()")
     assert page.evaluate("S.plan.days[0].ex.length") == n + 1
+
+
+def test_spara_pass_som_passmall(page):
+    start(page)
+    go(page, "pass")
+    pick(page, page.evaluate("S.plan.days[0].id"))
+    n = page.evaluate("S.plan.days[0].ex.length")
+    page.evaluate("const w = workoutFor(S.plan.days[0]); w.sets.bankpress = [{kg: 80, reps: 8, ok: true}]; save(); render()")
+    page.click("button[data-finish]")
+    # Frivilligt: man kan avsluta utan att spara
+    assert page.locator("[data-tplname]").count() == 1
+    page.click("[data-tplname]")
+    page.click("[data-tplcancel]")
+    assert page.locator("[data-tplname]").count() == 1 and page.evaluate("tpls().length") == 0
+    page.click("[data-tplname]")
+    page.fill("#tplname", "Jobbet")
+    page.click("[data-tplsave]")
+    assert "Sparad som passmall" in page.inner_text(".passdone")
+    t = page.evaluate("tpls()[0]")
+    assert t["name"] == "Jobbet" and len(t["ex"]) == n
+    # Schemat är orört
+    assert page.evaluate("S.plan.days.length") == 3
+    page.click(".passdone .wide[data-passdoneclose]")
+    # Mallen finns under Mer på Träna och kan startas
+    go(page, "pass")
+    page.click('[data-trsheet="tpls"]')
+    assert "Jobbet" in page.inner_text(".tplsheet")
+    page.click(f'.tplsheet [data-focusstart="{t["id"]}"]')
+    assert page.evaluate("focus && focus.dayId") == t["id"]
+    assert page.locator(".focus").count() == 1 and page.locator(".tplsheet").count() == 0
+    # Ett pass från mallen flyttar inte schemat framåt
+    page.evaluate("S.log[shift(TODAY,-1)] = { workouts: [{ dayId: S.plan.days[0].id, done: true, sets: {} }, { dayId: tpls()[0].id, done: true, sets: {} }], dailies: {}, food: [] }")
+    assert page.evaluate("nextInRotation() === S.plan.days[1]") is True
+
+
+def test_passmall_byt_namn_och_ta_bort(page):
+    start(page)
+    page.evaluate("S.tpls = [{ id: 'tpl-a', type: 'push', name: 'Hemma', named: true, ex: [{ id: 'bankpress', sets: 3, reps: '8' }] }]; save(); render()")
+    go(page, "pass")
+    page.click('[data-trsheet="tpls"]')
+    page.click('[data-tplopen="tpl-a"]')
+    assert "PASSMALL" in page.inner_text("#app").upper() and page.inner_text("h1.passname").upper() == "HEMMA"
+    # Ta bort kräver två tryck
+    page.click('[data-tpldel="tpl-a"]')
+    assert page.evaluate("tpls().length") == 1
+    page.click('[data-tpldel="tpl-a"]')
+    assert page.evaluate("tpls().length") == 0
+    assert page.locator('[data-trsheet="tpls"]').count() == 0

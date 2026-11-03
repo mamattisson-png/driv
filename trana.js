@@ -9,6 +9,7 @@ let editSnap = null;    // passets övningar när Ändra öppnades, för Avbryt
 let exSheet = null;     // index för övningen vars blad är öppet när man ändrar
 let ordna = false;      // pilar för att flytta övningarna
 let trSheet = null;
+let tplDelArm = null;   // mallen som väntar på andra trycket för att tas bort
 let trSel = null;       // passet vars övningar visas under rutorna på Träna (annars det som står på tur)     // "dailys" när dailys är öppet ovanpå Träna
 
 // Set och reps utskrivet: "4 set · 6–8 reps", "3 set · 10 per ben", "3 set · 45 s"
@@ -112,11 +113,12 @@ function traningView() {
     ${list}
     <div class="klabel h3-sec">Mer</div>
     <section class="h3-list">
+      ${tpls().length ? row("trana", "Passmallar", esc(tpls().map(p => p.name).join(", ")), 'data-trsheet="tpls"') : ""}
       ${row("search", "Övningar", `${Object.keys(EX).length} övningar · sök och läs instruktioner`, "data-exlib")}
       ${row("aktivitet", "Annan träning", acts.length ? esc(acts.map(a => `${a.name} ${+a.min} min`).join(", ")) : "Padel, löpning, cykling …", `data-actnew="" data-actdate="${TODAY}"`, "plus")}
     </section>
     ${acts.length ? `<div class="homeacts">${acts.map((a, i) => `<button class="dchip on" data-actedit="${i}" data-actdate="${TODAY}">${icon("check", 16)}${esc(a.name)} · ${+a.min} min</button>`).join("")}</div>` : ""}
-    ${trSheet === "dailys" ? dailysSheet() : ""}`;
+    ${trSheet === "dailys" ? dailysSheet() : trSheet === "tpls" ? tplSheet() : ""}`;
 }
 
 document.addEventListener("click", ev => {
@@ -164,6 +166,18 @@ document.addEventListener("click", ev => {
   save(); render(); window.scrollTo(0, 0);
 });
 
+// Sparade passmallar: tryck på en mall för att se och ändra den, eller starta direkt
+function tplSheet() {
+  const L = tpls();
+  if (!L.length) { trSheet = null; return ""; }
+  return `<div class="overlay" data-trsheet=""><div class="sheet tplsheet" role="dialog" aria-label="Passmallar">
+    <div class="row between"><div><span class="klabel">Utanför schemat</span><h2 class="sheeth">Passmallar</h2></div>
+      <button class="small ghost iconbtn" data-trsheet="" aria-label="Stäng">${icon("close", 18)}</button></div>
+    <section class="h3-list">${L.map(p => `<div class="h3-row tplrow"><button class="grow tplopen" data-tplopen="${p.id}"><b>${esc(p.name)}</b>
+        <small>${p.ex.length} ${p.ex.length === 1 ? "övning" : "övningar"} · ${esc(p.ex.slice(0, 3).map(e => EX[e.id] ? EX[e.id].name : e.id).join(", "))}${p.ex.length > 3 ? " …" : ""}</small></button>
+      <button class="small primary" data-focusstart="${p.id}" aria-label="Starta ${esc(p.name)}">${icon("play", 14)}Starta</button></div>`).join("")}</section>
+    <div class="muted small">Spara fler mallar när du avslutat ett pass.</div></div></div>`;
+}
 function dailysSheet() {
   const n = S.daily.length, done = S.daily.filter(e => dailyDone(logDate(), e.id)).length;
   return `<div class="overlay" data-trsheet=""><div class="sheet dsheet" role="dialog" aria-label="Dailys">
@@ -198,7 +212,7 @@ function passetView(d) {
   const w = workoutOn(logDate(), d.id), i = S.plan.days.indexOf(d);
   const done = d.ex.filter(x => exDone(w, x)).length, logged = w && Object.values(w.sets).some(a => a.some(hasData));
   const sets = d.ex.reduce((a, x) => a + (+x.sets || 0), 0);
-  const when = isFixed() ? cap(WD_LONG[S.plan.weekdays[i]]) : `Pass ${i + 1} av ${S.plan.days.length}`;
+  const tpl = isTpl(d), when = tpl ? "Passmall" : isFixed() ? cap(WD_LONG[S.plan.weekdays[i]]) : `Pass ${i + 1} av ${S.plan.days.length}`;
   const bottom = !d.ex.length ? ""
     : w && w.done ? `<div class="card done-card"><b>${icon("check", 16)}Bra jobbat, passet är sparat!</b>
         <div class="muted small">Det räknas in i veckans pass och jämförelsen med förra veckan.</div>
@@ -216,7 +230,8 @@ function passetView(d) {
     ${w && w.done ? doneSummary(d, w) : muscleSummary(d)}
     ${d.ex.length ? `<div class="klabel sechead">${w && w.done ? "Det här gjorde du" : "Övningar"}</div>${passOverview(d, w)}`
       : `<div class="card empty"><b>Passet har inga övningar än.</b><button class="primary wide" style="margin-top:12px" data-edit>Lägg till övningar</button></div>`}
-    ${bottom}${w && !w.end ? `<button class="ghost wide dangertext" data-passcancel="${d.id}">Avbryt passet utan att spara</button>` : ''}`;
+    ${bottom}${w && !w.end ? `<button class="ghost wide dangertext" data-passcancel="${d.id}">Avbryt passet utan att spara</button>` : ''}
+    ${tpl && !(w && !w.end) ? `<button class="ghost wide dangertext" data-tpldel="${d.id}">${tplDelArm === d.id ? "Tryck igen för att ta bort mallen" : "Ta bort mallen"}</button>` : ""}`;
 }
 
 // Ändra övningar: kroppen med musklerna överst, sedan övningarna. Ett tryck öppnar övningens blad.
@@ -291,7 +306,7 @@ function stepReps(r, dir, id) {
 }
 
 document.addEventListener("click", ev => {
-  const t = ev.target.closest("[data-seepass],[data-passback],[data-editcancel],[data-exsheet],[data-exsheetclose],[data-exstep],[data-exlast],[data-ordna],[data-trsheet]");
+  const t = ev.target.closest("[data-seepass],[data-passback],[data-editcancel],[data-exsheet],[data-exsheetclose],[data-exstep],[data-exlast],[data-ordna],[data-trsheet],[data-tplopen],[data-tpldel]");
   if (!t || t.disabled) return;
   if (t.classList.contains("overlay") && ev.target !== t) return;   // klick inne i fönstret
   const ds = t.dataset;
@@ -321,6 +336,14 @@ document.addEventListener("click", ev => {
   else if (ds.exlast !== undefined) { const d = currentPassDay(), e = d && d.ex[exSheet]; if (e) { if (ds.exlast) e.last = ds.exlast; else delete e.last; } }
   else if (ds.ordna !== undefined) ordna = !ordna;
   else if (ds.trsheet !== undefined) { trSheet = ds.trsheet || null; dailyEditing = false; }
+  else if (ds.tplopen) { trSheet = null; chosenDay = ds.tplopen; passOpen = true; window.scrollTo(0, 0); }
+  else if (ds.tpldel) {
+    // Två tryck: första ber om bekräftelse. Loggade pass från mallen ligger kvar i historiken.
+    if (tplDelArm !== ds.tpldel) { tplDelArm = ds.tpldel; render(); return; }
+    const p = dayById(ds.tpldel);
+    S.tpls = tpls().filter(x => x.id !== ds.tpldel); tplDelArm = null;
+    passOpen = false; chosenDay = null; toast(`${p ? p.name : "Mallen"} är borttagen`);
+  }
   save();
   render();
 });

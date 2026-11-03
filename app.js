@@ -197,6 +197,7 @@ function freshState() {
     learned: {},           // rätter som Claude räknat ut, så att de känns igen nästa gång
     plan: { program: "ppl", count: 3, mode: "flex", weekdays: DEFAULT_WEEKDAYS[3].slice(), days: makeDays("ppl", 3) },
     daily: DEFAULT_DAILY.map(exEntry),
+    tpls: [],
     log: {},
   };
 }
@@ -666,7 +667,10 @@ const workoutOn = (date, dayId) => workoutsOn(date).find(w => w.dayId === dayId)
 // Alla set för en övning en dag, från alla pass
 const setsOn = (date, exId) => workoutsOn(date).flatMap(w => w.sets[exId] || []);
 const exIdsOn = date => workoutsOn(date).flatMap(w => Object.keys(w.sets));
-const dayById = id => S.plan.days.find(d => d.id === id);
+// Passmallar (S.tpls) är pass utanför veckoschemat: samma form som schemats pass, så att fokusläget, loggen och historiken fungerar som vanligt
+const tpls = () => S.tpls || (S.tpls = []);
+const isTpl = d => !!d && tpls().includes(d);
+const dayById = id => S.plan.days.find(d => d.id === id) || tpls().find(d => d.id === id);
 // "flex": passen körs i ordning vilka dagar som helst. "fixed": varje pass har en veckodag.
 const isFixed = () => S.plan.mode === "fixed";
 function scheduledDay(date) {
@@ -684,13 +688,16 @@ function nextScheduled(from) {
 // Passet efter det senast avklarade, oavsett veckodag
 function nextInRotation() {
   const dates = Object.keys(S.log).filter(d => d < TODAY && workoutsOn(d).some(w => w.done)).sort();
-  const lastW = dates.length ? workoutsOn(dates[dates.length - 1]).filter(w => w.done).pop() : null;
+  // Pass från en mall flyttar inte schemat framåt
+  const inPlan = w => w.done && S.plan.days.some(x => x.id === w.dayId);
+  const lastDate = dates.filter(d => workoutsOn(d).some(inPlan)).pop();
+  const lastW = lastDate ? workoutsOn(lastDate).filter(inPlan).pop() : null;
   const last = lastW ? S.plan.days.findIndex(x => x.id === lastW.dayId) : -1;
   return S.plan.days[(last + 1) % S.plan.days.length];
 }
 const suggestedDay = () => isFixed() ? (scheduledDay(TODAY) || nextScheduled(TODAY).day) : nextInRotation();
 // Text i rubrikbandet bredvid etiketten: passets nummer, och namnet om det inte redan står på etiketten
-const passBand = d => `Pass ${S.plan.days.indexOf(d) + 1}${norm(d.name) === norm(TYPES[d.type].label) ? "" : ` · <span class="nocaps">${esc(d.name)}</span>`}`;
+const passBand = d => isTpl(d) ? `Passmall · <span class="nocaps">${esc(d.name)}</span>` : `Pass ${S.plan.days.indexOf(d) + 1}${norm(d.name) === norm(TYPES[d.type].label) ? "" : ` · <span class="nocaps">${esc(d.name)}</span>`}`;
 
 // ---------- Kalorier ----------
 // Mifflin–St Jeor
@@ -1690,6 +1697,22 @@ function confetti() {
 }
 
 // Skärmen när ett pass är klart: tid, set, nya personbästa och total vikt, och delning med vänner
+// Efter passet: ett diskret val att spara det som passmall, med eget namn
+function tplOffer(d) {
+  if (isTpl(d) || !passDone.ex || !passDone.ex.length) return "";
+  if (passDone.tplSaved) return `<div class="pdtpl saved">${icon("check", 16)}<span>Sparad som passmall: <b>${esc(passDone.tplSaved)}</b></span></div>`;
+  if (passDone.tplNaming) return `<section class="card pdtpl naming" aria-label="Spara som passmall">
+      <label class="klabel" for="tplname">Namn på mallen</label>
+      <input id="tplname" type="text" maxlength="40" placeholder="T.ex. Jobbet, Gymmet, Hemma" value="${esc(d.name)}" autocomplete="off">
+      <div class="row sheetbtns"><button class="grow" data-tplcancel>Avbryt</button><button class="grow primary" data-tplsave>Spara mall</button></div></section>`;
+  return `<button class="ghost wide pdtplbtn" data-tplname>${icon("plus", 16)}Spara som passmall</button>`;
+}
+function saveTpl(name) {
+  const src = dayById(passDone.dayId), id = "tpl-" + Date.now().toString(36);
+  const ex = passDone.ex.map(e => { const c = Object.assign({}, e); delete c.done; return c; });
+  tpls().push({ id, type: src ? src.type : "push", name, named: true, ex });
+  passDone.tplSaved = name; passDone.tplNaming = false;
+}
 function passDoneView() {
   const d = dayById(passDone.dayId), date = passDone.date;
   if (!d) { passDone = null; return VIEWS[tab](); }
@@ -1713,6 +1736,7 @@ function passDoneView() {
         <span class="muted small">${fmtSet2({ kg: +p.t.kg || 0, reps: +p.t.reps || 0 }, p.id)}</span></span><span class="pbtag">PB ${gain(p)}</span></div>`).join("")}</section>` : ""}
     ${sharing ? `<label class="card pdshare"><span class="grow col"><b>Dela med vänner</b><span class="muted small">De ser att du kört ${esc(d.name)}, inga vikter</span></span>
       <input type="checkbox" role="switch" class="switch" data-pdshare ${passDone.shared === false ? "" : "checked"} aria-label="Dela passet med vänner"></label>` : ""}
+    ${tplOffer(d)}
     ${inviteCard()}
     <div class="pdspace"></div>
     <button class="wide bigbtn lightbtn" data-passdoneclose>Klar</button>
@@ -2006,6 +2030,9 @@ document.addEventListener("click", ev => {
   if (ds.openpick) { modal = null; openLibrary({ kind: ds.openpick === "daily" ? "daily" : "workout", target: ds.openpick }); render(); return; }
   if (ds.swap) { exSheet = null; openLibrary({ kind: "workout", target: ds.swap, replace: +ds.idx }); render(); return; }
   if (ds.askai !== undefined) { askClaude(); return; }
+  if (ds.tplname !== undefined && passDone) { passDone.tplNaming = true; render(); const f = $("tplname"); if (f) { f.focus(); f.select(); } return; }
+  if (ds.tplcancel !== undefined && passDone) { passDone.tplNaming = false; render(); return; }
+  if (ds.tplsave !== undefined && passDone) { const f = $("tplname"); saveTpl((f && f.value.trim()) || dayById(passDone.dayId).name); save(); render(); toast("Passmallen är sparad"); return; }
   if (ds.passdoneclose !== undefined) { passDone = null; tab = "idag"; render(); window.scrollTo(0, 0); return; }
   if (ds.tab) {
     if (ds.tab === "vanner" && tab !== "vanner") vannerBack = tab;
@@ -2071,6 +2098,8 @@ document.addEventListener("click", ev => {
     // Avsluta från fokusläget ska aldrig öppna ett redan automatiskt sparat pass igen.
     w.done = ds.focusend !== undefined ? true : !w.done;
     if (w.done) {
+      // Passet som det faktiskt kördes (med byten och tillagda övningar), om man vill spara det som mall
+      var ranEx = JSON.parse(JSON.stringify(dayById(ds.finish).ex));
       restoreSwaps(dayById(ds.finish), w);
       if (w.start && !editDate) w.end = Date.now();
       // Historiska loggar ska inte avbryta vilan i ett pågående pass.
@@ -2079,7 +2108,7 @@ document.addEventListener("click", ev => {
     shareWorkout(dayById(ds.finish), logDate(), w.done);
     // Ett sparat pass visar skärmen Pass klart; i efterhand går man tillbaka till dagen i Historik
     if (w.done && editDate) { histDay = editDate; editDate = null; tab = "historik"; }
-    else if (w.done) { passDone = { dayId: ds.finish, date: logDate() }; tab = "idag"; }
+    else if (w.done) { passDone = { dayId: ds.finish, date: logDate(), ex: ranEx }; tab = "idag"; }
   }
   // Uppvärmning under passet: ett lättare set läggs före arbetsseten och blir det man står på
   // Dropset: en drop till, ytterligare ca 25 % lättare
