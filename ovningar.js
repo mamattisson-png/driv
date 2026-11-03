@@ -1169,10 +1169,10 @@ const MW = {
   sittande_bencurl: "exercise/machine-seated-leg-curl", kettlebellsving: "exercise/kettlebell-swing", sidoplanka: "exercise/elbow-side-plank",
   mountain_climbers: "exercise/mountain-climber", dead_bug: "exercise/dead-bug", cykelcrunch: "exercise/bicycle-crunch",
   pallof: "exercise/cable-pallof-press", superman: "exercise/supermans",
-  framatfallning: "exercises/hamstrings/stretches", 
+   
   framsida_lar_stretch: "exercise/quads-stretch-variation-one", vadstretch: "exercise/calves-stretch-variation-two",
-  barnets_position: "exercise/child-pose-arms-extended", katt_ko: "exercises/lowerback/stretches",
-   triceps_stretch: "exercises/triceps/stretches",
+  barnets_position: "exercise/child-pose-arms-extended", 
+   
   fjarilen: "exercise/bodyweight-butterfly-stretch",
   kobran: "exercise/cobra-stretch-2",
   armhavningar_bank: "exercise/incline-push-up", nedlutande_bankpress: "exercise/dumbbell-decline-bench-press",
@@ -1186,10 +1186,10 @@ const MW = {
   hangande_knalyft: "exercise/hanging-knee-raises", kabelcrunch: "exercise/cable-rope-kneeling-crunch", fallkniven: "exercise/reverse-crunch",
   bird_dog: "exercise/bird-dog", fladdersparkar: "exercise/laying-alternating-leg-raise",
   dodhang: "exercise/dead-hang", nedatgaende_hund: "exercise/downward-dog", 
-  djup_knaboj: "exercises/quads/stretches", halv_split: "exercises/hamstrings/stretches", kna_mot_brost: "exercises/lowerback/stretches",
-  liggande_hamstring: "exercises/hamstrings/stretches", 
-  sittande_vridning: "exercises/lowerback/stretches", trad_nalen: "exercises/shoulders/stretches", arm_over_brost: "exercises/shoulders/stretches",
-  latsstretch_bank: "exercises/lats/stretches", hander_bakom_ryggen: "exercises/chest/stretches",
+    
+   
+    
+   
   lutande_flyes: "exercise/dumbbell-incline-chest-fly", smith_bankpress: "exercise/smith-machine-bench-press",
   smith_lutande: "exercise/smith-machine-incline-bench-press", kabelpress: "exercise/cable-chest-press",
   lutande_brostpress_maskin: "exercise/machine-plate-loaded-incline-chest-press", golvpress: "exercise/barbell-floor-press",
