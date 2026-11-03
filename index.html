@@ -1919,7 +1919,13 @@ button.h3-card.h3-head { background: var(--card); padding: 12px 14px; }
 .msk-how h2 { margin: 0 0 2px; font-size: 16px; }
 .msk-fig { width: 84px; height: 84px; border-radius: 16px; flex: none; }
 .msk-steps { margin: 14px 0 0; padding-left: 20px; display: flex; flex-direction: column; gap: 8px; font-size: 14px; line-height: 1.45; }
-.msk .pagefoot .primary { background: var(--stretch); border-color: var(--stretch); color: #0d0e10; }
+.msk.st .pagefoot .primary { background: var(--stretch); border-color: var(--stretch); color: #0d0e10; }
+/* Övningens sida: samma upplägg som stretchens, men i appens orange */
+.msk:not(.st) .msk-tchip { border-color: color-mix(in srgb, var(--accent) 45%, transparent); color: var(--accent-text); }
+.msk:not(.st) .msk-tchip i, .msk:not(.st) .msk-legend i { background: color-mix(in srgb, var(--accent) 50%, transparent); }
+.msk:not(.st) .msk-tchip.on { background: var(--accent-soft); }
+.msk:not(.st) .msk-tchip.on i, .msk:not(.st) .msk-legend i.on { background: var(--accent); }
+.msk.st .mwlink { color: var(--stretch-text); }
 .msk .pagefoot .ghost { display: flex; align-items: center; justify-content: center; gap: 6px; min-height: 56px; }
 
 /* Appguiden: en lysande ram runt det som förklaras och ett kort med en pil som pekar på det. Ingen mörk slöja. */

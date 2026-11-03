@@ -1602,7 +1602,7 @@ def test_valj_ovning_efter_kroppsdel_och_utrustning(page):
     # Instruktionen öppnas från listan och har en väg tillbaka
     page.click(".msk-row [data-info] >> nth=0")
     link = page.locator(".mwlink")
-    assert link.get_attribute("href").startswith("https://musclewiki.com/")
+    assert "musclewiki.com" in link.get_attribute("href")
     assert link.get_attribute("target") == "_blank"
     page.click(".sheet [data-close]")
     assert page.locator(".msk-ctx").count() == 1
@@ -2077,9 +2077,9 @@ def test_ovningsbiblioteket(page):
     # Sökning letar bland alla övningar, även passtyper
     page.fill("#mskq", "rodd")
     assert "Sökresultat" in page.inner_text(".sg-head") and page.evaluate("document.activeElement.id") == "mskq"
-    page.click(".msk-row [data-info] >> nth=0")
-    assert page.locator(".mwlink, .sheet .fig").count() > 0
-    page.click(".sheet [data-close] >> nth=0")
+    page.click(".msk-row [data-mskdetail] >> nth=0")
+    assert page.locator(".msk .mwlink, .msk .fig").count() > 0
+    page.click('.backbtn[data-mskdetail=""]')
     page.click("[data-exlibclose]")
     assert page.locator(".wkcard").count() == 3
 
@@ -2129,9 +2129,10 @@ def test_alla_ovningar_kan_laggas_till(page):
     day1 = page.evaluate("S.plan.days[1].id")
     page.click(f'[data-sgto="{day1}"]')
     assert page.evaluate("S.plan.days[1].ex.some(e => e.id === 'hantelrodd')")
-    # Även från instruktionen
-    page.click(".msk-row [data-info] >> nth=0")
-    page.click(".sg-infoadd")
+    # Även från övningens sida, som ser ut som stretchens
+    page.click(".msk-row [data-mskdetail] >> nth=0")
+    assert "Tränas mest" in page.inner_text(".msk") and "musclewiki.com" in page.get_attribute(".msk .mwlink", "href")
+    page.click('.pagefoot [data-sgadd]')
     page.click('[data-sgto="daily"]')
     assert page.evaluate("S.daily.some(e => e.id === 'hantelrodd')") and not page.errors
 

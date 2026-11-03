@@ -1230,6 +1230,12 @@ const MW = {
   sidliggande_benlyft: "exercises/glutes/bodyweight", hamstring_walkout: "exercises/hamstrings/bodyweight",
 };
 const mwUrl = id => MW[id] ? `https://musclewiki.com/${MW[id]}` : null;
+// MuscleWikis egna adresser ändras och kan inte kontrolleras härifrån, så länken söker efter övningen
+// på MuscleWiki i stället. Det engelska namnet tas från adressen när det finns, annars det svenska.
+const mwSearch = id => {
+  const en = MW[id] ? MW[id].split("/").pop().replace(/-/g, " ") : EX[id].name;
+  return `https://www.google.com/search?q=${encodeURIComponent(`${en} site:musclewiki.com`)}`;
+};
 
 // ---------- Muskelkartan ----------
 // Grupperna som gubben ritar, och huvud- och hjälpmuskler per övning ("huvud|hjälp").

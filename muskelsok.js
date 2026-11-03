@@ -91,7 +91,7 @@ function muscleView() {
   const action = id => browse ? addBtn(id)
     : have.includes(id) && !replacing ? `<span class="sg-add have" aria-label="Finns redan">${icon("check", 18)}</span>`
     : `<button class="sg-add" data-libpick="${id}" aria-label="${replacing ? "Välj" : "Lägg till"} ${esc(EX[id].name)}">${icon(replacing ? "right" : "plus", 18)}</button>`;
-  const rows = list.slice(0, msk.limit).map(id => `<div class="h3-row sg-row msk-row ${have.includes(id) ? "have" : ""}"><button class="sg-open" ${st && browse ? `data-mskdetail="${id}"` : `data-info="${id}"`} aria-label="Visa ${esc(EX[id].name)}">
+  const rows = list.slice(0, msk.limit).map(id => `<div class="h3-row sg-row msk-row ${have.includes(id) ? "have" : ""}"><button class="sg-open" ${browse ? `data-mskdetail="${id}"` : `data-info="${id}"`} aria-label="Visa ${esc(EX[id].name)}">
       <span class="thumb exl">${figure(id)}</span><span class="grow"><b>${esc(EX[id].name)}</b><small>${EX[id].sets} × ${esc(EX[id].reps)} · ${esc(EX[id].muscles || "")}</small></span></button>${action(id)}</div>`).join("");
   const filters = `<div class="pfilters msk-filters">${st ? "" : `<label class="pfilter ${cat !== "alla" ? "on" : ""}"><span class="sr">Passtyp</span><select data-mskcat aria-label="Passtyp">
       <option value="alla">Alla passtyper</option>${Object.keys(PASS_FILTER).map(k => `<option value="${k}" ${cat === k ? "selected" : ""}>${areaLabel(k)}</option>`).join("")}</select>${icon("down", 16)}</label>`}
@@ -111,25 +111,38 @@ function muscleView() {
     ${list.length > msk.limit ? `<button class="wide sg-more" data-mskmore>Visa fler (${list.length - msk.limit})</button>` : ""}</div>`;
 }
 
-// En stretchövning: vad som töjs, hur länge, hur man gör, Starta och Lägg till
+// En övning eller stretch på en egen sida: musklerna på kroppen, upplägget, hur man gör och Lägg till.
+// Stretch har dessutom Starta (Dailys-timern). Samma sida för båda, så att de känns likadana.
 function stretchPage(id) {
-  const e = EX[id], ms = stretchMuscles(id), most = ms.slice(0, 1), also = ms.slice(1);
-  if (typeof dailyClock !== "undefined" && dailyClock && dailyClock.id === id) return `<div class="msk st">${dailyClockView()}</div>`;
+  const e = EX[id], st = e.cat === "stretch";
+  if (st && typeof dailyClock !== "undefined" && dailyClock && dailyClock.id === id) return `<div class="msk st">${dailyClockView()}</div>`;
+  let most, also;
+  if (st) { const ms = stretchMuscles(id); most = ms.slice(0, 1); also = ms.slice(1); }
+  else {
+    most = MUSKLER.map(m => m[0]).filter(k => trainsMuscle(id, k));
+    also = [...new Set((e.sec || []).flatMap(g => GROUP_TO_MUSKEL[g] || []))].filter(k => !most.includes(k));
+  }
+  const ms = [...most, ...also];
   const secs = (String(e.reps).match(/(\d+)\s*(s|sek)/) || [])[1];
   const tile = (v, l) => `<div><b>${v}</b><span>${l}</span></div>`;
   const chip = (k, strong) => `<span class="msk-tchip ${strong ? "on" : ""}"><i></i>${MUSKEL_NAMN[k]}</span>`;
   const back = ms.some(k => !MUSKEL_FRAM.includes(k)), front = ms.some(k => MUSKEL_FRAM.includes(k));
-  return `<div class="msk st"><button class="backbtn" data-mskdetail="">${icon("left", 18)}Stretch</button>
+  const mode = st ? "st" : "ex", g = gearOf(id);
+  const words = st ? ["Töjs mest", "Töjs också"] : ["Tränas mest", "Tränas också"];
+  return `<div class="msk ${st ? "st" : ""}"><button class="backbtn" data-mskdetail="">${icon("left", 18)}${st ? "Stretch" : "Övningar"}</button>
     <h1 class="msk-h">${esc(e.name)}</h1>
     <div class="msk-tchips">${most.map(k => chip(k, true)).join("")}${also.map(k => chip(k, false)).join("")}</div>
-    <section class="msk-map msk-both" aria-label="Muskler som töjs">${front || !back ? anatSvg("f", { strong: most, soft: also, labels: false, mode: "st", vb: "0 30 640 1190" }) : ""}${back ? anatSvg("b", { strong: most, soft: also, labels: false, mode: "st", vb: "620 30 640 1190" }) : ""}
-      <div class="msk-legend"><span><i class="on"></i>Töjs mest</span>${also.length ? `<span><i></i>Töjs också</span>` : ""}</div></section>
-    <div class="rstats three">${tile(secs ? `${secs} s` : esc(e.reps), secs ? "håll" : "reps")}${tile(`${e.sets} ×`, "gånger")}${tile(gearOf(id) ? "1" : "0", "utrustning")}</div>
+    <section class="msk-map msk-both" aria-label="${st ? "Muskler som töjs" : "Muskler som tränas"}">${front || !back ? anatSvg("f", { strong: most, soft: also, labels: false, mode, vb: "0 30 640 1190" }) : ""}${back ? anatSvg("b", { strong: most, soft: also, labels: false, mode, vb: "620 30 640 1190" }) : ""}
+      <div class="msk-legend"><span><i class="on"></i>${words[0]}</span>${also.length ? `<span><i></i>${words[1]}</span>` : ""}</div></section>
+    <div class="rstats three">${tile(`${e.sets} ×`, st ? "gånger" : "set")}${tile(secs ? `${secs} s` : esc(String(e.reps).replace(/(\d)\s*-\s*(\d)/g, "$1–$2")), secs ? "håll" : "reps")}${tile(g ? GEAR[g][0] : "Ingen", "utrustning")}</div>
     <section class="card msk-how"><div class="row" style="gap:14px;align-items:center"><span class="thumb msk-fig">${figure(id, "", true)}</span>
-      <div><h2>Så här gör du</h2><span class="muted small">Det ska dra${most.length ? ` i ${MUSKEL_NAMN[most[0]].toLowerCase()}` : ""}, inte göra ont.</span></div></div>
-      <ol class="msk-steps">${(e.cues || []).map(c => `<li>${esc(c)}</li>`).join("")}</ol><a href="https://musclewiki.com/exercises" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:7px;margin-top:18px;color:#12b7a5;font-weight:700;text-decoration:none">Visa fler övningar på MuscleWiki ↗</a></section>
-    <div class="pagefoot row"><button class="grow ghost" data-sgadd="${id}">${icon("plus", 16)}Lägg till</button>
-      <button class="primary grow bigbtn" data-dclockstart="${id}">${icon("timer", 18)}Starta${secs ? ` · ${secs} s` : ""}</button></div></div>`;
+      <div><h2>Så här gör du</h2><span class="muted small">${st ? `Det ska dra${most.length ? ` i ${MUSKEL_NAMN[most[0]].toLowerCase()}` : ""}, inte göra ont.` : esc(e.muscles || "")}</span></div></div>
+      <ol class="msk-steps">${(e.cues || []).map(c => `<li>${esc(c)}</li>`).join("")}</ol>
+      ${g && !st ? `<div class="gearbox"><b>${GEAR[g][0]}</b><div>${GEAR[g][1]}</div></div>` : ""}
+      <a class="mwlink" href="${mwSearch(id)}" target="_blank" rel="noopener noreferrer">Sök övningen på MuscleWiki ↗</a></section>
+    <div class="pagefoot row">${st ? `<button class="grow ghost" data-sgadd="${id}">${icon("plus", 16)}Lägg till</button>
+      <button class="primary grow bigbtn" data-dclockstart="${id}">${icon("timer", 18)}Starta${secs ? ` · ${secs} s` : ""}</button>`
+      : `<button class="primary grow bigbtn" data-sgadd="${id}">${icon("plus", 18)}Lägg till i Dailys eller ett pass</button>`}</div></div>`;
 }
 
 // Menyn lämnar alltid biblioteket, även till fliken man kom från
