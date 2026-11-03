@@ -1171,6 +1171,8 @@ const MW = {
   pallof: "exercise/cable-pallof-press", superman: "exercise/supermans",
    
   figur_fyra: "exercise/reclining-pigeon-pose",
+  brost_dorr: "exercise/chest-stretch-variation-one",
+  katt_ko: "exercise/cat-pose",
   framsida_lar_stretch: "exercise/quads-stretch-variation-one", vadstretch: "exercise/calves-stretch-variation-two",
   barnets_position: "exercise/child-pose-arms-extended", 
    
