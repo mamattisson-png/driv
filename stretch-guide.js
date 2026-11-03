@@ -73,7 +73,9 @@ const stretchInArea = (id, a) => stretchTargetsOf(id).some(t => STRETCH_AREAS[a]
     if (!src || EX[id]) continue;
     EX[id] = { name, cat: "stretch", bw: true, muscles, sets: 2, reps, cues, stretchTargets: targets.split(" "), A: src.A };
     for (const k of ["B", "scene", "view"]) if (src[k]) EX[id][k] = src[k];
-    // Ingen MuscleWiki-länk utan verifierad direkt motsvarighet.\n    // Kategorilänkar leder inte till den valda stretchövningen.
+    // Bara verifierade direkta övningslänkar, aldrig generella kategorisidor.
+    const directMuscleWiki = { couch: "exercise/hip-flexor-stretch-kneeling-lunge-3" };
+    if (typeof MW !== "undefined" && directMuscleWiki[code]) MW[id] = directMuscleWiki[code];
     if (typeof AREA_IDS !== "undefined" && AREA_IDS.stretch && !AREA_IDS.stretch.includes(id)) AREA_IDS.stretch += " " + id;
   }
 })();
