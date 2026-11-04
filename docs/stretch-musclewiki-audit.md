@@ -139,3 +139,15 @@ Update this tracker when mappings change. Do not merge without approval.
 - Searches for `strx_figure_four_chair`, `strx_couch`, `strx_knee_wall`, `strx_supine_butterfly`, `strx_child_side_reach`, `strx_leg_swing_front`, `strx_quad_side`, `strx_wrist_flexor` found no verified exact new match this pass. Existing direct URLs need their own verification.
 
 No new direct URL was added this run. Keep searching; do not claim completion.
+
+## Verifierad kopplingskorrigering — 2026-11-04 05:25 CET
+
+Fem guideövningar i `stretch-guide.js` skapas som `strg_` + kod. Tidigare MW-poster för `supine_twist`, `sphinx`, `single_knee`, `happy_baby` och `side_lunge` hade inget prefix och fungerade därför inte för de genererade ID:na. Korrigerat med en explicit verifierad mappning till `MW[id]` i commit `2f3e75a`:
+
+- `strg_supine_twist` → https://musclewiki.com/exercise/lumbar-rotation-1-supine-passive (böjda knän åt sidan)
+- `strg_sphinx` → https://musclewiki.com/exercise/sphinx-pose (magliggande på underarmar)
+- `strg_single_knee` → https://musclewiki.com/exercise/glute-stretch-static-unilateral (ett knä mot bröstet)
+- `strg_happy_baby` → https://musclewiki.com/exercise/happy-baby (ryggliggande, grepp om fötternas utsidor)
+- `strg_side_lunge` → https://musclewiki.com/exercise/bodyweight-cossack-squat (sidoutfall med rakt motsatt ben)
+
+Räknat direkt från källan: `stretch-extra.js` definierar 83 övningar, varav 8 har `exercise/`-länk och 75 saknar; `stretch-guide.js` definierar 16, varav 5 nu har fungerande verifierad länk och 11 saknar. Basbibliotekets stretch och cardio ligger i samma kodblock och måste särskiljas via `cat` innan totalen räknas. Sökningar för aktiv nackrörelse, väggglidning, axelpendling, hörn-bröststretch och bröstryggsrotation gav ingen exakt verifierad match. `forward-arm-circle` är bara framåtriktade cirklar, medan DRIV kräver båda riktningarna, och har därför inte lagts till. Ingen merge eller deploy. Fortsätt söka.
