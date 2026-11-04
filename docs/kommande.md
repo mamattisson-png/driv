@@ -8,7 +8,7 @@ Senast uppdaterad: 2026-11-03. Status bygger på dokumenterade publiceringar och
 | 2 | Kompaktare avslutade set | Träning | Hög | Klar |
 | 3 | Skalbar träningsvy | Träning | Hög | Klar |
 | 4 | Facelift av hemskärmen | Design | Hög | Klar |
-| 5 | Tillskott och hälsorutiner i Dailys | Dailys | Medel | I test |
+| 5 | Tillskott och hälsorutiner i Dailys | Dailys | Medel | Klar |
 | 6 | Interaktiv stretchguide | Dailys | Medel | Klar |
 | 7 | Tydligare övningsfigurer och animationer | Design | Hög | Klar |
 | 8 | Smart grönmarkering av måltider | Kost | Medel | Klar |
