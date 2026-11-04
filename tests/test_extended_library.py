@@ -7,7 +7,7 @@ def test_biblioteket_laddas_med_flera_hundra_nya_ovningar(page):
     start(page)
     result=page.evaluate('''() => ({total:Object.keys(EX).length,strength:EXTRA_STRENGTH_IDS.length,
       stretch:EXTRA_STRETCH_IDS.length,missing:Object.keys(EX).filter(id=>!figure(id).includes('<svg')||
-        (EX[id].cat!=='cardio'&&!mwUrl(id)))})''')
+        (EX[id].cat!=='cardio' && EX[id].cat!=='stretch' && !mwUrl(id)))})''')
     assert result['total']>=500
     assert result['strength']>=200 and result['stretch']>=80
     assert result['missing']==[]

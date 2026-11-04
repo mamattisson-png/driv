@@ -33,7 +33,19 @@ for (const e of rows) {
   assert.match(e.reps, /^(?:[1-9]\d?(?:–[1-9]\d?)?)(?: s)?(?:\/(?:sida|ben|arm|riktning))?$/);
   if (/ s/.test(e.reps)) { timed++; assert.ok(parseInt(e.reps) >= 15); }
   else { dynamic++; assert.ok(parseInt(e.reps) <= 15); assert.ok(e.B || ['strx_ankle_circles','strx_ankle_point_flex','strx_seated_internal_rotation','strx_prone_wipers','strx_ninety_switch','strx_supine_wipers'].includes(e.id), `${e.id} needs movement poses or a documented anatomical fallback`); }
-  assert.match(e.wiki, /^(?:exercises\/(traps|shoulders|chest|lats|lowerback|triceps|biceps|forearms|glutes|quads|hamstrings|calves)\/stretches|exercise\/adductor-stretch-dynamic-unilateral-4-point-position)$/);
+  // No generic category link is acceptable as a direct stretch demonstration.
+  // Explicit reviewed exercise pages only. Category/muscle pages must never masquerade as demos.
+  const verifiedStretchPages = new Set([
+    "exercise/chest-stretch-variation-two",
+    "exercise/puppy-pose",
+    "exercise/biceps-stretch-variation-one",
+    "exercise/wrist-flexor-stretch-seated",
+    "exercise/wrist-extensor-stretch-seated",
+    "exercise/adductor-stretch-dynamic-unilateral-4-point-position",
+    "exercise/quad-stretch-floor-prone",
+    "exercise/hamstrings-stretch-variation-two",
+  ]);
+  assert.ok(e.wiki === undefined || verifiedStretchPages.has(e.wiki), `${e.id}: unreviewed or generic MuscleWiki link ${e.wiki}`);
   assert.ok(e.stretchTargets.length > 0);
   e.stretchTargets.forEach(t => { assert.match(t, /^[a-z][a-z0-9_]+$/); targets.add(t); });
   assert.ok(e.svg.startsWith('<svg')); assert.ok(!/NaN|Infinity|undefined|null/.test(e.svg), e.id);
