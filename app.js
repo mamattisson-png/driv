@@ -663,7 +663,8 @@ function day(date = logDate()) {
 }
 // En dag kan ha flera pass, men bara ett av varje pass i upplägget
 const workoutsOn = date => (S.log[date] && S.log[date].workouts) || [];
-const workoutOn = (date, dayId) => workoutsOn(date).find(w => w.dayId === dayId) || null;
+// Samma pass kan köras flera gånger samma dag (Kör igen): det senaste gäller
+const workoutOn = (date, dayId) => workoutsOn(date).filter(w => w.dayId === dayId).pop() || null;
 // Alla set för en övning en dag, från alla pass
 const setsOn = (date, exId) => workoutsOn(date).flatMap(w => w.sets[exId] || []);
 const exIdsOn = date => workoutsOn(date).flatMap(w => Object.keys(w.sets));
@@ -1783,7 +1784,7 @@ const areaLabel = a => PASS_FILTER[a] ? PASS_FILTER[a].split(":")[0] : AREAS[a];
 // ---------- Logg ----------
 function workoutFor(d) {
   const L = day();
-  let w = L.workouts.find(x => x.dayId === d.id);
+  let w = L.workouts.filter(x => x.dayId === d.id).pop();
   if (!w) L.workouts.push(w = { dayId: d.id, sets: {}, done: false });
   // Klockan i fokusläget: passet räknas från när det startades
   if (!w.start && focus && focus.dayId === d.id && !editDate) w.start = focus.start;

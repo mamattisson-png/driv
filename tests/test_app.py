@@ -2595,3 +2595,23 @@ def test_utveckling_period_och_tom_period(page):
     page.click('[data-hper="1y"]')
     assert "+5 kg" in page.inner_text('.hstr[data-chart="bankpress"]')
     assert page.evaluate("histPer") == "1y"
+
+
+def test_kor_igen_startar_ett_nytt_pass(page):
+    start(page)
+    d = page.evaluate("S.plan.days[0].id")
+    seed(page, f"S.log[TODAY] = {{workouts:[{{dayId:'{d}',done:true,start:Date.now()-3600e3,end:Date.now()-600e3,sets:{{bankpress:[{{kg:80,reps:8,ok:true}}]}}}}],dailies:{{}},food:[]}}")
+    go(page, "pass")
+    assert "Kör igen" in page.inner_text(f'.tpass [data-focusstart="{d}"]')
+    page.click(f'.tpass [data-focusstart="{d}"]')
+    # Ett nytt, tomt pass: första övningen, inga set klara, klockan börjar om
+    assert page.evaluate("workoutsOn(TODAY).length") == 2
+    assert page.evaluate("focus.idx") == 0 and page.locator(".fall").count() == 0
+    assert page.evaluate("Date.now() - focus.start < 60000") is True
+    # Det första passet ligger kvar som sparat, och båda räknas i veckan när det nya sparas
+    assert page.evaluate("workoutsOn(TODAY)[0].done && workoutsOn(TODAY)[0].sets.bankpress[0].kg === 80") is True
+    page.evaluate("const w = workoutFor(S.plan.days[0]); w.sets.bankpress = [{kg: 82.5, reps: 8, ok: true}]; save(); render()")
+    page.evaluate(f"document.querySelector('[data-finish=\"{d}\"]') ? 0 : (focus = null, chosenDay = '{d}', passOpen = true, render())")
+    page.click(f'button[data-finish="{d}"]')
+    assert page.evaluate("workoutsOn(TODAY).map(w => w.done)") == [True, True]
+    assert page.evaluate("weekSummary(weekStart(TODAY)).passes") == 2

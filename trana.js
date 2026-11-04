@@ -150,7 +150,7 @@ document.addEventListener("click", ev => {
   if (!t) return;
   ev.stopImmediatePropagation();
   const id = t.dataset.passundo || t.dataset.passreopen, d = dayById(id), date = (passDone && passDone.date) || logDate();
-  const L = S.log[date], w = L && L.workouts.find(x => x.dayId === id);
+  const L = S.log[date], w = L && L.workouts.filter(x => x.dayId === id).pop();
   if (t.dataset.passreopen) {
     // Från Pass klart: passet blir inte klart, och man kommer tillbaka till det
     if (w) w.done = false;

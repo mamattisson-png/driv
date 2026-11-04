@@ -11,7 +11,9 @@ let focusOrder = false;     // fönstret där övningarnas ordning ändras
 function startFocus(dayId) {
   const d = dayById(dayId);
   if (!d || !d.ex.length) return false;
-  const w = workoutOn(logDate(), d.id);
+  let w = workoutOn(logDate(), d.id);
+  // Kör igen: ett pass som redan är avslutat idag öppnas inte igen, utan ett nytt startas. Det gamla ligger kvar i loggen.
+  if (w && w.done && w.end && !editDate) { day().workouts.push(w = { dayId: d.id, sets: {}, done: false }); save(); }
   focus = { dayId, idx: Math.max(0, d.ex.findIndex(x => !exDone(w, x))), start: (w && w.start) || Date.now() };
   chosenDay = dayId;
   keepAwake(true);
