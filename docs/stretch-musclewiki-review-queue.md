@@ -5,7 +5,7 @@
 | ID | Swedish name | Source | Existing direct URL | Review status | Evidence |
 |---|---|---|---|---|---|
 | framatfallning | Stående framåtfällning | ovningar.js | https://musclewiki.com/exercise/standing-forward-bend | verified | Standing Forward Bend: hip-width stance, hip hinge, arms toward floor; matches DRIV. |
-| hoftbojare_stretch | Höftböjarstretch | ovningar.js | https://musclewiki.com/exercise/hip-flexor-stretch-kneeling-lunge-1 | pending | Existing kneeling lunge page cues front-knee slide and leaning back; DRIV emphasizes rear hip advancing upright. Needs alternate match search. |
+| hoftbojare_stretch | Höftböjarstretch | ovningar.js | https://musclewiki.com/exercise/hip-flexor-stretch-kneeling-lunge-1 | no_exact_match | Existing kneeling-lunge-1 requires front knee sliding and torso leaning back; DRIV specifies upright torso and rear hip forward. Kneeling-lunge-3 additionally elevates rear foot. Neither exact. |
 | framsida_lar_stretch | Framsida lår | ovningar.js | https://musclewiki.com/exercise/quads-stretch-variation-one | verified | Quads Stretch Variation One: standing single-leg foot grasp, optional wall support, pull heel back; matches. |
 | vadstretch | Vadstretch mot vägg | ovningar.js | https://musclewiki.com/exercise/calves-stretch-variation-two | verified | Calves Stretch Variation Two: hands on wall, staggered stance, rear knee straight, lean forward; matches. |
 | duvan | Duvan | ovningar.js | — | no_exact_match | Targeted MuscleWiki pigeon-pose search returned no matching individual exercise; do not use reclining pigeon. |
@@ -24,12 +24,12 @@
 | kna_mot_brost | Knä mot bröst | ovningar.js | https://musclewiki.com/exercise/glute-stretch-static-unilateral | verified | Glute Stretch Static Unilateral: supine, one knee drawn to chest, hold and switch sides; matches DRIV. |
 | liggande_hamstring | Liggande baksida lår | ovningar.js | — | no_exact_match | Supine Static page exists but its actual instructions prescribe dynamic strap tugging; DRIV is static hold with optional calf grip or strap. Not an exact match. |
 | figur_fyra | Figur fyra | ovningar.js | https://musclewiki.com/exercise/reclining-pigeon-pose | verified | Reclining Pigeon Pose: supine, ankle over opposite knee, pull supporting leg toward chest; exact figure-four position and movement. |
-| sittande_vridning | Sittande vridning | ovningar.js | — | pending | — |
-| trad_nalen | Tråd nålen | ovningar.js | — | pending | — |
-| arm_over_brost | Arm över bröstet | ovningar.js | — | pending | — |
-| latsstretch_bank | Latsstretch mot bänk | ovningar.js | — | pending | — |
-| grodan | Grodan | ovningar.js | — | pending | — |
-| hander_bakom_ryggen | Händerna bakom ryggen | ovningar.js | https://musclewiki.com/exercise/chest-stretch-variation-three | pending | — |
+| sittande_vridning | Sittande vridning | ovningar.js | — | no_exact_match | Searched seated spinal twist/rotation yoga; no individual matching seated leg-crossed static twist exercise found. |
+| trad_nalen | Tråd nålen | ovningar.js | — | no_exact_match | Searched thread-the-needle quadruped shoulder thoracic stretch; no matching individual exercise found. |
+| arm_over_brost | Arm över bröstet | ovningar.js | https://musclewiki.com/exercise/shoulders-stretch-variation-four | verified | Shoulders Stretch Variation Four: arm across chest at shoulder height, opposite forearm draws it inward; same starting position and hold. MW adds optional torso rotation. |
+| latsstretch_bank | Latsstretch mot bänk | ovningar.js | — | no_exact_match | Kneeling bench lat/external-rotation results all require a dowel and sitting hips back; DRIV uses bare elbows and lowers chest without dowel. |
+| grodan | Grodan | ovningar.js | — | no_exact_match | Searched frog pose/adductor stretch on forearms with wide knees; no individual exact page found. |
+| hander_bakom_ryggen | Händerna bakom ryggen | ovningar.js | https://musclewiki.com/exercise/chest-stretch-variation-three | verified | Chest Stretch Variation Three: clasp hands behind back, extend elbows and lift hands away from body; exact movement. |
 | strx_neck_sidebend | Aktiv sidolutning av nacken | stretch-extra.js | — | no_exact_match | Search found resisted/isometric seated side flexion, not free active alternating sidebend. |
 | strx_neck_turn | Lugn nackrotation | stretch-extra.js | — | no_exact_match | Found seated resisted cervical rotation, not free standing active rotation. |
 | strx_neck_nod | Små nickningar i ryggliggande | stretch-extra.js | https://musclewiki.com/exercise/laying-chin-tucks | verified | Laying Chin Tucks: supine, folded towel under head, small chin tuck with head down; matches DRIV cues. |
@@ -38,11 +38,11 @@
 | strx_floor_angels | Snöänglar på golvet | stretch-extra.js | — | no_exact_match | No matching supine floor snow-angel movement found in targeted search. |
 | strx_pendulum | Avslappnad axelpendling | stretch-extra.js | — | no_exact_match | Search returned pendulum squat, not supported bent-over relaxed shoulder pendulum. |
 | strx_arm_circles | Kontrollerade armcirklar | stretch-extra.js | — | no_exact_match | Forward and backward arm circles exist as TWO separate pages; one direct link cannot represent both directions. |
-| strx_shoulder_rolls | Lugna skuldercirklar | stretch-extra.js | — | no_exact_match | No exact upright bidirectional shoulder roll exercise found in targeted search. |
+| strx_shoulder_rolls | Lugna skuldercirklar | stretch-extra.js | https://musclewiki.com/exercise/shoulders-stretch-variation-two | verified | Shoulders Stretch Variation Two: shoulders roll forward/up/back opening chest; same standing shoulder circles, DRIV additionally reverses direction. |
 | strx_wall_external_rotation | Utåtrotation av axeln mot dörrkarm | stretch-extra.js | — | no_exact_match | No exact elbow-at-waist palm-on-doorframe rotational stretch found in targeted search. |
-| strx_table_flexion | Axelfällning med händer på bord | stretch-extra.js | — | pending | — |
-| strx_supine_flexion | Axellyft över huvudet i ryggliggande | stretch-extra.js | — | pending | — |
-| strx_goalpost_rotation | Axelrotation i liggande målstolpe | stretch-extra.js | — | pending | — |
+| strx_table_flexion | Axelfällning med händer på bord | stretch-extra.js | — | no_exact_match | Searched table shoulder flexion and hands-on-table stretch; results are floor tabletop yoga positions, not standing hands-on-table hip hinge. |
+| strx_supine_flexion | Axellyft över huvudet i ryggliggande | stretch-extra.js | — | no_exact_match | Searched supine overhead shoulder flexion; results are weighted dumbbell pullovers, not unloaded supine arm raise. |
+| strx_goalpost_rotation | Axelrotation i liggande målstolpe | stretch-extra.js | — | no_exact_match | Searched supine goalpost external rotation; no individual matching unloaded floor shoulder rotation found. |
 | strx_chest_towel | Bröstöppning över rullad handduk | stretch-extra.js | — | pending | — |
 | strx_chest_corner | Bröststretch med båda armarna i hörn | stretch-extra.js | — | pending | — |
 | strx_chest_low_arm | Bröststretch med låg arm mot vägg | stretch-extra.js | — | pending | — |
