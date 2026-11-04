@@ -36,7 +36,7 @@ const EXTRA_STRETCH_IDS = [];
     "neck", "traps", mod(standing, { a: [60, 81] }), mod(standing, { a: [60, 81] }));
   add("neck_nod", "Små nickningar i ryggliggande", "Djupa nackmuskler, nackens baksida", "8",
     ["Ligg på rygg med huvudet vilande på en tunn vikt handduk.", "Gör en liten nickning som om du säger ja utan att lyfta huvudet.", "Släpp tillbaka till neutralt läge och upprepa långsamt."],
-    "neck", "traps", mod(supine, { a: [30, 94], f: [79, 95], kb: -1 }), mod(supine, { a: [30, 94], f: [79, 95], kb: -1 }));
+    "neck", "exercise/laying-chin-tucks", mod(supine, { a: [30, 94], f: [79, 95], kb: -1 }), mod(supine, { a: [30, 94], f: [79, 95], kb: -1 }));
   add("neck_diagonal", "Diagonal nackstretch utan handdrag", "Skulderbladshöjaren, nackens baksida", "20 s/sida",
     ["Sitt på en stol och låt ena handen vila under sätets kant.", "Vrid huvudet lite åt motsatt sida och sänk blicken mot armhålan.", "Håll en mild sträckning utan att trycka på huvudet; byt sida."],
     "neck", "traps", mod(seated, { a: [39, 65], a2: [64, 64] }), undefined, { scene: chair });
