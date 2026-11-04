@@ -70,6 +70,7 @@ Senast uppdaterad: 2026-11-04. Status bygger på dokumenterade publiceringar och
 | 66 | Förbättra menyn Avsluta passet | Design | Medel | Kommande |
 | 67 | Anpassa hälsningen efter alla dagens mål | Hem | Medel | Kommande |
 | 68 | Flexibelt träningsschema för alla aktiviteter | Träning | Hög | Kommande |
+| 69 | Anpassningsbara Dailys med sparade rutiner och rotation | Dailys | Hög | Kommande |
 
 ## Detaljer och acceptanskriterier
 
@@ -156,6 +157,8 @@ Senast uppdaterad: 2026-11-04. Status bygger på dokumenterade publiceringar och
 67. **Anpassa hälsningen efter alla dagens mål:** Visa inte ”Allt klart” när kostmålet återstår, även om träningspass och Dailys är klara. Hälsningen ska skilja på genomförd träning, Dailys och uppnått kalorimål. Exempel när träning och Dailys är klara men kosten återstår: ”Bra jobbat idag!” med ”Träningen och Dailys är klara · Kosten återstår”. Sent på kvällen kan en vänlig sov gott-hälsning användas utan att påstå att allt är klart. ”Allt klart, sov gott” reserveras för dagar där samtliga relevanta mål är uppnådda. Bevara befintlig design och hantera dagar utan planerat pass.
 
 68. **Flexibelt träningsschema för alla aktiviteter:** Träningsschemat ska kunna användas utan gymövningar. Användaren väljer styrketräning, annan aktivitet eller en blandning per schemalagd dag, exempelvis yoga, promenad, löpning eller cykling. Varje aktivitet ska kunna planeras med namn, dag, varaktighet och relevanta mål, markeras som genomförd och visas i historik och veckans framsteg. Behåll nuvarande set/reps/vikt för gympass, men kräv inte dessa fält för andra aktiviteter. Anpassa Träna-vyn och hemskärmens dagens pass så att de fungerar även när inget gympass finns. Undvik parallella scheman och bevara befintlig data och funktionalitet. Visa designförslag före implementation.
+
+69. **Anpassningsbara Dailys med sparade rutiner och rotation:** Låt användaren skapa, namnge, spara, redigera, kopiera och välja flera Dailys-rutiner med egna övningar, set, repetitioner och tider. Stöd tre lägen: fritt val av sparad rutin för dagen, automatisk växling varannan dag mellan två rutiner och automatisk rotation mellan exempelvis 3–4 rutiner. Tillåt fasta dagliga Dailys och kosttillskott som visas oberoende av vald rutin. Visa dagens aktiva rutin tydligt och låt användaren byta den utan att förlora redan registrerade genomföranden. Bevara befintlig Dailys-historik, avprickning och synk; utforma och testa innan implementation.
 
 ## Arbetsregler
 
