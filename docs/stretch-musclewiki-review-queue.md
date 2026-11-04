@@ -87,17 +87,17 @@
 | strx_side_lunge_hold | Sidoutfallsstretch med stöd | stretch-extra.js | — | no_exact_match | Searched supported side-lunge adductor stretch; returned quadruped dynamic adductor stretch and TRX lateral lunge, neither matches static supported floor stance. |
 | strx_adductor_rock | Adduktorgungning med ett ben åt sidan | stretch-extra.js | https://musclewiki.com/exercise/adductor-stretch-dynamic-unilateral-4-point-position | verified | MuscleWiki instructions: four-point position, one leg extended sideways with foot grounded, rock hips backward and forward while keeping neutral spine; exact match to DRIV cues. Checked 2026-11-04. |
 | strx_wide_seat_fold | Framåtfällning i bred sittställning | stretch-extra.js | — | no_exact_match | Searched seated wide-leg forward fold/straddle; result was standing wide-leg bend, not seated hip hinge. |
-| strx_wall_straddle | Bred benstretch mot vägg | stretch-extra.js | — | pending | — |
-| strx_supine_butterfly | Liggande fjäril med stöd | stretch-extra.js | — | pending | — |
-| strx_frog_rock | Dynamisk grodgungning | stretch-extra.js | — | pending | — |
-| strx_standing_straddle_hinge | Bred stående höftfällning med stöd | stretch-extra.js | — | pending | — |
-| strx_quad_side | Sidliggande framsida lårstretch | stretch-extra.js | — | pending | — |
+| strx_wall_straddle | Bred benstretch mot vägg | stretch-extra.js | — | no_exact_match | Targeted search for supine wall-supported straddle found leg raises, not legs resting up a wall and opening into V. |
+| strx_supine_butterfly | Liggande fjäril med stöd | stretch-extra.js | — | no_exact_match | Search for supported reclined butterfly found no individual page including supine soles-together with thigh cushions. |
+| strx_frog_rock | Dynamisk grodgungning | stretch-extra.js | — | no_exact_match | Search for dynamic frog rock-back found no individual forearms-down wide-knee hip rocking match. |
+| strx_standing_straddle_hinge | Bred stående höftfällning med stöd | stretch-extra.js | — | no_exact_match | Wide-legged forward-bend pages omit hands supported on a table and differ in arm positioning; not exact. |
+| strx_quad_side | Sidliggande framsida lårstretch | stretch-extra.js | — | no_exact_match | Targeted side-lying quadriceps stretch search found no matching individual exercise. |
 | strx_quad_prone | Magliggande framsida lårstretch | stretch-extra.js | https://musclewiki.com/exercise/quad-stretch-floor-prone | verified | MuscleWiki Band Floor Quad Stretch: prone, bend knee, grasp ankle/foot, draw heel toward glute; strap optional; matches DRIV unassisted version. |
-| strx_couch | Couchstretch med bakre fot på bänk | stretch-extra.js | — | pending | — |
-| strx_quad_halfkneel_grasp | Halvt knästående lårstretch med fotgrepp | stretch-extra.js | — | pending | — |
-| strx_hamstring_heel_chair | Baksida lår med häl på stol | stretch-extra.js | — | pending | — |
-| strx_hamstring_chair_seated | Sittande enbensstretch på stol | stretch-extra.js | — | pending | — |
-| strx_hamstring_hurdler | Enbens framåtfällning med invikt fot | stretch-extra.js | — | pending | — |
+| strx_couch | Couchstretch med bakre fot på bänk | stretch-extra.js | — | no_exact_match | Targeted couch stretch search found no half-kneeling rear foot elevated on bench match. |
+| strx_quad_halfkneel_grasp | Halvt knästående lårstretch med fotgrepp | stretch-extra.js | — | no_exact_match | Targeted half-kneeling quad stretch search found no exact supported rear-ankle grasp variation. |
+| strx_hamstring_heel_chair | Baksida lår med häl på stol | stretch-extra.js | — | no_exact_match | Targeted chair-supported standing hamstring search found no heel-on-chair hip-hinge match. |
+| strx_hamstring_chair_seated | Sittande enbensstretch på stol | stretch-extra.js | — | no_exact_match | Targeted seated-chair single-leg hamstring search found no front-of-chair heel-on-floor hip-hinge match. |
+| strx_hamstring_hurdler | Enbens framåtfällning med invikt fot | stretch-extra.js | — | no_exact_match | Targeted hurdler stretch search found no seated one-leg-extended opposite sole-to-inner-thigh match. |
 | strx_hamstring_stagger | Baksida lår i kort gångställning | stretch-extra.js | https://musclewiki.com/exercise/hamstrings-stretch-variation-two | verified | Hamstrings Stretch Variation Two: staggered feet, rear knee bent, front leg straight, hold; DRIV adds hip hinge cue consistent with position. |
 | strx_hamstring_scoops | Gående skopsteg för baksida lår | stretch-extra.js | — | pending | — |
 | strx_supine_knee_extension | Aktiv knästräckning i ryggliggande | stretch-extra.js | — | pending | — |
