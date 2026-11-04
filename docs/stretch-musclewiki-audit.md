@@ -151,3 +151,18 @@ Fem guideövningar i `stretch-guide.js` skapas som `strg_` + kod. Tidigare MW-po
 - `strg_side_lunge` → https://musclewiki.com/exercise/bodyweight-cossack-squat (sidoutfall med rakt motsatt ben)
 
 Räknat direkt från källan: `stretch-extra.js` definierar 83 övningar, varav 8 har `exercise/`-länk och 75 saknar; `stretch-guide.js` definierar 16, varav 5 nu har fungerande verifierad länk och 11 saknar. Basbibliotekets stretch och cardio ligger i samma kodblock och måste särskiljas via `cat` innan totalen räknas. Sökningar för aktiv nackrörelse, väggglidning, axelpendling, hörn-bröststretch och bröstryggsrotation gav ingen exakt verifierad match. `forward-arm-circle` är bara framåtriktade cirklar, medan DRIV kräver båda riktningarna, och har därför inte lagts till. Ingen merge eller deploy. Fortsätt söka.
+
+
+## Audit checkpoint — 2026-11-04 06:28 CET
+
+Fresh scan of the three JS source files found **125** stretch IDs: 26 in `ovningar.js`, 83 in `stretch-extra.js`, and 16 in `stretch-guide.js`. **29** IDs currently have individual `exercise/` URLs (16 base, 8 extra, 5 guide), leaving **96** without. This supersedes the older snapshot above, which missed some recent changes. **Existing links are not automatically validated.**
+
+### Searched but not accepted — movement mismatch
+
+- `strx_figure_four_chair`: MuscleWiki `glute-hip-rotator-stretch-1-seated` presses the knee outward; `glute-hip-rotator-stretch-2-seated` pulls the knee toward the body. DRIV folds forward from the hips. Neither is exact.
+- `strx_ninety_fold`: MuscleWiki `bodyweight-ninety-ninety-hip-stretch` holds a static 90/90 position, whereas DRIV folds over the front thigh.
+- `strx_stacked_shins`: `double-pigeon-pose` prescribes pressing knees toward the floor, whereas DRIV folds forward. Similar position, different movement.
+- `strx_wall_slide`: `shoulder-flexion-wall-stretch` is a single-arm stretch, not the two-forearm wall-slide in DRIV.
+- `latsstretch_bank`: `lat-and-shoulder-external-rotation-stretch-3-kneeling-dowel` requires a dowel, which DRIV does not use.
+
+Search and compare actual step-by-step instructions for remaining exercises before adding a link. A rate limit interrupted additional TinyFish searches this run; retry on the next scheduled execution.
