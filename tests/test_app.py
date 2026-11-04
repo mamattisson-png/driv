@@ -2615,3 +2615,19 @@ def test_kor_igen_startar_ett_nytt_pass(page):
     page.click(f'button[data-finish="{d}"]')
     assert page.evaluate("workoutsOn(TODAY).map(w => w.done)") == [True, True]
     assert page.evaluate("weekSummary(weekStart(TODAY)).passes") == 2
+def test_aterkoppling_nar_set_avslutas(page):
+    start(page)
+    go(page, "pass")
+    pick(page, page.evaluate("S.plan.days[0].id"))
+    page.click("[data-focusstart]")
+    page.evaluate("S.plan.days[0].ex[0].sets = 2; save(); render()")
+    page.click(".fbar .fdone")
+    page.wait_for_selector(".fxbanner")
+    assert "Set klart" in page.inner_text(".fxbanner")
+    assert page.locator(".focus .fset.active.arrive").count() == 1
+    page.click(".fbar .fdone")
+    page.wait_for_function("document.querySelector('.fxbanner') && document.querySelector('.fxbanner').innerText.includes('Nästa:')")
+    t = page.inner_text(".fxbanner")
+    assert "klar" in t and page.evaluate("EX[S.plan.days[0].ex[1].id].name") in t
+    # Försvinner av sig själv
+    page.wait_for_function("!document.querySelector('.fxbanner')", timeout=4000)

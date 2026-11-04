@@ -1188,6 +1188,24 @@
   .pdshare { display: flex; align-items: center; gap: 12px; padding: 14px 16px; margin: 0; }
   .passdone .lightbtn { margin: 0; }
 
+  /* Återkoppling när ett set bockas av */
+  .fxbanner { position: fixed; left: 50%; top: calc(env(safe-area-inset-top, 0px) + var(--tb, 0px) + 64px); transform: translate(-50%, -6px); z-index: 30;
+    display: flex; align-items: center; gap: 8px; max-width: calc(100% - 32px); padding: 9px 16px; border-radius: 99px; pointer-events: none;
+    background: var(--ok-strong); color: var(--card); font-size: 14px; font-weight: 600; box-shadow: 0 6px 20px rgba(0, 0, 0, .25);
+    animation: fxin .22s ease-out forwards; transition: opacity .35s, transform .35s; }
+  .fxbanner span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .fxbanner.big { padding: 10px 20px; font-size: 14px; border-radius: 22px; }
+  .fxbanner .col { display: flex; flex-direction: column; min-width: 0; }
+  .fxbanner .col > * { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .fxbanner .col b { font-size: 15px; }
+  .fxbanner.out { opacity: 0; transform: translate(-50%, -12px); }
+  @keyframes fxin { from { opacity: 0; transform: translate(-50%, -14px); } to { opacity: 1; transform: translate(-50%, 0); } }
+  .fset.active.arrive { animation: fxarrive .6s ease-out; }
+  @keyframes fxarrive { 0% { transform: translateY(10px); opacity: .4; box-shadow: 0 0 0 0 var(--accent); } 60% { box-shadow: 0 0 0 4px var(--accent-soft); } 100% { transform: none; opacity: 1; } }
+  .frest.restpulse { animation: fxrest .9s ease-out; }
+  @keyframes fxrest { 30% { transform: scale(1.08); box-shadow: 0 0 0 6px var(--accent-soft); } }
+  @media (prefers-reduced-motion: reduce) { .fxbanner { animation: none; transition: opacity .2s; } .fset.active.arrive, .frest.restpulse { animation: none; } }
+
   /* Historik: dagen som sammanfattning */
   .hsheet { display: flex; flex-direction: column; gap: 4px; }
   .hsheet-top { margin-bottom: 6px; }

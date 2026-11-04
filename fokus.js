@@ -52,6 +52,40 @@ function focusAfterSet(d, idx = focus && focus.idx, i = 0) {
   focus.scroll = focus.idx !== from ? "top" : "active";
   focus.sel = null;
 }
+// Återkoppling när ett set bockas av i fokusläget: kort vibration, en rad som bekräftar setet
+// (eller att övningen är klar och vilken som är nästa), nästa set markeras och vilan lyser upp.
+// Allt försvinner av sig självt, inget behöver stängas.
+let setFx = null;
+function setFeedback(d, exId, s, o = {}) {
+  if (!focus || editDate || focus.suspended || focus.dayId !== d.id) return;
+  const w = workoutOn(logDate(), d.id), next = d.ex[focus.idx];
+  const changed = o.from != null && focus.idx !== o.from;
+  const val = hasData(s) ? fmtSet2({ kg: +s.kg || 0, reps: +s.reps || 0 }, exId) : "";
+  let text;
+  if (o.warm) text = `Uppvärmning klar${val ? ` · ${val}` : ""}`;
+  else if (changed && next && o.inRound) text = `Nästa i varvet: ${EX[next.id].name}`;
+  else if (changed && next) text = [`${EX[exId].name} klar`, `Nästa: ${EX[next.id].name}`];
+  else if (d.ex.every(x => exDone(w, x))) text = "Alla övningar klara!";
+  else text = `Set klart${val ? ` · ${val}` : ""}`;
+  setFx = { text, big: changed, rest: !!o.rest, t: Date.now() };
+  setTimeout(applySetFx, 0);
+}
+function applySetFx() {
+  const fx = setFx; setFx = null;
+  if (!fx || !document.querySelector(".focus")) return;
+  try { if (navigator.vibrate) navigator.vibrate(fx.big ? [20, 60, 20] : 25); } catch (e) { /* inte tillåtet */ }
+  document.querySelectorAll(".fxbanner").forEach(b => b.remove());
+  const b = document.createElement("div");
+  b.className = `fxbanner ${fx.big ? "big" : ""}`; b.setAttribute("role", "status");
+  b.innerHTML = `${icon("check", 16)}${Array.isArray(fx.text) ? `<span class="col"><b>${esc(fx.text[0])}</b><span>${esc(fx.text[1])}</span></span>` : `<span>${esc(fx.text)}</span>`}`;
+  document.body.appendChild(b);
+  setTimeout(() => b.classList.add("out"), fx.big ? 1900 : 1300);
+  setTimeout(() => b.remove(), fx.big ? 2300 : 1700);
+  const a = document.querySelector(".focus .fset.active");
+  if (a) a.classList.add("arrive");
+  const r = fx.rest && document.querySelector(".focus .frest.on");
+  if (r) r.classList.add("restpulse");
+}
 // Bekräfta manuell inmatning separat från att avsluta setet.
 let editingSetInput = null;
 function clearSetEditing() {
