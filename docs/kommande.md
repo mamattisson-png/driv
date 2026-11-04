@@ -66,6 +66,7 @@ Senast uppdaterad: 2026-11-03. Status bygger på dokumenterade publiceringar och
 | 62 | Sök övningar på engelska, med felstavning och förkortningar | Träning | Hög | Klar |
 | 63 | Träna: listan visar klara, påbörjade och superset-övningar | Träning | Medel | Klar |
 | 64 | Ändra från listan på Träna leder tillbaka till listan | Bugg | Medel | Klar |
+| 65 | Korrigera dagens avslutade pass direkt från Träna | Träning | Hög | Klar |
 
 ## Detaljer och acceptanskriterier
 
