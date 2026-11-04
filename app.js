@@ -821,6 +821,11 @@ function logWeight(kg, date = logDate()) {
 // sedan bara veckans vikt och skillnaden mot förra veckan.
 let weightEditing = false;
 const weighDay = () => S.weighDay ?? 0;
+// Raden Vikt på Hem innan veckans vägning: dagen den ska göras, idag, eller att den saknas om dagen har passerat
+function weighHint() {
+  const wd = weekdayOf(TODAY), d = weighDay();
+  return wd < d ? `Väg dig ${WD_LONG[d]}` : wd === d ? "Väg dig idag" : "Inte vägd den här veckan · väg dig idag";
+}
 // På Hem visas vägningen bara när den är dags; vikten över tid finns under Historik
 function weighCardDue() {
   const ws = weekStart(TODAY), weighed = weekDates(ws).some(d => d <= TODAY && weights()[d] > 0);
@@ -1221,7 +1226,7 @@ const VIEWS = {
       <section class="h3-list">
         ${row(stretchId ? figure(stretchId) : icon("utseende", 18), "Stretch", "Övningar som töjer · välj kroppsdel", 'data-tab="stretchguide"')}
         ${row(icon("aktivitet", 18), "Annan träning", "Löpning, padel, promenad …", "data-homeactivity", "plus")}
-        ${S.hideWeight ? "" : row(icon("vikt", 18), "Vikt", weighed && avg ? `${fmtNum(avg)} kg den här veckan` : `Väg dig ${WD_LONG[weighDay()]}`, 'data-tab="vagning"')}
+        ${S.hideWeight ? "" : row(icon("vikt", 18), "Vikt", weighed && avg ? `${fmtNum(avg)} kg den här veckan` : weighHint(), 'data-tab="vagning"')}
         ${row(icon("vanner", 18), "Vänner", friendSub, 'data-tab="vanner"')}
       </section></div>`;
   },

@@ -632,7 +632,8 @@ def test_kroppsvikt_en_gang_i_veckan_och_kalorimal(page):
     seed(page, "S.weights['2026-10-15'] = 82; S.weights['2026-10-16'] = 81.8")
     # Ingen vägning den här veckan: raden Vikt på Hem påminner, och leder till vägningen
     vikt = '.h3-row[data-tab="vagning"]'
-    assert "Väg dig" in page.inner_text(vikt)
+    # Vägningsdagen (måndag) har passerat: raden säger att vägningen saknas
+    assert "Inte vägd den här veckan" in page.inner_text(vikt)
     page.click(vikt)
     page.fill("#wkg", "70")
     page.click("[data-wsave]")
@@ -2629,3 +2630,13 @@ def test_aterkoppling_nar_set_avslutas(page):
     assert "klar" in t and page.evaluate("EX[S.plan.days[0].ex[1].id].name") in t
     # Försvinner av sig själv
     page.wait_for_function("!document.querySelector('.fxbanner')", timeout=4000)
+
+
+def test_vikt_paminnelse_foljer_veckodagen(page):
+    import datetime
+    page.clock.install(time=datetime.datetime(2026, 10, 21, 9, 0))   # onsdag
+    start(page)
+    hint = lambda day: page.evaluate(f"S.weighDay = {day}; weighHint()")
+    assert hint(4) == "Väg dig fredag"
+    assert hint(2) == "Väg dig idag"
+    assert hint(0) == "Inte vägd den här veckan · väg dig idag"
