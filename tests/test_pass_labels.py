@@ -19,8 +19,8 @@ def test_flexible_pass_is_next_not_today_on_both_screens(page):
     assert page.text_content('.tpass .tp-top .pst') == 'På tur'
     assert page.locator('.wkcard .pst').first.text_content().strip() == 'På tur'
     go(page, 'idag')
-    assert page.text_content('.passtile .klabel') == 'Nästa pass'
-    assert page.get_attribute('.passtile', 'aria-label').startswith('Nästa pass:')
+    assert page.text_content('.h3-passcard .klabel') == 'Nästa pass'
+    assert page.get_attribute('.h3-passcard .h3-head', 'aria-label').startswith('Nästa pass:')
 
 
 def test_fixed_days_show_weekdays_and_today_only_for_today(page):
@@ -45,8 +45,8 @@ def test_completed_today_is_labelled_on_both_screens(page):
     assert page.text_content('.tpass .tp-top .pst') == 'Klar'
     assert 'Kör igen' in page.inner_text('.tpass [data-focusstart]')
     go(page, 'idag')
-    assert page.text_content('.passtile .klabel') == 'Genomfört idag'
-    assert page.inner_text('.passtile .muted.small .oktext') == 'Genomfört idag'
+    assert page.text_content('.h3-passcard .klabel') == 'Genomfört idag'
+    assert 'Passet klart' in page.inner_text('.h3-passcard .h3-btn')
 
 
 def test_started_pass_is_ongoing_not_just_next(page):
@@ -54,7 +54,8 @@ def test_started_pass_is_ongoing_not_just_next(page):
     assert page.text_content('.tpass .tp-top .pst') == 'Pågående'
     assert page.locator('.wkcard .pst').first.text_content() == 'Pågående'
     go(page, 'idag')
-    assert page.text_content('.passtile .klabel') == 'Pågående pass'
+    assert page.text_content('.h3-passcard .klabel') == 'Pågående pass'
+    assert 'Fortsätt' in page.inner_text('.h3-passcard .h3-btn')
 
 
 def test_fixed_today_label_survives_another_pass_completed_today(page):

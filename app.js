@@ -1182,6 +1182,8 @@ const VIEWS = {
     const hr = new Date().getHours();
     const passes = weekSummary(weekStart(TODAY)).passes;
     const greeting = homeGreeting(hr, { done, dailysOk, started, rest: !!t.rest, passes, goal: S.plan.count });
+    // Samma etiketter som på Träna: Nästa pass (flexibelt) eller Dagens pass (fasta dagar), Pågående och Genomfört
+    const passLab = t.rest ? "Vilodag" : done ? "Genomfört idag" : started ? "Pågående pass" : passLabel(t);
     const sub = t.rest ? "Vilodag idag" : done ? "Dagens pass är klart" : started ? `${esc(d.name)} är påbörjat` : `${esc(d.name)} står på schemat`;
     const date = cap(new Date().toLocaleDateString("sv-SE", { weekday: "long", day: "numeric", month: "long" }));
     // Siffran blir en grön bock när steget är klart; orange bara för det man trycker på
@@ -1206,8 +1208,8 @@ const VIEWS = {
         <button class="small primary" data-tourstart>Visa</button><button class="small ghost" data-tourskip>Inte nu</button></section>`}
       <div class="muted h3-date">${date}</div><h1 class="h3-greet">${greeting}</h1>
       <div class="muted h3-sub">${sub} · ${passes} av ${S.plan.count} pass i veckan</div>
-      <section class="h3-card ${done ? "done" : ""}"><button class="h3-head" data-seepass="${d.id}" aria-label="Dagens pass: ${esc(d.name)}">${no(1, done)}
-        <span class="grow"><span class="klabel ${done ? "oktext" : "accent"}">${t.rest ? "Vilodag" : "Dagens pass"}</span><b class="h3-pass">${esc(t.rest ? "Vila" : d.name)}</b><small>${passInfo}</small></span>${icon("right", 18)}</button>
+      <section class="h3-card h3-passcard ${done ? "done" : ""}"><button class="h3-head" data-seepass="${d.id}" aria-label="${passLab}: ${esc(d.name)}">${no(1, done)}
+        <span class="grow"><span class="klabel ${done ? "oktext" : "accent"}">${passLab}</span><b class="h3-pass">${esc(t.rest ? "Vila" : d.name)}</b><small>${passInfo}</small></span>${icon("right", 18)}</button>
         ${passBtn}</section>
       <button class="h3-card h3-head ${foodOk ? "done" : ""}" data-tab="kost">${no(2, foodOk)}<span class="grow"><b>${foodOk ? "Kalorimålet nått" : "Logga dagens mat"}</b>
         <small>${tnum(e.kcal)} / ${tnum(m.kcal)} kcal · ${tnum(e.protein)} / ${tnum(m.protein)} g protein</small>

@@ -49,6 +49,7 @@ CONTRAST = r"""
 def views(page):
     """Går igenom appens vyer och fönster; ger (namn, rotelement) för varje."""
     page.clock.install(time=datetime.datetime(2026, 10, 25, 12, 0))   # en söndag, så att veckobrevet syns
+    page.emulate_media(reduced_motion="reduce")   # mät färdiga vyer, inte mitt i en animation
     open_app(page)
     page.evaluate("setTheme('auto')")   # följer färgschemat som testet väljer
     yield "Välkommen", "#app"
@@ -72,9 +73,9 @@ def views(page):
     yield "Idag", "#app"
     go(page, "pass")
     yield "Träna", "#app"
-    page.click("[data-trsheet=dailys]")
-    yield "Dailys", ".sheet"
-    page.click(".sheet [data-trsheet='']")
+    go(page, "dailys")
+    yield "Dailys", "#app"
+    go(page, "pass")
     pick(page, page.evaluate("S.plan.days[0].id"))
     yield "Passet", "#app"
     page.evaluate("chosenDay = S.plan.days[0].id; window.__ex = S.plan.days[0].ex; S.plan.days[0].ex = [{ id: 'kabelflyes', sets: 3, reps: '12', ss: true }, { id: 'lutande_hantelpress', sets: 3, reps: '10', warm: 2 }]; editing = true; render()")
@@ -132,16 +133,19 @@ def views(page):
     yield "Ett recept", "#app"
     page.evaluate("recipeOpen = null; tab = 'kost'; render()")
     page.click("#faddbtn")   # Klar går till översikten
-    page.click('[data-mealpage="1"]')
+    page.click('[data-addto="1"] >> nth=0')
     yield "En måltid", "#app"
-    page.click('[data-fooditem="0"]')
+    # Ändra en vara: från översikten, där måltiden fälls ut
+    page.click("[data-mealback]")
+    page.click('[data-overviewmeal="1"]')
+    page.click("[data-overviewitem] >> nth=0")
     yield "Ändra mat", "#app"
     page.click(".pagefoot [data-itemclose]")
     go(page, "historik")
     yield "Historik", "#app"
     page.click(f'[data-histday="{page.evaluate("shift(TODAY, -1)")}"]')
     yield "Dag i historiken", ".sheet"
-    page.click(".sheet [data-hclose].wide")
+    page.click(".sheet .iconbtn[data-hclose]")
     page.click("[data-letter]")
     yield "Veckobrev", ".sheet"
     page.evaluate("modal = null; histView = 'utveckling'; render()")

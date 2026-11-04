@@ -96,14 +96,14 @@ def test_hem_visar_dagens_pass(page):
     assert page.inner_text("#nav [data-tab=idag]").endswith("Hem")
     # Hem visar bara dagens pass och om det är gjort; allt om passen finns under Träna
     d = page.evaluate("({name: todaysPass().d.name, n: todaysPass().d.ex.length, title: passMuscles(todaysPass().d)})")
-    tile = page.inner_text(".passtile")
-    assert d["name"].upper() in tile.upper() and "Inte gjort än" in tile
-    assert page.locator("#app [data-pick], #app [data-focusstart]").count() == 0
-    assert page.locator(".weekrow .wsegs i").count() == 3 and "0 av 3 pass" in page.inner_text(".weekrow")
-    page.click(".passtile")
-    assert page.evaluate("tab") == "pass" and page.locator("[data-trsel]").count() == 3
-    assert d["title"] in page.inner_text(".tpass") and f'{d["n"]} övningar' in page.inner_text(".tpass")
-    page.click(".tpass [data-focusstart]")
+    tile = page.inner_text(".h3-passcard")
+    assert d["name"].upper() in tile.upper() and "Starta" in tile and d["title"] in tile
+    assert "0 av 3 pass" in page.inner_text(".h3-sub")
+    page.click(".h3-passcard .h3-head")
+    # Kortet öppnar passet på Träna, där det startas
+    assert page.evaluate("[tab, passOpen]") == ["pass", True]
+    assert d["title"] in page.inner_text(".pvsub") and f'{d["n"]} övningar' in page.inner_text(".pvsub")
+    page.click("#app [data-focusstart]")
     assert page.locator(".focus").count() == 1
 
 def test_kort_start_och_paminnelse_om_kalorimal(page):
@@ -419,9 +419,11 @@ def test_forslag_sorteras_efter_maltiden_och_har_tak(page):
       S.favs = [{{name:'Kaffe', kcal:20, protein:1}}]""")
     go(page, "kost")
     add_to(page, 0)
-    # Gröt äts oftast till frukost och kommer först, före favoriten
-    assert page.evaluate("quickCache.map(f => f.name).slice(0, 2)") == ["Gröt", "Kaffe"]
+    # Senast använda har ett tak, och det man brukar äta till frukost visas för sig: Gröt, inte mellanmålen
     assert page.evaluate("quickCache.length") <= 20
+    text = page.inner_text("#app")
+    vanliga = text.split("VANLIGA FÖR FRUKOST")[1] if "VANLIGA FÖR FRUKOST" in text else text.split("Vanliga för frukost")[1]
+    assert vanliga.strip().startswith("Gröt") and "Sak 39" not in vanliga.split("Valda livsmedel")[0]
 
 
 def test_superset_vaxlar_och_vilar_efter_varvet(page):
@@ -450,8 +452,9 @@ def test_hem_visar_dagens_kalorier(page):
     seed(page, "logFood({name: 'Gröt', kcal: 300, protein: 10}, 0)")
     go(page, "idag")
     goal = page.evaluate("macros().kcal")
-    assert "300" in page.inner_text(".kcaltile") and f"{goal:,}".replace(",", "\xa0") in page.inner_text(".kcaltile")
-    page.click(".kcaltile")
+    card = page.inner_text('.h3-card[data-tab="kost"]')
+    assert "300" in card and f"{goal:,}".replace(",", "\xa0") in card
+    page.click('.h3-card[data-tab="kost"]')
     assert page.evaluate("tab") == "kost"
 
 
@@ -723,7 +726,7 @@ def test_kost_maltider_forslag_mangd_och_upprepa(page):
     page.set_viewport_size({"width": 390, "height": 844})
     page.click('#faddbtn')
     assert page.evaluate("mealPage") is None and page.locator(".addpage").count() == 0
-    page.click('[data-mealpage="1"]')
+    page.click('[data-addto="1"] >> nth=0')
     assert "Ägg" in page.inner_text(".kitems") and "2 st" in page.inner_text(".kitems")
     # Livsmedlets sida: mängd, favorit med sin mängd, ta bort
     i = page.evaluate("day().food.findIndex(f => f.meal === 1 && f.name === 'Ägg')")
@@ -740,7 +743,7 @@ def test_kost_maltider_forslag_mangd_och_upprepa(page):
     assert page.evaluate("day().food.some(f => f.meal === 1 && f.name === 'Ägg')") is False
     # Frukosten sparad som måltid: föreslås bara till frukost och loggas del för del
     page.click("[data-mealback]")
-    page.click('[data-mealpage="0"]')
+    page.click('[data-addto="0"] >> nth=0')
     page.click('[data-savegroup="0"]')
     page.click("[data-mealback]")
     add_to(page, 3)
@@ -789,14 +792,14 @@ def test_uppskattningar_raknas_inte_dubbelt(page):
     # Riktig mat i samma måltid: varning på måltidens sida och ett tryck för att ta bort uppskattningen
     page.click('.qadd:has-text("Pasta")')
     page.click('#faddbtn')
-    page.click('[data-mealpage="2"]')
+    page.click('[data-addto="2"] >> nth=0')
     assert "räknas dubbelt" in page.inner_text(".kitems")
     page.click(".kirow.est [data-mdel]")
     assert page.evaluate("day().food.filter(f => f.meal === 2).map(f => f.name)") == ["Pasta"]
     page.click("[data-mealback]")
     # En uppskattning visas som just det och kan inte bli favorit
     page.evaluate("day().food.push({name: 'Uppskattning', kcal: 600, protein: 30, meal: 3, est: true}); render()")
-    page.click('[data-mealpage="3"]')
+    page.click('[data-addto="3"] >> nth=0')
     assert "≈ Uppskattning" in page.inner_text(".kitems")
     page.click(f'[data-fooditem="{page.evaluate("day().food.length - 1")}"]')
     assert page.locator("[data-itemfav]").count() == 0
@@ -1170,7 +1173,8 @@ def test_sammanslagning_del_for_del(page):
       const bortTagen = mergeParts({ _t: { note: 9 } }, { note: 'gammal', _t: { note: 1 } });
       return { m: mergeParts(a, b), lika, bortTagen };
     }""")
-    assert r["m"]["food"] == [1] and r["m"]["dailies"] == {} and r["m"]["workouts"] == [9]
+    # Dailys slås ihop bock för bock: x fanns bara på den ena sidan och ligger kvar
+    assert r["m"]["food"] == [1] and r["m"]["dailies"] == {"x": True} and r["m"]["workouts"] == [9]
     assert r["lika"]["food"] == [2]          # lika gammalt: kontots version
     assert "note" not in r["bortTagen"]      # det som tagits bort senast förblir borttaget
 
@@ -1231,15 +1235,15 @@ def test_nytt_datum_efter_midnatt(page):
 
 def test_fyra_flikar_och_profil_via_kugghjulet(page):
     start(page)
-    assert page.evaluate("[...document.querySelectorAll('#nav [data-tab]')].map(b => b.dataset.tab)") == ["idag", "pass", "kost", "historik"]
+    assert page.evaluate("[...document.querySelectorAll('#nav [data-tab]')].map(b => b.dataset.tab)") == ["idag", "pass", "dailys", "kost", "historik"]
     # Flikarna ligger centrerat, även på en bred skärm
     page.set_viewport_size({"width": 1400, "height": 800})
     first, last = page.locator("#nav button").first.bounding_box(), page.locator("#nav button").last.bounding_box()
     assert abs((first["x"] - 0) - (1400 - last["x"] - last["width"])) < 2
     page.set_viewport_size({"width": 390, "height": 844})
-    page.click(".gear")
+    page.click(".gear.setbtn")
     assert page.evaluate("tab") == "profil" and "Inställningar" in page.inner_text("h1")
-    # Dailys bockas av under Träna
+    # Dailys har en egen flik
     go(page, "dailys")
     page.click("[data-dcheck=plankan]")
     assert page.evaluate("dailyDone(TODAY, 'plankan')")
@@ -1866,9 +1870,9 @@ def test_kost_veckan_maltider_och_recept_med_uppskattade_mangder(page):
     assert "KVAR IDAG" in page.inner_text(".ksum").upper() and "310" in page.inner_text(".kside") and "av 2" in page.inner_text(".kringc")
     # Måltiderna är rader; ett tryck öppnar måltidens sida
     # Måltidskortet visar bara summan; maträtterna syns på måltidens sida
-    card = page.inner_text('[data-mealpage="0"]')
+    card = page.inner_text('.kmrow:has([data-overviewmeal="0"])')
     assert "310 kcal · 11 g protein" in card and "Gröt" not in card and page.locator("[data-fooditem]").count() == 0
-    page.click('[data-mealpage="0"]')
+    page.click('[data-addto="0"] >> nth=0')
     assert page.locator("[data-fooditem]").count() == 2 and "Gröt" in page.inner_text(".kitems")
     page.click("[data-mealback]")
     # En enda knapp lägger till; recept utan mängder får uppskattade mängder för antalet portioner
@@ -1941,7 +1945,7 @@ def test_bekraftelse_dar_man_tittar_utan_besked(page):
     assert page.locator(".toast").count() == 0
     assert page.locator(".kirow.fresh").count() == 1
     page.click("[data-mealback]")
-    assert page.locator('.kmrow.fresh [data-mealpage="1"]').count() == 1 and "+108" in page.inner_text(".kmrow.fresh")
+    assert page.locator('.kmrow.fresh [data-overviewmeal="1"]').count() == 1 and "+108" in page.inner_text(".kmrow.fresh")
     # På måltidssidan markeras bara den tillagda maten när ett förslag används
     add_to(page, 1)
     page.click('.qadd:has-text("Gröt")')
