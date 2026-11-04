@@ -2656,3 +2656,15 @@ def test_paborjad_ovning_syns_i_raden_overst(page):
     assert page.locator('.fsteps [data-focusgo="1"].started').count() == 0
     page.evaluate("const d = S.plan.days[0]; workoutFor(d).sets[d.ex[0].id] = Array.from({length: d.ex[0].sets}, () => ({kg: 60, reps: 8, ok: true})); render()")
     assert page.locator('.fsteps [data-focusgo="0"].done:not(.started)').count() == 1
+
+
+def test_kortare_vila_for_ett_ben_eller_en_arm(page):
+    start(page)
+    assert page.evaluate("restFor('bankpress')") == 90 and page.evaluate("restFor('sidolyft')") == 60
+    # Ett ben eller en arm i taget (t.ex. 10/ben): en tredjedel kortare
+    assert page.evaluate("restFor('utfall')") == 60
+    uni = page.evaluate("Object.keys(EX).find(id => EX[id].cat !== 'stretch' && EX[id].cat !== 'core' && /ett ben/i.test(EX[id].name))")
+    assert uni and page.evaluate(f"unilateral('{uni}')") is True
+    # Egna inställningar följer med: 120 s blir 75 s (avrundat till 15 s)
+    page.evaluate("S.rest = { on: true, compound: 120, iso: 60 }")
+    assert page.evaluate("restFor('utfall')") == 75
