@@ -14,16 +14,16 @@
 | brost_dorr | Bröststretch i dörr | ovningar.js | https://musclewiki.com/exercise/chest-stretch-variation-one | verified | Chest Stretch Variation One: arm at 90 degrees against vertical support, staggered stance, lean forward; matches. |
 | triceps_stretch | Tricepsstretch | ovningar.js | https://musclewiki.com/exercise/triceps-stretch-variation-one | verified | Triceps Stretch Variation One: arm overhead with bent elbow, other hand presses elbow, alternate sides; matches. |
 | sittande_framatfallning | Sittande framåtfällning | ovningar.js | https://musclewiki.com/exercise/seated-forward-bend | verified | Seated Forward Bend: legs extended, hinge from hips, reach feet with long spine; matches. |
-| fjarilen | Fjärilen | ovningar.js | https://musclewiki.com/exercise/bodyweight-butterfly-stretch | pending | — |
-| kobran | Kobran | ovningar.js | https://musclewiki.com/exercise/cobra-stretch-2 | pending | — |
-| dodhang | Dödhäng | ovningar.js | https://musclewiki.com/exercise/dead-hang | pending | — |
-| nedatgaende_hund | Nedåtgående hund | ovningar.js | https://musclewiki.com/exercise/downward-dog | pending | — |
-| varldens_basta | Världens bästa stretch | ovningar.js | — | pending | — |
-| djup_knaboj | Djup knäböj | ovningar.js | — | pending | — |
-| halv_split | Halv split | ovningar.js | — | pending | — |
-| kna_mot_brost | Knä mot bröst | ovningar.js | https://musclewiki.com/exercise/glute-stretch-static-unilateral | pending | — |
-| liggande_hamstring | Liggande baksida lår | ovningar.js | — | pending | — |
-| figur_fyra | Figur fyra | ovningar.js | https://musclewiki.com/exercise/reclining-pigeon-pose | pending | — |
+| fjarilen | Fjärilen | ovningar.js | https://musclewiki.com/exercise/bodyweight-butterfly-stretch | no_exact_match | Existing butterfly page requires forward lean, whereas DRIV cues upright seated knee opening and optional elbow pressure; no exact counterpart established. |
+| kobran | Kobran | ovningar.js | https://musclewiki.com/exercise/cobra-stretch-2 | verified | Cobra Stretch 2: prone, palms under shoulders, upper torso rises supported by hands, hips stay on floor; matches DRIV. |
+| dodhang | Dödhäng | ovningar.js | https://musclewiki.com/exercise/dead-hang | verified | Dead Hang: pull-up bar, fully extended arms, static hold; DRIV permits feet touching floor as easier modification. |
+| nedatgaende_hund | Nedåtgående hund | ovningar.js | https://musclewiki.com/exercise/downward-dog | verified | Downward Dog: hands/feet planted, inverted V with hips raised and heels pressed down; matches DRIV. |
+| varldens_basta | Världens bästa stretch | ovningar.js | — | no_exact_match | Searched World's Greatest Stretch / lunge rotation; no individual MuscleWiki page matching deep lunge with grounded hand and overhead thoracic rotation found. |
+| djup_knaboj | Djup knäböj | ovningar.js | — | no_exact_match | Searched deep squat hold/pry stretch; no individual MuscleWiki page found for heel-down squat hold with palms together and elbows against knees. |
+| halv_split | Halv split | ovningar.js | — | no_exact_match | Searched half split and kneeling hamstring stretch; no matching rear-knee-down/front-leg-straight half split page found. |
+| kna_mot_brost | Knä mot bröst | ovningar.js | https://musclewiki.com/exercise/glute-stretch-static-unilateral | verified | Glute Stretch Static Unilateral: supine, one knee drawn to chest, hold and switch sides; matches DRIV. |
+| liggande_hamstring | Liggande baksida lår | ovningar.js | — | no_exact_match | Supine Static page exists but its actual instructions prescribe dynamic strap tugging; DRIV is static hold with optional calf grip or strap. Not an exact match. |
+| figur_fyra | Figur fyra | ovningar.js | https://musclewiki.com/exercise/reclining-pigeon-pose | verified | Reclining Pigeon Pose: supine, ankle over opposite knee, pull supporting leg toward chest; exact figure-four position and movement. |
 | sittande_vridning | Sittande vridning | ovningar.js | — | pending | — |
 | trad_nalen | Tråd nålen | ovningar.js | — | pending | — |
 | arm_over_brost | Arm över bröstet | ovningar.js | — | pending | — |
