@@ -125,7 +125,7 @@ const EXTRA_STRETCH_IDS = [];
     "triceps", "triceps", mod(supine, { a: [8, 69], a2: [25, 59], f: [78, 95], eb: -1 }));
   add("biceps_wall", "Bicepsstretch med rak arm mot vägg", "Biceps, framsida axlar", "25 s/arm",
     ["Stå med sidan mot en vägg och lägg handflatan bakom dig i axelhöjd.", "Håll armbågen nästan rak och vrid kroppen lite bort från handen.", "Stanna vid mild sträckning längs överarmen och byt sida."],
-    "biceps shoulders", "exercise/biceps-stretch-variation-one", mod(standing, { a: [27, 25], a2: [62, 83] }), undefined, { scene: [["line", 26, 4, 26, 95]] });
+    "biceps shoulders", "biceps", mod(standing, { a: [27, 25], a2: [62, 83] }), undefined, { scene: [["line", 26, 4, 26, 95]] });
   add("biceps_floor", "Sittande bicepsstretch med händer i golvet", "Biceps, framsida axlar, bröstmuskler", "25 s",
     ["Sitt med böjda knän och händerna i golvet bakom dig, fingrarna bort från kroppen.", "För sätet en liten bit framåt medan armarna förblir långa.", "Behåll bröstet öppet och avlasta händerna när du lämnar positionen."],
     "biceps shoulders chest", "biceps", { h: [49, 89], t: 192, a: [26, 95], f: [79, 95], kb: -1 } );
