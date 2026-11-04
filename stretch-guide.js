@@ -73,6 +73,9 @@ const stretchInArea = (id, a) => stretchTargetsOf(id).some(t => STRETCH_AREAS[a]
     if (!src || EX[id]) continue;
     EX[id] = { name, cat: "stretch", bw: true, muscles, sets: 2, reps, cues, stretchTargets: targets.split(" "), A: src.A };
     for (const k of ["B", "scene", "view"]) if (src[k]) EX[id][k] = src[k];
+    // Enbart verifierade individuella MuscleWiki-sidor med matchande rörelse.
+    const verifiedDirectLinks = { sphinx: "exercise/sphinx-pose", happy_baby: "exercise/happy-baby" };
+    if (verifiedDirectLinks[code]) MW[id] = verifiedDirectLinks[code];
     // Ingen länk till MuscleWiki förrän en direkt motsvarighet har kontrollerats.
     // Generella kategorisidor ska aldrig visas som övningslänkar.
     if (typeof AREA_IDS !== "undefined" && AREA_IDS.stretch && !AREA_IDS.stretch.includes(id)) AREA_IDS.stretch += " " + id;
