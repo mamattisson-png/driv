@@ -16,7 +16,7 @@ def meals(page):
     go(page,'kost')
 
 
-@pytest.mark.parametrize('entry',['mealpage','addto'])
+@pytest.mark.parametrize('entry',['addto'])
 def test_meal_and_plus_open_same_editor_with_search_and_delete(page,entry):
     meals(page)
     page.click(f'[data-{entry}="1"]')

@@ -745,6 +745,12 @@ function addPage(m) {
   return `<div class="kpage foodsheet addpage mealpage" aria-label="${MEALS[meal][0]}"><button class="backbtn" data-fsclose data-mealback>${icon("left", 18)}Kost</button>
     <div class="kmhead fshead"><span class="kmic">${mealIcon(meal)}</span><span class="col"><h1>${MEALS[meal][0]}</h1><span class="muted small">${wd}</span></span></div>
     <div class="mealseg" role="radiogroup" aria-label="Måltid">${MEALS.map(([n], i) => `<button role="radio" data-sheetmeal="${i}" class="${i === meal ? "on" : ""}" aria-checked="${i === meal}">${n}</button>`).join("")}</div>
+    ${items.length ? `<section class="current-meal" aria-label="I ${mealName}en"><h2 class="ksec">I ${mealName}en · ${items.length} · ${tnum(sumKcal(mealItems))} kcal</h2>
+      <div class="kmeals kitems">${rows}</div><div class="kmacros">${nutrients}</div>
+      ${items.filter(x => !isEst(x.f)).length > 1 ? `<button class="linkbtn2 small ksave" data-savegroup="${meal}">${icon("plus", 14)}Spara som måltid</button>` : ""}</section>`
+      : last ? `<section class="kshort" aria-label="Samma som förra gången">
+      <button class="klink" data-repeat="${meal}">↻ Samma som ${whenText(last.date)}<span class="muted"> · ${esc(last.items.map(f => isEst(f) ? "uppskattning" : f.name).join(", "))}</span></button></section>` : ""}
+    ${savedMealsView(meal)}
     ${foodPanel === "kcal" ? `<p class="small">Namn på maten</p>` : ""}
     <div class="finput">${foodPanel === "kcal" ? "" : icon("search", 18)}<input id="fname" placeholder="${foodPanel === "kcal" ? "t.ex. Min maträtt" : items.length ? "Lägg till mer …" : "t.ex. 2 ägg och 1 banan"}" autocomplete="off" aria-label="${foodPanel === "kcal" ? "Namn på maten" : "Vad åt du?"}">
       ${CAN_SCAN && foodPanel !== "kcal" ? `<button class="fscan" data-scan aria-label="Skanna streckkod">${icon("barcode", 22)}</button>` : ""}</div>

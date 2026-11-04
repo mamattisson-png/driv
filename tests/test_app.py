@@ -588,7 +588,8 @@ def test_vilotimer(page):
     assert page.inner_text(".rest-time") == "1:00"
     page.evaluate("rest.end = Date.now() + 500")
     page.wait_for_function("rest.el && rest.el.classList.contains('ding')")
-    assert page.evaluate("window.__vib") == [[200, 100, 200]]
+    # Kort vibration när setet bockas av (25 ms), och mönstret när vilan är slut
+    assert page.evaluate("window.__vib")[-1] == [200, 100, 200] and page.evaluate("window.__vib.filter(v => Array.isArray(v)).length") == 1
     page.click(".frestctl [data-restskip]")
     assert page.locator(".rest").count() == 0
 
@@ -629,32 +630,27 @@ def test_kroppsvikt_en_gang_i_veckan_och_kalorimal(page):
     page.click('[data-goalpick="cut"]')
     page.click("[data-savesetup]")
     seed(page, "S.weights['2026-10-15'] = 82; S.weights['2026-10-16'] = 81.8")
-    # Ingen vägning den här veckan: rutan ber om en
-    assert "VECKANS VÄGNING" in page.inner_text("#app").upper()
+    # Ingen vägning den här veckan: raden Vikt på Hem påminner, och leder till vägningen
+    vikt = '.h3-row[data-tab="vagning"]'
+    assert "Väg dig" in page.inner_text(vikt)
+    page.click(vikt)
     page.fill("#wkg", "70")
     page.click("[data-wsave]")
     assert page.evaluate("S.weights['2026-10-22']") == 70 and page.evaluate("S.profile.weight") == 70
     assert page.evaluate("kcalGoal()") < 2360
-    # Därefter försvinner rutan från Hem; vikten över tid finns under Historik
-    assert page.locator("#wkg").count() == 0 and "VECKANS" not in page.inner_text("#app").upper()
-    # Före vägningsdagen syns ingen ruta
-    prof(page, "vikt")
-    page.select_option("[data-weighday]", "4")
-    page.evaluate("delete S.weights['2026-10-22']; save()")
     go(page, "idag")
-    assert "Veckans" not in page.inner_text("#app")
+    assert "70 kg den här veckan" in page.inner_text(vikt)
     # Vikten kan döljas och visas igen
     prof(page, "vikt")
-    page.select_option("[data-weighday]", "0")
     page.click("[data-showweight]")
     go(page, "idag")
-    assert page.locator("#wkg").count() == 0
+    assert page.locator(vikt).count() == 0
     go(page, "historik")
     assert page.locator('.card:has(h2:text-is("Vikt"))').count() == 0
     prof(page, "vikt")
     page.click("[data-showweight]")
     go(page, "idag")
-    assert page.locator("#wkg").count() == 1
+    assert page.locator(vikt).count() == 1
 
 
 def test_paminnelse_i_kalendern(page):
@@ -681,7 +677,7 @@ def test_fritext_forslag_och_felstavning(page):
     page.click('[data-fpick="0:0"]')
     assert page.input_value("#fname") == "150 g ryggbiff"
     assert "195 kcal" in page.inner_text("#fpreview")
-    page.type("#fname", " och kottbu")
+    page.focus("#fname"); page.keyboard.press("End"); page.keyboard.type(" och kottbu")
     assert "Köttbull" in page.inner_text(".fask")
     assert page.locator("#faddbtn").is_disabled()   # inget läggs till förrän allt är tolkat
     page.click('.fask [data-fpick$=":0"]')
@@ -711,14 +707,11 @@ def test_kost_maltider_forslag_mangd_och_upprepa(page):
     assert page.inner_text("#faddbtn") == "Lägg till i lunch · 108 kcal"
     page.click("[data-addfood]")
     assert page.evaluate("day().food.at(-1).meal") == 1
-    # Sökning, tillägg och borttagning finns på samma måltidssida; senaste mängden används
-    page.click('.qadd:has-text("Ägg")')
-    assert amounts(1)[-1] == ["Ägg", 154, "2 st"]
-    assert page.locator('.qadd:has-text("Ägg")').count() == 0
-    assert page.locator(".addpage .qadd button").count() == 0   # ett förslag är en enda knapp, utan egna − och +
-    assert page.inner_text(".meal-summary-head h2") == "I lunchen"
-    assert "262 kcal" in page.inner_text(".meal-summary-head")
-    assert page.locator(".meal-summary-card .kirow").count() == 2
+    # Ett förslag läggs bland valda livsmedel med senaste mängden, och kommer in i måltiden med Klar
+    page.click('.qadd:has-text("Ägg") [data-stagequick], .qadd:has-text("Ägg") [data-stagecommon] >> nth=0')
+    assert "Valda livsmedel (1)" in page.inner_text(".staged-foods")
+    # Det som redan finns i lunchen syns överst
+    assert "I LUNCHEN · 1" in page.inner_text(".current-meal").upper() and page.locator(".current-meal .kirow").count() == 1
     # Klar syns även i ett lågt fönster
     page.set_viewport_size({"width": 1200, "height": 500})
     klar = page.locator("#faddbtn").bounding_box()
@@ -726,7 +719,9 @@ def test_kost_maltider_forslag_mangd_och_upprepa(page):
     page.set_viewport_size({"width": 390, "height": 844})
     page.click('#faddbtn')
     assert page.evaluate("mealPage") is None and page.locator(".addpage").count() == 0
+    assert amounts(1)[-1] == ["Ägg", 154, "2 st"]
     page.click('[data-addto="1"] >> nth=0')
+    assert "262 KCAL" in page.inner_text(".current-meal h2").upper()
     assert "Ägg" in page.inner_text(".kitems") and "2 st" in page.inner_text(".kitems")
     # Livsmedlets sida: mängd, favorit med sin mängd, ta bort
     i = page.evaluate("day().food.findIndex(f => f.meal === 1 && f.name === 'Ägg')")
@@ -747,11 +742,11 @@ def test_kost_maltider_forslag_mangd_och_upprepa(page):
     page.click('[data-savegroup="0"]')
     page.click("[data-mealback]")
     add_to(page, 3)
-    assert page.locator('.qadd.meal').count() == 0
+    assert page.locator('.saved-meals [data-usemeal]').count() == 0
     page.click('#faddbtn')
     page.evaluate("day().food = day().food.filter(f => f.meal !== 0); mealPage = null; save(); render()")
     add_to(page, 0)
-    page.click('.qadd.meal')
+    page.click('.saved-meals [data-usemeal]')
     assert amounts(0) == [["Gröt", 300, ""], ["Ägg", 154, "2 st"]]
     page.click('#faddbtn')
 
@@ -1327,18 +1322,16 @@ def test_vanner_kod_flode_och_peppning(page):
     page.click("[data-addfriend]")
     page.wait_for_function("social.friends.length === 1")
     assert page.locator(".fsheet").count() == 0 and "Bo" in page.inner_text("#app")
-    # Hem visar Bos pass, och peppningen sparas
+    # Hem visar Bos senaste pass på raden Vänner, som leder till vänsidan
     go(page, "idag")
-    page.wait_for_selector(".friendsrow [data-kudos]")
-    assert "Bo körde Push" in page.inner_text(".friendsrow") and "igår" in page.inner_text(".friendsrow")
-    page.click("[data-kudos='1']")
-    page.wait_for_function("window.__social.kudos.length === 1")
-    assert "Peppat" in page.inner_text(".friendsrow") and page.locator("[data-kudos='1']").count() == 0
-    # Vänsidan: igår hopfällt, fälls ut med ett tryck
-    page.click(".friendsrow .fbhead")
+    page.wait_for_function("document.querySelector('.h3-row[data-tab=\"vanner\"]').innerText.includes('Bo körde Push')")
+    page.click('.h3-row[data-tab="vanner"]')
+    # Vänsidan: igår hopfällt, fälls ut med ett tryck; peppningen sparas
     assert page.evaluate("tab") == "vanner" and "Igår · 1 pass" in page.text_content("#app")
     page.click('[data-fday="2026-10-21"]')
     assert "Bo körde Push" in page.inner_text(".flist")
+    page.click(".flist [data-kudos='1']")
+    page.wait_for_function("window.__social.kudos.length === 1")
     # Veckans topp: Bo har ett pass den här veckan
     assert "Veckans topp" in page.text_content(".ftop") and "Bo" in page.inner_text(".ftop")
     # Ett sparat pass delas med antal övningar, inget annat
@@ -1454,15 +1447,14 @@ def test_veckobrev_pa_sondag(page):
     seed(page, """const d = S.plan.days;
       S.log['2026-10-13'] = {workout:{dayId:d[0].id,done:true,sets:{bankpress:[{kg:80,reps:8,ok:true}]}},dailies:{},food:[]};
       S.log['2026-10-20'] = {workout:{dayId:d[0].id,done:true,sets:{bankpress:[{kg:82.5,reps:8,ok:true}]}},dailies:{},food:[]}""")
-    assert "1 av 3 pass" in page.inner_text(".letter-card")
-    page.click(".letter-card [data-letter]")
+    # Veckans sammanfattning finns under Historik
+    go(page, "historik")
+    page.click("[data-letter]")
+    assert "1 av 3 pass" in page.inner_text(".sheet")
     pb = page.inner_text(".sheet .lpb")
     assert "Bänkpress" in pb and "82,5 kg × 8" in pb
     page.click(".sheet [data-close]")
-    page.click("[data-letterclose]")
-    assert page.locator(".letter-card").count() == 0
-    page.reload()
-    assert page.locator(".letter-card").count() == 0
+    assert page.locator(".sheet").count() == 0
 
 
 # ---------- Tyck till ----------
@@ -1946,9 +1938,11 @@ def test_bekraftelse_dar_man_tittar_utan_besked(page):
     assert page.locator(".kirow.fresh").count() == 1
     page.click("[data-mealback]")
     assert page.locator('.kmrow.fresh [data-overviewmeal="1"]').count() == 1 and "+108" in page.inner_text(".kmrow.fresh")
-    # På måltidssidan markeras bara den tillagda maten när ett förslag används
+    # Ett förslag: bara den tillagda maten markeras, inte hela måltiden
     add_to(page, 1)
-    page.click('.qadd:has-text("Gröt")')
+    page.click('.qadd:has-text("Gröt") [data-stagequick], .qadd:has-text("Gröt") [data-stagecommon] >> nth=0')
+    page.click("#faddbtn")
+    page.click('[data-addto="1"] >> nth=0')
     page.wait_for_selector('.kirow.fresh:has-text("Gröt")')
     assert page.locator('.current-meal.fresh').count() == 0
     assert page.locator(".toast").count() == 0

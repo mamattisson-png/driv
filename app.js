@@ -1208,6 +1208,7 @@ const VIEWS = {
         <button class="small primary" data-tourstart>Visa</button><button class="small ghost" data-tourskip>Inte nu</button></section>`}
       <div class="muted h3-date">${date}</div><h1 class="h3-greet">${greeting}</h1>
       <div class="muted h3-sub">${sub} · ${passes} av ${S.plan.count} pass i veckan</div>
+      ${typeof friendsNudge === "function" ? friendsNudge() : ""}${accountNudge()}${installNudge()}
       <section class="h3-card h3-passcard ${done ? "done" : ""}"><button class="h3-head" data-seepass="${d.id}" aria-label="${passLab}: ${esc(d.name)}">${no(1, done)}
         <span class="grow"><span class="klabel ${done ? "oktext" : "accent"}">${passLab}</span><b class="h3-pass">${esc(t.rest ? "Vila" : d.name)}</b><small>${passInfo}</small></span>${icon("right", 18)}</button>
         ${passBtn}</section>
@@ -1220,7 +1221,7 @@ const VIEWS = {
       <section class="h3-list">
         ${row(stretchId ? figure(stretchId) : icon("utseende", 18), "Stretch", "Övningar som töjer · välj kroppsdel", 'data-tab="stretchguide"')}
         ${row(icon("aktivitet", 18), "Annan träning", "Löpning, padel, promenad …", "data-homeactivity", "plus")}
-        ${row(icon("vikt", 18), "Vikt", weighed && avg ? `${fmtNum(avg)} kg den här veckan` : `Väg dig ${WD_LONG[weighDay()]}`, 'data-tab="vagning"')}
+        ${S.hideWeight ? "" : row(icon("vikt", 18), "Vikt", weighed && avg ? `${fmtNum(avg)} kg den här veckan` : `Väg dig ${WD_LONG[weighDay()]}`, 'data-tab="vagning"')}
         ${row(icon("vanner", 18), "Vänner", friendSub, 'data-tab="vanner"')}
       </section></div>`;
   },
