@@ -99,16 +99,16 @@
 | strx_hamstring_chair_seated | Sittande enbensstretch på stol | stretch-extra.js | — | no_exact_match | Targeted seated-chair single-leg hamstring search found no front-of-chair heel-on-floor hip-hinge match. |
 | strx_hamstring_hurdler | Enbens framåtfällning med invikt fot | stretch-extra.js | — | no_exact_match | Targeted hurdler stretch search found no seated one-leg-extended opposite sole-to-inner-thigh match. |
 | strx_hamstring_stagger | Baksida lår i kort gångställning | stretch-extra.js | https://musclewiki.com/exercise/hamstrings-stretch-variation-two | verified | Hamstrings Stretch Variation Two: staggered feet, rear knee bent, front leg straight, hold; DRIV adds hip hinge cue consistent with position. |
-| strx_hamstring_scoops | Gående skopsteg för baksida lår | stretch-extra.js | — | pending | — |
-| strx_supine_knee_extension | Aktiv knästräckning i ryggliggande | stretch-extra.js | — | pending | — |
-| strx_wall_hamstring | Baksida lår med ett ben mot dörrkarm | stretch-extra.js | — | pending | — |
-| strx_soleus_wall | Vadstretch med böjt bakre knä | stretch-extra.js | — | pending | — |
-| strx_calf_step_hold | Hållen vadstretch på trappkant | stretch-extra.js | — | pending | — |
-| strx_calf_toe_wall | Vadstretch med framfoten mot vägg | stretch-extra.js | — | pending | — |
-| strx_calf_towel_seat | Sittande vadstretch med handduk | stretch-extra.js | — | pending | — |
-| strx_knee_wall | Knä mot vägg för fotledsrörlighet | stretch-extra.js | — | pending | — |
-| strx_ankle_circles | Sittande fotledscirklar | stretch-extra.js | — | pending | — |
-| strx_shin_kneel | Fotryggsstretch i knäsittande | stretch-extra.js | — | pending | — |
+| strx_hamstring_scoops | Gående skopsteg för baksida lår | stretch-extra.js | — | no_exact_match | Searched MuscleWiki hamstring scoops and dynamic hamstring variations; available seated static stretches do not match walking heel-scoop movement. |
+| strx_supine_knee_extension | Aktiv knästräckning i ryggliggande | stretch-extra.js | — | no_exact_match | Searched supine active knee extension; results describe seated towel knee extension or strap hamstring stretch, not the specified supine movement. |
+| strx_wall_hamstring | Baksida lår med ett ben mot dörrkarm | stretch-extra.js | — | no_exact_match | Searched doorway/wall supine hamstring stretches; MuscleWiki supine version requires a strap, unlike leg against doorframe. |
+| strx_soleus_wall | Vadstretch med böjt bakre knä | stretch-extra.js | https://musclewiki.com/exercise/soleus-stretch-static | verified | Both: staggered stance by wall, knees bent, weight on rear leg, static soleus hold. |
+| strx_calf_step_hold | Hållen vadstretch på trappkant | stretch-extra.js | https://musclewiki.com/exercise/calf-stretch-on-box-bilateral | verified | Both: forefoot on raised step/platform, heel lowered below edge and held; MuscleWiki allows weight on one foot. |
+| strx_calf_toe_wall | Vadstretch med framfoten mot vägg | stretch-extra.js | https://musclewiki.com/exercise/calves-stretch-variation-one | verified | Both: ball of foot against wall, heel on floor, straight knee, lean toward wall and hold. |
+| strx_calf_towel_seat | Sittande vadstretch med handduk | stretch-extra.js | — | no_exact_match | Searched seated towel calf stretch; no exact individual MuscleWiki stretch page found. |
+| strx_knee_wall | Knä mot vägg för fotledsrörlighet | stretch-extra.js | — | no_exact_match | Searched knee-to-wall dorsiflexion and ankle mobility; returned unrelated wall sit and ankle circles. |
+| strx_ankle_circles | Sittande fotledscirklar | stretch-extra.js | https://musclewiki.com/exercise/ankle-circle | verified | Both: seated foot lifted, circular ankle movement in both directions, then other foot. |
+| strx_shin_kneel | Fotryggsstretch i knäsittande | stretch-extra.js | — | no_exact_match | Searched kneeling anterior tibialis/top-of-foot stretch; no exact individual exercise found. |
 | strx_toe_tuck | Tåstretch i understött knäsittande | stretch-extra.js | — | pending | — |
 | strx_ankle_point_flex | Sittande växling mellan spetsad och böjd fot | stretch-extra.js | — | pending | — |
 | strx_dog_pedal | Växelvis vadstretch i nedåtgående hund | stretch-extra.js | — | pending | — |
