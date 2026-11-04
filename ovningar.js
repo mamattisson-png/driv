@@ -1178,6 +1178,12 @@ const MW = {
   hander_bakom_ryggen: "exercise/chest-stretch-variation-three",
   triceps_stretch: "exercise/triceps-stretch-variation-one",
   nedatgaende_hund: "exercise/downward-dog",
+  supine_twist: "exercise/lumbar-rotation-1-supine-passive",
+  sphinx: "exercise/sphinx-pose",
+  single_knee: "exercise/glute-stretch-static-unilateral",
+  happy_baby: "exercise/happy-baby",
+  side_lunge: "exercise/bodyweight-cossack-squat",
+  kna_mot_brost: "exercise/glute-stretch-static-unilateral",
   framsida_lar_stretch: "exercise/quads-stretch-variation-one", vadstretch: "exercise/calves-stretch-variation-two",
   barnets_position: "exercise/child-pose-arms-extended", 
    
