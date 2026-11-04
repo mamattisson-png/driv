@@ -252,7 +252,7 @@ const EXTRA_STRETCH_IDS = [];
     "hamstrings hip_rotators", "hamstrings", mod(floorSit, { t: 133, a: [74, 92], f2: [51, 93], kb2: 1 }));
   add("hamstring_stagger", "Baksida lår i kort gångställning", "Hamstrings, stora sätesmuskeln", "25 s/ben",
     ["Stå med ena foten ett kort steg framför den andra och främre hälen tung.", "Böj bakre knät och för höften bakåt medan främre benet hålls långt.", "Fäll från höften med lång rygg och byt ben efter hålltiden."],
-    "hamstrings glutes", "hamstrings", { h: [48, 61], t: 133, a: [76, 75], f: [78, 95], f2: [45, 95], kb: -1, kb2: -1 } );
+    "hamstrings glutes", "exercise/hamstrings-stretch-variation-two", { h: [48, 61], t: 133, a: [76, 75], f: [78, 95], f2: [45, 95], kb: -1, kb2: -1 } );
   add("hamstring_scoops", "Gående skopsteg för baksida lår", "Hamstrings, vadmuskler", "8/ben",
     ["Ta ett kort steg med hälen framför kroppen och tårna lätt uppåt.", "Böj stödbenet och för höften bakåt medan händerna sveper mot framfoten.", "Res dig, ta ett nytt steg och växla ben utan att studsa."],
     "hamstrings calves", "hamstrings", { h: [49, 60], t: 123, a: [80, 88], f: [79, 95], f2: [45, 95], kb: -1 }, mod(standing, { a: [77, 57], f: [65, 95], f2: [43, 95] }));
