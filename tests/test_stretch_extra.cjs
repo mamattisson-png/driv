@@ -36,6 +36,7 @@ for (const e of rows) {
   // No generic category link is acceptable as a direct stretch demonstration.
   // Explicit reviewed exercise pages only. Category/muscle pages must never masquerade as demos.
   const verifiedStretchPages = new Set([
+    "exercise/chest-stretch-variation-two",
     "exercise/puppy-pose",
     "exercise/biceps-stretch-variation-one",
     "exercise/wrist-flexor-stretch-seated",
