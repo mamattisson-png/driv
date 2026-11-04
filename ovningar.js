@@ -1185,11 +1185,8 @@ const MW = {
   happy_baby: "exercise/happy-baby",
   side_lunge: "exercise/bodyweight-cossack-squat",
   kna_mot_brost: "exercise/glute-stretch-static-unilateral",
-  hoftbojare_stretch: "exercise/hip-flexor-stretch-kneeling-lunge-1",
   framsida_lar_stretch: "exercise/quads-stretch-variation-one", vadstretch: "exercise/calves-stretch-variation-two",
   barnets_position: "exercise/child-pose-arms-extended", 
-   
-  fjarilen: "exercise/bodyweight-butterfly-stretch",
   kobran: "exercise/cobra-stretch-2",
   armhavningar_bank: "exercise/incline-push-up", nedlutande_bankpress: "exercise/dumbbell-decline-bench-press",
   flyes_maskin: "exercise/machine-pec-fly", rackpull: "exercise/barbell-rack-pull", pendlayrodd: "exercise/barbell-pronated-pendlay-row",
