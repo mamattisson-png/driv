@@ -30,16 +30,16 @@
 | latsstretch_bank | Latsstretch mot bänk | ovningar.js | — | pending | — |
 | grodan | Grodan | ovningar.js | — | pending | — |
 | hander_bakom_ryggen | Händerna bakom ryggen | ovningar.js | https://musclewiki.com/exercise/chest-stretch-variation-three | pending | — |
-| strx_neck_sidebend | Aktiv sidolutning av nacken | stretch-extra.js | — | pending | — |
-| strx_neck_turn | Lugn nackrotation | stretch-extra.js | — | pending | — |
-| strx_neck_nod | Små nickningar i ryggliggande | stretch-extra.js | https://musclewiki.com/exercise/laying-chin-tucks | pending | — |
-| strx_neck_diagonal | Diagonal nackstretch utan handdrag | stretch-extra.js | — | pending | — |
-| strx_wall_slide | Väggglidning med underarmar | stretch-extra.js | — | pending | — |
-| strx_floor_angels | Snöänglar på golvet | stretch-extra.js | — | pending | — |
-| strx_pendulum | Avslappnad axelpendling | stretch-extra.js | — | pending | — |
-| strx_arm_circles | Kontrollerade armcirklar | stretch-extra.js | — | pending | — |
-| strx_shoulder_rolls | Lugna skuldercirklar | stretch-extra.js | — | pending | — |
-| strx_wall_external_rotation | Utåtrotation av axeln mot dörrkarm | stretch-extra.js | — | pending | — |
+| strx_neck_sidebend | Aktiv sidolutning av nacken | stretch-extra.js | — | no_exact_match | Search found resisted/isometric seated side flexion, not free active alternating sidebend. |
+| strx_neck_turn | Lugn nackrotation | stretch-extra.js | — | no_exact_match | Found seated resisted cervical rotation, not free standing active rotation. |
+| strx_neck_nod | Små nickningar i ryggliggande | stretch-extra.js | https://musclewiki.com/exercise/laying-chin-tucks | verified | Laying Chin Tucks: supine, folded towel under head, small chin tuck with head down; matches DRIV cues. |
+| strx_neck_diagonal | Diagonal nackstretch utan handdrag | stretch-extra.js | — | no_exact_match | Search found ball-assisted levator mobilization, not unassisted seated diagonal neck stretch. |
+| strx_wall_slide | Väggglidning med underarmar | stretch-extra.js | — | no_exact_match | No matching forearms-on-wall upward sliding exercise found in targeted search. |
+| strx_floor_angels | Snöänglar på golvet | stretch-extra.js | — | no_exact_match | No matching supine floor snow-angel movement found in targeted search. |
+| strx_pendulum | Avslappnad axelpendling | stretch-extra.js | — | no_exact_match | Search returned pendulum squat, not supported bent-over relaxed shoulder pendulum. |
+| strx_arm_circles | Kontrollerade armcirklar | stretch-extra.js | — | no_exact_match | Forward and backward arm circles exist as TWO separate pages; one direct link cannot represent both directions. |
+| strx_shoulder_rolls | Lugna skuldercirklar | stretch-extra.js | — | no_exact_match | No exact upright bidirectional shoulder roll exercise found in targeted search. |
+| strx_wall_external_rotation | Utåtrotation av axeln mot dörrkarm | stretch-extra.js | — | no_exact_match | No exact elbow-at-waist palm-on-doorframe rotational stretch found in targeted search. |
 | strx_table_flexion | Axelfällning med händer på bord | stretch-extra.js | — | pending | — |
 | strx_supine_flexion | Axellyft över huvudet i ryggliggande | stretch-extra.js | — | pending | — |
 | strx_goalpost_rotation | Axelrotation i liggande målstolpe | stretch-extra.js | — | pending | — |
