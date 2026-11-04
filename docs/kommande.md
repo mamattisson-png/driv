@@ -13,21 +13,21 @@ Senast uppdaterad: 2026-11-03. Status bygger på dokumenterade publiceringar och
 | 7 | Tydligare övningsfigurer och animationer | Design | Hög | Klar |
 | 8 | Smart grönmarkering av måltider | Kost | Medel | Klar |
 | 9 | Tydligare avklarade aktiviteter | Design | Hög | Klar |
-| 10 | Körbara tränings-Dailys | Dailys | Hög | Ej påbörjad |
+| 10 | Körbara tränings-Dailys | Dailys | Hög | Klar |
 | 11 | Frivillig appguide | Ny funktion | Medel | Klar |
-| 12 | Enhetlig profil- och inställningsikon | Design | Medel | Ej påbörjad |
-| 13 | Färdigställ uppvärmningsset | Träning | Medel | Ej påbörjad |
+| 12 | Enhetlig profil- och inställningsikon | Design | Medel | Klar |
+| 13 | Färdigställ uppvärmningsset | Träning | Medel | Klar |
 | 14 | Lägg till övning under pågående pass | Träning | Hög | Klar |
 | 15 | Tydligare Historik och Utveckling | Historik | Hög | Klar |
 | 16 | Numeriskt tangentbord för alla sifferfält | UX | Hög | Under arbete |
 | 17 | Ingen inloggningsblinkning vid uppdatering | Bugg | Hög | Klar |
-| 18 | Sista steget i Kom igång: konto eller fortsätt utan | Onboarding | Hög | Ej påbörjad |
+| 18 | Sista steget i Kom igång: konto eller fortsätt utan | Onboarding | Hög | Klar |
 | 19 | Tydligare e-postadress när inloggningskod inväntas | Konto | Medel | Klar |
 | 20 | Enhetliga DRIV-mejl med kod, länk och original-logga | Konto | Hög | Påbörjad |
 | 21 | Bekräfta viktinmatning med OK istället för att avsluta set | Träning | Hög | Klar |
 | 22 | Tydlig återkoppling när set avslutas och nästa öppnas | Träning | Hög | Hanteras av Claude |
 | 23 | Spara genomfört pass som namngiven passmall | Träning | Hög | Klar |
-| 24 | Testlägets extrabalk får inte skymma träningsvyn | Bugg | Hög | Ej påbörjad |
+| 24 | Testlägets extrabalk får inte skymma träningsvyn | Bugg | Hög | Klar |
 | 27 | Sök och filtrera övningar på passtyp (Push, Pull, Ben) | Träning | Medel | Klar |
 | 28 | Träna som en sida och övningsbibliotek | Träning | Hög | Klar |
 | 29 | Kroppskarta i bibliotek och stretchguide, alla övningar kan läggas till | Träning | Hög | Klar |
@@ -36,7 +36,7 @@ Senast uppdaterad: 2026-11-03. Status bygger på dokumenterade publiceringar och
 | 32 | Sök på muskel: övningar och stretch med realistisk anatomibild | Träning | Hög | Klar |
 | 33 | Ta bort dubbla muskelknappar under kroppskartan | UX | Låg | Klar |
 | 34 | MuscleWiki-länk från stretchövningens detaljsida | Stretch | Medel | Klar |
-| 35 | Direktlänkar till rätt MuscleWiki-övning | Stretch | Medel | Ej påbörjad |
+| 35 | Direktlänkar till rätt MuscleWiki-övning | Stretch | Medel | Klar |
 | 36 | Gemensamt övningsbibliotek för pass, Dailys och byten | Träning | Hög | Klar |
 | 37 | Testbalken trycker inte ut innehåll utanför skärmen | Testläge | Låg | Klar |
 | 38 | Hela kroppen i Sök på muskel | Träning | Medel | Klar |
