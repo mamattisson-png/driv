@@ -6,7 +6,8 @@ const ISOLATION = new Set(["sidolyft", "triceps_pushdown", "fransk_press", "bice
   "benspark", "bencurl", "vadpress", "glute_bridge"]);
 const restSettings = () => Object.assign({ on: true, compound: 90, iso: 60 }, S.rest);
 // Ett ben eller en arm i taget: ena sidan vilar medan den andra jobbar, så vilan efter setet blir ungefär en tredjedel kortare (90 → 60 s, 60 → 45 s)
-const unilateral = id => /\/\s*(ben|arm|sida)\b/i.test(String(EX[id].reps || "")) || /\b(ett ben|en arm|enarms|enbens)/i.test(EX[id].name || "");
+const unilateral = id => EX[id].cat !== "stretch" && EX[id].cat !== "core" &&
+  (/\/\s*(ben|arm|sida)\b/i.test(String(EX[id].reps || "")) || /\b(ett ben|en arm|enarms|enbens)/i.test(EX[id].name || ""));
 const restFor = id => {
   const base = ISOLATION.has(id) || EX[id].cat === "core" || EX[id].cat === "stretch" ? restSettings().iso : restSettings().compound;
   return unilateral(id) ? Math.max(30, Math.round(base * 2 / 3 / 15) * 15) : base;
