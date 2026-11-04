@@ -63,6 +63,8 @@ Senast uppdaterad: 2026-11-03. Status bygger på dokumenterade publiceringar och
 | 59 | Hem: raden Vikt säger när veckans vägning saknas | Hem | Medel | Klar |
 | 60 | Fokusläget: påbörjade övningar får en ring i raden överst | Träning | Medel | Klar |
 | 61 | Kortare vila för övningar med ett ben eller en arm i taget | Träning | Medel | Klar |
+| 62 | Sök övningar på engelska, med felstavning och förkortningar | Träning | Hög | Klar |
+| 63 | Träna: listan visar klara, påbörjade och superset-övningar | Träning | Medel | Klar |
 
 ## Detaljer och acceptanskriterier
 
