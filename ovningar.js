@@ -1176,6 +1176,7 @@ const MW = {
   framatfallning: "exercise/standing-forward-bend",
   sittande_framatfallning: "exercise/seated-forward-bend",
   hander_bakom_ryggen: "exercise/chest-stretch-variation-three",
+  arm_over_brost: "exercise/shoulders-stretch-variation-four",
   triceps_stretch: "exercise/triceps-stretch-variation-one",
   nedatgaende_hund: "exercise/downward-dog",
   supine_twist: "exercise/lumbar-rotation-1-supine-passive",
