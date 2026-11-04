@@ -85,7 +85,7 @@
 | strx_stacked_shins | Sittande stretch med staplade smalben | stretch-extra.js | — | pending | — |
 | strx_bench_pigeon | Sätesstretch med böjt ben på bänk | stretch-extra.js | — | pending | — |
 | strx_side_lunge_hold | Sidoutfallsstretch med stöd | stretch-extra.js | — | pending | — |
-| strx_adductor_rock | Adduktorgungning med ett ben åt sidan | stretch-extra.js | https://musclewiki.com/exercise/adductor-stretch-dynamic-unilateral-4-point-position | pending | — |
+| strx_adductor_rock | Adduktorgungning med ett ben åt sidan | stretch-extra.js | https://musclewiki.com/exercise/adductor-stretch-dynamic-unilateral-4-point-position | verified | MuscleWiki instructions: four-point position, one leg extended sideways with foot grounded, rock hips backward and forward while keeping neutral spine; exact match to DRIV cues. Checked 2026-11-04. |
 | strx_wide_seat_fold | Framåtfällning i bred sittställning | stretch-extra.js | — | pending | — |
 | strx_wall_straddle | Bred benstretch mot vägg | stretch-extra.js | — | pending | — |
 | strx_supine_butterfly | Liggande fjäril med stöd | stretch-extra.js | — | pending | — |
