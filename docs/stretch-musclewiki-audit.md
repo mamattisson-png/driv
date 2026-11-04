@@ -129,3 +129,13 @@ Snapshot 2026-11-04: 125 total stretch IDs (26 base, 83 extra, 16 guide); 22 map
 - `strx_neck_sidebend`: Seated Cervical Side Flexion Hold uses hand pressure, DRIV explicitly excludes hand pressure.
 
 Update this tracker when mappings change. Do not merge without approval.
+
+## Additional candidate checks — 2026-11-04 04:30 CET
+
+- `strx_stacked_shins`: `double-pigeon-pose` requires a block under one knee and pressing knees toward the floor; DRIV instead instructs a forward hinge and optional cushion. Not accepted as an exact match.
+- `liggande_hamstring`: `hamstring-stretch-supine-static` specifies a strap and dynamic tugging; DRIV allows holding the calf and a static hold. Not accepted.
+- `trad_nalen`: `thread-the-needle-hip-over-knees` includes pigeon-style leg placement, not DRIV's quadruped arm-threading. Not accepted.
+- `latsstretch_bank`: `lat-and-shoulder-external-rotation-stretch-3-kneeling-dowel` requires a dowel and palms-up grip absent in DRIV. Not accepted.
+- Searches for `strx_figure_four_chair`, `strx_couch`, `strx_knee_wall`, `strx_supine_butterfly`, `strx_child_side_reach`, `strx_leg_swing_front`, `strx_quad_side`, `strx_wrist_flexor` found no verified exact new match this pass. Existing direct URLs need their own verification.
+
+No new direct URL was added this run. Keep searching; do not claim completion.
