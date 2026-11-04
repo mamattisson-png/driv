@@ -25,7 +25,7 @@ Senast uppdaterad: 2026-11-03. Status bygger på dokumenterade publiceringar och
 | 19 | Tydligare e-postadress när inloggningskod inväntas | Konto | Medel | Klar |
 | 20 | Enhetliga DRIV-mejl med kod, länk och original-logga | Konto | Hög | Påbörjad |
 | 21 | Bekräfta viktinmatning med OK istället för att avsluta set | Träning | Hög | Klar |
-| 22 | Tydlig återkoppling när set avslutas och nästa öppnas | Träning | Hög | Hanteras av Claude |
+| 22 | Tydlig återkoppling när set avslutas och nästa öppnas | Träning | Hög | Klar |
 | 23 | Spara genomfört pass som namngiven passmall | Träning | Hög | Klar |
 | 24 | Testlägets extrabalk får inte skymma träningsvyn | Bugg | Hög | Klar |
 | 27 | Sök och filtrera övningar på passtyp (Push, Pull, Ben) | Träning | Medel | Klar |
@@ -58,6 +58,7 @@ Senast uppdaterad: 2026-11-03. Status bygger på dokumenterade publiceringar och
 | 54 | Övningar får samma sida som stretch | Träning | Medel | Klar |
 | 55 | Inställningar: en sida per sak med samma upplägg | Design | Hög | Klar |
 | 56 | MuscleWiki-länkar tillbaka, kontrollerade | Träning | Medel | Klar |
+| 57 | Kör igen startar ett nytt pass i stället för att öppna det avslutade | Bugg | Hög | Klar |
 
 ## Detaljer och acceptanskriterier
 
