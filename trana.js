@@ -90,8 +90,16 @@ function traningView() {
   // Varje pass: tryck på raden för att se passet, och lika tydliga knappar för att starta och ändra det
   // Det valda passet: övningarna med set × reps, och lika tydliga knappar för att starta och ändra
   const sel = S.plan.days.find(p => p.id === selId) || d, si = S.plan.days.indexOf(sel);
-  const exLine = (p, e, k) => { const g = ssGroup(p, k);
-    return `<li><span class="tp-n">${g ? `<i class="sstag">${String.fromCharCode(65 + ssIndex(p, g[0]))}${k - g[0] + 1}</i>` : k + 1}</span><span class="grow">${esc(EX[e.id] ? EX[e.id].name : e.id)}</span><span class="tp-sr">${e.sets} × ${esc(String(e.reps || "").replace(/(\d)\s*-\s*(\d)/g, "$1–$2"))}</span></li>`; };
+  // Varje övning visar läget i dagens pass: klar (grön bock), påbörjad (ring och antal set) och superset (A1, A2 och en linje som håller ihop dem)
+  const exLine = (p, e, k) => { const g = ssGroup(p, k), w = workoutOn(logDate(), p.id);
+    const nOk = ((w && w.sets[e.id]) || []).filter(z => z && z.ok).length, done = !!w && exDone(w, e), started = !done && nOk > 0;
+    const tag = g ? `<i class="sstag">${String.fromCharCode(65 + ssIndex(p, g[0]))}${k - g[0] + 1}</i>` : "";
+    const num = done && !g ? icon("check", 12) : tag || k + 1;
+    const reps = esc(String(e.reps || "").replace(/(\d)\s*-\s*(\d)/g, "$1–$2"));
+    const ring = started ? ` style="--p:${Math.round(100 * Math.min(1, nOk / Math.max(1, +e.sets || 1)))}%"` : "";
+    const cls = [done ? "done" : "", started ? "started" : "", g ? "ss" : "", g && k === g[0] ? "ss-first" : "", g && k === g[1] ? "ss-last" : ""].filter(Boolean).join(" ");
+    return `<li class="${cls}"><span class="tp-n"${ring}>${num}</span><span class="grow">${esc(EX[e.id] ? EX[e.id].name : e.id)}</span>
+      <span class="tp-sr">${started ? `<b>${nOk}</b>/` : ""}${e.sets} × ${reps}</span></li>`; };
   const sOk = !!completedPassDate(sel), sNext = sel === d && !t.rest && !sOk, sGoing = sel === d && started;
   const sets = sel.ex.reduce((a, e) => a + (+e.sets || 0), 0);
   const list = `<section class="tpass ${sOk ? "ok" : sNext ? "next" : ""}" aria-label="${esc(sel.name)}">

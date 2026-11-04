@@ -2679,3 +2679,16 @@ def test_sok_ovningar_pa_engelska_och_med_felstavning(page, q, first):
     page.click("[data-exlib]")
     page.fill("#mskq", q)
     assert page.inner_text(".msk-row >> nth=0").startswith(first)
+
+
+def test_trana_listan_visar_klar_paborjad_och_superset(page):
+    start(page)
+    page.evaluate("""() => { const d = S.plan.days[0]; d.ex[4].ss = true; const w = workoutFor(d);
+      w.sets[d.ex[0].id] = Array.from({length: d.ex[0].sets}, () => ({kg: 80, reps: 6, ok: true}));
+      w.sets[d.ex[1].id] = [{kg: 20, reps: 10, ok: true}]; trSel = d.id; save(); }""")
+    go(page, "pass")
+    rows = page.locator(".tpass .tp-ex li")
+    assert "done" in rows.nth(0).get_attribute("class")
+    assert "started" in rows.nth(1).get_attribute("class") and page.inner_text(".tpass .tp-ex li >> nth=1").replace("\n", " ").count("1/") == 1
+    assert "ss-first" in rows.nth(4).get_attribute("class") and "ss-last" in rows.nth(5).get_attribute("class")
+    assert page.inner_text(".tpass .tp-ex li >> nth=4").startswith("A1")
