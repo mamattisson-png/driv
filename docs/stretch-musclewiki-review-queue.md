@@ -5,7 +5,7 @@
 | ID | Swedish name | Source | Existing direct URL | Review status | Evidence |
 |---|---|---|---|---|---|
 | framatfallning | Stående framåtfällning | ovningar.js | https://musclewiki.com/exercise/standing-forward-bend | verified | Standing Forward Bend: hip-width stance, hip hinge, arms toward floor; matches DRIV. |
-| hoftbojare_stretch | Höftböjarstretch | ovningar.js | https://musclewiki.com/exercise/hip-flexor-stretch-kneeling-lunge-1 | no_exact_match | Existing kneeling-lunge-1 requires front knee sliding and torso leaning back; DRIV specifies upright torso and rear hip forward. Kneeling-lunge-3 additionally elevates rear foot. Neither exact. |
+| hoftbojare_stretch | Höftböjarstretch | ovningar.js | — | no_exact_match | Existing kneeling-lunge-1 requires front knee sliding and torso leaning back; DRIV specifies upright torso and rear hip forward. Kneeling-lunge-3 additionally elevates rear foot. Neither exact. |
 | framsida_lar_stretch | Framsida lår | ovningar.js | https://musclewiki.com/exercise/quads-stretch-variation-one | verified | Quads Stretch Variation One: standing single-leg foot grasp, optional wall support, pull heel back; matches. |
 | vadstretch | Vadstretch mot vägg | ovningar.js | https://musclewiki.com/exercise/calves-stretch-variation-two | verified | Calves Stretch Variation Two: hands on wall, staggered stance, rear knee straight, lean forward; matches. |
 | duvan | Duvan | ovningar.js | — | no_exact_match | Rechecked MuscleWiki /exercise/pigeon-pose on 2026-11-04: despite matching title, instructions cross ankle over opposite thigh while seated, not DRIV's front shin on floor with rear leg extended; reclining pigeon also differs. No exact match. |
@@ -14,7 +14,7 @@
 | brost_dorr | Bröststretch i dörr | ovningar.js | https://musclewiki.com/exercise/chest-stretch-variation-one | verified | Chest Stretch Variation One: arm at 90 degrees against vertical support, staggered stance, lean forward; matches. |
 | triceps_stretch | Tricepsstretch | ovningar.js | https://musclewiki.com/exercise/triceps-stretch-variation-one | verified | Triceps Stretch Variation One: arm overhead with bent elbow, other hand presses elbow, alternate sides; matches. |
 | sittande_framatfallning | Sittande framåtfällning | ovningar.js | https://musclewiki.com/exercise/seated-forward-bend | verified | Seated Forward Bend: legs extended, hinge from hips, reach feet with long spine; matches. |
-| fjarilen | Fjärilen | ovningar.js | https://musclewiki.com/exercise/bodyweight-butterfly-stretch | no_exact_match | Existing butterfly page requires forward lean, whereas DRIV cues upright seated knee opening and optional elbow pressure; no exact counterpart established. |
+| fjarilen | Fjärilen | ovningar.js | — | no_exact_match | Existing butterfly page requires forward lean, whereas DRIV cues upright seated knee opening and optional elbow pressure; no exact counterpart established. |
 | kobran | Kobran | ovningar.js | https://musclewiki.com/exercise/cobra-stretch-2 | verified | Cobra Stretch 2: prone, palms under shoulders, upper torso rises supported by hands, hips stay on floor; matches DRIV. |
 | dodhang | Dödhäng | ovningar.js | https://musclewiki.com/exercise/dead-hang | verified | Dead Hang: pull-up bar, fully extended arms, static hold; DRIV permits feet touching floor as easier modification. |
 | nedatgaende_hund | Nedåtgående hund | ovningar.js | https://musclewiki.com/exercise/downward-dog | verified | Downward Dog: hands/feet planted, inverted V with hips raised and heels pressed down; matches DRIV. |
