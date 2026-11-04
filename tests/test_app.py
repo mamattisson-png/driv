@@ -2705,3 +2705,16 @@ def test_andra_fran_trana_listan_leder_tillbaka_till_listan(page, knapp):
     # Tillbaka på Träna med listan, inte på passets egen sida
     assert page.evaluate("[editing, passOpen, chosenDay]") == [False, False, None]
     assert page.locator(".tpass").count() == 1
+
+
+def test_korrigera_dagens_avslutade_pass_fran_trana(page):
+    start(page)
+    d = page.evaluate("S.plan.days[0].id")
+    seed(page, f"S.log[TODAY] = {{workouts:[{{dayId:'{d}',done:true,start:Date.now()-3600e3,end:Date.now(),sets:{{bankpress:[{{kg:80,reps:8,ok:true}}]}}}}],dailies:{{}},food:[]}}")
+    go(page, "pass")
+    page.click(f'[data-trfix="{d}"]')
+    # Passet öppnas igen på sin sida: setten går att ändra och passet sparas på nytt
+    assert page.evaluate("[passOpen, chosenDay, workoutOn(TODAY, chosenDay).done]") == [True, d, False]
+    assert page.locator(f'button[data-finish="{d}"]').count() >= 1
+    page.click(f'button[data-finish="{d}"] >> nth=0')
+    assert page.evaluate(f"workoutOn(TODAY, '{d}').done") is True and page.evaluate("workoutsOn(TODAY).length") == 1

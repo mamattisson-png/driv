@@ -110,7 +110,8 @@ function traningView() {
       <button class="tp-namebtn" data-pick="${sel.id}"><span class="tp-name">${esc(sel.name)}</span><span class="muted small tp-mus">${esc(passMuscles(sel))}</span></button>
       ${sel.ex.length ? `<ol class="tp-ex">${sel.ex.map((e, k) => exLine(sel, e, k)).join("")}</ol>` : `<span class="muted small">Inga övningar än</span>`}
       <div class="tp-acts">${sel.ex.length ? `<button class="${sOk ? "" : "primary"} grow" data-focusstart="${sel.id}">${icon("play", 16)}${sGoing ? "Fortsätt" : sOk ? "Kör igen" : "Starta"} ${esc(sel.name)}</button>` : ""}
-        <button class="${sel.ex.length ? "" : "primary grow"}" data-editpass="${sel.id}">${icon("edit", 16)}${sel.ex.length ? "Ändra" : "Lägg till övningar"}</button></div></section>`;
+        <button class="${sel.ex.length ? "" : "primary grow"}" data-editpass="${sel.id}">${icon("edit", 16)}${sel.ex.length ? "Ändra" : "Lägg till övningar"}</button></div>
+      ${completedPassDate(sel) === TODAY ? `<button class="linkbtn2 tp-fix" data-trfix="${sel.id}">${icon("edit", 14)}Korrigera dagens pass</button>` : ""}</section>`;
   const wd = isFixed() ? S.plan.weekdays.map(x => WD[x].toLowerCase()).join(", ") : "";
   const schema = `<section class="tschema"><span class="grow"><span class="klabel">Träningsschema</span>
       <b>${esc(PROGRAMS[S.plan.program || "ppl"].name)}</b><span class="muted small"> · ${S.plan.count} pass${wd ? ` · ${wd}` : ""}</span></span>
@@ -318,7 +319,7 @@ function stepReps(r, dir, id) {
 }
 
 document.addEventListener("click", ev => {
-  const t = ev.target.closest("[data-seepass],[data-passback],[data-editcancel],[data-exsheet],[data-exsheetclose],[data-exstep],[data-exlast],[data-ordna],[data-trsheet],[data-tplopen],[data-tpldel]");
+  const t = ev.target.closest("[data-seepass],[data-passback],[data-editcancel],[data-exsheet],[data-exsheetclose],[data-exstep],[data-exlast],[data-ordna],[data-trsheet],[data-tplopen],[data-tpldel],[data-trfix]");
   if (!t || t.disabled) return;
   if (t.classList.contains("overlay") && ev.target !== t) return;   // klick inne i fönstret
   const ds = t.dataset;
@@ -348,6 +349,12 @@ document.addEventListener("click", ev => {
   else if (ds.exlast !== undefined) { const d = currentPassDay(), e = d && d.ex[exSheet]; if (e) { if (ds.exlast) e.last = ds.exlast; else delete e.last; } }
   else if (ds.ordna !== undefined) ordna = !ordna;
   else if (ds.trsheet !== undefined) { trSheet = ds.trsheet || null; dailyEditing = false; }
+  else if (ds.trfix) {
+    // Rätta ett avslutat pass: det öppnas igen på passets sida, där set, vikter och reps kan ändras och passet sparas på nytt
+    const d = dayById(ds.trfix), w = d && workoutOn(logDate(), d.id);
+    if (w) { w.done = false; if (typeof shareWorkout === "function") shareWorkout(d, logDate(), false); }
+    chosenDay = ds.trfix; passOpen = true; window.scrollTo(0, 0);
+  }
   else if (ds.tplopen) { trSheet = null; chosenDay = ds.tplopen; passOpen = true; window.scrollTo(0, 0); }
   else if (ds.tpldel) {
     // Två tryck: första ber om bekräftelse. Loggade pass från mallen ligger kvar i historiken.
