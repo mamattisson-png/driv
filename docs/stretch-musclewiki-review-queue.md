@@ -66,16 +66,16 @@
 | strx_prayer | Handflator ihop framför bröstet | stretch-extra.js | — | no_exact_match | Prayer-stretch-1 is kneeling child's pose, not palms-together wrist stretch; no exact match found. |
 | strx_reverse_prayer_front | Handryggar ihop framför bröstet | stretch-extra.js | — | no_exact_match | Searched backs-of-hands-together wrist stretch in front of chest; no matching individual exercise found. |
 | strx_wrist_rock | Handledsgungning på alla fyra | stretch-extra.js | — | no_exact_match | Searched quadruped forward/back wrist rocks; no matching individual exercise found. |
-| strx_ninety_fold | Framåtfällning över främre benet i 90/90 | stretch-extra.js | — | pending | — |
-| strx_ninety_switch | Sittande 90/90-växlingar | stretch-extra.js | — | pending | — |
-| strx_seated_internal_rotation | Sittande inåtrotation av höften | stretch-extra.js | — | pending | — |
-| strx_gate_open | Öppna och stäng höftgrinden | stretch-extra.js | — | pending | — |
-| strx_leg_swing_front | Benpendling framåt och bakåt med stöd | stretch-extra.js | — | pending | — |
-| strx_leg_swing_side | Benpendling i sidled med väggstöd | stretch-extra.js | — | pending | — |
-| strx_quadruped_hip_circle | Höftcirklar på alla fyra | stretch-extra.js | — | pending | — |
-| strx_standing_hip_flexor | Stående höftböjarstretch i delad stans | stretch-extra.js | — | pending | — |
-| strx_bed_hip_flexor | Höftböjarstretch över sängkant | stretch-extra.js | — | pending | — |
-| strx_halfkneel_reach | Höftböjarstretch med räckning åt sidan | stretch-extra.js | — | pending | — |
+| strx_ninety_fold | Framåtfällning över främre benet i 90/90 | stretch-extra.js | — | no_exact_match | Searched 90/90 seated forward fold; results were unrelated hip hinges, no matching individual page established. |
+| strx_ninety_switch | Sittande 90/90-växlingar | stretch-extra.js | — | no_exact_match | Searched seated 90/90 hip switches; result was supine glute rotation, not seated switches. |
+| strx_seated_internal_rotation | Sittande inåtrotation av höften | stretch-extra.js | — | no_exact_match | Searched seated hip internal rotation; no matching individual page returned. |
+| strx_gate_open | Öppna och stäng höftgrinden | stretch-extra.js | — | no_exact_match | Searched standing hip gate opener; no matching individual page returned. |
+| strx_leg_swing_front | Benpendling framåt och bakåt med stöd | stretch-extra.js | — | no_exact_match | Searched supported front-back leg swings; results were weighted swings or lunges, not the movement. |
+| strx_leg_swing_side | Benpendling i sidled med väggstöd | stretch-extra.js | — | no_exact_match | Searched lateral standing leg swings; no matching individual page returned. |
+| strx_quadruped_hip_circle | Höftcirklar på alla fyra | stretch-extra.js | — | no_exact_match | Searched quadruped hip circles; no matching individual page returned. |
+| strx_standing_hip_flexor | Stående höftböjarstretch i delad stans | stretch-extra.js | — | no_exact_match | Searched standing split-stance hip flexor stretch; kneeling-lunge pages require kneeling, not standing. |
+| strx_bed_hip_flexor | Höftböjarstretch över sängkant | stretch-extra.js | — | no_exact_match | Searched Thomas stretch at bed edge; no matching individual page returned. |
+| strx_halfkneel_reach | Höftböjarstretch med räckning åt sidan | stretch-extra.js | — | no_exact_match | Searched half-kneeling hip flexor stretch with side reach; no matching individual page returned. |
 | strx_lizard | Ödlans position med händer på klossar | stretch-extra.js | — | pending | — |
 | strx_prone_wipers | Höftrotation i magliggande | stretch-extra.js | — | pending | — |
 | strx_supine_wipers | Vindrutetorkare med böjda ben | stretch-extra.js | — | pending | — |
