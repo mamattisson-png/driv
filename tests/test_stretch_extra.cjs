@@ -34,7 +34,17 @@ for (const e of rows) {
   if (/ s/.test(e.reps)) { timed++; assert.ok(parseInt(e.reps) >= 15); }
   else { dynamic++; assert.ok(parseInt(e.reps) <= 15); assert.ok(e.B || ['strx_ankle_circles','strx_ankle_point_flex','strx_seated_internal_rotation','strx_prone_wipers','strx_ninety_switch','strx_supine_wipers'].includes(e.id), `${e.id} needs movement poses or a documented anatomical fallback`); }
   // No generic category link is acceptable as a direct stretch demonstration.
-  assert.ok(e.wiki === undefined || e.wiki === "exercise/adductor-stretch-dynamic-unilateral-4-point-position", `${e.id}: invalid MuscleWiki link ${e.wiki}`);
+  // Explicit reviewed exercise pages only. Category/muscle pages must never masquerade as demos.
+  const verifiedStretchPages = new Set([
+    "exercise/puppy-pose",
+    "exercise/biceps-stretch-variation-one",
+    "exercise/wrist-flexor-stretch-seated",
+    "exercise/wrist-extensor-stretch-seated",
+    "exercise/adductor-stretch-dynamic-unilateral-4-point-position",
+    "exercise/quad-stretch-floor-prone",
+    "exercise/hamstrings-stretch-variation-two",
+  ]);
+  assert.ok(e.wiki === undefined || verifiedStretchPages.has(e.wiki), `${e.id}: unreviewed or generic MuscleWiki link ${e.wiki}`);
   assert.ok(e.stretchTargets.length > 0);
   e.stretchTargets.forEach(t => { assert.match(t, /^[a-z][a-z0-9_]+$/); targets.add(t); });
   assert.ok(e.svg.startsWith('<svg')); assert.ok(!/NaN|Infinity|undefined|null/.test(e.svg), e.id);
