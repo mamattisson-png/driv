@@ -109,17 +109,17 @@
 | strx_knee_wall | Knä mot vägg för fotledsrörlighet | stretch-extra.js | — | no_exact_match | Searched knee-to-wall dorsiflexion and ankle mobility; returned unrelated wall sit and ankle circles. |
 | strx_ankle_circles | Sittande fotledscirklar | stretch-extra.js | https://musclewiki.com/exercise/ankle-circle | verified | Both: seated foot lifted, circular ankle movement in both directions, then other foot. |
 | strx_shin_kneel | Fotryggsstretch i knäsittande | stretch-extra.js | — | no_exact_match | Searched kneeling anterior tibialis/top-of-foot stretch; no exact individual exercise found. |
-| strx_toe_tuck | Tåstretch i understött knäsittande | stretch-extra.js | — | pending | — |
-| strx_ankle_point_flex | Sittande växling mellan spetsad och böjd fot | stretch-extra.js | — | pending | — |
-| strx_dog_pedal | Växelvis vadstretch i nedåtgående hund | stretch-extra.js | — | pending | — |
-| strx_soleus_chair | Sittande fotledsstretch med häl i golvet | stretch-extra.js | — | pending | — |
-| strg_supine_twist | Liggande vridning med böjda knän | stretch-guide.js | https://musclewiki.com/exercise/lumbar-rotation-1-supine-passive | pending | — |
-| strg_sphinx | Sfinxen | stretch-guide.js | https://musclewiki.com/exercise/sphinx-pose | pending | — |
-| strg_single_knee | Ett knä mot bröstet | stretch-guide.js | https://musclewiki.com/exercise/glute-stretch-static-unilateral | pending | — |
-| strg_pelvic_tilt | Bäckentippning i ryggliggande | stretch-guide.js | — | pending | — |
+| strx_toe_tuck | Tåstretch i understött knäsittande | stretch-extra.js | — | no_exact_match | Searched kneeling toe-tuck/toe extension; no matching individual MuscleWiki exercise found. |
+| strx_ankle_point_flex | Sittande växling mellan spetsad och böjd fot | stretch-extra.js | — | no_exact_match | Searched seated alternating ankle plantarflexion/dorsiflexion; no exact individual exercise found. |
+| strx_dog_pedal | Växelvis vadstretch i nedåtgående hund | stretch-extra.js | — | no_exact_match | Searched alternating calf pedal in downward dog; no exact individual exercise found. |
+| strx_soleus_chair | Sittande fotledsstretch med häl i golvet | stretch-extra.js | — | no_exact_match | Searched seated bent-knee soleus/ankle stretch with heel grounded; no exact individual exercise found. |
+| strg_supine_twist | Liggande vridning med böjda knän | stretch-guide.js | https://musclewiki.com/exercise/lumbar-rotation-1-supine-passive | verified | Lumbar Rotation 1 Supine Passive: knees bent, feet flat, knees drop together sideways, slow breathing; matches DRIV. |
+| strg_sphinx | Sfinxen | stretch-guide.js | https://musclewiki.com/exercise/sphinx-pose | verified | Sphinx Pose: prone, elbows beneath shoulders, forearms on floor, chest lifted with hips grounded; matches DRIV. |
+| strg_single_knee | Ett knä mot bröstet | stretch-guide.js | https://musclewiki.com/exercise/glute-stretch-static-unilateral | verified | Glute Stretch Static Unilateral: supine, bend and pull one knee to chest, hold and switch; matches DRIV. |
+| strg_pelvic_tilt | Bäckentippning i ryggliggande | stretch-guide.js | — | no_exact_match | Searched supine posterior pelvic tilt; MuscleWiki results use tilt as setup for hamstring exercises, not the standalone DRIV movement. |
 | strg_happy_baby | Glada bebisen | stretch-guide.js | https://musclewiki.com/exercise/happy-baby | verified | Happy Baby: supine, knees toward chest, grasp outer feet, knees toward armpits and gentle rocking; matches DRIV. |
-| strg_chin_tuck | Hakindrag | stretch-guide.js | — | pending | — |
-| strg_couch | Soffstretch mot vägg | stretch-guide.js | — | pending | — |
+| strg_chin_tuck | Hakindrag | stretch-guide.js | — | no_exact_match | Searched upright seated/standing chin tuck; available laying chin tucks are supine and therefore not the same position. |
+| strg_couch | Soffstretch mot vägg | stretch-guide.js | — | no_exact_match | Searched wall couch stretch with rear foot against wall and upright lunge; no matching individual MuscleWiki page found. |
 | strg_side_lunge | Sidoutfall med paus | stretch-guide.js | https://musclewiki.com/exercise/bodyweight-cossack-squat | verified | Bodyweight Cossack Squat: wide stance, one knee bent and opposite leg straight, rise and alternate; matches DRIV side lunge with pause. |
 | strg_lying_butterfly | Liggande fjäril | stretch-guide.js | — | pending | — |
 | strg_heel_on_step | Baksida lår med hälen på pall | stretch-guide.js | — | pending | — |
