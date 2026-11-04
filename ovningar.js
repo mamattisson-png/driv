@@ -1185,7 +1185,6 @@ const MW = {
   side_lunge: "exercise/bodyweight-cossack-squat",
   kna_mot_brost: "exercise/glute-stretch-static-unilateral",
   hoftbojare_stretch: "exercise/hip-flexor-stretch-kneeling-lunge-1",
-  strx_calf_toe_wall: "exercise/calves-stretch-variation-one",
   framsida_lar_stretch: "exercise/quads-stretch-variation-one", vadstretch: "exercise/calves-stretch-variation-two",
   barnets_position: "exercise/child-pose-arms-extended", 
    
