@@ -23,7 +23,7 @@ Senast uppdaterad: 2026-11-03. Status bygger på dokumenterade publiceringar och
 | 17 | Ingen inloggningsblinkning vid uppdatering | Bugg | Hög | Klar |
 | 18 | Sista steget i Kom igång: konto eller fortsätt utan | Onboarding | Hög | Klar |
 | 19 | Tydligare e-postadress när inloggningskod inväntas | Konto | Medel | Klar |
-| 20 | Enhetliga DRIV-mejl med kod, länk och original-logga | Konto | Hög | Påbörjad |
+| 20 | Enhetliga DRIV-mejl med kod, länk och original-logga | Konto | Hög | Klar |
 | 21 | Bekräfta viktinmatning med OK istället för att avsluta set | Träning | Hög | Klar |
 | 22 | Tydlig återkoppling när set avslutas och nästa öppnas | Träning | Hög | Klar |
 | 23 | Spara genomfört pass som namngiven passmall | Träning | Hög | Klar |
