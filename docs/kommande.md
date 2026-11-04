@@ -18,7 +18,7 @@ Senast uppdaterad: 2026-11-03. Status bygger på dokumenterade publiceringar och
 | 12 | Enhetlig profil- och inställningsikon | Design | Medel | Ej påbörjad |
 | 13 | Färdigställ uppvärmningsset | Träning | Medel | Ej påbörjad |
 | 14 | Lägg till övning under pågående pass | Träning | Hög | Klar |
-| 15 | Tydligare Historik och Utveckling | Historik | Hög | Ej påbörjad |
+| 15 | Tydligare Historik och Utveckling | Historik | Hög | Klar |
 | 16 | Numeriskt tangentbord för alla sifferfält | UX | Hög | Under arbete |
 | 17 | Ingen inloggningsblinkning vid uppdatering | Bugg | Hög | Klar |
 | 18 | Sista steget i Kom igång: konto eller fortsätt utan | Onboarding | Hög | Ej påbörjad |
