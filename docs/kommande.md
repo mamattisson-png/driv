@@ -1,6 +1,6 @@
 # DRIV – Kommande förbättringar
 
-Senast uppdaterad: 2026-11-03. Status bygger på dokumenterade publiceringar och kontrollerad kod. Ej verifierade funktioner behåller pågående status.
+Senast uppdaterad: 2026-11-04. Status bygger på dokumenterade publiceringar och kontrollerad kod. Ej verifierade funktioner behåller pågående status.
 
 | Nr | Förbättring | Kategori | Prioritet | Status |
 |---|---|---|---|---|
@@ -65,6 +65,8 @@ Senast uppdaterad: 2026-11-03. Status bygger på dokumenterade publiceringar och
 | 61 | Kortare vila för övningar med ett ben eller en arm i taget | Träning | Medel | Klar |
 | 62 | Sök övningar på engelska, med felstavning och förkortningar | Träning | Hög | Klar |
 | 63 | Träna: listan visar klara, påbörjade och superset-övningar | Träning | Medel | Klar |
+| 64 | Stretch under vilan mellan set | Träning | Medel | Kommande |
+| 65 | Ta bort övning under pågående pass | Träning | Hög | Kommande |
 
 ## Detaljer och acceptanskriterier
 
@@ -141,6 +143,10 @@ Senast uppdaterad: 2026-11-03. Status bygger på dokumenterade publiceringar och
 
 55. **Nya Inställningar (Klar, publicerad 2026-11-03):** Varje rad öppnar en egen sida med tillbakaknapp, rubrik och en mening om vad den gör, i stället för att fällas ut. Brytare i stället för kryssrutor, Kalorimål visar målet stort, namn, inloggning och data på Konto och data, Träningsschema under Träning och en tillbakaknapp på Kommande funktioner.
 56. **MuscleWiki-länkar (Klar, publicerad 2026-11-03):** 524 av 533 övningar och stretchar länkar till MuscleWiki igen, på övningens sida, stretchens sida och i bladet inifrån passet. Adressformatet är kontrollerat mot MuscleWikis sökträffar; 189 går direkt till övningen och resten till en lista med liknande övningar. Ett test kontrollerar formatet.
+
+64. **Stretch under vilan mellan set:** Frivilliga, relevanta stretchförslag under vilotimern, med instruktioner och befintliga animationer. Timern fortsätter och passets set/loggar påverkas inte.
+
+65. **Ta bort övning under pågående pass:** Ta bort hela övningen och dess set endast från den aktuella sessionen. Övriga övningar påverkas inte. Visa Ångra i 5 sekunder. Behåll övningen i bibliotek och sparade passmallar.
 
 ## Arbetsregler
 
