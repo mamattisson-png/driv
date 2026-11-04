@@ -56,7 +56,7 @@ const EXTRA_STRETCH_IDS = [];
     "shoulders", "shoulders", { h: [60, 54], a: [98, 17] }, { h: [60, 54], a: [97, 36] }, { view: "front" });
   add("shoulder_rolls", "Lugna skuldercirklar", "Kappmuskeln, skulderbladsmuskler", "8/riktning",
     ["Stå upprätt med armarna avslappnade vid sidorna.", "För axlarna uppåt, bakåt och nedåt i en lugn cirkel.", "Vänd cirkeln utan att skjuta fram huvudet."],
-    "shoulders neck", "exercise/shoulders-stretch-variation-two", mod(standing, { s: [58, 20], a: [60, 50] }), mod(standing, { s: [54, 27], a: [55, 57] }));
+    "shoulders neck", "shoulders", mod(standing, { s: [58, 20], a: [60, 50] }), mod(standing, { s: [54, 27], a: [55, 57] }));
   add("wall_external_rotation", "Utåtrotation av axeln mot dörrkarm", "Axelns inåtrotatorer, bröstmuskler", "20 s/sida",
     ["Håll armbågen böjd intill midjan och lägg handflatan mot en dörrkarm.", "Vrid kroppen lite bort från handen medan armbågen stannar vid sidan.", "Stanna vid en mild sträckning och byt arm."],
     "shoulders chest", "shoulders", mod(standing, { h: [75, 54], a: [101, 49], f: [73, 95], eb: 1 }), undefined, { scene: wall });
