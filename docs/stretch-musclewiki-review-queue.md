@@ -92,13 +92,13 @@
 | strx_frog_rock | Dynamisk grodgungning | stretch-extra.js | — | pending | — |
 | strx_standing_straddle_hinge | Bred stående höftfällning med stöd | stretch-extra.js | — | pending | — |
 | strx_quad_side | Sidliggande framsida lårstretch | stretch-extra.js | — | pending | — |
-| strx_quad_prone | Magliggande framsida lårstretch | stretch-extra.js | https://musclewiki.com/exercise/quad-stretch-floor-prone | pending | — |
+| strx_quad_prone | Magliggande framsida lårstretch | stretch-extra.js | https://musclewiki.com/exercise/quad-stretch-floor-prone | verified | MuscleWiki Band Floor Quad Stretch: prone, bend knee, grasp ankle/foot, draw heel toward glute; strap optional; matches DRIV unassisted version. |
 | strx_couch | Couchstretch med bakre fot på bänk | stretch-extra.js | — | pending | — |
 | strx_quad_halfkneel_grasp | Halvt knästående lårstretch med fotgrepp | stretch-extra.js | — | pending | — |
 | strx_hamstring_heel_chair | Baksida lår med häl på stol | stretch-extra.js | — | pending | — |
 | strx_hamstring_chair_seated | Sittande enbensstretch på stol | stretch-extra.js | — | pending | — |
 | strx_hamstring_hurdler | Enbens framåtfällning med invikt fot | stretch-extra.js | — | pending | — |
-| strx_hamstring_stagger | Baksida lår i kort gångställning | stretch-extra.js | https://musclewiki.com/exercise/hamstrings-stretch-variation-two | pending | — |
+| strx_hamstring_stagger | Baksida lår i kort gångställning | stretch-extra.js | https://musclewiki.com/exercise/hamstrings-stretch-variation-two | verified | Hamstrings Stretch Variation Two: staggered feet, rear knee bent, front leg straight, hold; DRIV adds hip hinge cue consistent with position. |
 | strx_hamstring_scoops | Gående skopsteg för baksida lår | stretch-extra.js | — | pending | — |
 | strx_supine_knee_extension | Aktiv knästräckning i ryggliggande | stretch-extra.js | — | pending | — |
 | strx_wall_hamstring | Baksida lår med ett ben mot dörrkarm | stretch-extra.js | — | pending | — |
@@ -117,10 +117,10 @@
 | strg_sphinx | Sfinxen | stretch-guide.js | https://musclewiki.com/exercise/sphinx-pose | pending | — |
 | strg_single_knee | Ett knä mot bröstet | stretch-guide.js | https://musclewiki.com/exercise/glute-stretch-static-unilateral | pending | — |
 | strg_pelvic_tilt | Bäckentippning i ryggliggande | stretch-guide.js | — | pending | — |
-| strg_happy_baby | Glada bebisen | stretch-guide.js | https://musclewiki.com/exercise/happy-baby | pending | — |
+| strg_happy_baby | Glada bebisen | stretch-guide.js | https://musclewiki.com/exercise/happy-baby | verified | Happy Baby: supine, knees toward chest, grasp outer feet, knees toward armpits and gentle rocking; matches DRIV. |
 | strg_chin_tuck | Hakindrag | stretch-guide.js | — | pending | — |
 | strg_couch | Soffstretch mot vägg | stretch-guide.js | — | pending | — |
-| strg_side_lunge | Sidoutfall med paus | stretch-guide.js | https://musclewiki.com/exercise/bodyweight-cossack-squat | pending | — |
+| strg_side_lunge | Sidoutfall med paus | stretch-guide.js | https://musclewiki.com/exercise/bodyweight-cossack-squat | verified | Bodyweight Cossack Squat: wide stance, one knee bent and opposite leg straight, rise and alternate; matches DRIV side lunge with pause. |
 | strg_lying_butterfly | Liggande fjäril | stretch-guide.js | — | pending | — |
 | strg_heel_on_step | Baksida lår med hälen på pall | stretch-guide.js | — | pending | — |
 | strg_doorway_hamstring | Baksida lår i dörröppning | stretch-guide.js | — | pending | — |
