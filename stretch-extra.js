@@ -131,10 +131,10 @@ const EXTRA_STRETCH_IDS = [];
     "biceps shoulders chest", "biceps", { h: [49, 89], t: 192, a: [26, 95], f: [79, 95], kb: -1 } );
   add("wrist_flexor", "Handledsböjarstretch med rak arm", "Handledens böjmuskler, fingrarnas böjmuskler", "25 s/arm",
     ["Sträck ena armen framåt med handflatan uppåt och mjuk armbåge.", "Böj handleden bakåt med andra handen så att fingrarna pekar nedåt.", "Använd lätt tryck och byt arm efter hålltiden."],
-    "forearms", "exercise/wrist-flexor-stretch-seated", mod(standing, { a: [89, 26], a2: [88, 29], eb2: -1 }));
+    "forearms", "forearms", mod(standing, { a: [89, 26], a2: [88, 29], eb2: -1 }));
   add("wrist_extensor", "Handledssträckarstretch med rak arm", "Handledens sträckmuskler", "25 s/arm",
     ["Sträck ena armen framåt med handryggen uppåt.", "Böj handleden nedåt och ge handen ett lätt stöd med andra handen.", "Låt axeln vara sänkt och byt arm utan att dra hårt i fingrarna."],
-    "forearms", "exercise/wrist-extensor-stretch-seated", mod(standing, { a: [88, 34], a2: [87, 37], eb2: -1 }));
+    "forearms", "forearms", mod(standing, { a: [88, 34], a2: [87, 37], eb2: -1 }));
   add("prayer", "Handflator ihop framför bröstet", "Handledens och fingrarnas böjmuskler", "25 s",
     ["Pressa handflatorna lätt mot varandra framför bröstet med fingrarna uppåt.", "Sänk händerna långsamt medan handflatorna behåller kontakt.", "Stanna när det sträcker milt i underarmarna och andas lugnt."],
     "forearms", "forearms", mod(standing, { a: [71, 39], a2: [71, 40], eb: 1, eb2: -1 }));
