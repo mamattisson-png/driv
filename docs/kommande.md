@@ -19,7 +19,7 @@ Senast uppdaterad: 2026-11-03. Status bygger på dokumenterade publiceringar och
 | 13 | Färdigställ uppvärmningsset | Träning | Medel | Klar |
 | 14 | Lägg till övning under pågående pass | Träning | Hög | Klar |
 | 15 | Tydligare Historik och Utveckling | Historik | Hög | Klar |
-| 16 | Numeriskt tangentbord för alla sifferfält | UX | Hög | Under arbete |
+| 16 | Numeriskt tangentbord för alla sifferfält | UX | Hög | Klar |
 | 17 | Ingen inloggningsblinkning vid uppdatering | Bugg | Hög | Klar |
 | 18 | Sista steget i Kom igång: konto eller fortsätt utan | Onboarding | Hög | Klar |
 | 19 | Tydligare e-postadress när inloggningskod inväntas | Konto | Medel | Klar |
