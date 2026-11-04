@@ -90,7 +90,7 @@ const EXTRA_STRETCH_IDS = [];
   // Rygg, sida och lats.
   add("open_book", "Öppen bok med raka armar", "Bröstryggens muskler, bröstmuskler", "6/sida",
     ["Ligg på sidan med böjda knän och raka armar framför bröstet.", "För den övre armen i en båge bakåt medan knäna ligger kvar.", "Följ handen med blicken och återgå utan att pressa rotationen."],
-    "thoracic_back chest", "lowerback", mod(supine, { a: [25, 61], a2: [25, 62], f: [64, 91], kb: 1 }), mod(supine, { a: [2, 91], a2: [25, 62], f: [64, 91], kb: 1 }));
+    "thoracic_back chest", "exercise/chest-stretch-variation-two", mod(supine, { a: [25, 61], a2: [25, 62], f: [64, 91], kb: 1 }), mod(supine, { a: [2, 91], a2: [25, 62], f: [64, 91], kb: 1 }));
   add("quadruped_rotation", "Bröstryggsrotation på alla fyra", "Bröstryggens rotatorer, baksida axlar", "8/sida",
     ["Stå på alla fyra och lägg ena handen lätt bakom huvudet.", "Vrid bröstkorgen så att armbågen förs lugnt mot taket.", "För armbågen tillbaka under bröstet och behåll höften stilla."],
     "thoracic_back shoulders", "lowerback", mod(four, { a2: [75, 72], eb2: -1 }), mod(four, { a2: [77, 46], eb2: -1 }));
