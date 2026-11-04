@@ -2063,6 +2063,7 @@ document.addEventListener("click", ev => {
     s.ok = !s.ok;
     if (s.ok && ex) { const h = warmHint(d, ex, +ds.i); if (s.reps === undefined || s.reps === "") s.reps = h.reps; if ((s.kg === undefined || s.kg === "") && +h.kg) s.kg = h.kg; }
     if (focus && !editDate && !focus.suspended) focus.sel = null;
+    if (s.ok) setFeedback(d, ds.ok, s, { warm: true });
   }
   else if (ds.ok) {
     const d = currentPassDay(), s = setAt(d, ds.ok, +ds.i);
@@ -2073,7 +2074,9 @@ document.addEventListener("click", ev => {
     const exo = d.ex[idx], toDrop = exo && exo.last === "drop" && +ds.i >= exo.sets - 1 && +ds.i < exo.sets - 1 + nd(exo);   // dropen körs direkt, utan vila   // dropen körs direkt, utan vila
     if (s.ok) { fillFromHint(d, ds.ok, +ds.i); checkRecord(ds.ok, s); if (!editDate && !inRound && !toDrop) startRest(ds.ok); }
     syncDone(d);
+    const from = focus && focus.idx;
     if (s.ok) focusAfterSet(d, idx, +ds.i);
+    if (s.ok) setFeedback(d, ds.ok, s, { from, rest: !editDate && !inRound && !toDrop, inRound, drop: toDrop });
   }
   else if (ds.exok) {
     const d = currentPassDay(), ex = d.ex.find(x => x.id === ds.exok);

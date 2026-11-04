@@ -2595,3 +2595,21 @@ def test_utveckling_period_och_tom_period(page):
     page.click('[data-hper="1y"]')
     assert "+5 kg" in page.inner_text('.hstr[data-chart="bankpress"]')
     assert page.evaluate("histPer") == "1y"
+
+
+def test_aterkoppling_nar_set_avslutas(page):
+    start(page)
+    go(page, "pass")
+    pick(page, page.evaluate("S.plan.days[0].id"))
+    page.click("[data-focusstart]")
+    page.evaluate("S.plan.days[0].ex[0].sets = 2; save(); render()")
+    page.click(".fbar .fdone")
+    page.wait_for_selector(".fxbanner")
+    assert "Set klart" in page.inner_text(".fxbanner")
+    assert page.locator(".focus .fset.active.arrive").count() == 1
+    page.click(".fbar .fdone")
+    page.wait_for_function("document.querySelector('.fxbanner') && document.querySelector('.fxbanner').innerText.includes('Nästa:')")
+    t = page.inner_text(".fxbanner")
+    assert "klar" in t and page.evaluate("EX[S.plan.days[0].ex[1].id].name") in t
+    # Försvinner av sig själv
+    page.wait_for_function("!document.querySelector('.fxbanner')", timeout=4000)
