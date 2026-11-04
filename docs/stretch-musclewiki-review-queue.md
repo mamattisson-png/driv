@@ -4,16 +4,16 @@
 
 | ID | Swedish name | Source | Existing direct URL | Review status | Evidence |
 |---|---|---|---|---|---|
-| framatfallning | Stående framåtfällning | ovningar.js | https://musclewiki.com/exercise/standing-forward-bend | pending | — |
-| hoftbojare_stretch | Höftböjarstretch | ovningar.js | https://musclewiki.com/exercise/hip-flexor-stretch-kneeling-lunge-1 | pending | — |
-| framsida_lar_stretch | Framsida lår | ovningar.js | https://musclewiki.com/exercise/quads-stretch-variation-one | pending | — |
-| vadstretch | Vadstretch mot vägg | ovningar.js | https://musclewiki.com/exercise/calves-stretch-variation-two | pending | — |
-| duvan | Duvan | ovningar.js | — | pending | — |
-| barnets_position | Barnets position | ovningar.js | https://musclewiki.com/exercise/child-pose-arms-extended | pending | — |
-| katt_ko | Katt och ko | ovningar.js | https://musclewiki.com/exercise/cat-pose | pending | — |
-| brost_dorr | Bröststretch i dörr | ovningar.js | https://musclewiki.com/exercise/chest-stretch-variation-one | pending | — |
-| triceps_stretch | Tricepsstretch | ovningar.js | https://musclewiki.com/exercise/triceps-stretch-variation-one | pending | — |
-| sittande_framatfallning | Sittande framåtfällning | ovningar.js | https://musclewiki.com/exercise/seated-forward-bend | pending | — |
+| framatfallning | Stående framåtfällning | ovningar.js | https://musclewiki.com/exercise/standing-forward-bend | verified | Standing Forward Bend: hip-width stance, hip hinge, arms toward floor; matches DRIV. |
+| hoftbojare_stretch | Höftböjarstretch | ovningar.js | https://musclewiki.com/exercise/hip-flexor-stretch-kneeling-lunge-1 | pending | Existing kneeling lunge page cues front-knee slide and leaning back; DRIV emphasizes rear hip advancing upright. Needs alternate match search. |
+| framsida_lar_stretch | Framsida lår | ovningar.js | https://musclewiki.com/exercise/quads-stretch-variation-one | verified | Quads Stretch Variation One: standing single-leg foot grasp, optional wall support, pull heel back; matches. |
+| vadstretch | Vadstretch mot vägg | ovningar.js | https://musclewiki.com/exercise/calves-stretch-variation-two | verified | Calves Stretch Variation Two: hands on wall, staggered stance, rear knee straight, lean forward; matches. |
+| duvan | Duvan | ovningar.js | — | no_exact_match | Targeted MuscleWiki pigeon-pose search returned no matching individual exercise; do not use reclining pigeon. |
+| barnets_position | Barnets position | ovningar.js | https://musclewiki.com/exercise/child-pose-arms-extended | verified | Child Pose Arms Extended: sit back on heels from tabletop, reach arms along floor; matches. |
+| katt_ko | Katt och ko | ovningar.js | https://musclewiki.com/exercise/cat-pose | verified | Cat Pose page explicitly alternates arching and rounding on all fours; matches cat-cow sequence. |
+| brost_dorr | Bröststretch i dörr | ovningar.js | https://musclewiki.com/exercise/chest-stretch-variation-one | verified | Chest Stretch Variation One: arm at 90 degrees against vertical support, staggered stance, lean forward; matches. |
+| triceps_stretch | Tricepsstretch | ovningar.js | https://musclewiki.com/exercise/triceps-stretch-variation-one | verified | Triceps Stretch Variation One: arm overhead with bent elbow, other hand presses elbow, alternate sides; matches. |
+| sittande_framatfallning | Sittande framåtfällning | ovningar.js | https://musclewiki.com/exercise/seated-forward-bend | verified | Seated Forward Bend: legs extended, hinge from hips, reach feet with long spine; matches. |
 | fjarilen | Fjärilen | ovningar.js | https://musclewiki.com/exercise/bodyweight-butterfly-stretch | pending | — |
 | kobran | Kobran | ovningar.js | https://musclewiki.com/exercise/cobra-stretch-2 | pending | — |
 | dodhang | Dödhäng | ovningar.js | https://musclewiki.com/exercise/dead-hang | pending | — |
