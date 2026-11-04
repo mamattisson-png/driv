@@ -43,18 +43,18 @@
 | strx_table_flexion | Axelfällning med händer på bord | stretch-extra.js | — | no_exact_match | Searched table shoulder flexion and hands-on-table stretch; results are floor tabletop yoga positions, not standing hands-on-table hip hinge. |
 | strx_supine_flexion | Axellyft över huvudet i ryggliggande | stretch-extra.js | — | no_exact_match | Searched supine overhead shoulder flexion; results are weighted dumbbell pullovers, not unloaded supine arm raise. |
 | strx_goalpost_rotation | Axelrotation i liggande målstolpe | stretch-extra.js | — | no_exact_match | Searched supine goalpost external rotation; no individual matching unloaded floor shoulder rotation found. |
-| strx_chest_towel | Bröstöppning över rullad handduk | stretch-extra.js | — | pending | — |
-| strx_chest_corner | Bröststretch med båda armarna i hörn | stretch-extra.js | — | pending | — |
-| strx_chest_low_arm | Bröststretch med låg arm mot vägg | stretch-extra.js | — | pending | — |
-| strx_chest_chair | Sittande bröstöppning med stolstöd | stretch-extra.js | — | pending | — |
-| strx_chest_side_lying | Sidliggande bröstöppning med hand bakom huvudet | stretch-extra.js | — | pending | — |
-| strx_open_book | Öppen bok med raka armar | stretch-extra.js | https://musclewiki.com/exercise/chest-stretch-variation-two | pending | — |
-| strx_quadruped_rotation | Bröstryggsrotation på alla fyra | stretch-extra.js | — | pending | — |
-| strx_chair_extension | Bröstryggssträckning över stolrygg | stretch-extra.js | — | pending | — |
-| strx_standing_sidebend | Stående sidostretch med arm över huvudet | stretch-extra.js | — | pending | — |
-| strx_child_side_reach | Barnets position med händer åt sidan | stretch-extra.js | — | pending | — |
-| strx_wall_lat | Enarms latsstretch mot vägg | stretch-extra.js | — | pending | — |
-| strx_puppy | Valpens position | stretch-extra.js | https://musclewiki.com/exercise/puppy-pose | pending | — |
+| strx_chest_towel | Bröstöppning över rullad handduk | stretch-extra.js | — | no_exact_match | Searched towel/roller supine chest opening; MuscleWiki shoulder-flexion roller version moves arms overhead, unlike static arms-out towel hold. |
+| strx_chest_corner | Bröststretch med båda armarna i hörn | stretch-extra.js | — | no_exact_match | Searched corner bilateral forearm pec stretch; no individual page with both forearms against two walls found. |
+| strx_chest_low_arm | Bröststretch med låg arm mot vägg | stretch-extra.js | — | no_exact_match | Searched low-arm wall pec stretch; found shoulder-height wall variations, not hand behind body below shoulder. |
+| strx_chest_chair | Sittande bröstöppning med stolstöd | stretch-extra.js | — | no_exact_match | Searched seated chair-supported chest opener with hands gripping rear seat; no equivalent individual page found. |
+| strx_chest_side_lying | Sidliggande bröstöppning med hand bakom huvudet | stretch-extra.js | — | no_exact_match | Searched side-lying elbow-opening thoracic stretch; found straight-arm Chest Stretch Variation Two, not hand-behind-head elbow rotation. |
+| strx_open_book | Öppen bok med raka armar | stretch-extra.js | https://musclewiki.com/exercise/chest-stretch-variation-two | verified | Chest Stretch Variation Two: side-lying, upper arm rotates slowly around body, return and switch sides; matches DRIV straight-arm open book. |
+| strx_quadruped_rotation | Bröstryggsrotation på alla fyra | stretch-extra.js | — | no_exact_match | Bodyweight Thoracic Spine Rotation requires chest lowered to ground and a static hold; DRIV remains on all fours and rotates dynamically. |
+| strx_chair_extension | Bröstryggssträckning över stolrygg | stretch-extra.js | — | no_exact_match | Searched seated thoracic extension over chair back; available foam-roller thoracic extension uses different equipment/position. |
+| strx_standing_sidebend | Stående sidostretch med arm över huvudet | stretch-extra.js | — | no_exact_match | Searched standing single-arm overhead lateral trunk bend; no matching individual exercise page found. |
+| strx_child_side_reach | Barnets position med händer åt sidan | stretch-extra.js | — | no_exact_match | Searched child's pose with both hands walked laterally; standard child's pose is not the lateral-reach variation. |
+| strx_wall_lat | Enarms latsstretch mot vägg | stretch-extra.js | — | no_exact_match | Searched one-arm high wall lat hinge stretch; found bilateral wall lat stretch, not unilateral version. |
+| strx_puppy | Valpens position | stretch-extra.js | https://musclewiki.com/exercise/puppy-pose | verified | Puppy Pose: tabletop start, walk hands forward, lower chest, hips over knees and hold; exact DRIV instructions. |
 | strx_upper_back_hug | Sittande stretch mellan skulderbladen | stretch-extra.js | — | pending | — |
 | strx_triceps_bench | Tricepsstretch med armbågar på bänk | stretch-extra.js | — | pending | — |
 | strx_triceps_towel | Tricepsstretch med handduk bakom ryggen | stretch-extra.js | — | pending | — |
