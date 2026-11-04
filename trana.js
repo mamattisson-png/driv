@@ -9,7 +9,10 @@ let editSnap = null;    // passets övningar när Ändra öppnades, för Avbryt
 let exSheet = null;     // index för övningen vars blad är öppet när man ändrar
 let ordna = false;      // pilar för att flytta övningarna
 let trSheet = null;
-let tplDelArm = null;   // mallen som väntar på andra trycket för att tas bort
+let tplDelArm = null;
+let editFromList = false;   // ändringen startades från listan på Träna
+// Efter Spara eller Avbryt: tillbaka dit man kom ifrån
+function leaveEdit() { if (editFromList) { passOpen = false; chosenDay = null; } editFromList = false; }   // mallen som väntar på andra trycket för att tas bort
 let trSel = null;       // passet vars övningar visas under rutorna på Träna (annars det som står på tur)     // "dailys" när dailys är öppet ovanpå Träna
 
 // Set och reps utskrivet: "4 set · 6–8 reps", "3 set · 10 per ben", "3 set · 45 s"
@@ -134,6 +137,7 @@ document.addEventListener("click", ev => {
   if (!e) return;
   ev.stopImmediatePropagation();
   chosenDay = e.dataset.editpass; passOpen = true; editing = true; startEdit(dayById(chosenDay));
+  editFromList = true;   // Spara och Avbryt leder tillbaka till listan på Träna, inte till passets sida
   window.scrollTo(0, 0); render();
 }, true);
 document.addEventListener("click", ev => {
@@ -323,7 +327,7 @@ document.addEventListener("click", ev => {
   else if (ds.editcancel !== undefined) {
     const d = editSnap && dayById(editSnap.id);
     if (d) { d.ex = JSON.parse(editSnap.ex); d.name = editSnap.name; if (editSnap.named) d.named = true; else delete d.named; }
-    editing = false; editSnap = null; exSheet = null; ordna = false;
+    editing = false; editSnap = null; exSheet = null; ordna = false; leaveEdit();
   }
   else if (ds.exsheet !== undefined) exSheet = +ds.exsheet;
   else if (ds.exsheetclose !== undefined) exSheet = null;

@@ -2061,7 +2061,7 @@ document.addEventListener("click", ev => {
   else if (ds.pick) { chosenDay = ds.pick; passOpen = true; if (!editDate) window.scrollTo(0, 0); }
   else if (ds.edit !== undefined) {
     editing = !editing;
-    if (editing) startEdit(currentPassDay()); else { editSnap = null; exSheet = null; ordna = false; }
+    if (editing) startEdit(currentPassDay()); else { editSnap = null; exSheet = null; ordna = false; if (typeof leaveEdit === "function") leaveEdit(); }
     window.scrollTo(0, 0);
   }
   // Övningarna ändras bara i Träna; från Hem kommer man dit med passet öppet för ändring

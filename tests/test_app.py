@@ -2692,3 +2692,16 @@ def test_trana_listan_visar_klar_paborjad_och_superset(page):
     assert "started" in rows.nth(1).get_attribute("class") and page.inner_text(".tpass .tp-ex li >> nth=1").replace("\n", " ").count("1/") == 1
     assert "ss-first" in rows.nth(4).get_attribute("class") and "ss-last" in rows.nth(5).get_attribute("class")
     assert page.inner_text(".tpass .tp-ex li >> nth=4").startswith("A1")
+
+
+@pytest.mark.parametrize("knapp", ["[data-edit].stickcta", "[data-editcancel]"])
+def test_andra_fran_trana_listan_leder_tillbaka_till_listan(page, knapp):
+    start(page)
+    go(page, "pass")
+    d = page.evaluate("S.plan.days[0].id")
+    page.click(f'.tpass [data-editpass="{d}"]')
+    assert page.evaluate("editing") is True
+    page.click(knapp)
+    # Tillbaka på Träna med listan, inte på passets egen sida
+    assert page.evaluate("[editing, passOpen, chosenDay]") == [False, False, None]
+    assert page.locator(".tpass").count() == 1
