@@ -121,11 +121,11 @@
 | strg_chin_tuck | Hakindrag | stretch-guide.js | — | no_exact_match | Searched upright seated/standing chin tuck; available laying chin tucks are supine and therefore not the same position. |
 | strg_couch | Soffstretch mot vägg | stretch-guide.js | — | no_exact_match | Searched wall couch stretch with rear foot against wall and upright lunge; no matching individual MuscleWiki page found. |
 | strg_side_lunge | Sidoutfall med paus | stretch-guide.js | https://musclewiki.com/exercise/bodyweight-cossack-squat | verified | Bodyweight Cossack Squat: wide stance, one knee bent and opposite leg straight, rise and alternate; matches DRIV side lunge with pause. |
-| strg_lying_butterfly | Liggande fjäril | stretch-guide.js | — | pending | — |
-| strg_heel_on_step | Baksida lår med hälen på pall | stretch-guide.js | — | pending | — |
-| strg_doorway_hamstring | Baksida lår i dörröppning | stretch-guide.js | — | pending | — |
-| strg_side_quad | Sidoliggande framsida lår | stretch-guide.js | — | pending | — |
-| strg_step_calf | Vadstretch på trappsteg | stretch-guide.js | — | pending | — |
-| strg_toe_wall | Tåstretch mot vägg | stretch-guide.js | — | pending | — |
-| strg_forearm_wall | Underarmsstretch mot vägg | stretch-guide.js | — | pending | — |
-| strg_door_hang | Lätt häng i dörrkarm | stretch-guide.js | — | pending | — |
+| strg_lying_butterfly | Liggande fjäril | stretch-guide.js | — | no_exact_match | Searched supine/reclined butterfly; no exact individual MuscleWiki instructions found for supine soles-together knees-out hold. |
+| strg_heel_on_step | Baksida lår med hälen på pall | stretch-guide.js | — | no_exact_match | Searched elevated-heel hamstring stretch; Pyramid Pose uses foot on floor, not heel on low stool. |
+| strg_doorway_hamstring | Baksida lår i dörröppning | stretch-guide.js | — | no_exact_match | Searched doorway supine hamstring stretch; no individual matching exercise found. |
+| strg_side_quad | Sidoliggande framsida lår | stretch-guide.js | — | no_exact_match | Searched side-lying quad stretch; no matching individual exercise found. |
+| strg_step_calf | Vadstretch på trappsteg | stretch-guide.js | — | no_exact_match | Step calf results are dynamic calf raises, not a static heel-below-step hold. |
+| strg_toe_wall | Tåstretch mot vägg | stretch-guide.js | — | no_exact_match | Calves Stretch Variation Three uses balls of both feet on platform and drops heels; not toe-to-wall plantar stretch. |
+| strg_forearm_wall | Underarmsstretch mot vägg | stretch-guide.js | — | no_exact_match | Forearms Stretch Variation One/Two use different palm/finger positions or movement; no exact fingers-down palm-wall body rotation match. |
+| strg_door_hang | Lätt häng i dörrkarm | stretch-guide.js | — | no_exact_match | Searched door-frame supported hang; no exact partial-bodyweight supported doorway hang exercise found. |
