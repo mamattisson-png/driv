@@ -68,6 +68,7 @@ Senast uppdaterad: 2026-11-04. Status bygger på dokumenterade publiceringar och
 | 64 | Stretch under vilan mellan set | Träning | Medel | Kommande |
 | 65 | Ta bort övning under pågående pass | Träning | Hög | Kommande |
 | 66 | Förbättra menyn Avsluta passet | Design | Medel | Kommande |
+| 67 | Anpassa hälsningen efter alla dagens mål | Hem | Medel | Kommande |
 
 ## Detaljer och acceptanskriterier
 
@@ -150,6 +151,8 @@ Senast uppdaterad: 2026-11-04. Status bygger på dokumenterade publiceringar och
 65. **Ta bort övning under pågående pass:** Ta bort hela övningen och dess set endast från den aktuella sessionen. Övriga övningar påverkas inte. Visa Ångra i 5 sekunder. Behåll övningen i bibliotek och sparade passmallar.
 
 66. **Förbättra menyn Avsluta passet:** Ge alternativen Pausa och fortsätt senare, Avbryt passet utan att spara och Fortsätt träna en konsekvent visuell hierarki, tydliga tryckytor, jämna avstånd och enhetliga knapphöjder. Pausa som primär handling, Fortsätt träna som sekundär och Avbryt som diskret destruktiv handling. Behåll befintligt beteende och säkerställ god läsbarhet i mörkt och ljust läge.
+
+67. **Anpassa hälsningen efter alla dagens mål:** Visa inte ”Allt klart” när kostmålet återstår, även om träningspass och Dailys är klara. Hälsningen ska skilja på genomförd träning, Dailys och uppnått kalorimål. Exempel när träning och Dailys är klara men kosten återstår: ”Bra jobbat idag!” med ”Träningen och Dailys är klara · Kosten återstår”. Sent på kvällen kan en vänlig sov gott-hälsning användas utan att påstå att allt är klart. ”Allt klart, sov gott” reserveras för dagar där samtliga relevanta mål är uppnådda. Bevara befintlig design och hantera dagar utan planerat pass.
 
 ## Arbetsregler
 
