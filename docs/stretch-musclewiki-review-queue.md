@@ -76,17 +76,17 @@
 | strx_standing_hip_flexor | Stående höftböjarstretch i delad stans | stretch-extra.js | — | no_exact_match | Searched standing split-stance hip flexor stretch; kneeling-lunge pages require kneeling, not standing. |
 | strx_bed_hip_flexor | Höftböjarstretch över sängkant | stretch-extra.js | — | no_exact_match | Searched Thomas stretch at bed edge; no matching individual page returned. |
 | strx_halfkneel_reach | Höftböjarstretch med räckning åt sidan | stretch-extra.js | — | no_exact_match | Searched half-kneeling hip flexor stretch with side reach; no matching individual page returned. |
-| strx_lizard | Ödlans position med händer på klossar | stretch-extra.js | — | pending | — |
-| strx_prone_wipers | Höftrotation i magliggande | stretch-extra.js | — | pending | — |
-| strx_supine_wipers | Vindrutetorkare med böjda ben | stretch-extra.js | — | pending | — |
-| strx_figure_four_chair | Sittande figur fyra på stol | stretch-extra.js | — | pending | — |
-| strx_figure_four_stand | Stående figur fyra med stöd | stretch-extra.js | — | pending | — |
-| strx_cross_knee | Liggande knä mot motsatt axel | stretch-extra.js | — | pending | — |
-| strx_stacked_shins | Sittande stretch med staplade smalben | stretch-extra.js | — | pending | — |
-| strx_bench_pigeon | Sätesstretch med böjt ben på bänk | stretch-extra.js | — | pending | — |
-| strx_side_lunge_hold | Sidoutfallsstretch med stöd | stretch-extra.js | — | pending | — |
+| strx_lizard | Ödlans position med händer på klossar | stretch-extra.js | — | no_exact_match | Searched lizard pose with yoga blocks; no matching individual MuscleWiki exercise found for rear knee down, front foot outside hands, hands elevated. |
+| strx_prone_wipers | Höftrotation i magliggande | stretch-extra.js | — | no_exact_match | Searched prone hip rotation and windshield wipers; no individual page matched one knee bent 90 degrees and foot sweeping while thigh remains grounded. |
+| strx_supine_wipers | Vindrutetorkare med böjda ben | stretch-extra.js | — | no_exact_match | Searched supine windshield wipers; no page matched bent knees moving side to side with shoulders grounded and feet wide. |
+| strx_figure_four_chair | Sittande figur fyra på stol | stretch-extra.js | — | no_exact_match | Searched seated figure-four and seated piriformis; results were hip thrusts or reclining pigeon, not seated ankle-on-thigh forward fold. |
+| strx_figure_four_stand | Stående figur fyra med stöd | stretch-extra.js | — | no_exact_match | Searched standing figure-four glute stretch; standing knee-pull page differs from supported single-leg figure-four squat hold. |
+| strx_cross_knee | Liggande knä mot motsatt axel | stretch-extra.js | — | no_exact_match | Searched supine knee to opposite shoulder and glute stretches; glute-hip-rotator-stretch-supine instead crosses ankle over opposite knee and pulls supporting thigh. |
+| strx_stacked_shins | Sittande stretch med staplade smalben | stretch-extra.js | — | no_exact_match | Searched stacked shins, double pigeon and fire-log pose; no matching individual page found. |
+| strx_bench_pigeon | Sätesstretch med böjt ben på bänk | stretch-extra.js | — | no_exact_match | Searched elevated pigeon and bench glute stretch; no matching individual page found for bent shin on bench with standing support leg. |
+| strx_side_lunge_hold | Sidoutfallsstretch med stöd | stretch-extra.js | — | no_exact_match | Searched supported side-lunge adductor stretch; returned quadruped dynamic adductor stretch and TRX lateral lunge, neither matches static supported floor stance. |
 | strx_adductor_rock | Adduktorgungning med ett ben åt sidan | stretch-extra.js | https://musclewiki.com/exercise/adductor-stretch-dynamic-unilateral-4-point-position | verified | MuscleWiki instructions: four-point position, one leg extended sideways with foot grounded, rock hips backward and forward while keeping neutral spine; exact match to DRIV cues. Checked 2026-11-04. |
-| strx_wide_seat_fold | Framåtfällning i bred sittställning | stretch-extra.js | — | pending | — |
+| strx_wide_seat_fold | Framåtfällning i bred sittställning | stretch-extra.js | — | no_exact_match | Searched seated wide-leg forward fold/straddle; result was standing wide-leg bend, not seated hip hinge. |
 | strx_wall_straddle | Bred benstretch mot vägg | stretch-extra.js | — | pending | — |
 | strx_supine_butterfly | Liggande fjäril med stöd | stretch-extra.js | — | pending | — |
 | strx_frog_rock | Dynamisk grodgungning | stretch-extra.js | — | pending | — |
