@@ -11,7 +11,7 @@ def meal(page, saved=False):
       if(saved) S.meals=Array.from({length:4},(_,i)=>({name:i<3?'Ramen, Ägg':'Annan måltid',slot:3,kcal:572,protein:35,items:[{name:'Ramen',kcal:495,protein:28},{name:'Ägg',kcal:77,protein:7,fat:6,fiber:0}]}));
       save();
     }''',saved)
-    go(page,'kost');page.click('[data-mealpage="3"]')
+    go(page,'kost');page.click('[data-addto="3"] >> nth=0')
 
 
 def test_saved_meals_can_all_be_removed_without_changing_food_log(page):

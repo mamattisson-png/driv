@@ -59,6 +59,7 @@ Senast uppdaterad: 2026-11-03. Status bygger på dokumenterade publiceringar och
 | 55 | Inställningar: en sida per sak med samma upplägg | Design | Hög | Klar |
 | 56 | MuscleWiki-länkar tillbaka, kontrollerade | Träning | Medel | Klar |
 | 57 | Kör igen startar ett nytt pass i stället för att öppna det avslutade | Bugg | Hög | Klar |
+| 58 | Alla tester gröna; måltidens innehåll, sparade måltider och kontokort tillbaka | Kvalitet | Hög | Klar |
 
 ## Detaljer och acceptanskriterier
 

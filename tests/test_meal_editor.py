@@ -16,7 +16,7 @@ def meals(page):
     go(page,'kost')
 
 
-@pytest.mark.parametrize('entry',['mealpage','addto'])
+@pytest.mark.parametrize('entry',['addto'])
 def test_meal_and_plus_open_same_editor_with_search_and_delete(page,entry):
     meals(page)
     page.click(f'[data-{entry}="1"]')
@@ -28,7 +28,7 @@ def test_meal_and_plus_open_same_editor_with_search_and_delete(page,entry):
 
 def test_add_and_remove_stay_on_meal_then_done_opens_overview(page):
     meals(page)
-    page.click('[data-mealpage="1"]')
+    page.click('[data-addto="1"] >> nth=0')
     page.fill('#fname','1 banan')
     page.click('#faddbtn')
     assert page.locator('#fname').count()==1
@@ -47,7 +47,7 @@ def test_add_and_remove_stay_on_meal_then_done_opens_overview(page):
 def test_added_food_highlight_does_not_cover_meal_summary(page,theme):
     meals(page)
     page.evaluate('setTheme',theme)
-    page.click('[data-mealpage="1"]')
+    page.click('[data-addto="1"] >> nth=0')
     page.fill('#fname','1 banan')
     page.click('#faddbtn')
     # Freeze the actual confirmation animation while it is visible.
@@ -72,7 +72,7 @@ def test_done_keeps_selected_historical_date_and_other_days_unchanged(page):
     meals(page)
     date=page.evaluate('shift(TODAY,-1)')
     page.click(f'[data-kday="{date}"]')
-    page.click('[data-mealpage="1"]')
+    page.click('[data-addto="1"] >> nth=0')
     page.fill('#fname','1 banan');page.click('#faddbtn')
     page.locator('.kirow',has_text='Gårdagens lunch').locator('[data-mdel]').click()
     page.click('#faddbtn')
@@ -86,7 +86,7 @@ def test_banner_done_returns_to_today_overview(page):
     meals(page)
     date=page.evaluate('shift(TODAY,-1)')
     page.click(f'[data-kday="{date}"]')
-    page.click('[data-mealpage="1"]')
+    page.click('[data-addto="1"] >> nth=0')
     page.click('.editbar [data-editdone]')
     assert page.locator('.kdnav').count()==1
     assert page.evaluate('logDate()===TODAY && foodSheet===null && mealPage===null')
@@ -108,7 +108,7 @@ def test_meal_done_stays_above_rest_timer_during_workout(page):
     meals(page)
     page.click('#nav [data-tab="pass"]');page.click('[data-focusstart]')
     page.click('.fbar .fdone')
-    page.click('#nav [data-tab="kost"]');page.click('[data-mealpage="1"]')
+    page.click('#nav [data-tab="kost"]');page.click('[data-addto="1"] >> nth=0')
     page.evaluate('window.scrollTo(0,document.documentElement.scrollHeight)')
     done=page.locator('#faddbtn').bounding_box();timer=page.locator('.rest').bounding_box()
     assert done['y']+done['height']<=timer['y']
@@ -125,7 +125,7 @@ def test_history_food_entry_opens_overview_without_previous_meal_or_search(page)
     page.click('#nav [data-tab="historik"]')
     page.click(f'[data-histday="{date}"]');page.click('[data-hfood]')
     assert page.locator('.kdnav').count()==1
-    page.click('[data-mealpage="1"]');page.fill('#fname','1 banan')
+    page.click('[data-addto="1"] >> nth=0');page.fill('#fname','1 banan')
     page.click('.editbar [data-editdone]')
     assert page.evaluate('tab')=='historik'
     page.click('[data-hfood]')

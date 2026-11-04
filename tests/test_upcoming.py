@@ -9,6 +9,9 @@ def open_upcoming(page):
     start(page)
     go(page, 'profil')
     page.click('[data-tab="kommande"]')
+    page.wait_for_function("upcomingItems")
+    # Fliken med genomförda har alltid innehåll, även när allt planerat är klart
+    page.click('[data-upcoming-tab="done"]')
 
 
 def test_upcoming_opens_own_page_without_account_and_returns_to_settings(page):
@@ -20,10 +23,11 @@ def test_upcoming_opens_own_page_without_account_and_returns_to_settings(page):
     assert page.evaluate('tab') == 'kommande'
     assert page.inner_text('h1') == 'Kommande funktioner'
     assert page.evaluate('scrollY') == 0
+    # Listan kommer från docs/kommande.md; de genomförda ligger under en egen flik
+    page.click('[data-upcoming-tab="done"]')
     panel = page.locator('.upcoming-page .upcoming-list')
-    assert 'Stretch guiden' in panel.inner_text()
-    assert 'Planerat' in panel.inner_text()
-    assert 'dailys' in panel.inner_text() and 'träningspass' in panel.inner_text()
+    assert 'Spara genomfört pass som namngiven passmall' in panel.inner_text()
+    assert 'Klar' in panel.inner_text()
     assert panel.locator('input, textarea, select, button').count() == 0
     page.click('.upcoming-page .backbtn')
     assert page.evaluate('tab') == 'profil'
@@ -39,6 +43,7 @@ def test_upcoming_is_shared_content_independent_of_training_plan(page):
     page.reload()
     go(page, 'profil')
     page.click('[data-tab="kommande"]')
+    page.click('[data-upcoming-tab="done"]')
     assert page.inner_text('.upcoming-page .upcoming-list') == before
 
 
@@ -57,8 +62,8 @@ def test_upcoming_fits_mobile_and_has_readable_contrast(page, theme, width):
 def test_long_upcoming_list_can_be_scrolled_above_bottom_navigation(page):
     open_upcoming(page)
     page.evaluate("""() => {
-        for (let i=0; i<20; i++) UPCOMING_FEATURES.push({title:'Kommande punkt '+i,status:'planned',description:'En längre beskrivning. '.repeat(20)});
-        render();
+        for (let i=0; i<20; i++) upcomingItems.push({id:900+i,title:'Kommande punkt '+i,category:'Test',priority:'Hög',status:'Planerat',description:'En längre beskrivning. '.repeat(20)});
+        upcomingTab = 'active'; render();
         window.scrollTo(0, document.documentElement.scrollHeight);
     }""")
     last = page.locator('.upcoming-list li').last.bounding_box()

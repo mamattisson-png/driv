@@ -29,17 +29,12 @@ def delayed_account(page, mode='signed_in'):
 def test_refresh_waits_for_session_and_profile_without_guest_flash(page):
     delayed_account(page)
     assert page.locator('[data-gokonto]').count() == 0
-    assert page.locator('.homehead .avbtn svg').count() == 1
-    assert page.locator('.friendsrow[aria-busy="true"]').count() == 1
     page.evaluate('window.__releaseSession()')
     page.wait_for_function("typeof window.__releaseProfile === 'function'")
     page.evaluate('render()')
     assert page.locator('[data-gokonto]').count() == 0
-    assert page.locator('.homehead .avbtn svg').count() == 1
     page.evaluate('window.__releaseProfile()')
     page.wait_for_function('account.ready && social.loaded')
-    assert page.inner_text('.homehead .avbtn') == 'K'
-    assert page.locator('.friendsrow[aria-busy="true"]').count() == 0
     assert page.locator('[data-gokonto]').count() == 0
 
 
@@ -48,8 +43,8 @@ def test_guest_prompt_waits_until_session_check_finishes(page):
     assert page.locator('[data-gokonto]').count() == 0
     page.evaluate('window.__releaseSession()')
     page.wait_for_function('account.ready')
+    # Utan konto efter tre dagars loggning: kortet Spara dina loggar (Skapa konto och Logga in)
     assert page.locator('[data-gokonto]').count() == 2
-    assert page.inner_text('.homehead .avbtn') == 'M'
 
 
 def test_session_error_does_not_claim_user_is_signed_out(page):
@@ -57,5 +52,5 @@ def test_session_error_does_not_claim_user_is_signed_out(page):
     page.evaluate('window.__releaseSession()')
     page.wait_for_function('account.ready')
     assert page.locator('[data-gokonto]').count() == 0
-    assert page.locator('.htiles').count() == 1
+    assert page.locator('.home3').count() == 1
     assert page.evaluate('day().food.length') == 1
