@@ -55,17 +55,17 @@
 | strx_child_side_reach | Barnets position med händer åt sidan | stretch-extra.js | — | no_exact_match | Searched child's pose with both hands walked laterally; standard child's pose is not the lateral-reach variation. |
 | strx_wall_lat | Enarms latsstretch mot vägg | stretch-extra.js | — | no_exact_match | Searched one-arm high wall lat hinge stretch; found bilateral wall lat stretch, not unilateral version. |
 | strx_puppy | Valpens position | stretch-extra.js | https://musclewiki.com/exercise/puppy-pose | verified | Puppy Pose: tabletop start, walk hands forward, lower chest, hips over knees and hold; exact DRIV instructions. |
-| strx_upper_back_hug | Sittande stretch mellan skulderbladen | stretch-extra.js | — | pending | — |
-| strx_triceps_bench | Tricepsstretch med armbågar på bänk | stretch-extra.js | — | pending | — |
-| strx_triceps_towel | Tricepsstretch med handduk bakom ryggen | stretch-extra.js | — | pending | — |
-| strx_triceps_supine | Liggande tricepsstretch över huvudet | stretch-extra.js | — | pending | — |
-| strx_biceps_wall | Bicepsstretch med rak arm mot vägg | stretch-extra.js | https://musclewiki.com/exercise/biceps-stretch-variation-one | pending | — |
-| strx_biceps_floor | Sittande bicepsstretch med händer i golvet | stretch-extra.js | — | pending | — |
-| strx_wrist_flexor | Handledsböjarstretch med rak arm | stretch-extra.js | — | pending | — |
-| strx_wrist_extensor | Handledssträckarstretch med rak arm | stretch-extra.js | — | pending | — |
-| strx_prayer | Handflator ihop framför bröstet | stretch-extra.js | — | pending | — |
-| strx_reverse_prayer_front | Handryggar ihop framför bröstet | stretch-extra.js | — | pending | — |
-| strx_wrist_rock | Handledsgungning på alla fyra | stretch-extra.js | — | pending | — |
+| strx_upper_back_hug | Sittande stretch mellan skulderbladen | stretch-extra.js | — | no_exact_match | Searched rhomboid/upper-back clasped-hands stretch; no individual page matching seated hands-clasped forward scapular protraction. |
+| strx_triceps_bench | Tricepsstretch med armbågar på bänk | stretch-extra.js | — | no_exact_match | Closest lat-and-shoulder-external-rotation-stretch-3-kneeling-dowel requires a dowel and supinated grip; DRIV uses no dowel and bent elbows. |
+| strx_triceps_towel | Tricepsstretch med handduk bakom ryggen | stretch-extra.js | — | no_exact_match | Searched behind-back towel-assisted triceps stretch; no matching individual exercise found. |
+| strx_triceps_supine | Liggande tricepsstretch över huvudet | stretch-extra.js | — | no_exact_match | Searched supine single-arm overhead triceps stretch; no matching individual exercise found. |
+| strx_biceps_wall | Bicepsstretch med rak arm mot vägg | stretch-extra.js | — | no_exact_match | Existing biceps-stretch-variation-one instructs leaning forward while DRIV instructs rotating torso away from hand; not exact. Do not retain this link. |
+| strx_biceps_floor | Sittande bicepsstretch med händer i golvet | stretch-extra.js | — | no_exact_match | Searched seated hands-behind-on-floor biceps stretch; seated-arm-stretch and biceps variation pages use different positions. |
+| strx_wrist_flexor | Handledsböjarstretch med rak arm | stretch-extra.js | — | no_exact_match | Closest wrist-flexor-stretch-seated matches wrist action but explicitly seated; DRIV standing. No exact standing variation found. |
+| strx_wrist_extensor | Handledssträckarstretch med rak arm | stretch-extra.js | — | no_exact_match | Closest wrist-extensor-stretch-seated matches wrist action but explicitly seated; DRIV standing. No exact standing variation found. |
+| strx_prayer | Handflator ihop framför bröstet | stretch-extra.js | — | no_exact_match | Prayer-stretch-1 is kneeling child's pose, not palms-together wrist stretch; no exact match found. |
+| strx_reverse_prayer_front | Handryggar ihop framför bröstet | stretch-extra.js | — | no_exact_match | Searched backs-of-hands-together wrist stretch in front of chest; no matching individual exercise found. |
+| strx_wrist_rock | Handledsgungning på alla fyra | stretch-extra.js | — | no_exact_match | Searched quadruped forward/back wrist rocks; no matching individual exercise found. |
 | strx_ninety_fold | Framåtfällning över främre benet i 90/90 | stretch-extra.js | — | pending | — |
 | strx_ninety_switch | Sittande 90/90-växlingar | stretch-extra.js | — | pending | — |
 | strx_seated_internal_rotation | Sittande inåtrotation av höften | stretch-extra.js | — | pending | — |
