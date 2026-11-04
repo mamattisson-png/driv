@@ -1111,6 +1111,9 @@
     overflow: hidden; overflow-wrap: anywhere; hyphens: auto; color: var(--text); font-weight: 500; }
   .fsteps .xs.done { opacity: .6; }
   .fsteps .xs.done .fn { background: var(--ok); color: var(--on-color); }
+  /* Påbörjad övning: ring runt numret som visar hur många set som är gjorda */
+  .fsteps .xs.started .fn { color: var(--text); background-color: var(--card-2); background-image: radial-gradient(closest-side, var(--card-2) 72%, transparent 74%), conic-gradient(var(--accent-strong) var(--p, 0%), var(--line-strong) 0); }
+  .fsteps .xs.on.started .fn { color: var(--on-accent, var(--on-color)); background-color: var(--accent-strong); background-image: radial-gradient(closest-side, var(--accent-strong) 72%, transparent 74%), conic-gradient(var(--accent-text) var(--p, 0%), var(--line-strong) 0); }
   .fsteps .xs.on { background: var(--accent-soft); border-color: var(--accent); color: var(--text); }
   .fsteps .xs.on .fn { background: var(--accent-strong); color: var(--on-accent); }
   .fsteps .xs.ss { border-color: var(--accent); border-style: dashed; }

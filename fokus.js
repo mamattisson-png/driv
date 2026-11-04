@@ -337,8 +337,11 @@ function stepRow(d, w) {
   const from = all ? 0 : Math.max(0, Math.min(focus.idx - 3, n - (MAX - 1))), to = all ? n : from + MAX - 1;
   const tile = k => { const x = d.ex[k], done = exDone(w, x), g = ssGroup(d, k);
     const ss = g ? ` ss ${k === g[0] ? "ss-first" : ""} ${k === g[1] ? "ss-last" : ""}` : "";
-    return `<button data-focusgo="${k}" class="xs ${k === focus.idx ? "on" : ""} ${done ? "done" : ""}${ss}" ${k === focus.idx ? 'aria-current="step"' : ""}
-      aria-label="${esc(EX[x.id].name)}${done ? ", klar" : ""}"><span class="fn">${done ? icon("check", 11) : k + 1}</span><span class="nm">${esc(EX[x.id].name)}</span></button>`; };
+    // Påbörjad övning: en ring runt numret som fylls med seten (ramen är redan upptagen av supersets)
+    const nOk = ((w && w.sets[x.id]) || []).filter(z => z && z.ok).length, started = !done && nOk > 0;
+    const ring = started ? ` style="--p:${Math.round(100 * Math.min(1, nOk / Math.max(1, +x.sets || 1)))}%"` : "";
+    return `<button data-focusgo="${k}" class="xs ${k === focus.idx ? "on" : ""} ${done ? "done" : ""} ${started ? "started" : ""}${ss}" ${k === focus.idx ? 'aria-current="step"' : ""}
+      aria-label="${esc(EX[x.id].name)}${done ? ", klar" : started ? `, påbörjad, ${nOk} av ${x.sets} set` : ""}"><span class="fn"${ring}>${done ? icon("check", 11) : k + 1}</span><span class="nm">${esc(EX[x.id].name)}</span></button>`; };
   const tiles = Array.from({ length: to - from }, (_, i) => tile(from + i)).join("");
   const more = n <= MAX ? "" : focus.allSteps ? `<button class="xs fmore" data-fstepsall>Färre</button>`
     : `<button class="xs fmore" data-fstepsall aria-label="Visa alla ${n} övningar">+${n - (to - from)}</button>`;

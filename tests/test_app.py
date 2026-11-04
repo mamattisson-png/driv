@@ -2640,3 +2640,19 @@ def test_vikt_paminnelse_foljer_veckodagen(page):
     assert hint(4) == "Väg dig fredag"
     assert hint(2) == "Väg dig idag"
     assert hint(0) == "Inte vägd den här veckan · väg dig idag"
+
+
+def test_paborjad_ovning_syns_i_raden_overst(page):
+    start(page)
+    go(page, "pass")
+    pick(page, page.evaluate("S.plan.days[0].id"))
+    page.click("[data-focusstart]")
+    page.evaluate("""() => { const d = S.plan.days[0], w = workoutFor(d);
+      w.sets[d.ex[0].id] = [{kg: 60, reps: 8, ok: true}, {kg: 60, reps: 8, ok: true}]; focus.idx = 2; save(); render(); }""")
+    first = page.locator('.fsteps [data-focusgo="0"]')
+    assert "started" in first.get_attribute("class") and "påbörjad, 2 av" in first.get_attribute("aria-label")
+    assert "50%" in first.locator(".fn").get_attribute("style")
+    # Inte påbörjade och klara övningar har ingen ring
+    assert page.locator('.fsteps [data-focusgo="1"].started').count() == 0
+    page.evaluate("const d = S.plan.days[0]; workoutFor(d).sets[d.ex[0].id] = Array.from({length: d.ex[0].sets}, () => ({kg: 60, reps: 8, ok: true})); render()")
+    assert page.locator('.fsteps [data-focusgo="0"].done:not(.started)').count() == 1
