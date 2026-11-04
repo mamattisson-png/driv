@@ -69,6 +69,7 @@ Senast uppdaterad: 2026-11-04. Status bygger på dokumenterade publiceringar och
 | 65 | Ta bort övning under pågående pass | Träning | Hög | Kommande |
 | 66 | Förbättra menyn Avsluta passet | Design | Medel | Kommande |
 | 67 | Anpassa hälsningen efter alla dagens mål | Hem | Medel | Kommande |
+| 68 | Flexibelt träningsschema för alla aktiviteter | Träning | Hög | Kommande |
 
 ## Detaljer och acceptanskriterier
 
@@ -153,6 +154,8 @@ Senast uppdaterad: 2026-11-04. Status bygger på dokumenterade publiceringar och
 66. **Förbättra menyn Avsluta passet:** Ge alternativen Pausa och fortsätt senare, Avbryt passet utan att spara och Fortsätt träna en konsekvent visuell hierarki, tydliga tryckytor, jämna avstånd och enhetliga knapphöjder. Pausa som primär handling, Fortsätt träna som sekundär och Avbryt som diskret destruktiv handling. Behåll befintligt beteende och säkerställ god läsbarhet i mörkt och ljust läge.
 
 67. **Anpassa hälsningen efter alla dagens mål:** Visa inte ”Allt klart” när kostmålet återstår, även om träningspass och Dailys är klara. Hälsningen ska skilja på genomförd träning, Dailys och uppnått kalorimål. Exempel när träning och Dailys är klara men kosten återstår: ”Bra jobbat idag!” med ”Träningen och Dailys är klara · Kosten återstår”. Sent på kvällen kan en vänlig sov gott-hälsning användas utan att påstå att allt är klart. ”Allt klart, sov gott” reserveras för dagar där samtliga relevanta mål är uppnådda. Bevara befintlig design och hantera dagar utan planerat pass.
+
+68. **Flexibelt träningsschema för alla aktiviteter:** Träningsschemat ska kunna användas utan gymövningar. Användaren väljer styrketräning, annan aktivitet eller en blandning per schemalagd dag, exempelvis yoga, promenad, löpning eller cykling. Varje aktivitet ska kunna planeras med namn, dag, varaktighet och relevanta mål, markeras som genomförd och visas i historik och veckans framsteg. Behåll nuvarande set/reps/vikt för gympass, men kräv inte dessa fält för andra aktiviteter. Anpassa Träna-vyn och hemskärmens dagens pass så att de fungerar även när inget gympass finns. Undvik parallella scheman och bevara befintlig data och funktionalitet. Visa designförslag före implementation.
 
 ## Arbetsregler
 
