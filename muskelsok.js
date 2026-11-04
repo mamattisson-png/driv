@@ -80,9 +80,12 @@ function muscleView() {
   const replacing = !browse && ctx.replace != null ? exList(ctx.target)[ctx.replace] : null;
   // Kondition passar i Dailys men inte i ett pass; stretch finns under sin egen flik
   const pool = Object.keys(EX).filter(id => (st ? EX[id].cat === "stretch" : EX[id].cat !== "stretch") && (ctx.kind !== "workout" || EX[id].cat !== "cardio"));
-  const list = pool.filter(id => (!replacing || id !== replacing.id) && (!q || norm(EX[id].name + " " + (EX[id].muscles || "") + " " + (PASS_WORDS[EX[id].cat] || "")).includes(q))
+  // Sökningen tål engelska, felstavning och förkortningar (sok.js); bäst träff först
+  const score = q ? Object.fromEntries(pool.map(id => [id, exSearchScore(id, msk.q)])) : null;
+  const list = pool.filter(id => (!replacing || id !== replacing.id) && (!q || score[id] > 0)
     && (q || !msk.sel || (st ? stretchMuscles(id).includes(msk.sel) : trainsMuscle(id, msk.sel)))
     && (st || cat === "alla" || EX[id].cat === cat) && (gear === "alla" || gearGroup(id) === gear));
+  if (q) list.sort((a, b) => score[b] - score[a]);
   const title = q ? "Sökresultat" : msk.sel ? MUSKEL_NAMN[msk.sel] : st ? "Alla stretchövningar" : cat !== "alla" ? `Alla ${areaLabel(cat).toLowerCase()}-övningar` : "Alla övningar";
   const heading = replacing ? `Byt ut ${esc(EX[replacing.id].name)}` : ctx.kind === "daily" ? "Lägg till daily" : ctx.kind === "workout" ? `Lägg till i ${esc(libTargetName(ctx.target))}` : "Övningar";
   const back = browse ? `<button class="backbtn" ${msk.back === "idag" ? 'data-tab="idag"' : "data-exlibclose"}>${icon("left", 18)}${msk.back === "idag" ? "Hem" : "Träna"}</button>`

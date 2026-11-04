@@ -1,4 +1,5 @@
 """Webbläsartester för Driv. Kör med: python -m pytest tests"""
+import pytest
 from conftest import finish_setup, go, open_app, start, to_step, pick
 
 KONTO = '.card:has(h2:text-is("Konto"))'
@@ -2668,3 +2669,13 @@ def test_kortare_vila_for_ett_ben_eller_en_arm(page):
     # Egna inställningar följer med: 120 s blir 75 s (avrundat till 15 s)
     page.evaluate("S.rest = { on: true, compound: 120, iso: 60 }")
     assert page.evaluate("restFor('utfall')") == 75
+
+
+@pytest.mark.parametrize("q,first", [("lg extension", "Bensparkar"), ("leg extension", "Bensparkar"), ("bench press", "Bänkpress"),
+                                     ("deadlift", "Marklyft"), ("lat pulldown", "Latsdrag"), ("kneboj", "Knäböj"), ("bankpres", "Bänkpress")])
+def test_sok_ovningar_pa_engelska_och_med_felstavning(page, q, first):
+    start(page)
+    page.click('#nav [data-tab="pass"]')
+    page.click("[data-exlib]")
+    page.fill("#mskq", q)
+    assert page.inner_text(".msk-row >> nth=0").startswith(first)
