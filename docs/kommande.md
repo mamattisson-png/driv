@@ -1,6 +1,6 @@
 # DRIV – Kommande förbättringar
 
-Senast uppdaterad: 2026-11-03. Status bygger på dokumenterade publiceringar och kontrollerad kod. Ej verifierade funktioner behåller pågående status.
+Senast uppdaterad: 2026-11-06. Status bygger på dokumenterade publiceringar och kontrollerad kod. Ej verifierade funktioner behåller pågående status.
 
 | Nr | Förbättring | Kategori | Prioritet | Status |
 |---|---|---|---|---|
@@ -67,6 +67,12 @@ Senast uppdaterad: 2026-11-03. Status bygger på dokumenterade publiceringar och
 | 63 | Träna: listan visar klara, påbörjade och superset-övningar | Träning | Medel | Klar |
 | 64 | Ändra från listan på Träna leder tillbaka till listan | Bugg | Medel | Klar |
 | 65 | Korrigera dagens avslutade pass direkt från Träna | Träning | Hög | Klar |
+| 66 | Stretch under vilan mellan set | Träning | Medel | Kommande |
+| 67 | Ta bort övning under pågående pass | Träning | Hög | Kommande |
+| 68 | Förbättra menyn Avsluta passet | Design | Medel | Kommande |
+| 69 | Anpassa hälsningen efter alla dagens mål | Hem | Medel | Kommande |
+| 70 | Flexibelt träningsschema för alla aktiviteter | Träning | Hög | Kommande |
+| 71 | Anpassningsbara Dailys med sparade rutiner och rotation | Dailys | Hög | Kommande |
 
 ## Detaljer och acceptanskriterier
 
@@ -143,6 +149,18 @@ Senast uppdaterad: 2026-11-03. Status bygger på dokumenterade publiceringar och
 
 55. **Nya Inställningar (Klar, publicerad 2026-11-03):** Varje rad öppnar en egen sida med tillbakaknapp, rubrik och en mening om vad den gör, i stället för att fällas ut. Brytare i stället för kryssrutor, Kalorimål visar målet stort, namn, inloggning och data på Konto och data, Träningsschema under Träning och en tillbakaknapp på Kommande funktioner.
 56. **MuscleWiki-länkar (Klar, publicerad 2026-11-03):** 524 av 533 övningar och stretchar länkar till MuscleWiki igen, på övningens sida, stretchens sida och i bladet inifrån passet. Adressformatet är kontrollerat mot MuscleWikis sökträffar; 189 går direkt till övningen och resten till en lista med liknande övningar. Ett test kontrollerar formatet.
+
+66. **Stretch under vilan mellan set:** Frivilliga, relevanta stretchförslag under vilotimern, med instruktioner och befintliga animationer. Timern fortsätter och passets set/loggar påverkas inte.
+
+67. **Ta bort övning under pågående pass:** Ta bort hela övningen och dess set endast från den aktuella sessionen. Övriga övningar påverkas inte. Visa Ångra i 5 sekunder. Behåll övningen i bibliotek och sparade passmallar.
+
+68. **Förbättra menyn Avsluta passet:** Ge alternativen Pausa och fortsätt senare, Avbryt passet utan att spara och Fortsätt träna en konsekvent visuell hierarki, tydliga tryckytor, jämna avstånd och enhetliga knapphöjder. Pausa som primär handling, Fortsätt träna som sekundär och Avbryt som diskret destruktiv handling. Behåll befintligt beteende och säkerställ god läsbarhet i mörkt och ljust läge.
+
+69. **Anpassa hälsningen efter alla dagens mål:** Visa inte ”Allt klart” när kostmålet återstår, även om träningspass och Dailys är klara. Hälsningen ska skilja på genomförd träning, Dailys och uppnått kalorimål. Exempel när träning och Dailys är klara men kosten återstår: ”Bra jobbat idag!” med ”Träningen och Dailys är klara · Kosten återstår”. Sent på kvällen kan en vänlig sov gott-hälsning användas utan att påstå att allt är klart. ”Allt klart, sov gott” reserveras för dagar där samtliga relevanta mål är uppnådda. Bevara befintlig design och hantera dagar utan planerat pass.
+
+70. **Flexibelt träningsschema för alla aktiviteter:** Träningsschemat ska kunna användas utan gymövningar. Användaren väljer styrketräning, annan aktivitet eller en blandning per schemalagd dag, exempelvis yoga, promenad, löpning eller cykling. Varje aktivitet ska kunna planeras med namn, dag, varaktighet och relevanta mål, markeras som genomförd och visas i historik och veckans framsteg. Behåll nuvarande set/reps/vikt för gympass, men kräv inte dessa fält för andra aktiviteter. Anpassa Träna-vyn och hemskärmens dagens pass så att de fungerar även när inget gympass finns. Undvik parallella scheman och bevara befintlig data och funktionalitet. Visa designförslag före implementation.
+
+71. **Anpassningsbara Dailys med sparade rutiner och rotation:** Låt användaren skapa, namnge, spara, redigera, kopiera och välja flera Dailys-rutiner med egna övningar, set, repetitioner och tider. Stöd tre lägen: fritt val av sparad rutin för dagen, automatisk växling varannan dag mellan två rutiner och automatisk rotation mellan exempelvis 3–4 rutiner. Tillåt fasta dagliga Dailys och kosttillskott som visas oberoende av vald rutin. Visa dagens aktiva rutin tydligt och låt användaren byta den utan att förlora redan registrerade genomföranden. Bevara befintlig Dailys-historik, avprickning och synk; utforma och testa innan implementation.
 
 ## Arbetsregler
 
