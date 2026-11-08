@@ -563,3 +563,52 @@ document.addEventListener("click", ev => {
   const b = ev.target.closest && ev.target.closest(".fmoresheet .fmrow");
   if (b) focusMore = false;
 }, true);
+
+// Flytta en övning till en ny plats i dagens pass. Supersets som berörs bryts, som med pilarna i Ändra ordning.
+function moveExTo(d, from, to) {
+  if (from === to || from < 0 || to < 0 || from >= d.ex.length || to >= d.ex.length) return;
+  const cur = d.ex[focus.idx];
+  for (const i of [from - 1, from]) if (d.ex[i]) d.ex[i].ss = false;
+  const [x] = d.ex.splice(from, 1);
+  d.ex.splice(to, 0, x);
+  for (const i of [to - 1, to]) if (d.ex[i]) d.ex[i].ss = false;
+  focus.idx = d.ex.indexOf(cur);
+}
+// Dra en övning i raden överst åt höger eller vänster för att flytta den. Ett tryck väljer övningen som vanligt.
+(() => {
+  let drag = null, justDragged = false;
+  const tileAt = (x, y) => { const el = document.elementFromPoint(x, y); return el && el.closest && el.closest(".fsteps [data-focusgo]"); };
+  const clearMarks = () => document.querySelectorAll(".fsteps .dropbefore, .fsteps .dropafter, .fsteps .dragging").forEach(e => e.classList.remove("dropbefore", "dropafter", "dragging"));
+  document.addEventListener("pointerdown", ev => {
+    justDragged = false;   // ett nytt tryck är aldrig klicket efter en dragning
+    const t = ev.target.closest && ev.target.closest(".fsteps [data-focusgo]");
+    if (!t || !focus) return;
+    drag = { el: t, from: +t.dataset.focusgo, x: ev.clientX, y: ev.clientY, on: false, to: null };
+  });
+  document.addEventListener("pointermove", ev => {
+    if (!drag) return;
+    const dx = ev.clientX - drag.x, dy = ev.clientY - drag.y;
+    if (!drag.on) { if (Math.abs(dx) < 10 || Math.abs(dx) < Math.abs(dy)) return; drag.on = true; drag.el.classList.add("dragging"); }
+    drag.el.style.transform = `translateX(${dx}px)`;
+    const over = tileAt(ev.clientX, ev.clientY);
+    document.querySelectorAll(".fsteps .dropbefore, .fsteps .dropafter").forEach(e => e.classList.remove("dropbefore", "dropafter"));
+    if (over && over !== drag.el) {
+      const k = +over.dataset.focusgo, r = over.getBoundingClientRect(), after = ev.clientX > r.left + r.width / 2;
+      over.classList.add(after ? "dropafter" : "dropbefore");
+      let to = after ? k + 1 : k; if (to > drag.from) to--;
+      drag.to = to;
+    } else drag.to = null;
+  });
+  const end = () => {
+    if (!drag) return;
+    const dd = drag; drag = null;
+    if (!dd.on) return;
+    dd.el.style.transform = ""; clearMarks(); justDragged = true; setTimeout(() => { justDragged = false; }, 50);
+    const d = focus && dayById(focus.dayId);
+    if (d && dd.to != null && dd.to !== dd.from) { moveExTo(d, dd.from, dd.to); save(); render(); }
+  };
+  document.addEventListener("pointerup", end);
+  document.addEventListener("pointercancel", end);
+  // Klicket efter en dragning ska inte också välja övningen
+  document.addEventListener("click", ev => { if (justDragged && ev.target.closest && ev.target.closest(".fsteps")) { ev.stopImmediatePropagation(); ev.preventDefault(); } }, true);
+})();

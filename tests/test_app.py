@@ -2774,3 +2774,24 @@ def test_under_setet_en_rad_och_resten_under_mer(page):
         assert t in sheet
     page.click(".fmoresheet [data-fmoreclose].iconbtn")
     assert page.locator(".fmoresheet").count() == 0
+
+
+def test_dra_ovning_i_raden_overst_for_att_flytta(page):
+    start(page)
+    go(page, "pass")
+    pick(page, page.evaluate("S.plan.days[0].id"))
+    page.click("[data-focusstart]")
+    ids = page.evaluate("S.plan.days[0].ex.map(e => e.id)")
+    a = page.locator('.fsteps [data-focusgo="0"]').bounding_box()
+    c = page.locator('.fsteps [data-focusgo="2"]').bounding_box()
+    page.mouse.move(a["x"] + a["width"] / 2, a["y"] + a["height"] / 2)
+    page.mouse.down()
+    page.mouse.move(a["x"] + a["width"] / 2 + 20, a["y"] + a["height"] / 2, steps=3)
+    page.mouse.move(c["x"] + c["width"] * 0.8, c["y"] + c["height"] / 2, steps=8)
+    page.mouse.up()
+    # Första övningen ligger nu efter den tredje, och fokus följer med den man stod på
+    assert page.evaluate("S.plan.days[0].ex.map(e => e.id)") == [ids[1], ids[2], ids[0]] + ids[3:]
+    assert page.evaluate("S.plan.days[0].ex[focus.idx].id") == ids[0]
+    # Ett vanligt tryck väljer fortfarande övningen
+    page.click('.fsteps [data-focusgo="1"]')
+    assert page.evaluate("focus.idx") == 1
