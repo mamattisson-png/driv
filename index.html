@@ -1170,6 +1170,11 @@
   .endsheet h2 { font: 800 22px "Unbounded", sans-serif; margin: 6px 0 4px; }
   .endbtns { gap: 8px; margin-top: 16px; }
   .endbtns .wide { margin: 0; }
+  /* Avsluta passet: samma höjd och avstånd; huvudvalet fyllt, Fortsätt träna med ram, Avbryt som diskret text längst ned */
+  .endbtns { gap: 10px; }
+  .endbtns .endbtn { min-height: 52px; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 16px; font-weight: 600; border-radius: 16px; }
+  .endbtns .endsecondary { background: none; border: 1px solid var(--line-strong); }
+  .endbtns .endcancel { align-self: center; margin-top: 6px; min-height: 44px; padding: 0 12px; background: none; border: 0; font-size: 14px; font-weight: 600; color: var(--bad-text); }
 
   /* Pass klart */
   .passdone { gap: 16px; }
@@ -1858,6 +1863,8 @@ button.h3-card.h3-head { background: var(--card); padding: 12px 14px; }
 .tp-ex li.done.ss .tp-n .sstag { color: var(--on-color); }
 .tp-ex li.done .grow { color: var(--muted); }
 .tp-fix { align-self: center; margin: 6px auto 0; display: flex; gap: 6px; }
+.fundo { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 12px; margin-bottom: 8px; border-radius: 12px; background: var(--card-2); font-size: 14px; }
+.fundo .linkbtn2 { flex: none; }
 .tp-ex li.started .tp-n { border-radius: 50%; color: var(--text); background-color: var(--card-2); background-image: radial-gradient(closest-side, var(--card-2) 70%, transparent 73%), conic-gradient(var(--accent-strong) var(--p, 0%), var(--line-strong) 0); }
 .tp-ex li.started .tp-sr b { color: var(--accent-text); }
 /* Superset: en linje till vänster håller ihop övningarna */

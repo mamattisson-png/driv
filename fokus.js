@@ -86,6 +86,35 @@ function applySetFx() {
   const r = fx.rest && document.querySelector(".focus .frest.on");
   if (r) r.classList.add("restpulse");
 }
+// Ta bort övningen man står på, bara från dagens pass. Setten tas bort med den; Ångra i 5 sekunder.
+// Passet får tillbaka övningen nästa dag eller om passet avbryts (restoreRemoved).
+let focusRemoved = null;
+function removeFocusEx() {
+  const d = dayById(focus.dayId), idx = focus.idx, entry = d && d.ex[idx];
+  if (!entry || d.ex.length < 2) return;
+  const w = workoutFor(d), prevSs = idx > 0 && !!d.ex[idx - 1].ss;
+  focusRemoved = { dayId: d.id, idx, entry: JSON.parse(JSON.stringify(entry)), prevSs, sets: w.sets[entry.id], warm: w.warm && w.warm[entry.id], at: Date.now() };
+  // Ett superset hålls ihop: övningen före länkas vidare som den borttagna var länkad
+  if (prevSs && !entry.ss) delete d.ex[idx - 1].ss;
+  d.ex.splice(idx, 1);
+  delete w.sets[entry.id]; if (w.warm) delete w.warm[entry.id];
+  if (w.added && w.added.includes(entry.id)) w.added = w.added.filter(x => x !== entry.id);   // tillagd idag: bara borta
+  else (w.removed = w.removed || []).push({ idx, entry: focusRemoved.entry, prevSs });
+  focus.idx = Math.min(idx, d.ex.length - 1); focus.sel = null;
+  clearTimeout(removeFocusEx.t);
+  removeFocusEx.t = setTimeout(() => { if (focusRemoved && Date.now() - focusRemoved.at >= 5000) { focusRemoved = null; render(); } }, 5100);
+}
+function undoFocusRemove() {
+  const r = focusRemoved, d = r && dayById(r.dayId);
+  if (!d || Date.now() - r.at > 5000) { focusRemoved = null; return; }
+  const w = workoutFor(d);
+  d.ex.splice(Math.min(r.idx, d.ex.length), 0, r.entry);
+  if (r.prevSs && r.idx > 0) d.ex[r.idx - 1].ss = true;
+  if (r.sets) w.sets[r.entry.id] = r.sets;
+  if (r.warm) (w.warm = w.warm || {})[r.entry.id] = r.warm;
+  if (w.removed) { w.removed = w.removed.filter(x => x.entry.id !== r.entry.id); if (!w.removed.length) delete w.removed; }
+  focus.idx = r.idx; focus.sel = null; focusRemoved = null;
+}
 // Bekräfta manuell inmatning separat från att avsluta setet.
 let editingSetInput = null;
 function clearSetEditing() {
@@ -292,6 +321,7 @@ function focusView() {
     <button class="chipbtn" data-setcount="1" data-ex="${ex.id}" aria-label="Ett set till">+ Set</button>
     ${nW < 5 && !stretch && !timed ? `<button class="chipbtn" data-warmadd="${ex.id}" aria-label="Ett uppvärmningsset till">+ Uppvärmning</button>` : ""}
     <button class="chipbtn" data-faddex aria-label="Lägg till en övning i passet">${icon("plus", 14)}Övning</button>
+    ${d.ex.length > 1 ? `<button class="chipbtn" data-fremove aria-label="Ta bort ${esc(EX[ex.id].name)} från dagens pass">${icon("minus", 14)}Ta bort övning</button>` : ""}
     ${!g && d.ex.length > 1 ? `<button class="chipbtn ${focus.ssPick ? "on" : ""}" data-sspick>${icon("plus", 14)}Superset</button>` : ""}
     ${d.ex.length > 1 ? `<button class="chipbtn" data-forder>Ordning</button>` : ""}
     ${S.daily.length ? `<button class="chipbtn" data-fdopen aria-label="Dailys, ${dDone} av ${S.daily.length} klara">Dailys ${dDone} av ${S.daily.length}</button>` : ""}</div>`;
@@ -309,7 +339,7 @@ function focusView() {
     ${currentRows ? `<ol class="fsets" aria-label="Set">${currentRows}</ol>` : ""}
     ${allDone ? `<div class="fall">${icon("check", 16)}Alla set klara</div>` : ""}
     ${ssPick}</div>
-    <div class="focus-controls">${tools}
+    <div class="focus-controls">${focusRemoved && Date.now() - focusRemoved.at < 5000 ? `<div class="fundo" role="status"><span>${esc(EX[focusRemoved.entry.id].name)} borttagen från dagens pass</span><button class="linkbtn2" data-fundo>Ångra</button></div>` : ""}${tools}
     <div class="fbar">${restBox ? `<div class="frestctl" role="group" aria-label="Vila"><button class="small" data-restadd="-15">−15</button>
       <button class="small" data-restadd="15">+15</button><button class="small" data-restskip>Klar</button></div>` : ""}
       <div class="fbar-row">${main}<button class="primary grow fconfirm" data-setconfirm aria-label="Bekräfta inmatning">OK</button>${restBox}</div></div></div>
@@ -325,10 +355,11 @@ function endSheet(d, w) {
   return `<div class="overlay" data-fendclose><div class="sheet endsheet" role="dialog" aria-label="Avsluta passet">
     <h2>Avsluta passet?</h2>
     <div class="muted">${logged ? `${done} av ${d.ex.length} övningar klara · ${sets} set` : "Inget set är loggat än."}</div>
-    <div class="col endbtns">${logged ? `<button class="primary wide bigbtn" data-finish="${d.id}" data-focusend>${w && w.done ? "Avsluta pass" : "Spara och avsluta"}</button>` : ""}
-      <button class="wide" data-focusexit>Pausa och fortsätt senare</button>
-      ${!w || !w.end ? `<button class="ghost wide dangertext" data-passcancel="${d.id}">Avbryt passet utan att spara</button>` : ''}
-      <button class="ghost wide" data-fendclose>Fortsätt träna</button></div></div></div>`;
+    <div class="col endbtns">
+      ${logged ? `<button class="primary wide endbtn" data-finish="${d.id}" data-focusend>${icon("check", 18)}${w && w.done ? "Avsluta pass" : "Spara och avsluta"}</button>` : ""}
+      <button class="${logged ? "" : "primary "}wide endbtn" data-focusexit>${icon("timer", 18)}Pausa och fortsätt senare</button>
+      <button class="wide endbtn endsecondary" data-fendclose>${icon("play", 18)}Fortsätt träna</button>
+      ${!w || !w.end ? `<button class="ghost endcancel dangertext" data-passcancel="${d.id}">Avbryt passet utan att spara</button>` : ""}</div></div></div>`;
 }
 // Övningarna som rutor överst: klara med bock, den aktuella markerad, superset sammanlänkade.
 // Upp till sex på en rad; fler delas på två rader. Med fler än åtta visas sju runt den aktuella och resten bakom "+N".
@@ -454,7 +485,7 @@ document.addEventListener("click", ev => {
       const same = target && (w ? !w.end && w._id === target.workoutId : target.workoutId === null);
       if (target && !editDate && target.date === TODAY && same) {
         if (w) {
-          restoreSwaps(dayById(target.dayId), w); dropAdded(dayById(target.dayId), w);
+          restoreSwaps(dayById(target.dayId), w); dropAdded(dayById(target.dayId), w); restoreRemoved(dayById(target.dayId), w);
           day(target.date).workouts = workoutsOn(target.date).filter(x => x !== w);
         }
         if (!focus || focus.dayId === target.dayId) { endFocus(); stopRest(); }
@@ -465,11 +496,13 @@ document.addEventListener("click", ev => {
     }
     render(); return;
   }
-  const t = ev.target.closest("[data-step],[data-focusgo],[data-focusexit],[data-focusend],[data-focusstart],[data-focusex],[data-fdopen],[data-fdclose],[data-fsel],[data-sspick],[data-sspair],[data-forder],[data-forderclose],[data-fmove],[data-fstepsall],[data-fswap],[data-faddex],[data-fend],[data-fendclose]");
+  const t = ev.target.closest("[data-step],[data-focusgo],[data-focusexit],[data-focusend],[data-focusstart],[data-focusex],[data-fdopen],[data-fdclose],[data-fsel],[data-sspick],[data-sspair],[data-forder],[data-forderclose],[data-fmove],[data-fstepsall],[data-fswap],[data-faddex],[data-fremove],[data-fundo],[data-fend],[data-fendclose]");
   if (!t || t.disabled) return;
   if (t.classList.contains("overlay") && ev.target !== t) return;   // klick inne i fönstret
   const ds = t.dataset;
   if (ds.fdopen !== undefined || ds.fdclose !== undefined) { focusDailies = ds.fdopen !== undefined; dailyEditing = false; render(); return; }
+  if (ds.fremove !== undefined) { removeFocusEx(); save(); render(); return; }
+  if (ds.fundo !== undefined) { undoFocusRemove(); save(); render(); return; }
   if (ds.faddex !== undefined) { openLibrary({ kind: "workout", target: focus.dayId, today: true }); render(); return; }
   if (ds.fswap !== undefined) { openLibrary({ kind: "workout", target: focus.dayId, replace: +ds.fswap, today: true }); render(); return; }
   if (ds.fend !== undefined || ds.fendclose !== undefined) { focusEnd = ds.fend !== undefined; render(); return; }

@@ -2312,6 +2312,8 @@ def test_halsningen_efter_tid_och_pass(page):
     assert g(1, started=True) == "Fortsätt där du var"
     assert g(9, done=True) == "Passet är gjort" and g(15, done=True) == "Bra jobbat idag"
     assert g(16, done=True, dailysOk=True) == "Allt klart för idag" and g(23, done=True, dailysOk=True) == "Allt klart, sov gott"
+    # Kosten återstår: aldrig "Allt klart", men gärna sov gott på kvällen
+    assert g(16, done=True, dailysOk=True, foodOk=False) == "Bra jobbat idag!" and g(23, done=True, dailysOk=True, foodOk=False) == "Bra jobbat, sov gott"
     assert g(14, passes=3) == "Veckans pass är klara"
     assert g(8, rest=True) == "God morgon" and g(14, rest=True) == "Ta det lugnt idag"
     # Hem visar hälsningen för klockan just nu
@@ -2718,3 +2720,36 @@ def test_korrigera_dagens_avslutade_pass_fran_trana(page):
     assert page.locator(f'button[data-finish="{d}"]').count() >= 1
     page.click(f'button[data-finish="{d}"] >> nth=0')
     assert page.evaluate(f"workoutOn(TODAY, '{d}').done") is True and page.evaluate("workoutsOn(TODAY).length") == 1
+
+
+def test_ta_bort_ovning_under_passet_med_angra(page):
+    start(page)
+    go(page, "pass")
+    pick(page, page.evaluate("S.plan.days[0].id"))
+    page.click("[data-focusstart]")
+    ids = page.evaluate("S.plan.days[0].ex.map(e => e.id)")
+    page.evaluate("focus.idx = 1; const w = workoutFor(S.plan.days[0]); w.sets[S.plan.days[0].ex[1].id] = [{kg: 20, reps: 10, ok: true}]; render()")
+    page.click("[data-fremove]")
+    assert page.evaluate("S.plan.days[0].ex.map(e => e.id)") == ids[:1] + ids[2:]
+    assert page.evaluate(f"!workoutFor(S.plan.days[0]).sets['{ids[1]}']") is True
+    assert "borttagen" in page.inner_text(".fundo")
+    # Ångra lägger tillbaka övningen och setten
+    page.click("[data-fundo]")
+    assert page.evaluate("S.plan.days[0].ex.map(e => e.id)") == ids and page.evaluate("focus.idx") == 1
+    assert page.evaluate(f"workoutFor(S.plan.days[0]).sets['{ids[1]}'].length") == 1
+    # Bara i dag: borttagen övning kommer tillbaka i passet nästa dag
+    page.click("[data-fremove]")
+    page.evaluate("""() => { const w = workoutFor(S.plan.days[0]); S.log['2020-01-01'] = { workouts: [Object.assign({}, w)], dailies: {}, food: [] };
+      delete w.removed; restoreOldSwaps(); }""")
+    assert page.evaluate("S.plan.days[0].ex.map(e => e.id)") == ids
+
+
+def test_hem_visar_vad_som_ar_klart_och_vad_som_aterstar(page):
+    start(page)
+    d = page.evaluate("S.plan.days[0].id")
+    page.evaluate(f"""() => {{ S.supplements = []; S.log[TODAY] = {{ workouts: [{{ dayId: '{d}', done: true, sets: {{}} }}], dailies: {{}}, food: [] }};
+      S.daily.forEach(e => S.log[TODAY].dailies[e.id] = true); save(); render(); }}""")
+    assert page.inner_text(".h3-sub").startswith("Träningen och Dailys är klara · Kosten återstår")
+    assert "Allt klart" not in page.inner_text(".h3-greet")
+    page.evaluate("logFood({ name: 'Middag', kcal: macros().kcal, protein: 100 }, 2); render()")
+    assert page.inner_text(".h3-sub").startswith("Alla dagens mål är klara") and "Allt klart" in page.inner_text(".h3-greet")

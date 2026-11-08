@@ -1186,10 +1186,17 @@ const VIEWS = {
     const foodOk = m.kcal > 0 && e.kcal >= m.kcal;
     const hr = new Date().getHours();
     const passes = weekSummary(weekStart(TODAY)).passes;
-    const greeting = homeGreeting(hr, { done, dailysOk, started, rest: !!t.rest, passes, goal: S.plan.count });
+    const greeting = homeGreeting(hr, { done, dailysOk, started, rest: !!t.rest, passes, goal: S.plan.count, foodOk });
     // Samma etiketter som på Träna: Nästa pass (flexibelt) eller Dagens pass (fasta dagar), Pågående och Genomfört
     const passLab = t.rest ? "Vilodag" : done ? "Genomfört idag" : started ? "Pågående pass" : passLabel(t);
-    const sub = t.rest ? "Vilodag idag" : done ? "Dagens pass är klart" : started ? `${esc(d.name)} är påbörjat` : `${esc(d.name)} står på schemat`;
+    // När passet är gjort: vad som är klart och vad som återstår av dagens mål
+    const doneSub = () => {
+      const ok = [["Träningen", true], ["Dailys", dailysOk || !total], ["kosten", foodOk]];
+      const klar = ok.filter(x => x[1]).map(x => x[0]), kvar = ok.filter(x => !x[1]).map(x => x[0]);
+      const list = a => cap(a.length > 1 ? `${a.slice(0, -1).join(", ")} och ${a[a.length - 1]}` : a[0]);
+      return !kvar.length ? "Alla dagens mål är klara" : `${list(klar)} ${klar.length > 1 ? "är klara" : "är klar"} · ${list(kvar)} återstår`;
+    };
+    const sub = t.rest ? "Vilodag idag" : done ? doneSub() : started ? `${esc(d.name)} är påbörjat` : `${esc(d.name)} står på schemat`;
     const date = cap(new Date().toLocaleDateString("sv-SE", { weekday: "long", day: "numeric", month: "long" }));
     // Siffran blir en grön bock när steget är klart; orange bara för det man trycker på
     const no = (n, ok) => `<span class="h3-no ${ok ? "ok" : ""}" aria-hidden="true">${ok ? icon("check", 14) : n}</span>`;
@@ -1360,10 +1367,13 @@ const fnvHash = str => { let h = 0x811c9dc5; for (const b of new TextEncoder().e
 const isDevAccount = () => account.step === "in" && fnvHash(String(account.email || "").trim().toLowerCase()) === "b24ae646";
 // Namnet i profilen: det vännerna ser, annars det sparade, annars början på e-posten
 // Hälsningen på Hem: dagens läge först (klart, påbörjat, vilodag, veckan klar), annars tiden på dygnet
-function homeGreeting(hr, { done, dailysOk, started, rest, passes, goal }) {
+// "Allt klart" bara när träningen (eller vilodagen), Dailys och kalorimålet är klara.
+// foodOk saknas i äldre anrop och räknas då som klart.
+function homeGreeting(hr, { done, dailysOk, started, rest, passes, goal, foodOk = true }) {
   const night = hr < 5, eve = hr >= 21;
-  if (done && dailysOk) return eve || night ? "Allt klart, sov gott" : "Allt klart för idag";
-  if (done) return hr < 12 ? "Passet är gjort" : "Bra jobbat idag";
+  if (done && dailysOk && foodOk) return eve || night ? "Allt klart, sov gott" : "Allt klart för idag";
+  if (done && dailysOk) return eve || night ? "Bra jobbat, sov gott" : "Bra jobbat idag!";
+  if (done) return eve || night ? "Bra jobbat, sov gott" : hr < 12 ? "Passet är gjort" : "Bra jobbat idag";
   if (started) return "Fortsätt där du var";
   if (night) return "God natt";
   if (goal && passes >= goal) return "Veckans pass är klara";
@@ -1975,11 +1985,23 @@ function dropAdded(d, w) {
   if (d) d.ex = d.ex.filter(x => !w.added.includes(x.id));
   delete w.added;
 }
+// Övningar som tagits bort bara för ett pass läggs tillbaka på sin plats i passet
+function restoreRemoved(d, w) {
+  if (!w.removed) return;
+  if (d) for (const r of w.removed.slice().reverse()) {
+    if (d.ex.some(x => x.id === r.entry.id)) continue;
+    const i = Math.min(r.idx, d.ex.length);
+    d.ex.splice(i, 0, Object.assign({}, r.entry));
+    if (i > 0 && r.prevSs) d.ex[i - 1].ss = true;
+  }
+  delete w.removed;
+}
 // Byten från tidigare dagar som aldrig sparades läggs också tillbaka
 function restoreOldSwaps() {
   for (const [date, L] of Object.entries(S.log || {})) if (date < TODAY) for (const w of L.workouts || []) {
     if (w.swap) restoreSwaps(dayById(w.dayId), w);
     if (w.added) dropAdded(dayById(w.dayId), w);
+    if (w.removed) restoreRemoved(dayById(w.dayId), w);
   }
 }
 function syncDone(d) {
