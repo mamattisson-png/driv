@@ -15,6 +15,7 @@ function startFocus(dayId) {
   let w = workoutOn(logDate(), d.id);
   // Kör igen: ett pass som redan är avslutat idag öppnas inte igen, utan ett nytt startas. Det gamla ligger kvar i loggen.
   if (w && w.done && w.end && !editDate) { day().workouts.push(w = { dayId: d.id, sets: {}, done: false }); save(); }
+  if (d.ex.length >= 3 && !S.dragLearned) S.dragHints = (S.dragHints || 0) + 1;   // tipset om att dra visas de första gångerna
   focus = { dayId, idx: Math.max(0, d.ex.findIndex(x => !exDone(w, x))), start: (w && w.start) || Date.now() };
   chosenDay = dayId;
   keepAwake(true);
@@ -390,7 +391,9 @@ function stepRow(d, w) {
   const more = n <= MAX ? "" : focus.allSteps ? `<button class="xs fmore" data-fstepsall>Färre</button>`
     : `<button class="xs fmore" data-fstepsall aria-label="Visa alla ${n} övningar">+${n - (to - from)}</button>`;
   const count = to - from + (more ? 1 : 0), cols = count <= 6 ? count : Math.ceil(count / 2);
-  return `<div class="fsteps" role="group" aria-label="Övningar i passet" style="grid-template-columns:repeat(${cols},minmax(0,1fr))">${tiles}${more}</div>`;
+  // Diskret tips de första gångerna, tills man har dragit en gång
+  const hint = n >= 3 && !S.dragLearned && (S.dragHints || 0) <= 5 ? `<div class="fhint">Dra för att ändra ordning</div>` : "";
+  return `<div class="fsteps" role="group" aria-label="Övningar i passet" style="grid-template-columns:repeat(${cols},minmax(0,1fr))">${tiles}${more}</div>${hint}`;
 }
 // Passets ordning: pilar flyttar en övning ett steg upp eller ned
 function orderSheet(d, w) {
@@ -626,6 +629,7 @@ function moveExTo(d, from, to) {
       const t = dd.slots[dd.to], s = dd.slots[dd.from];
       dd.el.style.transition = "transform .14s ease-out";
       dd.el.style.transform = `translate(${t.left - s.left}px, ${t.top - s.top}px)`;
+      S.dragLearned = true;
       setTimeout(() => { reset(); moveExTo(d, from, to); save(); render(); }, 150);
     } else reset();
   };

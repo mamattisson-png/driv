@@ -2798,3 +2798,19 @@ def test_dra_ovning_i_raden_overst_for_att_flytta(page):
     # Ett vanligt tryck väljer fortfarande övningen
     page.click('.fsteps [data-focusgo="1"]')
     assert page.evaluate("focus.idx") == 1
+
+
+def test_tips_om_att_dra_forsvinner_efter_forsta_dragningen(page):
+    start(page)
+    go(page, "pass")
+    pick(page, page.evaluate("S.plan.days[0].id"))
+    page.click("[data-focusstart]")
+    assert "Dra för att ändra ordning" in page.inner_text(".fhint")
+    a = page.locator('.fsteps [data-focusgo="0"]').bounding_box()
+    c = page.locator('.fsteps [data-focusgo="1"]').bounding_box()
+    page.mouse.move(a["x"] + a["width"] / 2, a["y"] + a["height"] / 2)
+    page.mouse.down()
+    page.mouse.move(c["x"] + c["width"] * 0.7, c["y"] + c["height"] / 2, steps=8)
+    page.mouse.up()
+    page.wait_for_timeout(300)
+    assert page.evaluate("S.dragLearned") is True and page.locator(".fhint").count() == 0
