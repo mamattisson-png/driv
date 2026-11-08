@@ -74,6 +74,7 @@ Senast uppdaterad: 2026-11-06. Status bygger på dokumenterade publiceringar och
 | 70 | Flexibelt träningsschema för alla aktiviteter | Träning | Hög | Kommande |
 | 71 | Anpassningsbara Dailys med sparade rutiner och rotation | Dailys | Hög | Kommande |
 | 72 | Profiler med statistik och profilbild | Vänner | Medel | Kommande |
+| 73 | Fokusläget: en rad under setet med Mer, och dra övningar för att flytta dem | Träning | Hög | Klar |
 
 ## Detaljer och acceptanskriterier
 
