@@ -75,6 +75,7 @@ Senast uppdaterad: 2026-11-06. Status bygger på dokumenterade publiceringar och
 | 71 | Anpassningsbara Dailys med sparade rutiner och rotation | Dailys | Hög | Kommande |
 | 72 | Profiler med statistik och profilbild | Vänner | Medel | Kommande |
 | 73 | Fokusläget: en rad under setet med Mer, och dra övningar för att flytta dem | Träning | Hög | Klar |
+| 74 | Dra övningar som i andra appar (de andra gör plats) och diskret tips | Träning | Medel | Klar |
 
 ## Detaljer och acceptanskriterier
 
