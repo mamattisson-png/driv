@@ -68,9 +68,9 @@ Senast uppdaterad: 2026-11-06. Status bygger på dokumenterade publiceringar och
 | 64 | Ändra från listan på Träna leder tillbaka till listan | Bugg | Medel | Klar |
 | 65 | Korrigera dagens avslutade pass direkt från Träna | Träning | Hög | Klar |
 | 66 | Stretch under vilan mellan set | Träning | Medel | Kommande |
-| 67 | Ta bort övning under pågående pass | Träning | Hög | Kommande |
-| 68 | Förbättra menyn Avsluta passet | Design | Medel | Kommande |
-| 69 | Anpassa hälsningen efter alla dagens mål | Hem | Medel | Kommande |
+| 67 | Ta bort övning under pågående pass | Träning | Hög | Klar |
+| 68 | Förbättra menyn Avsluta passet | Design | Medel | Klar |
+| 69 | Anpassa hälsningen efter alla dagens mål | Hem | Medel | Klar |
 | 70 | Flexibelt träningsschema för alla aktiviteter | Träning | Hög | Kommande |
 | 71 | Anpassningsbara Dailys med sparade rutiner och rotation | Dailys | Hög | Kommande |
 | 72 | Profiler med statistik och profilbild | Vänner | Medel | Kommande |
