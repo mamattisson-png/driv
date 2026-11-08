@@ -448,8 +448,58 @@ function frontJoints(p) {
 
   // Stilla bilder blir alltid likadana för en övning, så de byggs bara en gång
   const cache = new Map();
+  // ---------- Rätt håll på kroppen ----------
+  // Figuren ritas alltid som om den tittar åt höger: framsidan (bröst, knäskålar, tår) räknas fram ur det.
+  // En pose som egentligen tittar åt vänster (t.ex. ligger på rygg med huvudet åt höger) skulle då ritas
+  // som om den låg på mage, med knän och armbågar som böjer åt fel håll. Sådana övningar speglas, och en
+  // enskild led som ändå böjer fel vänds. Knät böjer så att hälen går bakåt, armbågen så att handen går framåt.
+  const BEND_T = .3;   // en led räknas som tydligt böjd över ungefär 17 grader
+  const bendOf = (a, b, c) => { const u = sub(b, a), v = sub(c, b); return (u[0] * v[1] - u[1] * v[0]) / ((Math.hypot(u[0], u[1]) * Math.hypot(v[0], v[1])) || 1); };
+  // Positivt = böjer rätt för en figur som tittar åt höger
+  function limbBends(p) {
+    const J = sideJoints(p);
+    return { kb: bendOf(...J.leg.slice(0, 3)), kb2: bendOf(...J.leg2.slice(0, 3)), eb: -bendOf(...J.arm), eb2: -bendOf(...J.arm2) };
+  }
+  const mirrorPt = q => [100 - q[0], q[1]];
+  function mirrorPose(p) {
+    const o = Object.assign({}, p);
+    for (const k of ["h", "s", "a", "a2", "f", "f2"]) if (p[k]) o[k] = mirrorPt(p[k]);
+    if (typeof p.t === "number") o.t = -p.t;
+    const kb = p.kb ?? -1, eb = p.eb ?? 1;
+    o.kb = -kb; o.eb = -eb; o.kb2 = -(p.kb2 ?? kb); o.eb2 = -(p.eb2 ?? eb);
+    return o;
+  }
+  function mirrorEx(ex) {
+    const o = Object.assign({}, ex, { A: mirrorPose(ex.A) });
+    if (ex.B) o.B = mirrorPose(ex.B);
+    if (ex.cable) o.cable = mirrorPt(ex.cable);
+    if (ex.plate) o.plate = [-ex.plate[0], ex.plate[1]];
+    if (ex.scene) o.scene = ex.scene.map(([kind, ...v]) => kind === "rect" ? [kind, 100 - v[0] - v[2], v[1], v[2], v[3]] : [kind, 100 - v[0], v[1], 100 - v[2], v[3]]);
+    return o;
+  }
+  // Knän som tydligt böjer bakåt vänds alltid (ett knä kan inte det); armbågar bara när hela figuren speglats
+  function fixLimbs(p, arms) {
+    const b = limbBends(p), o = Object.assign({}, p);
+    const kb = p.kb ?? -1, eb = p.eb ?? 1, kb2 = p.kb2 ?? kb, eb2 = p.eb2 ?? eb;
+    o.kb = b.kb < -BEND_T ? -kb : kb; o.kb2 = b.kb2 < -BEND_T ? -kb2 : kb2;
+    o.eb = arms && b.eb < -BEND_T ? -eb : eb; o.eb2 = arms && b.eb2 < -BEND_T ? -eb2 : eb2;
+    return o;
+  }
+  const facedCache = new Map();
+  function faced(ex) {
+    if (ex.view === "front" || globalThis.FIG_RAW) return ex;
+    if (facedCache.has(ex)) return facedCache.get(ex);
+    // Böjer det närmre knät tydligt bakåt i alla lägen där det är böjt, tittar figuren egentligen åt vänster
+    const knees = [ex.A, ex.B].filter(Boolean).map(p => limbBends(p).kb).filter(v => Math.abs(v) > BEND_T);
+    const mirror = knees.length > 0 && knees.every(v => v < 0);
+    let out = mirror ? mirrorEx(ex) : ex;
+    out = Object.assign({}, out, { A: fixLimbs(out.A, mirror) });
+    if (ex.B) out.B = fixLimbs(out.B, mirror);
+    facedCache.set(ex, out);
+    return out;
+  }
   function figure(id, cls = "", animate = false) {
-    const ex = EX[id];
+    const ex = EX[id] && EX[id].A ? faced(EX[id]) : EX[id];
     if (!ex || !ex.A) return "";
     const still = !ex.B || REDUCED || !animate;
     const key = id + "|" + cls;
