@@ -77,6 +77,7 @@ Senast uppdaterad: 2026-11-06. Status bygger på dokumenterade publiceringar och
 | 73 | Fokusläget: en rad under setet med Mer, och dra övningar för att flytta dem | Träning | Hög | Klar |
 | 74 | Dra övningar som i andra appar (de andra gör plats) och diskret tips | Träning | Medel | Klar |
 | 75 | Övningsbiblioteket: passtyperna följer det valda schemat | Träning | Medel | Klar |
+| 76 | Träna går att nå under ett pågående pass, med en rad som tar en tillbaka | Träning | Hög | Klar |
 
 ## Detaljer och acceptanskriterier
 
