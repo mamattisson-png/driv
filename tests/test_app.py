@@ -508,7 +508,7 @@ def test_dailys_under_passet(page):
     go(page, "pass")
     pick(page, page.evaluate("S.plan.days[0].id"))
     page.click("[data-focusstart]")
-    assert "Dailys 0 av 2" in page.inner_text("[data-fdopen]")
+    assert "Dailys 0/2" in page.inner_text("[data-fdopen]")
     page.click("[data-fdopen]")
     assert page.locator(".overlay [data-dedit]").count() == 0
     page.click('.overlay [data-dcheck="plankan"]')
@@ -516,7 +516,7 @@ def test_dailys_under_passet(page):
     assert page.locator(".overlay").count() == 1   # fönstret står kvar tills man stänger
     page.click(".overlay button.wide[data-fdclose]")
     assert page.locator(".overlay").count() == 0 and page.locator(".focus").count() == 1
-    assert "Dailys 1 av 2" in page.inner_text("[data-fdopen]")
+    assert "Dailys 1/2" in page.inner_text("[data-fdopen]")
 
 
 def test_vikten_foljer_med_och_orimliga_tal_begransas(page):
@@ -1541,6 +1541,7 @@ def test_valj_ovning_till_superset_och_se_passet(page):
     assert names[0] in page.inner_text(".fsteps .on")
     # Superset med en valfri övning: den flyttas till direkt efter
     third = page.evaluate("S.plan.days[0].ex[2].id")
+    page.click("[data-fmore]")  # under Mer
     page.click("[data-sspick]")
     page.click('[data-sspair="2"]')
     assert page.evaluate("S.plan.days[0].ex[1].id") == third and page.evaluate("S.plan.days[0].ex[0].ss") is True
@@ -1557,6 +1558,7 @@ def test_alla_ovningar_syns_och_ordningen_kan_andras(page):
     # Alla övningar ryms i bredd utan att raden rullar
     assert page.evaluate("(r => r.scrollWidth <= r.clientWidth)(document.querySelector('.fsteps'))") is True
     ids = page.evaluate("S.plan.days[0].ex.map(x => x.id)")
+    page.click("[data-fmore]")  # under Mer
     page.click("[data-forder]")
     page.click('[data-fmove="0"][data-dir="1"]')
     assert page.evaluate("S.plan.days[0].ex.map(x => x.id)")[:2] == [ids[1], ids[0]]
@@ -2365,6 +2367,7 @@ def test_uppvarmning_under_passet(page):
     ex = page.evaluate("S.plan.days[0].ex[0].id")
     # Ett arbetsset är redan gjort; uppvärmningen läggs före och blir det man står på
     page.click(f'[data-ok="{ex}"][data-i="0"]:not([data-w])')
+    page.click("[data-fmore]")  # under Mer
     page.click(f'[data-warmadd="{ex}"]')
     assert page.evaluate("S.plan.days[0].ex[0].warm") == 1
     assert page.locator(".fset.warm.active").count() == 1
@@ -2500,6 +2503,7 @@ def test_lagg_till_ovning_under_passet(page):
     pick(page, page.evaluate("S.plan.days[0].id"))
     page.click("[data-focusstart]")
     n = page.evaluate("S.plan.days[0].ex.length")
+    page.click("[data-fmore]")  # under Mer
     page.click("[data-faddex]")
     assert "Lägg till i" in page.inner_text(".msk h1")
     assert page.locator('[data-libtoday="true"].on').count() == 1
@@ -2515,6 +2519,7 @@ def test_lagg_till_ovning_under_passet(page):
     assert page.evaluate("S.plan.days[0].ex.length") == n
     # Även framåt: övningen stannar
     page.evaluate("render()")
+    page.click("[data-fmore]")  # under Mer
     page.click("[data-faddex]")
     page.click('[data-libtoday="false"]')
     page.click('.msk-row [data-libpick] >> nth=0')
@@ -2729,6 +2734,7 @@ def test_ta_bort_ovning_under_passet_med_angra(page):
     page.click("[data-focusstart]")
     ids = page.evaluate("S.plan.days[0].ex.map(e => e.id)")
     page.evaluate("focus.idx = 1; const w = workoutFor(S.plan.days[0]); w.sets[S.plan.days[0].ex[1].id] = [{kg: 20, reps: 10, ok: true}]; render()")
+    page.click("[data-fmore]")  # under Mer
     page.click("[data-fremove]")
     assert page.evaluate("S.plan.days[0].ex.map(e => e.id)") == ids[:1] + ids[2:]
     assert page.evaluate(f"!workoutFor(S.plan.days[0]).sets['{ids[1]}']") is True
@@ -2738,6 +2744,7 @@ def test_ta_bort_ovning_under_passet_med_angra(page):
     assert page.evaluate("S.plan.days[0].ex.map(e => e.id)") == ids and page.evaluate("focus.idx") == 1
     assert page.evaluate(f"workoutFor(S.plan.days[0]).sets['{ids[1]}'].length") == 1
     # Bara i dag: borttagen övning kommer tillbaka i passet nästa dag
+    page.click("[data-fmore]")  # under Mer
     page.click("[data-fremove]")
     page.evaluate("""() => { const w = workoutFor(S.plan.days[0]); S.log['2020-01-01'] = { workouts: [Object.assign({}, w)], dailies: {}, food: [] };
       delete w.removed; restoreOldSwaps(); }""")
@@ -2753,3 +2760,17 @@ def test_hem_visar_vad_som_ar_klart_och_vad_som_aterstar(page):
     assert "Allt klart" not in page.inner_text(".h3-greet")
     page.evaluate("logFood({ name: 'Middag', kcal: macros().kcal, protein: 100 }, 2); render()")
     assert page.inner_text(".h3-sub").startswith("Alla dagens mål är klara") and "Allt klart" in page.inner_text(".h3-greet")
+
+
+def test_under_setet_en_rad_och_resten_under_mer(page):
+    start(page)
+    go(page, "pass")
+    pick(page, page.evaluate("S.plan.days[0].id"))
+    page.click("[data-focusstart]")
+    assert page.locator(".ftools .chipbtn").count() == 4
+    page.click("[data-fmore]")
+    sheet = page.inner_text(".fmoresheet")
+    for t in ["Uppvärmningsset", "Byt övning", "Kör som superset", "Ta bort övning", "Lägg till övning", "Ändra ordning"]:
+        assert t in sheet
+    page.click(".fmoresheet [data-fmoreclose].iconbtn")
+    assert page.locator(".fmoresheet").count() == 0

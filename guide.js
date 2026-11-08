@@ -14,7 +14,7 @@ const TOUR = [
   { tab: "historik", sel: '#nav [data-tab="historik"]', title: "Historik", text: "Alla dagar du tränat och ätit, och hur du utvecklas över tid." },
   { tab: "pass", prep: () => { startEdit(dayById(day0())); editing = true; chosenDay = day0(); passOpen = true; exSheet = 0; },
     sel: '.exset:has([data-exstep="warm"])', title: "Uppvärmning", text: "Öppna en övning när du ändrar passet och välj hur många lättare set du vill värma upp med. De räknas inte in i dina rekord." },
-  { tab: "pass", prep: () => startFocus(day0()), sel: "[data-sspick]", title: "Supersets", text: "Under passet: tryck på + Superset och välj en övning att köra växelvis med, utan vila emellan." },
+  { tab: "pass", prep: () => startFocus(day0()), sel: "[data-fmore]", title: "Fler val under passet", text: "Under Mer: kör som superset, lägg till uppvärmning, byt, lägg till eller ta bort övningar och ändra ordning." },
   { tab: "pass", prep: () => startFocus(day0()), sel: "[data-fdopen]", title: "Dailys under passet", text: "Hinner du inte med dailys separat? Öppna dem här och bocka av mellan seten." },
   { tab: "idag", sel: "[data-tourstart]", title: "Klart!", text: "Guiden startar du igen med den här knappen, eller under Inställningar." },
 ];
