@@ -1592,7 +1592,7 @@ def test_valj_ovning_efter_kroppsdel_och_utrustning(page):
     page.click('[data-openpick]')
     # Biblioteket öppnas för passet, med passets typ förvald
     assert "Lägg till i" in page.inner_text(".msk h1")
-    assert page.eval_on_selector("[data-mskcat]", "e => e.value") == "push"
+    assert page.eval_on_selector("[data-mskcat]", "e => e.value") == "t:push"
     shown = lambda: page.evaluate("[...document.querySelectorAll('.msk-row [data-info]')].map(b => b.dataset.info)")
     cats = lambda: {page.evaluate(f"EX['{i}'].cat") for i in shown()}
     assert shown() and cats() == {"push"}
@@ -1607,7 +1607,7 @@ def test_valj_ovning_efter_kroppsdel_och_utrustning(page):
     assert "pull" in cats()
     # Passtyp och utrustning filtrerar tillsammans
     page.fill("#mskq", "")
-    page.select_option("[data-mskcat]", "push")
+    page.select_option("[data-mskcat]", "t:push")
     page.select_option("[data-mskgear]", "db")
     assert shown() and all(page.evaluate(f"EX['{i}'].cat === 'push' && gearGroup('{i}') === 'db'") for i in shown())
     # Instruktionen öppnas från listan och har en väg tillbaka
@@ -2814,3 +2814,17 @@ def test_tips_om_att_dra_forsvinner_efter_forsta_dragningen(page):
     page.mouse.up()
     page.wait_for_timeout(300)
     assert page.evaluate("S.dragLearned") is True and page.locator(".fhint").count() == 0
+
+
+def test_passtyper_i_biblioteket_foljer_schemat(page):
+    start(page)
+    page.evaluate("S.plan = { program: 'overunder', count: 2, mode: 'flex', weekdays: [0, 3], days: makeDays('overunder', 2) }; save(); render()")
+    go(page, "pass")
+    page.click("[data-exlib]")
+    opts = page.evaluate("[...document.querySelectorAll('[data-mskcat] option')].map(o => o.textContent)")
+    assert opts == ["Alla passtyper", "Överkropp", "Underkropp"]
+    page.select_option("[data-mskcat]", "t:upper")
+    cats = page.evaluate("[...new Set([...document.querySelectorAll('.msk-row [data-mskdetail]')].map(b => EX[b.dataset.mskdetail].cat))]")
+    assert set(cats) <= {"push", "pull"} and cats
+    page.click('[data-mus=""]')   # Visa alla muskler: rubriken visar passtypen
+    assert "Övningar för överkropp" in page.inner_text(".sg-head")
