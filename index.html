@@ -1869,11 +1869,11 @@ button.h3-card.h3-head { background: var(--card); padding: 12px 14px; }
 .fmoresheet .h3-list { margin: 0; }
 .fmoresheet .fmrow { width: 100%; text-align: left; }
 .ftools .chipbtn { display: inline-flex; align-items: center; gap: 4px; }
-/* Dra övningar i raden överst: vågrät dragning flyttar, lodrät rullar sidan */
+/* Dra övningar i raden överst: rutan lyfts och de andra glider undan och gör plats */
 .fsteps .xs { touch-action: pan-y; }
-.fsteps .xs.dragging { position: relative; z-index: 2; opacity: .9; pointer-events: none; box-shadow: 0 6px 18px rgba(0,0,0,.35); transition: none; }
-.fsteps .xs.dropbefore { box-shadow: inset 3px 0 0 var(--accent); }
-.fsteps .xs.dropafter { box-shadow: inset -3px 0 0 var(--accent); }
+.fsteps .xs.making-room { transition: transform .18s cubic-bezier(.2, .8, .2, 1); }
+.fsteps .xs.dragging { position: relative; z-index: 3; box-shadow: 0 10px 24px rgba(0,0,0,.45); border-color: var(--accent); transition: none; cursor: grabbing; }
+@media (prefers-reduced-motion: reduce) { .fsteps .xs.making-room { transition: none; } }
 .tp-ex li.started .tp-n { border-radius: 50%; color: var(--text); background-color: var(--card-2); background-image: radial-gradient(closest-side, var(--card-2) 70%, transparent 73%), conic-gradient(var(--accent-strong) var(--p, 0%), var(--line-strong) 0); }
 .tp-ex li.started .tp-sr b { color: var(--accent-text); }
 /* Superset: en linje till vänster håller ihop övningarna */

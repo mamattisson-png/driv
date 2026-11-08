@@ -2787,8 +2787,11 @@ def test_dra_ovning_i_raden_overst_for_att_flytta(page):
     page.mouse.move(a["x"] + a["width"] / 2, a["y"] + a["height"] / 2)
     page.mouse.down()
     page.mouse.move(a["x"] + a["width"] / 2 + 20, a["y"] + a["height"] / 2, steps=3)
-    page.mouse.move(c["x"] + c["width"] * 0.8, c["y"] + c["height"] / 2, steps=8)
+    page.mouse.move(c["x"] + c["width"] * 0.6, c["y"] + c["height"] / 2, steps=8)
+    # Under dragningen glider de andra undan och gör plats
+    assert page.evaluate("getComputedStyle(document.querySelector('.fsteps [data-focusgo=\"1\"]')).transform") != "none"
     page.mouse.up()
+    page.wait_for_timeout(300)
     # Första övningen ligger nu efter den tredje, och fokus följer med den man stod på
     assert page.evaluate("S.plan.days[0].ex.map(e => e.id)") == [ids[1], ids[2], ids[0]] + ids[3:]
     assert page.evaluate("S.plan.days[0].ex[focus.idx].id") == ids[0]

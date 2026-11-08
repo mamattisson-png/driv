@@ -575,37 +575,59 @@ function moveExTo(d, from, to) {
   focus.idx = d.ex.indexOf(cur);
 }
 // Dra en övning i raden överst åt höger eller vänster för att flytta den. Ett tryck väljer övningen som vanligt.
+// Som i andra appar: rutan lyfts, de andra glider undan och gör plats, och den hamnar där luckan är när man släpper.
 (() => {
   let drag = null, justDragged = false;
-  const tileAt = (x, y) => { const el = document.elementFromPoint(x, y); return el && el.closest && el.closest(".fsteps [data-focusgo]"); };
-  const clearMarks = () => document.querySelectorAll(".fsteps .dropbefore, .fsteps .dropafter, .fsteps .dragging").forEach(e => e.classList.remove("dropbefore", "dropafter", "dragging"));
+  const tiles = () => [...document.querySelectorAll(".fsteps [data-focusgo]")];
+  const reset = () => tiles().forEach(t => { t.style.transform = ""; t.style.transition = ""; t.classList.remove("dragging", "making-room"); });
   document.addEventListener("pointerdown", ev => {
     justDragged = false;   // ett nytt tryck är aldrig klicket efter en dragning
     const t = ev.target.closest && ev.target.closest(".fsteps [data-focusgo]");
     if (!t || !focus) return;
-    drag = { el: t, from: +t.dataset.focusgo, x: ev.clientX, y: ev.clientY, on: false, to: null };
+    const all = tiles();
+    // Platserna som de ser ut innan något flyttas: mitten på varje ruta
+    const slots = all.map(el => { const r = el.getBoundingClientRect(); return { el, x: r.left + r.width / 2, y: r.top + r.height / 2, left: r.left, top: r.top }; });
+    drag = { el: t, from: all.indexOf(t), idx: +t.dataset.focusgo, slots, x: ev.clientX, y: ev.clientY, on: false, to: all.indexOf(t), id: ev.pointerId };
   });
   document.addEventListener("pointermove", ev => {
-    if (!drag) return;
+    if (!drag || ev.pointerId !== drag.id) return;
     const dx = ev.clientX - drag.x, dy = ev.clientY - drag.y;
-    if (!drag.on) { if (Math.abs(dx) < 10 || Math.abs(dx) < Math.abs(dy)) return; drag.on = true; drag.el.classList.add("dragging"); }
-    drag.el.style.transform = `translateX(${dx}px)`;
-    const over = tileAt(ev.clientX, ev.clientY);
-    document.querySelectorAll(".fsteps .dropbefore, .fsteps .dropafter").forEach(e => e.classList.remove("dropbefore", "dropafter"));
-    if (over && over !== drag.el) {
-      const k = +over.dataset.focusgo, r = over.getBoundingClientRect(), after = ev.clientX > r.left + r.width / 2;
-      over.classList.add(after ? "dropafter" : "dropbefore");
-      let to = after ? k + 1 : k; if (to > drag.from) to--;
-      drag.to = to;
-    } else drag.to = null;
+    if (!drag.on) {
+      if (Math.abs(dx) < 8 || Math.abs(dx) < Math.abs(dy)) return;
+      drag.on = true; drag.el.classList.add("dragging");
+      try { drag.el.setPointerCapture(ev.pointerId); } catch (e) { /* stöds inte */ }
+      drag.slots.forEach(s => { if (s.el !== drag.el) s.el.classList.add("making-room"); });
+    }
+    ev.preventDefault();
+    drag.el.style.transform = `translate(${dx}px, ${dy * 0.25}px) scale(1.06)`;
+    // Närmaste plats till fingret (fungerar även när rutorna ligger på två rader)
+    const px = drag.slots[drag.from].x + dx, py = drag.slots[drag.from].y + dy;
+    let to = 0, best = Infinity;
+    drag.slots.forEach((s, k) => { const dd = (s.x - px) ** 2 + ((s.y - py) * 2) ** 2; if (dd < best) { best = dd; to = k; } });
+    drag.to = to;
+    // De andra glider till grannplatsen och lämnar en lucka där rutan hamnar
+    drag.slots.forEach((s, k) => {
+      if (k === drag.from) return;
+      let target = k;
+      if (drag.from < to && k > drag.from && k <= to) target = k - 1;
+      else if (drag.from > to && k >= to && k < drag.from) target = k + 1;
+      const t = drag.slots[target];
+      s.el.style.transform = target === k ? "" : `translate(${t.left - s.left}px, ${t.top - s.top}px)`;
+    });
   });
-  const end = () => {
-    if (!drag) return;
+  const end = ev => {
+    if (!drag || (ev && ev.pointerId !== drag.id)) return;
     const dd = drag; drag = null;
     if (!dd.on) return;
-    dd.el.style.transform = ""; clearMarks(); justDragged = true; setTimeout(() => { justDragged = false; }, 50);
-    const d = focus && dayById(focus.dayId);
-    if (d && dd.to != null && dd.to !== dd.from) { moveExTo(d, dd.from, dd.to); save(); render(); }
+    justDragged = true; setTimeout(() => { justDragged = false; }, 400);
+    const d = focus && dayById(focus.dayId), from = dd.idx, to = from + (dd.to - dd.from);
+    if (d && dd.to !== dd.from) {
+      // Rutan glider in i luckan och sedan ritas raden om i den nya ordningen
+      const t = dd.slots[dd.to], s = dd.slots[dd.from];
+      dd.el.style.transition = "transform .14s ease-out";
+      dd.el.style.transform = `translate(${t.left - s.left}px, ${t.top - s.top}px)`;
+      setTimeout(() => { reset(); moveExTo(d, from, to); save(); render(); }, 150);
+    } else reset();
   };
   document.addEventListener("pointerup", end);
   document.addEventListener("pointercancel", end);
