@@ -2828,3 +2828,24 @@ def test_passtyper_i_biblioteket_foljer_schemat(page):
     assert set(cats) <= {"push", "pull"} and cats
     page.click('[data-mus=""]')   # Visa alla muskler: rubriken visar passtypen
     assert "Övningar för överkropp" in page.inner_text(".sg-head")
+
+
+def test_trana_under_pagaende_pass_och_tillbaka(page):
+    start(page)
+    go(page, "pass")
+    pick(page, page.evaluate("S.plan.days[0].id"))
+    page.click("[data-focusstart]")
+    assert page.locator(".focus").count() == 1 and page.locator("#nav .navdot").count() == 1
+    # Träna under passet: översikten, med raden som tar en tillbaka
+    page.click('#nav [data-tab="pass"]')
+    assert page.locator(".focus").count() == 0 and page.locator(".tpass").count() == 1
+    assert "pågår" in page.inner_text(".focusbar") and page.evaluate("!!focus") is True
+    page.click(".focusbar")
+    assert page.locator(".focus").count() == 1
+    # Raden finns på de andra flikarna (Hem har kortet Fortsätt), och Träna tar en tillbaka till passet
+    page.click('#nav [data-tab="kost"]')
+    assert page.locator(".focusbar").count() == 1
+    page.click('#nav [data-tab="idag"]')
+    assert page.locator(".focusbar").count() == 0
+    page.click('#nav [data-tab="pass"]')
+    assert page.locator(".focus").count() == 1

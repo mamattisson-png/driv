@@ -1872,6 +1872,17 @@ button.h3-card.h3-head { background: var(--card); padding: 12px 14px; }
 /* Dra övningar i raden överst: rutan lyfts och de andra glider undan och gör plats */
 .fsteps .xs { touch-action: pan-y; }
 .fhint { margin: 6px 0 -4px; text-align: center; font-size: 12px; color: var(--muted); }
+/* Pågående pass i bakgrunden: en rad överst som tar en tillbaka, och en prick på fliken Träna */
+.focusbar { display: flex; align-items: center; gap: 10px; width: 100%; margin: 0 0 14px; padding: 12px 14px; border-radius: 16px; border: 1px solid var(--accent); background: var(--accent-soft); color: var(--text); text-align: left; font-size: 14px; }
+.focusbar b { font-weight: 700; }
+.gear ~ .focusbar { width: calc(100% - 60px); }   /* plats åt kugghjulet uppe till höger */
+.focusbar .ftimer { font-variant-numeric: tabular-nums; }
+.focusbar .fbgo { display: inline-flex; align-items: center; gap: 2px; color: var(--accent-text); font-weight: 700; flex: none; }
+.focusbar .fbdot, #nav .navdot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent-strong); flex: none; animation: fbpulse 1.6s ease-in-out infinite; }
+#nav button { position: relative; }
+#nav .navdot { position: absolute; top: 8px; right: calc(50% - 18px); }
+@keyframes fbpulse { 50% { opacity: .35; } }
+@media (prefers-reduced-motion: reduce) { .focusbar .fbdot, #nav .navdot { animation: none; } }
 .fsteps .xs.making-room { transition: transform .18s cubic-bezier(.2, .8, .2, 1); }
 .fsteps .xs.dragging { position: relative; z-index: 3; box-shadow: 0 10px 24px rgba(0,0,0,.45); border-color: var(--accent); transition: none; cursor: grabbing; }
 @media (prefers-reduced-motion: reduce) { .fsteps .xs.making-room { transition: none; } }

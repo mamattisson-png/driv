@@ -638,3 +638,22 @@ function moveExTo(d, from, to) {
   // Klicket efter en dragning ska inte också välja övningen
   document.addEventListener("click", ev => { if (justDragged && ev.target.closest && ev.target.closest(".fsteps")) { ev.stopImmediatePropagation(); ev.preventDefault(); } }, true);
 })();
+
+// Raden "Push pågår · 12:34 · Fortsätt" på Hem och Träna medan passet pågår i bakgrunden, som en minispelare
+function focusBar() {
+  // Hem har redan kortet Fortsätt; raden behövs där man annars inte hittar tillbaka
+  if (!focus || editDate || passDone || libCtx || !(["dailys", "kost", "historik"].includes(tab) || (tab === "pass" && focus.suspended && !editing))) return "";
+  const d = dayById(focus.dayId);
+  if (!d) return "";
+  const start = focus.start || Date.now();
+  return `<button class="focusbar" data-focusresume aria-label="Fortsätt ${esc(d.name)}"><span class="fbdot" aria-hidden="true"></span>
+    <span class="grow"><b>${esc(d.name)} pågår</b> · <span class="ftimer" data-start="${start}">${clockText(Date.now() - start)}</span></span>
+    <span class="fbgo">Fortsätt${icon("right", 16)}</span></button>`;
+}
+document.addEventListener("click", ev => {
+  const b = ev.target.closest && ev.target.closest("[data-focusresume]");
+  if (!b || !focus) return;
+  ev.stopImmediatePropagation();
+  tab = "pass"; focus.suspended = false; passOpen = false; chosenDay = null; editing = false; trSheet = null;
+  window.scrollTo(0, 0); render();
+}, true);

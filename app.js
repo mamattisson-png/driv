@@ -944,14 +944,14 @@ function render() {
   document.body.classList.toggle("onboard", tab === "upplagg" && !S.setupDone);
   document.body.classList.toggle("infocus", inFocus);
   nav.innerHTML = TABS.map(([id, ic, lbl]) =>
-    `<button data-tab="${id}" class="${tab === id || (tab === "recept" && id === "kost") ? "on" : ""}" ${tab === id ? 'aria-current="page"' : ""}>${icon(ic, 22)}${lbl}</button>`).join("");
+    `<button data-tab="${id}" class="${tab === id || (tab === "recept" && id === "kost") ? "on" : ""} ${id === "pass" && focus && !editDate ? "live" : ""}" ${tab === id ? 'aria-current="page"' : ""}>${icon(ic, 22)}${lbl}${id === "pass" && focus && !editDate ? `<i class="navdot" aria-label="Pass pågår"></i>` : ""}</button>`).join("");
   const banner = editDate && (tab === "kost" || (tab === "pass" && focus && !editing))
     ? `<div class="editbar">Du ändrar <b>${dateLabel(editDate)}</b><button class="small" data-editdone>Klar</button></div>` : "";
   // Samma inställningsknapp på alla huvudvyer. Hem har knappen i sin egen header.
   // Kugghjulet ligger på samma plats överallt; under ett pass har fokusvyn egna knappar där
-  const gear = tab === "idag" || tab === "profil" || tab === "upplagg" || passDone || (focus && tab === "pass" && !libCtx) ? "" : `<button class="gear" data-tab="profil" aria-label="Inställningar">${GEAR_SVG}</button>`;
+  const gear = tab === "idag" || tab === "profil" || tab === "upplagg" || passDone || inFocus ? "" : `<button class="gear" data-tab="profil" aria-label="Inställningar">${GEAR_SVG}</button>`;
   document.getElementById("app").innerHTML = passDone ? passDoneView()
-    : gear + banner + (libCtx ? muscleView() : VIEWS[tab]()) + (modal ? renderModal() : "") + (actSheet ? actSheetView() : "") + (sgAdd && EX[sgAdd] ? stretchAddSheet(sgAdd) : "") + tourView();
+    : gear + banner + focusBar() + (libCtx ? muscleView() : VIEWS[tab]()) + (modal ? renderModal() : "") + (actSheet ? actSheetView() : "") + (sgAdd && EX[sgAdd] ? stretchAddSheet(sgAdd) : "") + tourView();
   if (tab === "recept" && typeof filterRecipes === "function") filterRecipes();
   const focusScroll = document.querySelector(".focus-scroll");
   if (focusScroll && focus) focusScroll.scrollTop = focus.scrollTop || 0;
@@ -2069,7 +2069,8 @@ document.addEventListener("click", ev => {
     if (ds.tab === "vanner" && tab !== "vanner") vannerBack = tab;
     if (ds.tab === "vagning" && tab !== "vagning") vikBack = tab;
     passDone = null;
-    if (ds.tab === "pass" && focus) focus.suspended = false;
+    // Under passet: Träna visar översikten (passet fortsätter i bakgrunden); från en annan flik tar Träna dig tillbaka till passet
+    if (ds.tab === "pass" && focus) focus.suspended = prevTab === "pass" && !focus.suspended && !editing && !libCtx && !editDate;
     tab = ds.tab; editing = false; dailyEditing = false; draft = null; editDate = null; histDay = null;
     chosenDay = null; passOpen = false; exLib = null; kostDay = false; mealPage = null; foodSheet = null; foodItem = null; recipeOpen = null; recipeEdit = null;
     editSnap = null; exSheet = null; ordna = false; trSheet = null;
