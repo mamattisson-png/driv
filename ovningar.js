@@ -1229,7 +1229,8 @@ const MW = {
   sidoplanka_kna: "exercises/obliques/bodyweight", enbens_tahavning: "exercise/calf-raises",
   sidliggande_benlyft: "exercises/glutes/bodyweight", hamstring_walkout: "exercises/hamstrings/bodyweight",
 };
-const mwUrl = id => MW[id] ? `https://musclewiki.com/${MW[id]}` : null;
+// Bara länkar direkt till övningen: listor med liknande övningar visas inte, eftersom de inte leder till rätt övning
+const mwUrl = id => MW[id] && MW[id].startsWith("exercise/") ? `https://musclewiki.com/${MW[id]}` : null;
 // MuscleWikis egna adresser ändras och kan inte kontrolleras härifrån, så länken söker efter övningen
 // på MuscleWiki i stället. Det engelska namnet tas från adressen när det finns, annars det svenska.
 const mwSearch = id => {
