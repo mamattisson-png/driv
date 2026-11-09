@@ -79,6 +79,7 @@ Senast uppdaterad: 2026-11-06. Status bygger på dokumenterade publiceringar och
 | 75 | Övningsbiblioteket: passtyperna följer det valda schemat | Träning | Medel | Klar |
 | 76 | Träna går att nå under ett pågående pass, med en rad som tar en tillbaka | Träning | Hög | Klar |
 | 77 | Övningsgubbar: rätt håll på kroppen och knän som böjer rätt | Träning | Hög | Klar |
+| 78 | MuscleWiki: bara kontrollerade länkar direkt till rätt övning (304 av 533) | Träning | Hög | Klar |
 
 ## Detaljer och acceptanskriterier
 
