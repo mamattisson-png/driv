@@ -6,11 +6,11 @@ from conftest import start,go, pick
 def test_biblioteket_laddas_med_flera_hundra_nya_ovningar(page):
     start(page)
     result=page.evaluate('''() => ({total:Object.keys(EX).length,strength:EXTRA_STRENGTH_IDS.length,
-      stretch:EXTRA_STRETCH_IDS.length,missing:Object.keys(EX).filter(id=>!figure(id).includes('<svg')||
-        (EX[id].cat!=='cardio'&&!mwUrl(id)))})''')
+      stretch:EXTRA_STRETCH_IDS.length,missing:Object.keys(EX).filter(id=>!figure(id).includes('<svg')),
+      badLinks:Object.keys(EX).map(mwUrl).filter(u=>u&&!u.includes('/exercise/'))})''')
     assert result['total']>=500
     assert result['strength']>=200 and result['stretch']>=80
-    assert result['missing']==[]
+    assert result['missing']==[] and result['badLinks']==[]
 
 
 def test_ny_stretch_kan_laggas_till_som_daily_och_bevaras(page):

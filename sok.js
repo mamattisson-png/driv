@@ -65,7 +65,9 @@ function exSearchText(id) {
   if (!exSearchCache) exSearchCache = {};
   if (exSearchCache[id]) return exSearchCache[id];
   const e = EX[id], sv = exNorm(`${e.name} ${e.muscles || ""} ${typeof PASS_WORDS !== "undefined" ? PASS_WORDS[e.cat] || "" : ""}`);
-  const mw = typeof MW !== "undefined" && MW[id] && MW[id].startsWith("exercise/") ? MW[id].slice(9).replace(/-/g, " ") : "";
+  // MuscleWikis engelska namn: den kontrollerade länken i första hand
+  const slug = typeof MW_LANK !== "undefined" && MW_LANK[id] ? MW_LANK[id] : typeof MW !== "undefined" && MW[id] && MW[id].startsWith("exercise/") ? MW[id].slice(9) : "";
+  const mw = slug.replace(/-/g, " ");
   // Korta delord bara i början av ett ord ("vad" i vadpress, inte i "kvadrat")
   const en = EN_WORDS.filter(([k]) => k.length < 5 ? (" " + sv).includes(" " + k) : sv.includes(k)).map(([, v]) => v).join(" ");
   return (exSearchCache[id] = ` ${sv} ${exNorm(mw)} ${en} `.replace(/\s+/g, " "));

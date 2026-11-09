@@ -2849,3 +2849,13 @@ def test_trana_under_pagaende_pass_och_tillbaka(page):
     assert page.locator(".focusbar").count() == 0
     page.click('#nav [data-tab="pass"]')
     assert page.locator(".focus").count() == 1
+
+
+def test_musclewiki_lankar_ar_kontrollerade_och_direkt_till_ovningen(page):
+    start(page)
+    # Bänkpress har en kontrollerad länk direkt till övningen
+    assert page.evaluate("mwUrl('bankpress')").startswith("https://musclewiki.com/exercise/")
+    # Inga länkar till listor med liknande övningar, och ingen länk där ingen kontrollerad finns
+    urls = page.evaluate("Object.keys(EX).map(mwUrl).filter(Boolean)")
+    assert urls and all("/exercise/" in u and "/exercises/" not in u for u in urls)
+    assert page.evaluate("Object.keys(EX).filter(id => !MW_LANK[id]).every(id => mwUrl(id) === null)") is True

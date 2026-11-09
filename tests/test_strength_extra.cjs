@@ -48,7 +48,8 @@ run(`(() => {
     check(!e.duration && !e.timed,'no hidden time flags');
     check(!/\\bs(?:\\/|$)/.test(e.reps) || !e.B,'timed holds have static illustration');
     check(typeof MW[id]==='string' && /^(exercise\\/[a-z0-9-]+|exercises\\/[a-z0-9-]+\\/[a-z0-9-]+)$/.test(MW[id]),'source link');
-    check(mwUrl(id).startsWith('https://musclewiki.com/'),'wiki coverage');
+    // Länken visas bara när den är kontrollerad (mw-lankar.js), och går då direkt till övningen
+    check(mwUrl(id)===null || mwUrl(id).startsWith('https://musclewiki.com/exercise/'),'wiki link');
     for(const animate of [false,true]) {
       const svg=figure(id,'',animate);
       check(svg.includes('<svg') && !/NaN|Infinity|undefined/.test(svg),'finite SVG');

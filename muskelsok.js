@@ -151,7 +151,7 @@ function stretchPage(id) {
       <div><h2>Så här gör du</h2><span class="muted small">${st ? `Det ska dra${most.length ? ` i ${MUSKEL_NAMN[most[0]].toLowerCase()}` : ""}, inte göra ont.` : esc(e.muscles || "")}</span></div></div>
       <ol class="msk-steps">${(e.cues || []).map(c => `<li>${esc(c)}</li>`).join("")}</ol>
       ${g && !st ? `<div class="gearbox"><b>${GEAR[g][0]}</b><div>${GEAR[g][1]}</div></div>` : ""}
-      ${mwUrl(id) ? `<a class="mwlink" href="${mwUrl(id)}" target="_blank" rel="noopener">${MW[id].startsWith("exercises/") ? "Liknande övningar på MuscleWiki" : "Mer om övningen på MuscleWiki"} <span aria-hidden="true">↗</span></a>` : ""}</section>
+      ${mwUrl(id) ? `<a class="mwlink" href="${mwUrl(id)}" target="_blank" rel="noopener">Mer om övningen på MuscleWiki <span aria-hidden="true">↗</span></a>` : ""}</section>
     <div class="pagefoot row">${st ? `<button class="grow ghost" data-sgadd="${id}">${icon("plus", 16)}Lägg till</button>
       <button class="primary grow bigbtn" data-dclockstart="${id}">${icon("timer", 18)}Starta${secs ? ` · ${secs} s` : ""}</button>`
       : `<button class="primary grow bigbtn" data-sgadd="${id}">${icon("plus", 18)}Lägg till i Dailys eller ett pass</button>`}</div></div>`;
