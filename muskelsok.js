@@ -79,7 +79,7 @@ function openLibrary(ctx) {
   mskDetail = null;
   window.scrollTo(0, 0);
 }
-const libTargetName = t => t === "daily" ? "Dailys" : t.startsWith("draft:") ? draft.days[+t.slice(6)].name : dayById(t).name;
+const libTargetName = t => t === "daily" ? "Dailys" : String(t).startsWith("rut:") ? (routineById(t.slice(4)) || { name: "Dailys" }).name : t.startsWith("draft:") ? draft.days[+t.slice(6)].name : dayById(t).name;
 
 function muscleView() {
   if (mskDetail && EX[mskDetail]) return stretchPage(mskDetail);

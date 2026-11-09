@@ -38,7 +38,7 @@ function calendar() {
       <h2 style="margin:0">${MONTHS[mo - 1].replace(/^./, c => c.toUpperCase())} ${y}</h2>
       <button class="roundbtn ghost" data-hmonth="1" ${atNow ? "disabled" : ""} aria-label="Nästa månad">${icon("right", 20)}</button></div>
     <div class="cal">${WD.map(w => `<b aria-hidden="true">${w[0]}</b>`).join("")}${cells}</div>
-    <div class="legend muted small"><span><i class="lg-pass"></i>Pass</span>${S.daily.length ? `<span><i class="lg-daily"></i>Alla dailys</span>` : ""}<span><i class="lg-today"></i>Idag</span></div></section>`;
+    <div class="legend muted small"><span><i class="lg-pass"></i>Pass</span>${hasDailies() ? `<span><i class="lg-daily"></i>Alla dailys</span>` : ""}<span><i class="lg-today"></i>Idag</span></div></section>`;
 }
 
 // Ett set som "65 × 8", "10 reps +10 kg" eller "45 s"
@@ -91,7 +91,7 @@ function daySheet() {
   if (histSub === "vikt") return `<div class="overlay" data-hclose><div class="sheet hsheet">${head(true)}<h3 class="sheet-sub">Vikt</h3>
     <div class="row"><input id="wkg" type="number" inputmode="decimal" step="0.1" placeholder="kg" aria-label="Vikt i kg" value="${weights()[d] ?? ""}"><button class="primary" data-wsave data-wdate="${d}">Spara</button></div></div></div>`;
   const ws = workoutsOn(d);   // även påbörjade pass utan set, så att de går att fortsätta i efterhand
-  const n = S.daily.length, done = S.daily.filter(x => dailyDone(d, x.id)).length;
+  const dl = dailyList(d), n = dl.length, done = dl.filter(x => dailyDone(d, x.id)).length;
   const line = (ic, name, val, attrs) => `<button class="hline" ${attrs}><span class="hl-ic">${ic}</span><span class="grow">${name}</span><span class="muted">${val}</span>${icon("right", 16)}</button>`;
   const ring = `<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="var(--line)" stroke-width="3"/>
     <circle cx="12" cy="12" r="9" fill="none" stroke="var(--ok)" stroke-width="3" stroke-dasharray="${(n ? done / n : 0) * 56.5} 56.5" transform="rotate(-90 12 12)" stroke-linecap="round"/></svg>`;
@@ -130,7 +130,7 @@ function weekSection() {
   const wNow = weekAvgWeight(ws), wPrev = weekAvgWeight(prevWs);
   const tiles = [
     tile("Pass", cur.passes, `av ${S.plan.count}`, diff(cur.passes, prev.passes, true)),
-    S.daily.length ? tile("Dailys", cur.dailies, "av 7 dagar", diff(cur.dailies, prev.dailies, true)) : "",
+    hasDailies() ? tile("Dailys", cur.dailies, "av 7 dagar", diff(cur.dailies, prev.dailies, true)) : "",
     tile("Kalorier", cur.kcal ? tnum(cur.kcal) : "–", "snitt", cur.kcal && prev.kcal ? diff(cur.kcal, prev.kcal, null) : `<span class="muted small">mål ${tnum(macros().kcal)}</span>`),
     S.hideWeight ? "" : tile("Vikt", wNow != null ? fmtNum(wNow) : "–", "kg", wNow != null && wPrev != null ? diff(wNow, wPrev, null, " kg") : `<span class="muted small">${wNow != null ? "Första vägningen" : "Ingen vägning"}</span>`),
     cur.km || prev.km ? tile("Löpning", fmtNum(cur.km), "km", diff(cur.km, prev.km, true, " km")) : "",

@@ -585,7 +585,7 @@ function reminderIcs(time) {
     "BEGIN:VALARM", "ACTION:DISPLAY", "DESCRIPTION:Dags för dina dailys", "TRIGGER:PT0M", "END:VALARM",
     "END:VEVENT", "END:VCALENDAR"].join("\r\n");
 }
-const dailiesLeft = () => S.daily.filter(e => !dailyDone(TODAY, e.id)).length;
+const dailiesLeft = () => dailyList(TODAY).filter(e => !dailyDone(TODAY, e.id)).length;
 
 // Siffra på appikonen med antal dailys kvar (där systemet stöder det)
 function updateBadge() {
@@ -602,7 +602,7 @@ async function remindIfDue() {
   if (now.getHours() * 60 + now.getMinutes() < hh * 60 + mm || r.lastNotified === TODAY || !dailiesLeft()) return;
   r.lastNotified = TODAY;
   save();
-  const body = `${dailiesLeft()} av ${S.daily.length} dailys kvar idag.`;
+  const body = `${dailiesLeft()} av ${dailyList(TODAY).length} dailys kvar idag.`;
   const opts = { body, icon: "icons/icon-192-v2.png", tag: "dailys" };
   // Installerade appar visar notiser via service workern; annars en vanlig notis
   try {
@@ -771,7 +771,7 @@ function dailyDone(date, id) {
   const v = S.log[date] && S.log[date].dailies[id];
   return isRun(id) ? !!(v && (v.km || v.min)) : v === true;
 }
-const allDailiesDone = date => S.daily.length > 0 && S.daily.every(e => dailyDone(date, e.id));
+const allDailiesDone = date => { const L = dailyList(date); return L.length > 0 && L.every(e => dailyDone(date, e.id)); };
 // Antal dagar i rad som test(datum) gäller, räknat från idag eller igår
 function streakOf(test) {
   let n = 0, d = test(TODAY) ? TODAY : shift(TODAY, -1);
@@ -904,7 +904,7 @@ let importMsg = "";
 const GEAR_SVG = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Z"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06-1.87 1.87-.06-.06A1.7 1.7 0 0 0 16 18.4a1.7 1.7 0 0 0-1 1.56V21h-6v-1.04A1.7 1.7 0 0 0 8 18.4a1.7 1.7 0 0 0-1.87.34l-.06.06-1.87-1.87.06-.06A1.7 1.7 0 0 0 4.6 15 1.7 1.7 0 0 0 3 14H2v-4h1a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.34-1.87L4.2 7.07 6.07 5.2l.06.06A1.7 1.7 0 0 0 8 5.6 1.7 1.7 0 0 0 9 4V3h6v1a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.87-.34l.06-.06 1.87 1.87-.06.06A1.7 1.7 0 0 0 19.4 9 1.7 1.7 0 0 0 21 10h1v4h-1a1.7 1.7 0 0 0-1.6 1Z"/></svg>`;
 // Uppmuntran: när sista dailyn bockas i firas det med konfetti och ett peppande besked.
 // Jämför med förra ritningen, så att det bara sker när man själv gör klart, inte när appen öppnas.
-const allDailysToday = () => { const a = S.supplements || [], ex = S.daily || [];
+const allDailysToday = () => { const a = S.supplements || [], ex = dailyList(logDate());
   return ex.length + a.length > 0 && ex.every(e => dailyDone(logDate(), e.id)) && a.every(x => day().dailies["supp:" + x.id]); };
 let cheerState = null;   // { date, done } från förra ritningen
 let lastCheck = null;   // bocken man senast tryckte på, så att konfettin kommer därifrån
@@ -988,7 +988,7 @@ function dailySeconds(e) {
 }
 function dailyClockView() {
   if (!dailyClock) return "";
-  const c = dailyClock, e = S.daily.find(x => x.id === c.id) || (EX[c.id] && { id: c.id, sets: EX[c.id].sets, reps: EX[c.id].reps });
+  const c = dailyClock, e = dailyList().find(x => x.id === c.id) || (EX[c.id] && { id: c.id, sets: EX[c.id].sets, reps: EX[c.id].reps });
   if (!e) return "";
   const left = c.paused ? Math.ceil(c.remaining / 1000) : Math.max(0, Math.ceil((c.end - Date.now()) / 1000));
   const fmt = n => String(Math.floor(n/60)).padStart(2,"0")+":"+String(n%60).padStart(2,"0");
@@ -1021,7 +1021,7 @@ function dailyClockAdvance() {
   dailyClockSound();
   if (c.phase === "work") {
     if (c.set >= c.total) {
-      if (S.daily.some(x => x.id === c.id)) day().dailies[c.id] = true;
+      if (dailyList().some(x => x.id === c.id)) day().dailies[c.id] = true;
       c.phase = "done"; clearInterval(dailyClockTick); dailyClockTick = null;
       save(); render(); return;
     }
@@ -1060,7 +1060,7 @@ document.addEventListener("click", ev => {
   ev.stopImmediatePropagation();
   const d = t.dataset;
   if (d.dclockstart) {
-    const e = S.daily.find(x => x.id === d.dclockstart) || (EX[d.dclockstart] && { id: d.dclockstart, sets: EX[d.dclockstart].sets, reps: EX[d.dclockstart].reps }); if (!e) return;
+    const e = dailyList().find(x => x.id === d.dclockstart) || (EX[d.dclockstart] && { id: d.dclockstart, sets: EX[d.dclockstart].sets, reps: EX[d.dclockstart].reps }); if (!e) return;
     const timed = /\d+\s*(?:sek|s)\b/i.test(e.reps || "");
     const work = dailySeconds(e);
     dailyClock = {id:e.id,work,timed,reps:e.reps||"",rest:30,total:Math.max(1,+e.sets||1),set:1,phase:"work",end:Date.now()+work*1000,paused:false};
@@ -1088,14 +1088,14 @@ document.addEventListener("submit", ev => {
 }, true);
 
 function dailiesCard(inPass, banded) {
-  const n = S.daily.length, date = logDate(), L = day(date);
-  if (dailyEditing) return `<div class="card"><div class="row between"><h2>Redigera dailys</h2><button class="small ghost" data-dedit>Klar</button></div>
+  const date = logDate(), L = day(date), list = dailyList(date), n = list.length;
+  if (dailyEditing === true) return `<div class="card"><div class="row between"><h2>Redigera dailys</h2><button class="small ghost" data-dedit>Klar</button></div>
     ${exRows("daily", S.daily, true)}
     </div>`;
   if (!n) return `<div class="card"><h2>Dailys</h2><div class="muted">Det du vill göra varje dag, till exempel plankan eller hängande benlyft.</div>
     <button style="margin-top:10px" data-openpick="daily">+ Lägg till daily</button></div>`;
-  const done = S.daily.filter(e => dailyDone(date, e.id)).length, st = streakOf(allDailiesDone);
-  const rows = S.daily.map(e => {
+  const done = list.filter(e => dailyDone(date, e.id)).length, st = streakOf(allDailiesDone);
+  const rows = list.map(e => {
     const id = e.id, ok = dailyDone(date, id), its = streakOf(d => dailyDone(d, id)), v = L.dailies[id] || {};
     const sub = isRun(id) ? "" : EX[id].cat === "cardio" ? esc(e.reps || "") : `${e.sets} × ${esc(e.reps)}`;
     const check = `${icon("check", 18)}`;
@@ -1129,16 +1129,18 @@ const VIEWS = {
 
   dailys() {
     if (dailyClock) return `<div class="dlx">${dailyClockView()}</div>`;
-    const a = S.supplements || [], ex = S.daily || [], date = logDate();
+    if (rutPage) return rutinerView();
+    const a = S.supplements || [], date = logDate(), ex = dailyList(date), rut = routineOn(date), every = (S.daily || []).filter(e => EX[e.id]);
     const n = ex.filter(e => dailyDone(date, e.id)).length, sn = a.filter(x => day().dailies["supp:" + x.id]).length;
     const total = ex.length + a.length, count = n + sn, allOk = total > 0 && count === total, st = streakOf(allDailiesDone);
     // Veckan bakåt till idag: grön prick när allt var klart, orange när något var gjort
     const week = Array.from({ length: 7 }, (_, i) => shift(TODAY, i - 6)).map(d => {
-      const L = S.log[d], done = ex.filter(e => L && dailyDone(d, e.id)).length + a.filter(x => L && L.dailies && L.dailies["supp:" + x.id]).length;
-      const cls = total && done === total ? "ok" : done ? "part" : "";
+      const L = S.log[d], dl = dailyList(d), all = dl.length + a.length;
+      const done = dl.filter(e => L && dailyDone(d, e.id)).length + a.filter(x => L && L.dailies && L.dailies["supp:" + x.id]).length;
+      const cls = all && done === all ? "ok" : done ? "part" : "";
       return `<span class="dlx-day ${d === TODAY ? "on" : ""}"><small>${WD[weekdayOf(d)].slice(0, 2)}</small><b>${+d.slice(-2)}</b><i class="${cls}"></i></span>`;
     }).join("");
-    const rows = ex.map(e => {
+    const rowsOf = list => list.filter(e => EX[e.id]).map(e => {
       const ok = dailyDone(date, e.id);
       return `<div class="h3-row dlx-row ${ok ? "ok" : ""}">${thumb(e.id, "exl")}<span class="grow"><b>${esc(EX[e.id].name)}</b><small>${e.sets} × ${esc(e.reps || "")}</small></span>
         ${ok ? "" : `<button class="dlx-play" data-dclockstart="${e.id}" aria-label="Starta ${esc(EX[e.id].name)}">${icon("play", 16)}</button>`}
@@ -1151,15 +1153,26 @@ const VIEWS = {
         <button class="dlx-check ${ok ? "on" : ""}" data-suppcheck="${esc(x.id)}" aria-pressed="${ok}" aria-label="${esc(x.name)} tagen">${icon("check", 18)}</button></div>`;
     }).join("");
     const addRow = (attr, text) => `<button class="h3-row dlx-addrow" ${attr}><span class="h3-ic">${icon("plus", 16)}</span><span class="grow"><b>${text}</b></span></button>`;
+    const cnt = list => `${list.filter(e => EX[e.id] && dailyDone(date, e.id)).length}/${list.filter(e => EX[e.id]).length}`;
+    // En lista med rubrik och Ändra; target är "daily" (Varje dag) eller "rut:<id>"
+    const section = (label, list, target, editAttr) => {
+      const ed = target === "daily" ? dailyEditing === true : dailyEditing === target;
+      return `<div class="row between dlx-sec"><span class="klabel">${label} · ${cnt(list)}</span><button class="linkbtn2" ${editAttr}>${ed ? "Klar" : "Ändra"}</button></div>
+      ${ed ? exRows(target, target === "daily" ? S.daily : list, true) : `<section class="h3-list">${rowsOf(list)}${addRow(`data-openpick="${target}"`, "Lägg till övning")}</section>`}`;
+    };
+    const exSecs = rut
+      ? `${section(esc(rut.name), rut.ex, "rut:" + rut.id, `data-rutedit="rut:${esc(rut.id)}"`)}${section("Varje dag", every, "daily", "data-dedit")}`
+      : `${section("Övningar", every, "daily", "data-dedit")}
+        <button class="dlx-rutlink" data-rutpage>${icon("kalender", 16)}<span class="grow">Rutiner · växla övningar mellan dagarna</span>${icon("right", 16)}</button>`;
     return `<div class="dlx"><h1>Dailys</h1>
       <div class="muted dlx-sub">Idag · ${count} av ${total} klara${st > 1 ? ` · ${st} dagar i rad` : ""}</div>
       <section class="dlx-top ${allOk ? "ok" : ""}"><span class="dlx-ring">${ring(total ? count / total : 0, 60, allOk ? "ok" : "")}<b>${total ? Math.round(count / total * 100) : 0}%</b></span>
         <div class="dlx-week">${week}</div></section>
-      <div class="row between dlx-sec"><span class="klabel">Övningar · ${n}/${ex.length}</span><button class="linkbtn2" data-dedit>${dailyEditing ? "Klar" : "Ändra"}</button></div>
-      ${dailyEditing ? exRows("daily", S.daily, true) : `<section class="h3-list">${rows}${addRow('data-openpick="daily"', "Lägg till övning")}</section>`}
+      ${routineHead(date)}
+      ${exSecs}
       <div class="row between dlx-sec"><span class="klabel">Kosttillskott · ${sn}/${a.length}</span></div>
       <section class="h3-list">${supp}${supplementEditing === null ? addRow("data-suppadd", "Lägg till kosttillskott") : ""}</section>
-      ${supplementForm()}</div>`;
+      ${supplementForm()}${rutinSheet()}</div>`;
   },
   stretchguide() { return muscleView(); },
   vagning() {
@@ -1180,7 +1193,7 @@ const VIEWS = {
     const m = macros(), e = eaten(), t = todaysPass(), d = t.d, w = t.w;
     m.kcal += burnedOn(TODAY);
     const done = !!(w && w.done), started = !done && (t.active || (w && d.ex.some(x => ((w.sets[x.id]) || []).some(z => z && z.ok))));
-    const dailyEx = S.daily || [], supp = S.supplements || [];
+    const dailyEx = dailyList(logDate()), supp = S.supplements || [];
     const completed = dailyEx.filter(x => dailyDone(logDate(), x.id)).length + supp.filter(x => day().dailies["supp:" + x.id]).length;
     const total = dailyEx.length + supp.length, dailysOk = total > 0 && completed === total;
     const foodOk = m.kcal > 0 && e.kcal >= m.kcal;
@@ -1312,7 +1325,7 @@ const VIEWS = {
       ${group(sbEnabled ? "Vänner och notiser" : "Notiser", `${sbEnabled ? `<div class="prow" id="p-vanner"><div class="prow-line"><button class="prow-head" data-tab="vanner"><span class="pic">${icon("vanner", 20)}</span><span class="grow"><b>Vänner</b>
           <span class="muted small">${friends}</span></span><span class="chev">${icon("right", 18)}</span></button></div></div>` : ""}
         ${profRow("notiser", "bell", "Notiser", pushSummary(), pushBody(), pushSwitch)}
-        ${S.daily.length ? profRow("paminnelse", "kalender", "Påminnelse i kalendern", r ? `För dina dailys · kl. ${esc(r.time)}` : "För dina dailys · ingen vald", reminderCard()) : ""}`)}
+        ${hasDailies() ? profRow("paminnelse", "kalender", "Påminnelse i kalendern", r ? `För dina dailys · kl. ${esc(r.time)}` : "För dina dailys · ingen vald", reminderCard()) : ""}`)}
       ${group("Appen", `${profRow("utseende", "utseende", "Utseende", "", null, themeSeg)}
         ${profRow("figur", "profil", "Figur", "I kroppskartan", null, figSeg)}
         ${profRow("guide", "info", "Appguide", "En kort rundtur genom flikarna", null, `<button class="small" data-tourstart>Starta</button>`)}
@@ -1479,11 +1492,12 @@ const ssLabel = (d, idx) => { const g = ssGroup(d, idx); return g ? `Superset ${
 // Övningslistor kan ligga i ett passdag-id, "draft:<index>" (upplägget) eller "daily"
 function exList(target) {
   if (target === "daily") return S.daily;
+  if (target.startsWith("rut:")) return routineById(target.slice(4)).ex;
   if (target.startsWith("draft:")) return draft.days[+target.slice(6)].ex;
   return dayById(target).ex;
 }
 function targetCats(target) {
-  if (target === "daily") return ["core"];
+  if (isDailyT(target)) return ["core"];
   const d = target.startsWith("draft:") ? draft.days[+target.slice(6)] : dayById(target);
   return TYPES[d.type].cats;
 }
@@ -1491,7 +1505,7 @@ function targetCats(target) {
 // Rader med byt/ta bort; withOrder lägger till sortering och set × reps
 function exRows(target, list, withOrder) {
   return list.map((e, i) => `<div class="subex">${thumb(e.id, "sm")}
-      <div class="grow"><b>${esc(EX[e.id].name)}</b>${target === "daily" ? "" : muscleLine(e.id)}${EX[e.id].cat === "cardio" ? `<div class="muted">${esc(e.reps || EX[e.id].muscles)}</div>`
+      <div class="grow"><b>${esc(EX[e.id].name)}</b>${isDailyT(target) ? "" : muscleLine(e.id)}${EX[e.id].cat === "cardio" ? `<div class="muted">${esc(e.reps || EX[e.id].muscles)}</div>`
         : `<div class="row" style="margin-top:4px">
         <input type="number" inputmode="numeric" min="1" style="width:52px" value="${e.sets}" data-ed="${i}" data-t="${target}" data-f="sets" aria-label="Antal set"><span class="muted">×</span>
         <input type="text" inputmode="numeric" style="width:76px" value="${esc(e.reps)}" data-ed="${i}" data-t="${target}" data-f="reps" aria-label="Reps"></div>`}</div>
@@ -1499,9 +1513,9 @@ function exRows(target, list, withOrder) {
         <button class="small ghost" data-mv="1" data-t="${target}" data-idx="${i}" ${i < list.length - 1 ? "" : "disabled"} aria-label="Flytta ned">↓</button></div>` : ""}
       <button class="small" data-swap="${target}" data-idx="${i}">Byt</button>
       <button class="small ghost" data-xdel="${target}" data-idx="${i}" aria-label="Ta bort">${icon("close", 18)}</button></div>
-      ${withOrder && target !== "daily" && i < list.length - 1 ? `<button class="sslink ${e.ss ? "on" : ""}" data-ss="${target}" data-idx="${i}" aria-pressed="${!!e.ss}">${e.ss
+      ${withOrder && !isDailyT(target) && i < list.length - 1 ? `<button class="sslink ${e.ss ? "on" : ""}" data-ss="${target}" data-idx="${i}" aria-pressed="${!!e.ss}">${e.ss
         ? `Superset med ${esc(EX[list[i + 1].id].name)} <span class="muted">· tryck för att dela</span>` : "＋ Superset med nästa"}</button>` : ""}`).join("") +
-    `<button class="small" style="margin-top:8px" data-openpick="${target}">+ Lägg till ${target === "daily" ? "daily" : "övning"}</button>`;
+    `<button class="small" style="margin-top:8px" data-openpick="${target}">+ Lägg till ${isDailyT(target) ? "daily" : "övning"}</button>`;
 }
 
 // ---------- Muskelkartan ----------
@@ -1676,7 +1690,7 @@ function weekLetter(ws) {
   const stat = (label, value, extra = "") => `<div class="lstat"><div class="klabel">${label}</div><div class="lbig">${value}</div>${extra}</div>`;
   const stats = [
     stat("Pass", `${cur.passes} av ${goalPasses}`, prev.passes || cur.passes ? deltaBadge(cur.passes - prev.passes, "mot förra") : ""),
-    S.daily.length ? stat("Alla dailys", `${cur.dailies} av 7 dagar`) : "",
+    hasDailies() ? stat("Alla dailys", `${cur.dailies} av 7 dagar`) : "",
     !S.hideWeight && wNow != null ? stat("Vikt, snitt", `${fmtNum(wNow)} kg`, wPrev != null ? weightBadge(wNow - wPrev) : "") : "",
     cur.kcal ? stat("Kalorier per dag", tnum(cur.kcal), `<span class="muted small">mål ${tnum(macros().kcal)}</span>`) : "",
     cur.km || prev.km ? stat("Löpning", `${fmtNum(cur.km)} km`) : "",
@@ -2058,8 +2072,8 @@ document.addEventListener("click", ev => {
   if (ds.chart) { modal = { chart: ds.chart }; render(); return; }
   if (ds.letter) { modal = { letter: ds.letter }; render(); return; }
   // Lägg till och byt övning sker i det gemensamma övningsbiblioteket (muskelsok.js)
-  if (ds.openpick) { modal = null; openLibrary({ kind: ds.openpick === "daily" ? "daily" : "workout", target: ds.openpick }); render(); return; }
-  if (ds.swap) { exSheet = null; openLibrary({ kind: "workout", target: ds.swap, replace: +ds.idx }); render(); return; }
+  if (ds.openpick) { modal = null; openLibrary({ kind: isDailyT(ds.openpick) ? "daily" : "workout", target: ds.openpick }); render(); return; }
+  if (ds.swap) { exSheet = null; openLibrary({ kind: isDailyT(ds.swap) ? "daily" : "workout", target: ds.swap, replace: +ds.idx }); render(); return; }
   if (ds.askai !== undefined) { askClaude(); return; }
   if (ds.tplname !== undefined && passDone) { passDone.tplNaming = true; render(); const f = $("tplname"); if (f) { f.focus(); f.select(); } return; }
   if (ds.tplcancel !== undefined && passDone) { passDone.tplNaming = false; render(); return; }
@@ -2164,7 +2178,7 @@ document.addEventListener("click", ev => {
     syncDone(d);
   }
   else if (ds.dcheck) day().dailies[ds.dcheck] = !dailyDone(logDate(), ds.dcheck);
-  else if (ds.dedit !== undefined) dailyEditing = !dailyEditing;
+  else if (ds.dedit !== undefined) dailyEditing = dailyEditing === true ? false : true;
   else if (ds.letterclose) S.letterSeen = ds.letterclose;
   else if (ds.showweight !== undefined) S.hideWeight = !t.checked;
   else if (ds.wsave !== undefined) {

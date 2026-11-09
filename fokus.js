@@ -316,13 +316,13 @@ function focusView() {
     : next ? `<button class="primary grow" data-focusgo="${nextIdx}">Nästa: ${esc(EX[next.id].name)}</button>`
     : w && w.done ? `<button class="primary grow" data-finish="${d.id}" data-focusend>Avsluta pass</button>`
     : `<button class="primary grow" data-finish="${d.id}" data-focusend>Spara och avsluta</button>`;
-  const dDone = S.daily.filter(e => dailyDone(logDate(), e.id)).length;
+  const dList = dailyList(logDate()), dDone = dList.filter(e => dailyDone(logDate(), e.id)).length;
   const start = focus.start || Date.now();
   // Under setet bara det man gör oftast; resten under Mer, grupperat efter övningen och passet
   const tools = `<div class="ftools">
     <button class="chipbtn" data-setcount="-1" data-ex="${ex.id}" ${ex.sets > 1 ? "" : "disabled"} aria-label="Ett set färre">− Set</button>
     <button class="chipbtn" data-setcount="1" data-ex="${ex.id}" aria-label="Ett set till">+ Set</button>
-    ${S.daily.length ? `<button class="chipbtn" data-fdopen aria-label="Dailys, ${dDone} av ${S.daily.length} klara">Dailys ${dDone}/${S.daily.length}</button>` : ""}
+    ${dList.length ? `<button class="chipbtn" data-fdopen aria-label="Dailys, ${dDone} av ${dList.length} klara">Dailys ${dDone}/${dList.length}</button>` : ""}
     <button class="chipbtn ${focusMore ? "on" : ""}" data-fmore aria-expanded="${focusMore}">${icon("more", 16)}Mer</button></div>`;
   const moreRow = (ic, title, sub, attrs) => `<button class="h3-row fmrow" ${attrs}><span class="h3-ic">${icon(ic, 18)}</span><span class="grow"><b>${title}</b>${sub ? `<small>${sub}</small>` : ""}</span></button>`;
   const moreSheet = focusMore ? `<div class="overlay" data-fmoreclose><div class="sheet fmoresheet" role="dialog" aria-label="Fler val">

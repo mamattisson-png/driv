@@ -192,7 +192,7 @@ function tplSheet() {
     <div class="muted small">Spara fler mallar när du avslutat ett pass.</div></div></div>`;
 }
 function dailysSheet() {
-  const n = S.daily.length, done = S.daily.filter(e => dailyDone(logDate(), e.id)).length;
+  const dl = dailyList(logDate()), n = dl.length, done = dl.filter(e => dailyDone(logDate(), e.id)).length;
   return `<div class="overlay" data-trsheet=""><div class="sheet dsheet" role="dialog" aria-label="Dailys">
     <div class="row between"><div><span class="klabel">Varje dag</span><h2 class="sheeth">Dailys</h2></div>${n ? `<span class="muted">${done} av ${n} idag</span>` : ""}</div>
     ${dailiesCard(true)}
