@@ -1276,7 +1276,8 @@
 
   /* Första besöket */
   body.onboard { padding-bottom: env(safe-area-inset-bottom); }
-  body.onboard main { min-height: calc(100vh - var(--tb, 0px)); min-height: calc(100dvh - var(--tb, 0px)); display: flex; flex-direction: column; }
+  /* Sidan är en skärm hög minus telefonens knapprad, som body redan lämnar plats för; annars hamnar knapparna längst ned bakom den */
+  body.onboard main { min-height: calc(100vh - var(--tb, 0px) - env(safe-area-inset-bottom, 0px)); min-height: calc(100dvh - var(--tb, 0px) - env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; }
   .welcome { position: relative; flex: 1; display: flex; flex-direction: column; }
   .welcome-glow { position: fixed; left: 0; right: 0; top: -260px; height: 560px; pointer-events: none;
     background: radial-gradient(ellipse 75% 50% at 50% 50%, color-mix(in srgb, var(--accent) 30%, transparent), transparent); }

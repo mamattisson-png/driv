@@ -82,6 +82,7 @@ Senast uppdaterad: 2026-11-06. Status bygger på dokumenterade publiceringar och
 | 78 | MuscleWiki: bara kontrollerade länkar direkt till rätt övning (304 av 533) | Träning | Hög | Klar |
 | 79 | Streckkodsskannern fungerar på iPhone (egen läsning av kamerabilden när telefonen saknar inbyggd läsare) | Kost | Hög | Klar |
 | 80 | Tillbaka från första steget i starten fungerar även när man är inloggad | Start | Medel | Klar |
+| 81 | Startsidan ryms ovanför telefonens knapprad (Android) | Start | Medel | Klar |
 
 ## Detaljer och acceptanskriterier
 
