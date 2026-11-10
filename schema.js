@@ -74,6 +74,7 @@ function openActDay(date, dayId) {
 }
 // Lägg till eller ändra ett pass i schemat (upplägget)
 function openPlanSheet(i) {
+  actQ = "";
   const d = i != null ? draft.days[i] : null, fixed = draft.mode === "fixed";
   const sorted = draft.weekdays.slice().sort((a, b) => a - b);
   const free = WD.map((_, k) => k).filter(k => !sorted.includes(k));

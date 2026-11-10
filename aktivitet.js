@@ -5,26 +5,7 @@
 // veckans pass (går att stänga av), och förbrända kcal kan läggas till dagens kalorimål (av från början).
 // Laddas före app.js; anropas först när appen ritas.
 
-// MET-värden för lugnt, medel och hårt (Compendium of Physical Activities, avrundade)
-const ACTIVITIES = [
-  { name: "Löpning", met: [7, 9.5, 11.5], km: true },
-  { name: "Padel", met: [5, 6, 8] },
-  { name: "Tennis", met: [5, 7, 8] },
-  { name: "Vandring", met: [4, 6, 7.5], km: true },
-  { name: "Kanot", met: [3, 5, 7], km: true },
-  { name: "Frisbeegolf", met: [3, 3.5, 4], km: true },
-  { name: "Cykling", met: [4, 7, 10], km: true },
-  { name: "Promenad", met: [3, 3.5, 4.5], km: true },
-  { name: "Simning", met: [5, 7, 9.5], km: true },
-  { name: "Fotboll", met: [6, 7, 10] },
-  { name: "Innebandy", met: [6, 8, 10] },
-  { name: "Golf", met: [3.5, 4.3, 5], km: true },
-  { name: "Skidor", met: [5, 7, 9], km: true },
-  { name: "Klättring", met: [5, 7, 8] },
-  { name: "Yoga", met: [2.5, 3, 4] },
-  { name: "Dans", met: [4, 5.5, 7] },
-  { name: "Kampsport", met: [6, 8, 10] },
-];
+// Träningsformerna (ACTIVITIES) och sökningen finns i motion.js
 const INTENSITY = ["Lugnt", "Medel", "Hårt"];
 const actInfo = name => ACTIVITIES.find(a => a.name.toLowerCase() === String(name).trim().toLowerCase());
 const actIcon = () => icon("aktivitet", 20);
@@ -44,11 +25,23 @@ function favActs(n) {
   const count = {};
   for (const L of Object.values(S.log)) for (const a of L.acts || []) count[a.name] = (count[a.name] || 0) + 1;
   const mine = Object.keys(count).sort((x, y) => count[y] - count[x]);
-  return [...new Set([...mine, ...ACTIVITIES.map(a => a.name)])].slice(0, n);
+  return [...new Set([...mine, ...POPULAR_ACTS, ...ACTIVITIES.map(a => a.name)])].slice(0, n);
 }
 
-let actSheet = null;   // { date, idx, name, min, int, km, custom }
+let actSheet = null;
+let actQ = "";   // sökningen i fönstret
+// Snabbval, eller träffarna när man söker. Det valda ligger alltid med.
+function actChips(s) {
+  const hits = actQ.trim() ? actSearch(actQ).slice(0, 14) : null;
+  const base = hits || (s.plan ? [...new Set(["Yoga", "Löpning", "Promenad", "Cykling", "Simning", ...favActs(30)])].slice(0, 12) : favActs(12));
+  const list = !hits && s.name && !s.custom && !base.includes(s.name) ? [s.name, ...base.slice(0, 11)] : base;
+  const own = actQ.trim() && !hits.some(n => n.toLowerCase() === actQ.trim().toLowerCase());
+  return `${list.map(n => `<button data-actpick="${esc(n)}" class="${!s.custom && s.name === n ? "on" : ""}">${esc(n)}</button>`).join("")}
+    ${hits && !hits.length ? `<span class="muted small actnohit">Ingen träff.</span>` : ""}
+    ${own ? `<button data-actpick="${esc(actQ.trim().slice(0, 30))}" data-actown>＋ Lägg till ”${esc(actQ.trim().slice(0, 30))}”</button>` : `<button data-actpick="" class="${s.custom ? "on" : ""}">＋ Annan</button>`}`;
+}   // { date, idx, name, min, int, km, custom }
 function openAct(date, idx, name) {
+  actQ = "";
   const a = idx != null ? actsOn(date)[idx] : null;
   actSheet = a ? { date, idx, name: a.name, min: a.min, int: a.int || 2, km: a.km || "", custom: !actInfo(a.name) }
     : { date, idx: null, name: name || "", min: 60, int: 2, km: "", custom: name === "" };
@@ -68,8 +61,8 @@ function actSheetView() {
     ${s.plan ? planSheetTop(s) : ""}
     ${gym ? `<label class="field" style="margin-top:10px">Namn på passet<input id="actname" value="${esc(s.name)}" placeholder="t.ex. Bröst och armar" maxlength="30" autocomplete="off"></label>
       <div class="muted small" style="margin-top:8px">Övningarna lägger du till i passet under Träna.</div>`
-    : `${s.dayId ? "" : `${s.plan ? `<div class="klabel" style="margin-top:12px">Vad</div>` : ""}<div class="chips actchips">${(s.plan ? [...new Set(["Yoga", "Löpning", "Promenad", "Cykling", "Simning", ...favActs(20)])].slice(0, 12) : favActs(12)).map(n => `<button data-actpick="${esc(n)}" class="${!s.custom && s.name === n ? "on" : ""}">${esc(n)}</button>`).join("")}
-      <button data-actpick="" class="${s.custom ? "on" : ""}">＋ Annan</button></div>
+    : `${s.dayId ? "" : `${s.plan ? `<div class="klabel" style="margin-top:12px">Vad</div>` : ""}<input id="actq" class="actq" type="search" placeholder="Sök träningsform, t.ex. EMS, padel, spinning" autocomplete="off" aria-label="Sök träningsform" value="${esc(actQ)}">
+      <div class="chips actchips" id="actchips">${actChips(s)}</div>
     ${s.custom ? `<label class="field" style="margin-top:10px">${s.plan ? "Vad vill du göra?" : "Vad gjorde du?"}<input id="actname" value="${esc(s.name)}" placeholder="t.ex. Bouldering" maxlength="30" autocomplete="off"></label>` : ""}`}
     <div class="row qtyrow" style="margin-top:14px"><span class="grow">${s.plan ? "Mål, tid" : "Tid"}</span>
       <button class="step" data-actmin="-15" ${s.min <= 15 ? "disabled" : ""} aria-label="Kortare">−</button><b class="qcount">${s.min} min</b>
@@ -110,6 +103,7 @@ document.addEventListener("change", ev => {
 });
 document.addEventListener("input", ev => {
   if (!actSheet) return;
+  if (ev.target.id === "actq") { actQ = ev.target.value; const c = document.getElementById("actchips"); if (c) c.innerHTML = actChips(actSheet); return; }
   if (ev.target.id === "actname") { actSheet.name = ev.target.value; const b = document.querySelector("[data-actsave]"); if (b) b.disabled = !ev.target.value.trim(); }
   if (ev.target.id === "actkm") actSheet.km = ev.target.value;
 });
@@ -121,7 +115,11 @@ document.addEventListener("click", ev => {
   if (ds.actnew !== undefined) openAct(ds.actdate || logDate(), null, ds.actnew);
   else if (ds.actedit !== undefined) openAct(ds.actdate || logDate(), +ds.actedit);
   else if (ds.actclose !== undefined) actSheet = null;
-  else if (ds.actpick !== undefined) { s.custom = ds.actpick === ""; s.name = ds.actpick; }
+  else if (ds.actpick !== undefined) {
+    // Ett eget namn från sökningen blir en egen aktivitet (medelhård om den inte finns i listan)
+    s.custom = ds.actpick === "" || (ds.actown !== undefined && !actInfo(ds.actpick)); s.name = ds.actown !== undefined && actInfo(ds.actpick) ? actInfo(ds.actpick).name : ds.actpick;
+    if (ds.actpick) actQ = "";
+  }
   else if (ds.actmin) s.min = Math.max(15, s.min + +ds.actmin);
   else if (ds.actint) s.int = +ds.actint;
   else if (ds.actsave !== undefined) {
