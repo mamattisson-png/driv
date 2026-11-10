@@ -83,6 +83,7 @@ Senast uppdaterad: 2026-11-06. Status bygger på dokumenterade publiceringar och
 | 79 | Streckkodsskannern fungerar på iPhone (egen läsning av kamerabilden när telefonen saknar inbyggd läsare) | Kost | Hög | Klar |
 | 80 | Tillbaka från första steget i starten fungerar även när man är inloggad | Start | Medel | Klar |
 | 81 | Startsidan ryms ovanför telefonens knapprad (Android) | Start | Medel | Klar |
+| 82 | Motion på Träna: mål och resultat som rutor som går att trycka på för att ändra, och Nästa pass | Träning | Hög | Klar |
 
 ## Detaljer och acceptanskriterier
 
