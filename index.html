@@ -2004,6 +2004,29 @@ button.h3-card.h3-head { background: var(--card); padding: 12px 14px; }
 .dlx-addrow b { color: var(--accent-text); font-weight: 600; }
 .dlx-addrow .h3-ic { color: var(--accent-text); }
 .dlx .supplement-form { margin-top: 10px; }
+/* Aktiviteter i schemat */
+.tag.act { background: var(--ok-soft); color: var(--ok-text); }
+.actgoal { display: flex; gap: 8px; margin-top: 8px; }
+.actgoal > div { flex: 1; display: flex; flex-direction: column; gap: 2px; background: var(--card-2); border-radius: 12px; padding: 10px 12px; }
+.actgoal b { font-size: 17px; font-weight: 600; }
+.actpass .tp-namebtn { cursor: default; }
+.actother { text-align: center; margin-top: 8px; }
+.h3-actbtns { gap: 8px; }
+.h3-actbtns .h3-btn { flex: 1; }
+.h3-actbtns .h3-btn:not(.primary) { flex: none; width: auto; padding: 0 16px; background: var(--card-2); color: var(--text); }
+.h3-actbtns .h3-btn:only-child { flex: 1; width: 100%; }
+.planhead { margin: 18px 4px 6px; align-items: center; }
+.planrow { background: var(--card); position: relative; transition: transform .18s; }
+.planrow + .planrow { border-top: 1px solid var(--line); }
+.planrow.dragging { transition: none; z-index: 2; box-shadow: 0 8px 24px rgba(0, 0, 0, .3); border-radius: 12px; }
+.plannum { min-width: 30px; height: 30px; flex: none; padding: 0 4px; border-radius: 15px; display: grid; place-items: center; background: var(--card-2); font-size: 12px; font-weight: 700; cursor: grab; touch-action: none; }
+.h3-ic.actic { color: var(--ok-text); background: var(--ok-soft); }
+.h3-ic.gymic { color: var(--accent-text); background: var(--accent-soft); }
+.planadd { display: flex; align-items: center; justify-content: center; gap: 6px; min-height: 48px; margin: 10px 0 4px; border-radius: 14px; font-weight: 600; }
+.plankind { margin-top: 10px; }
+.planwd { grid-template-columns: repeat(7, 1fr); }
+.planwd button:disabled { opacity: .35; }
+@media (prefers-reduced-motion: reduce) { .planrow { transition: none; } }
 /* Dailys-rutiner */
 .dlx-rut { display: flex; align-items: center; gap: 10px; width: 100%; margin: 12px 0 4px; padding: 12px 14px; border-radius: 16px; text-align: left;
   border: 1.5px solid var(--accent); background: var(--accent-soft); color: var(--text); font: inherit; }
@@ -2128,6 +2151,7 @@ button.h3-card.h3-head { background: var(--card); padding: 12px 14px; }
 <script src="produkter.js"></script>
 <script src="config.js"></script>
 <script src="konto.js"></script>
+<script src="schema.js"></script>
 <script src="fokus.js"></script>
 <script src="trana.js"></script>
 <script src="start.js"></script>

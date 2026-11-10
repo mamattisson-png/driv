@@ -63,6 +63,7 @@ function prevSamePass(dayId, date) {
 }
 // Ett pass som en lättläst sammanfattning: tid, set, total vikt och varje övnings set med PB och skillnad mot förra gången
 function passSummary(w, d) {
+  if (w.act) return actPassSummary(w, d);
   const p = dayById(w.dayId), prev = prevSamePass(w.dayId, d);
   const order = [...(p ? p.ex.map(e => e.id) : []), ...Object.keys(w.sets)].filter((id, i, a) => a.indexOf(id) === i && EX[id]);
   const rows = order.map(id => ({ id, sets: (w.sets[id] || []).filter(hasData) })).filter(r => r.sets.length);

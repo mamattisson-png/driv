@@ -36,7 +36,7 @@ function actKcal(a) {
   return Math.round(met * (S.profile.weight || 75) * (+a.min || 0) / 60);
 }
 // Dagens kalorimål, med aktiviteternas kcal om man valt det
-const burnedOn = date => S.actKcal ? actsOn(date).reduce((s, a) => s + actKcal(a), 0) : 0;
+const burnedOn = date => S.actKcal ? [...actsOn(date), ...schedActs(date)].reduce((s, a) => s + actKcal(a), 0) : 0;
 const actLine = a => [`${+a.min} min`, a.km ? `${fmtNum(+a.km)} km` : "", INTENSITY[(a.int || 2) - 1].toLowerCase()].filter(Boolean).join(" · ");
 
 // De aktiviteter man loggat oftast, sedan de vanligaste i listan
@@ -56,21 +56,31 @@ function openAct(date, idx, name) {
 function actSheetView() {
   const s = actSheet, info = actInfo(s.name), showKm = s.custom || (info && info.km);
   const kcal = s.name ? actKcal(s) : 0;
-  return `<div class="overlay" data-actclose><div class="sheet">
-    <div class="row between"><h2>${s.idx != null ? "Ändra aktivitet" : "Logga aktivitet"}</h2><button class="small ghost" data-actclose aria-label="Stäng">${icon("close", 18)}</button></div>
-    ${s.date !== TODAY ? `<div class="muted small" style="margin-top:-6px">${dateLabel(s.date).replace(/^./, c => c.toUpperCase())}</div>` : ""}
-    <div class="chips actchips">${favActs(12).map(n => `<button data-actpick="${esc(n)}" class="${!s.custom && s.name === n ? "on" : ""}">${esc(n)}</button>`).join("")}
+  // s.plan: ett pass i schemat (upplägget). s.dayId: en aktivitet i schemat som markeras klar. Se schema.js.
+  const title = s.plan ? (s.i != null ? `Ändra ${esc(s.name)}` : "Lägg till pass") : s.dayId ? `${esc(s.name)}${s.done ? "" : " klar"}`
+    : s.idx != null ? "Ändra aktivitet" : "Logga aktivitet";
+  const gym = s.plan && s.gym;
+  const note = s.plan ? `Ungefär ${kcal} kcal. Räknas som ett pass i veckan när du markerat den klar.`
+    : `Ungefär ${kcal} kcal förbrända${S.actKcal ? ", som läggs till dagens kalorimål" : ""}.${s.dayId || (s.min >= 45 && S.actCount !== false) ? " Räknas som ett pass den här veckan." : ""}`;
+  return `<div class="overlay" data-actclose><div class="sheet actsheet">
+    <div class="row between"><h2>${title}</h2><button class="small ghost" data-actclose aria-label="Stäng">${icon("close", 18)}</button></div>
+    ${s.date && s.date !== TODAY ? `<div class="muted small" style="margin-top:-6px">${dateLabel(s.date).replace(/^./, c => c.toUpperCase())}</div>` : ""}
+    ${s.plan ? planSheetTop(s) : ""}
+    ${gym ? `<label class="field" style="margin-top:10px">Namn på passet<input id="actname" value="${esc(s.name)}" placeholder="t.ex. Bröst och armar" maxlength="30" autocomplete="off"></label>
+      <div class="muted small" style="margin-top:8px">Övningarna lägger du till i passet under Träna.</div>`
+    : `${s.dayId ? "" : `${s.plan ? `<div class="klabel" style="margin-top:12px">Vad</div>` : ""}<div class="chips actchips">${(s.plan ? [...new Set(["Yoga", "Löpning", "Promenad", "Cykling", "Simning", ...favActs(20)])].slice(0, 12) : favActs(12)).map(n => `<button data-actpick="${esc(n)}" class="${!s.custom && s.name === n ? "on" : ""}">${esc(n)}</button>`).join("")}
       <button data-actpick="" class="${s.custom ? "on" : ""}">＋ Annan</button></div>
-    ${s.custom ? `<label class="field" style="margin-top:10px">Vad gjorde du?<input id="actname" value="${esc(s.name)}" placeholder="t.ex. Bouldering" maxlength="30" autocomplete="off"></label>` : ""}
-    <div class="row qtyrow" style="margin-top:14px"><span class="grow">Tid</span>
+    ${s.custom ? `<label class="field" style="margin-top:10px">${s.plan ? "Vad vill du göra?" : "Vad gjorde du?"}<input id="actname" value="${esc(s.name)}" placeholder="t.ex. Bouldering" maxlength="30" autocomplete="off"></label>` : ""}`}
+    <div class="row qtyrow" style="margin-top:14px"><span class="grow">${s.plan ? "Mål, tid" : "Tid"}</span>
       <button class="step" data-actmin="-15" ${s.min <= 15 ? "disabled" : ""} aria-label="Kortare">−</button><b class="qcount">${s.min} min</b>
       <button class="step" data-actmin="15" aria-label="Längre">+</button></div>
     <div class="seg three" style="margin-top:12px" role="radiogroup" aria-label="Hur tungt">${INTENSITY.map((n, i) =>
       `<button data-actint="${i + 1}" class="${s.int === i + 1 ? "on" : ""}" role="radio" aria-checked="${s.int === i + 1}">${n}</button>`).join("")}</div>
-    ${showKm ? `<label class="field" style="margin-top:12px">Sträcka i km (frivilligt)<input id="actkm" type="number" inputmode="decimal" step="0.1" min="0" value="${s.km}"></label>` : ""}
-    ${s.name ? `<div class="muted small" style="margin-top:10px">Ungefär ${kcal} kcal förbrända${S.actKcal ? ", som läggs till dagens kalorimål" : ""}.${s.min >= 45 && S.actCount !== false ? " Räknas som ett pass den här veckan." : ""}</div>` : ""}
-    <div class="sheet-foot row between">${s.idx != null ? `<button class="ghost" data-actdel>Ta bort</button>` : "<span></span>"}
-      <button class="primary" data-actsave ${(s.name || "").trim() ? "" : "disabled"}>Spara</button></div>
+    ${showKm ? `<label class="field" style="margin-top:12px">${s.plan ? "Mål, sträcka i km (frivilligt)" : "Sträcka i km (frivilligt)"}<input id="actkm" type="number" inputmode="decimal" step="0.1" min="0" value="${s.km}"></label>` : ""}
+    ${s.name ? `<div class="muted small" style="margin-top:10px">${note}</div>` : ""}`}
+    ${s.plan ? planSheetDays(s) : ""}
+    <div class="sheet-foot row between">${s.idx != null || (s.dayId && s.done) ? `<button class="ghost" data-actdel>Ta bort</button>` : "<span></span>"}
+      <button class="primary" data-actsave ${(s.name || "").trim() && !(s.plan && draft.mode === "fixed" && s.wd == null) ? "" : "disabled"}>${s.plan ? (s.i != null ? "Spara" : `Lägg till${s.name ? " " + esc(s.name) : ""}`) : s.dayId && !s.done ? "Klar" : "Spara"}</button></div>
   </div></div>`;
 }
 

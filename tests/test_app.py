@@ -63,7 +63,7 @@ def test_alla_upplagg_har_giltiga_standardovningar(page):
         for c in range(1, 8):
             page.click(f'[data-count="{c}"]')
             assert page.evaluate("draft.days.length") == c
-            assert page.evaluate("draft.days.every(d => d.ex.length || d.type === 'custom')")
+            assert page.evaluate("draft.days.every(d => d.ex.length || d.type === 'custom' || d.type === 'act')")
         page.click('[data-onb="1"]')
 
 

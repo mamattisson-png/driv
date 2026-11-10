@@ -28,6 +28,8 @@ const TYPES = {
   hfull: { label: "Hantlar", color: "full", muscles: "Hela kroppen med hantlar", cats: ["push", "pull", "legs"] },
   glutes: { label: "Rumpa", color: "lower", muscles: "Säte, baksida lår", cats: ["legs"] },
   custom: { label: "Pass", color: "full", muscles: "Dina egna övningar", cats: ["all"] },
+  // Aktivitet i schemat (yoga, löpning …): inga övningar, bara tid och mål (schema.js)
+  act: { label: "Aktivitet", color: "act", muscles: "Annan träning", cats: [] },
 };
 // Program: vilka passtyper som ingår för varje antal pass i veckan
 const PROGRAMS = {
@@ -53,6 +55,8 @@ const PROGRAMS = {
     2: ["hfull", "hfull"], 3: ["hfull", "hfull", "hfull"], 4: ["hfull", "hfull", "hfull", "hfull"] } },
   rumpa: { name: "Rumpa & ben", info: "Extra fokus på säte och baksida lår, plus ett överkroppspass.", days: {
     3: ["glutes", "upper", "lower"], 4: ["glutes", "upper", "glutes", "lower"] } },
+  aktiviteter: { name: "Bara aktiviteter", info: "Yoga, löpning, promenader … utan gymövningar. Du väljer vad och hur länge.", days: {
+    1: ["act"], 2: ["act", "act"], 3: ["act", "act", "act"], 4: Array(4).fill("act"), 5: Array(5).fill("act"), 6: Array(6).fill("act"), 7: Array(7).fill("act") } },
   eget: { name: "Eget schema", info: "Bygg helt själv: välj antal pass, döp dem och lägg till dina egna övningar.", days: {
     1: ["custom"], 2: ["custom", "custom"], 3: ["custom", "custom", "custom"], 4: ["custom", "custom", "custom", "custom"],
     5: ["custom", "custom", "custom", "custom", "custom"], 6: ["custom", "custom", "custom", "custom", "custom", "custom"] } },
@@ -180,11 +184,21 @@ function makeDays(prog, count, old = []) {
     const repeated = !TYPES[type].fixedName && types.filter(t => t === type).length > 1;
     const name = TYPES[type].label + (repeated ? " " + "ABCDEFG"[(round - 1) % 7] : "");
     const prev = old[i];
-    // Ett pass man själv döpt behåller sitt namn
-    if (prev && prev.type === type) return prev.named ? prev : { ...prev, name };
+    // Ett pass man själv döpt behåller sitt namn, en aktivitet allt man valt
+    if (prev && prev.type === type) return prev.named || type === "act" ? prev : { ...prev, name };
+    if (type === "act") return newActDay({ name: ACT_CYCLE[i % ACT_CYCLE.length], min: 30, int: 2 }, false, i);
     const list = DEFAULT_EX[round > 1 && DEFAULT_EX[type + round] ? type + round : type];
     return { id: `d${i + 1}-${type}-${Date.now().toString(36)}`, type, name, ex: list.map(exEntry) };
   });
+}
+
+// Passen i programmet byggs om, men pass man lagt till själv (extra) ligger kvar på sin plats
+function planDays(prog, count, old = []) {
+  const base = makeDays(prog, count, old.filter(d => !d.extra)), out = [];
+  let k = 0;
+  for (const d of old) if (d.extra) out.push(d); else if (k < base.length) out.push(base[k++]);
+  while (k < base.length) out.push(base[k++]);
+  return out;
 }
 
 function freshState() {
@@ -787,7 +801,7 @@ function weekSummary(ws) {
     passes: logged.reduce((a, d) => a + workoutsOn(d).filter(w => w.done).length + actsOn(d).filter(actCounts).length, 0),
     // Löpning loggas som daily eller som aktivitet
     km: logged.reduce((a, d) => a + (+(S.log[d].dailies.lop || {}).km || 0)
-      + actsOn(d).filter(x => x.name === "Löpning").reduce((k, x) => k + (+x.km || 0), 0), 0),
+      + [...actsOn(d), ...schedActs(d)].filter(x => x.name === "Löpning").reduce((k, x) => k + (+x.km || 0), 0), 0),
     dailies: dates.filter(allDailiesDone).length,
     kcal: kcalDays.length ? Math.round(kcalDays.reduce((a, d) => a + eaten(d).kcal, 0) / kcalDays.length) : 0,
   };
@@ -1192,7 +1206,7 @@ const VIEWS = {
   idag() {
     const m = macros(), e = eaten(), t = todaysPass(), d = t.d, w = t.w;
     m.kcal += burnedOn(TODAY);
-    const done = !!(w && w.done), started = !done && (t.active || (w && d.ex.some(x => ((w.sets[x.id]) || []).some(z => z && z.ok))));
+    const done = !!(w && w.done), started = !done && (t.active || !!actRunning(d) || (w && d.ex.some(x => ((w.sets[x.id]) || []).some(z => z && z.ok))));
     const dailyEx = dailyList(logDate()), supp = S.supplements || [];
     const completed = dailyEx.filter(x => dailyDone(logDate(), x.id)).length + supp.filter(x => day().dailies["supp:" + x.id]).length;
     const total = dailyEx.length + supp.length, dailysOk = total > 0 && completed === total;
@@ -1215,9 +1229,11 @@ const VIEWS = {
     const no = (n, ok) => `<span class="h3-no ${ok ? "ok" : ""}" aria-hidden="true">${ok ? icon("check", 14) : n}</span>`;
     const exN = `${d.ex.length} ${d.ex.length === 1 ? "övning" : "övningar"}`;
     const mins = Math.max(5, Math.round(d.ex.reduce((a, x) => a + (+x.sets || 0), 0) * 2.5 / 5) * 5);
-    const passInfo = t.rest ? `Återhämtning · nästa pass ${WD_LONG[weekdayOf(t.next)]}` : [passMuscles(d), exN, d.ex.length ? `~${mins} min` : ""].filter(Boolean).map(esc).join(" · ");
+    const passInfo = t.rest ? `Återhämtning · nästa pass ${WD_LONG[weekdayOf(t.next)]}` : isActDay(d) ? esc(`Aktivitet · ${done && w.act ? actLine(w.act) : actGoal(d)}`)
+      : [passMuscles(d), exN, d.ex.length ? `~${mins} min` : ""].filter(Boolean).map(esc).join(" · ");
     const passBtn = done ? `<button class="h3-btn ok" data-seepass="${d.id}">${icon("check", 16)}Passet klart · visa</button>`
       : t.rest ? `<button class="h3-btn ghost" data-tab="pass">Kör ett pass ändå</button>`
+      : isActDay(d) ? `<div class="row h3-actbtns">${actButtons(d, "h3-btn")}</div>`
       : d.ex.length ? `<button class="h3-btn" data-focusstart="${d.id}">${icon("play", 16)}${started ? "Fortsätt" : "Starta"} ${esc(d.name)}</button>`
       : `<button class="h3-btn ghost" data-seepass="${d.id}">Lägg till övningar</button>`;
     const row = (ic, title, sub, attrs, end = "right") => `<button class="h3-row" ${attrs}><span class="h3-ic">${ic}</span><span class="grow"><b>${title}</b><small>${sub}</small></span>${icon(end, 18)}</button>`;
@@ -2026,7 +2042,7 @@ function syncDone(d) {
 function saveSetup() {
   const back = S.setupDone ? setupFrom : null;
   const weekdays = draft.weekdays.slice().sort((a, b) => a - b);
-  S.plan = { program: draft.program, count: draft.count, mode: draft.mode, weekdays, days: draft.days };
+  S.plan = { program: draft.program, count: draft.days.length, mode: draft.mode, weekdays, days: draft.days };
   // Har man hoppat över kalorimålet påminner Kost om att ställa in det
   if (!S.setupDone && S.profileSet !== true) S.profileSet = false;
   if (!S.setupDone) S.tourAsked = false;   // nya användare erbjuds rundturen på Hem
@@ -2246,9 +2262,10 @@ document.addEventListener("click", ev => {
   }
   else if (ds.ss) { const e = exList(ds.ss)[+ds.idx]; if (e.ss) delete e.ss; else e.ss = true; }
   else if (ds.count) {
-    draft.count = Math.max(1, Math.min(7, +ds.count));
-    draft.days = makeDays(draft.program, draft.count, draft.days);
-    if (draft.weekdays.length !== draft.count) draft.weekdays = DEFAULT_WEEKDAYS[draft.count].slice();
+    const extra = draft.days.filter(d => d.extra).length;
+    draft.count = Math.max(1, Math.min(7 - extra, +ds.count));
+    draft.days = planDays(draft.program, draft.count, draft.days);
+    if (draft.weekdays.length !== draft.days.length) draft.weekdays = DEFAULT_WEEKDAYS[draft.days.length].slice();
   }
   else if (ds.mode) draft.mode = ds.mode;
   else if (ds.progtoggle !== undefined) progOpen = !progOpen;
@@ -2257,13 +2274,14 @@ document.addEventListener("click", ev => {
     if (S.setupDone) progOpen = false;
     const c = counts(ds.prog);
     if (!c.includes(draft.count)) draft.count = c.includes(3) ? 3 : c[0];
-    if (draft.weekdays.length !== draft.count) draft.weekdays = DEFAULT_WEEKDAYS[draft.count].slice();
-    draft.days = makeDays(draft.program, draft.count, draft.days);
+    draft.count = Math.min(draft.count, 7 - draft.days.filter(d => d.extra).length);
+    draft.days = planDays(draft.program, draft.count, draft.days);
+    if (draft.weekdays.length !== draft.days.length) draft.weekdays = DEFAULT_WEEKDAYS[draft.days.length].slice();
   }
   else if (ds.wd) {
     const i = +ds.wd, w = draft.weekdays;
     if (w.includes(i)) w.splice(w.indexOf(i), 1);
-    else if (w.length < draft.count) w.push(i);
+    else if (w.length < draft.days.length) w.push(i);
   }
   else if (ds.savesetup !== undefined) { saveSetup(); onb = 0; daysOpen = false; progOpen = false; }
   else if (ds.cancelsetup !== undefined) { draft = null; tab = setupFrom || "profil"; }
