@@ -2005,6 +2005,18 @@ button.h3-card.h3-head { background: var(--card); padding: 12px 14px; }
 .dlx-addrow b { color: var(--accent-text); font-weight: 600; }
 .dlx-addrow .h3-ic { color: var(--accent-text); }
 .dlx .supplement-form { margin-top: 10px; }
+/* Starten: Gym, Motion eller Båda */
+.onbkinds { display: flex; flex-direction: column; gap: 10px; margin: 14px 0 6px; }
+.onbkind { display: flex; align-items: center; gap: 14px; width: 100%; padding: 14px 16px; border-radius: 20px; border: 1.5px solid var(--line); background: var(--card); color: var(--text); text-align: left; font: inherit; }
+.onbkind.on { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, var(--card)); }
+.onbkind .grow { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.onbkind b { font-size: 17px; font-weight: 600; }
+.onbkind small { color: var(--muted); font-size: 13.5px; line-height: 1.35; }
+.okic { width: 46px; height: 46px; flex: none; border-radius: 14px; display: grid; place-items: center; background: var(--card-2); }
+.okic.g { background: var(--accent-soft); color: var(--accent-text); }
+.okic.m { background: var(--ok-soft); color: var(--ok-text); }
+.okrad { width: 22px; height: 22px; flex: none; border-radius: 50%; border: 2px solid var(--line-strong); }
+.onbkind.on .okrad { border: 7px solid var(--accent-strong); }
 /* Aktiviteter i schemat */
 .tag.act { background: var(--ok-soft); color: var(--ok-text); }
 .actgoal { display: flex; gap: 8px; margin-top: 8px; }

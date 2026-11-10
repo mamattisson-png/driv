@@ -57,7 +57,10 @@ def test_alla_upplagg_har_giltiga_standardovningar(page):
     assert page.evaluate("Object.values(DEFAULT_EX).flat().map(x => x.split('@')[0]).filter(id => !EX[id])") == []
     to_step(page, 1)
     for prog in page.evaluate("Object.keys(PROGRAMS)"):
-        page.click(f'[data-prog="{prog}"]')
+        # Motion är ett eget val i starten, inte en programruta
+        page.click('[data-onbkind="motion"]' if prog == "aktiviteter" else '[data-onbkind="gym"]')
+        if prog != "aktiviteter":
+            page.click(f'[data-prog="{prog}"]')
         assert page.evaluate(f"counts('{prog}')") == [1, 2, 3, 4, 5, 6, 7]
         page.click('[data-onb="2"]')
         for c in range(1, 8):

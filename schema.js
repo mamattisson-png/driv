@@ -49,7 +49,7 @@ function actPassCard(d, statusHtml, ok, next) {
   // Nästa pass i veckan som inte är gjort, så att man kommer vidare
   const L = S.plan.days, i = L.indexOf(d), nx = a && [...L.slice(i + 1), ...L.slice(0, i)].find(p => !completedPassDate(p));
   return `<section class="tpass actpass ${ok ? "ok" : next ? "next" : ""}" aria-label="${esc(d.name)}">
-    <span class="row between tp-top">${statusHtml}<span class="tag act">Aktivitet</span></span>
+    <span class="row between tp-top">${statusHtml}<span class="tag act">Motion</span></span>
     <span class="tp-namebtn"><span class="tp-name">${esc(d.name)}</span><span class="muted small tp-mus">${cap(INTENSITY[((a || d.act).int || 2) - 1].toLowerCase())}</span></span>
     <span class="klabel actsec">${a ? "Resultat" : "Mål"}</span>
     <div class="actgoal">${tiles}</div>
@@ -61,7 +61,7 @@ function actPassSummary(w, date) {
   const d = dayById(w.dayId);
   return `<section class="hpass" aria-label="${esc(w.act.name)}">
     <div class="row between hpass-top"><span class="row" style="gap:8px">${tag("act")}<b>${esc(w.act.name)}</b></span><span class="muted small">${esc(actLine(w.act))}</span></div>
-    <div class="muted small">${d ? "Från schemat" : "Aktivitet"} · ungefär ${actKcal(w.act)} kcal</div>
+    <div class="muted small">${d ? "Från schemat" : "Motion"} · ungefär ${actKcal(w.act)} kcal</div>
     ${d ? `<button class="small hedit" data-actdaydone="${d.id}" data-actdate="${date}">${icon("edit", 14)}Ändra</button>` : ""}</section>`;
 }
 
@@ -84,8 +84,8 @@ function openPlanSheet(i) {
 // Delar av bladet som bara finns för schemat eller för en aktivitet i schemat
 function planSheetTop(s) {
   if (!s.plan || s.i != null) return "";
-  return `<div class="seg two plankind" role="radiogroup" aria-label="Typ av pass"><button data-plankind="gym" class="${s.gym ? "on" : ""}" role="radio" aria-checked="${s.gym}">Gympass</button>
-    <button data-plankind="act" class="${s.gym ? "" : "on"}" role="radio" aria-checked="${!s.gym}">Aktivitet</button></div>`;
+  return `<div class="seg two plankind" role="radiogroup" aria-label="Typ av pass"><button data-plankind="gym" class="${s.gym ? "on" : ""}" role="radio" aria-checked="${s.gym}">Gym</button>
+    <button data-plankind="act" class="${s.gym ? "" : "on"}" role="radio" aria-checked="${!s.gym}">Motion</button></div>`;
 }
 function planSheetDays(s) {
   if (!s.plan || draft.mode !== "fixed") return "";
@@ -133,7 +133,7 @@ function planList() {
   const fixed = draft.mode === "fixed", sorted = draft.weekdays.slice().sort((a, b) => a - b), ok = !fixed || sorted.length === draft.days.length;
   return `<div class="row between planhead"><span class="klabel">Veckans pass · ${draft.days.length}</span>${draft.days.length > 1 ? `<span class="muted small">Dra för att flytta</span>` : ""}</div>
     <section class="h3-list planlist">${draft.days.map((d, i) => {
-      const act = isActDay(d), sub = act ? `Aktivitet · ${actGoal(d)}` : `Gympass · ${d.ex.length} ${d.ex.length === 1 ? "övning" : "övningar"}`;
+      const act = isActDay(d), sub = act ? `Motion · ${actGoal(d)}` : `Gym · ${d.ex.length} ${d.ex.length === 1 ? "övning" : "övningar"}`;
       return `<div class="planrow"><div class="h3-row"><span class="plannum" data-plandrag="${i}" aria-label="Dra för att flytta ${esc(d.name)}">${fixed && ok ? WD[sorted[i]].slice(0, 2) : i + 1}</span>
         <span class="h3-ic ${act ? "actic" : "gymic"}">${icon(act ? "aktivitet" : "trana", 18)}</span>
         <span class="grow"><b>${esc(d.name)}</b><small>${esc(sub)}</small></span>

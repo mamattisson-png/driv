@@ -58,7 +58,7 @@ def test_activity_done_counts_as_pass(page):
     assert w["done"] and w["act"]["name"] == "Yoga" and w["act"]["min"] == 30
     assert page.evaluate("weekSummary(weekStart(TODAY)).passes") == 1
     go(page, "idag")
-    assert "Aktivitet" in page.text_content(".h3-passcard")
+    assert "Motion" in page.text_content(".h3-passcard")
     page.evaluate("histDay = TODAY; tab = 'historik'; render()")
     assert "Från schemat" in page.text_content(".hsheet")
 
@@ -83,3 +83,18 @@ def test_only_activities_program(page):
     go(page, "pass")
     assert page.locator(".actpass").count() == 1
     assert page.locator("[data-focusstart]").count() == 0
+
+
+def test_onboarding_gym_motion_both(page):
+    from conftest import open_app
+    open_app(page)
+    page.evaluate("onb = 1; tab = 'upplagg'; render()")
+    assert page.locator(".onbkind").count() == 3
+    page.click('[data-onbkind="motion"]')
+    assert page.locator("[data-prog]").count() == 0
+    assert all(page.evaluate("draft.days.map(d => d.type === 'act')"))
+    page.click('[data-onbkind="both"]')
+    assert page.evaluate("draft.days.map(d => d.name)") == ["Push", "Pull", "Legs", "Promenad", "Yoga"]
+    assert page.locator('[data-prog="aktiviteter"]').count() == 0
+    page.click('[data-onbkind="gym"]')
+    assert page.evaluate("draft.days.map(d => d.name)") == ["Push", "Pull", "Legs"]

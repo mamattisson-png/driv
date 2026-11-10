@@ -77,7 +77,8 @@ function accountNote() {
     : cloud.status === "error" ? "Kunde inte hämta från kontot. Ladda om sidan." : "Hämtar från kontot…"}</span></div>`;
 }
 
-const progTiles = sel => `<div class="progtiles">${Object.entries(PROGRAMS).filter(([id]) => id !== "eget").map(([id, pr]) =>
+// I starten väljs Motion som ett eget val (onbKinds), inte bland gymprogrammen
+const progTiles = (sel, gymOnly) => `<div class="progtiles">${Object.entries(PROGRAMS).filter(([id]) => id !== "eget" && !(gymOnly && id === "aktiviteter")).map(([id, pr]) =>
   `<button class="progtile ${sel === id ? "on" : ""}" data-prog="${id}" aria-pressed="${sel === id}"><b>${pr.name}</b><span>${pr.best} pass</span></button>`).join("")}</div>
   <button class="progtile own ${sel === "eget" ? "on" : ""}" data-prog="eget" aria-pressed="${sel === "eget"}"><span class="plusic">${icon("plus", 18)}</span>
     <span class="grow col"><b>Eget schema</b><span class="muted small">Döp passen och välj övningar själv</span></span></button>`;
@@ -94,16 +95,47 @@ function daysPicker() {
       : `<div class="muted small daysnote">Appen föreslår nästa pass i ordningen när du tränar, vilken dag det än är.</div>`}`;
 }
 
+// Gym, Motion eller Båda: Motion är programmet Bara motion, Båda är ett gymprogram med motionspass tillagda
+const draftKind = () => draft.program === "aktiviteter" ? "motion" : draft.days.some(d => d.extra && d.type === "act") ? "both" : "gym";
+function onbKinds() {
+  const k = draftKind();
+  const opt = (id, ic, cls, title, sub) => `<button class="onbkind ${k === id ? "on" : ""}" data-onbkind="${id}" role="radio" aria-checked="${k === id}">
+    <span class="okic ${cls}">${icon(ic, 22)}</span><span class="grow"><b>${title}</b><small>${sub}</small></span><span class="okrad" aria-hidden="true"></span></button>`;
+  return `<div class="onbkinds" role="radiogroup" aria-label="Hur vill du träna?">${opt("gym", "trana", "g", "Gym", "Färdiga program med övningar, set och vikter")}
+    ${opt("motion", "aktivitet", "m", "Motion", "Promenad, löpning, yoga, cykling … med tid och mål")}
+    ${opt("both", "plus", "b", "Båda", "Ett gymprogram och motion samma vecka")}</div>`;
+}
+function setDraftKind(kind) {
+  const keep = draft.days.filter(d => d.extra && d.type !== "act");
+  if (kind === "motion") {
+    draft.program = "aktiviteter"; draft.count = 3;
+    draft.days = planDays("aktiviteter", 3, keep);
+  } else {
+    if (draft.program === "aktiviteter") { draft.program = "ppl"; draft.count = 3; }
+    draft.days = planDays(draft.program, draft.count, keep);
+    if (kind === "both") draft.days.push(newActDay({ name: "Promenad", min: 30, int: 1 }, true, 7), newActDay({ name: "Yoga", min: 30, int: 1 }, true, 8));
+  }
+  if (draft.weekdays.length !== draft.days.length) draft.weekdays = DEFAULT_WEEKDAYS[Math.min(7, draft.days.length)].slice();
+}
+document.addEventListener("click", ev => {
+  const t = ev.target.closest && ev.target.closest("[data-onbkind]");
+  if (!t || !draft) return;
+  ev.stopImmediatePropagation();
+  setDraftKind(t.dataset.onbkind); render();
+}, true);
+
 function onbView() {
   ensureDraft();
   const pr = PROGRAMS[draft.program], n = draft.count;
   if (onb === 1) return `${stepTop(1, 'data-onb="0"', "Tillbaka")}${accountNote()}
-    <h1>Hur vill du träna?</h1><div class="muted lead">Välj ett färdigt program. Övningarna är redan ifyllda.</div>
-    ${progTiles(draft.program)}
+    <h1>Hur vill du träna?</h1><div class="muted lead">Du kan blanda och ändra när du vill.</div>
+    ${onbKinds()}
+    ${draftKind() === "motion" ? "" : `<div class="klabel sechead">Välj gymprogram</div><div class="muted small" style="margin:-4px 4px 8px">Övningarna är redan ifyllda.</div>${progTiles(draft.program, true)}`}
     <div class="stepcta"><button class="primary wide bigbtn" data-onb="2">Nästa</button></div>`;
   if (onb === 2) return `${stepTop(2, 'data-onb="1"', "Program")}
-    <h1>Hur ofta?</h1><div class="muted lead">${draft.program === "eget" ? "Hur många pass vill du ha i veckan?" : `${pr.name} är gjort för ${pr.best} pass i veckan.`}</div>
-    <div class="klabel sechead">Pass i veckan</div>
+    <h1>Hur ofta?</h1><div class="muted lead">${draftKind() === "motion" ? "Hur många gånger i veckan vill du röra på dig? Vad och hur länge ändrar du sen under Träningsschema."
+      : draft.program === "eget" ? "Hur många pass vill du ha i veckan?" : `${pr.name} är gjort för ${pr.best} pass i veckan.${draftKind() === "both" ? " Motionspassen kommer utöver dem." : ""}`}</div>
+    <div class="klabel sechead">${draftKind() === "motion" ? "Motionspass i veckan" : draftKind() === "both" ? "Gympass i veckan" : "Pass i veckan"}</div>
     <div class="seg count">${counts(draft.program).map(c => `<button data-count="${c}" class="${n === c ? "on" : ""}" aria-pressed="${n === c}">${c}</button>`).join("")}</div>
     <div class="muted small daysnote">Passen blir: <b class="strong">${draft.days.map(d => esc(d.name)).join(", ")}</b>${pr.fit.includes(n) ? "" : `. ${pr.name} är gjort för ${pr.best} pass, så passen har anpassats`}${n === 7 ? ". Sju pass i veckan kräver bra återhämtning" : ""}</div>
     <div class="klabel sechead">När tränar du?</div>

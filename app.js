@@ -29,7 +29,7 @@ const TYPES = {
   glutes: { label: "Rumpa", color: "lower", muscles: "Säte, baksida lår", cats: ["legs"] },
   custom: { label: "Pass", color: "full", muscles: "Dina egna övningar", cats: ["all"] },
   // Aktivitet i schemat (yoga, löpning …): inga övningar, bara tid och mål (schema.js)
-  act: { label: "Aktivitet", color: "act", muscles: "Annan träning", cats: [] },
+  act: { label: "Motion", color: "act", muscles: "Annan träning", cats: [] },
 };
 // Program: vilka passtyper som ingår för varje antal pass i veckan
 const PROGRAMS = {
@@ -55,7 +55,7 @@ const PROGRAMS = {
     2: ["hfull", "hfull"], 3: ["hfull", "hfull", "hfull"], 4: ["hfull", "hfull", "hfull", "hfull"] } },
   rumpa: { name: "Rumpa & ben", info: "Extra fokus på säte och baksida lår, plus ett överkroppspass.", days: {
     3: ["glutes", "upper", "lower"], 4: ["glutes", "upper", "glutes", "lower"] } },
-  aktiviteter: { name: "Bara aktiviteter", info: "Yoga, löpning, promenader … utan gymövningar. Du väljer vad och hur länge.", days: {
+  aktiviteter: { name: "Bara motion", info: "Promenad, löpning, yoga, cykling … utan gymövningar. Du väljer vad och hur länge.", days: {
     1: ["act"], 2: ["act", "act"], 3: ["act", "act", "act"], 4: Array(4).fill("act"), 5: Array(5).fill("act"), 6: Array(6).fill("act"), 7: Array(7).fill("act") } },
   eget: { name: "Eget schema", info: "Bygg helt själv: välj antal pass, döp dem och lägg till dina egna övningar.", days: {
     1: ["custom"], 2: ["custom", "custom"], 3: ["custom", "custom", "custom"], 4: ["custom", "custom", "custom", "custom"],
@@ -1229,7 +1229,7 @@ const VIEWS = {
     const no = (n, ok) => `<span class="h3-no ${ok ? "ok" : ""}" aria-hidden="true">${ok ? icon("check", 14) : n}</span>`;
     const exN = `${d.ex.length} ${d.ex.length === 1 ? "övning" : "övningar"}`;
     const mins = Math.max(5, Math.round(d.ex.reduce((a, x) => a + (+x.sets || 0), 0) * 2.5 / 5) * 5);
-    const passInfo = t.rest ? `Återhämtning · nästa pass ${WD_LONG[weekdayOf(t.next)]}` : isActDay(d) ? esc(`Aktivitet · ${done && w.act ? actLine(w.act) : actGoal(d)}`)
+    const passInfo = t.rest ? `Återhämtning · nästa pass ${WD_LONG[weekdayOf(t.next)]}` : isActDay(d) ? esc(`Motion · ${done && w.act ? actLine(w.act) : actGoal(d)}`)
       : [passMuscles(d), exN, d.ex.length ? `~${mins} min` : ""].filter(Boolean).map(esc).join(" · ");
     const passBtn = done ? `<button class="h3-btn ok" data-seepass="${d.id}">${icon("check", 16)}Passet klart · visa</button>`
       : t.rest ? `<button class="h3-btn ghost" data-tab="pass">Kör ett pass ändå</button>`
