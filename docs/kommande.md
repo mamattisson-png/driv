@@ -72,7 +72,7 @@ Senast uppdaterad: 2026-11-06. Status bygger på dokumenterade publiceringar och
 | 68 | Förbättra menyn Avsluta passet | Design | Medel | Klar |
 | 69 | Anpassa hälsningen efter alla dagens mål | Hem | Medel | Klar |
 | 70 | Flexibelt träningsschema för alla aktiviteter | Träning | Hög | Kommande |
-| 71 | Anpassningsbara Dailys med sparade rutiner och rotation | Dailys | Hög | Kommande |
+| 71 | Anpassningsbara Dailys med sparade rutiner och rotation | Dailys | Hög | Klar |
 | 72 | Profiler med statistik och profilbild | Vänner | Medel | Kommande |
 | 73 | Fokusläget: en rad under setet med Mer, och dra övningar för att flytta dem | Träning | Hög | Klar |
 | 74 | Dra övningar som i andra appar (de andra gör plats) och diskret tips | Träning | Medel | Klar |
