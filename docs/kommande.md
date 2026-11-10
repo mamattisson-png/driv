@@ -80,6 +80,7 @@ Senast uppdaterad: 2026-11-06. Status bygger på dokumenterade publiceringar och
 | 76 | Träna går att nå under ett pågående pass, med en rad som tar en tillbaka | Träning | Hög | Klar |
 | 77 | Övningsgubbar: rätt håll på kroppen och knän som böjer rätt | Träning | Hög | Klar |
 | 78 | MuscleWiki: bara kontrollerade länkar direkt till rätt övning (304 av 533) | Träning | Hög | Klar |
+| 79 | Streckkodsskannern fungerar på iPhone (egen läsning av kamerabilden när telefonen saknar inbyggd läsare) | Kost | Hög | Klar |
 
 ## Detaljer och acceptanskriterier
 
