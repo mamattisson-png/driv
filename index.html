@@ -2008,8 +2008,11 @@ button.h3-card.h3-head { background: var(--card); padding: 12px 14px; }
 /* Aktiviteter i schemat */
 .tag.act { background: var(--ok-soft); color: var(--ok-text); }
 .actgoal { display: flex; gap: 8px; margin-top: 8px; }
-.actgoal > div { flex: 1; display: flex; flex-direction: column; gap: 2px; background: var(--card-2); border-radius: 12px; padding: 10px 12px; }
+.actgoal > .acttile { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 2px; background: var(--card-2); border: 0; border-radius: 12px; padding: 10px 12px; color: var(--text); text-align: left; font: inherit; }
+button.acttile { min-height: 64px; cursor: pointer; }
 .actgoal b { font-size: 17px; font-weight: 600; }
+.acttile i { font-style: normal; font-size: 11.5px; color: var(--ok-text); }
+.actsec { margin-top: 10px; }
 .actpass .tp-namebtn { cursor: default; }
 .actother { text-align: center; margin-top: 8px; }
 .h3-actbtns { gap: 8px; }

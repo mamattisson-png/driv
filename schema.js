@@ -28,21 +28,33 @@ setInterval(() => { if (S.actRun) document.querySelectorAll("[data-actclock]").f
 // Knapparna för en aktivitet: Starta timer och Klar, Avsluta medan den pågår, Ändra när den är gjord
 function actButtons(d, cls = "") {
   const w = workoutOn(TODAY, d.id), run = actRunning(d);
-  if (w && w.done && w.act) return `<button class="${cls}" data-actdaydone="${d.id}" data-actdate="${TODAY}">${icon("check", 16)}${esc(d.name)} klar · ${esc(actLine(w.act))}</button>`;
+  if (w && w.done && w.act) return `<button class="${cls} grow" data-actdaydone="${d.id}" data-actdate="${TODAY}">${icon("edit", 16)}Ändra · ${esc(actLine(w.act))}</button>`;
   if (run) return `<button class="primary ${cls} grow" data-actstop="${d.id}">Avsluta · <span data-actclock>${mmss(Date.now() - run.start)}</span></button>`;
   return `<button class="primary ${cls} grow" data-actstart="${d.id}">${icon("play", 16)}Starta timer</button>
     <button class="${cls}" data-actdaydone="${d.id}" data-actdate="${TODAY}">${icon("check", 16)}Klar</button>`;
 }
-// Kortet på Träna när en aktivitet är vald
+// Kortet på Träna när en aktivitet är vald: Mål innan, Resultat (mot målet) när den är gjord.
+// Rutorna med resultatet går att trycka på för att ändra, precis som knappen Ändra.
 function actPassCard(d, statusHtml, ok, next) {
-  const w = workoutOn(TODAY, d.id), info = actInfo(d.name);
-  const goal = (lbl, val) => `<div><span class="muted small">${lbl}</span><b>${val}</b></div>`;
+  const w = workoutOn(TODAY, d.id), a = w && w.done && w.act;
+  const attrs = `data-actdaydone="${d.id}" data-actdate="${TODAY}"`;
+  const tile = (lbl, val, sub = "") => a ? `<button class="acttile" ${attrs} aria-label="Ändra ${lbl.toLowerCase()}"><span class="muted small">${lbl}</span><b>${val}</b>${sub ? `<i>${sub}</i>` : ""}</button>`
+    : `<div class="acttile"><span class="muted small">${lbl}</span><b>${val}</b></div>`;
+  const diff = a ? +a.min - +d.act.min : 0;
+  const tiles = a
+    ? tile("Tid", `${+a.min} min`, `mål ${d.act.min}${diff ? ` · ${diff > 0 ? "+" : "−"}${Math.abs(diff)}` : " · nått"}`)
+      + tile("Sträcka", a.km ? `${fmtNum(a.km)} km` : "–", d.act.km ? `mål ${fmtNum(d.act.km)}` : "")
+      + tile("Ungefär", `${actKcal(a)} kcal`)
+    : tile("Tid", `${d.act.min} min`) + tile("Sträcka", d.act.km ? `${fmtNum(d.act.km)} km` : "–") + tile("Ungefär", `${actDayKcal(d)} kcal`);
+  // Nästa pass i veckan som inte är gjort, så att man kommer vidare
+  const L = S.plan.days, i = L.indexOf(d), nx = a && [...L.slice(i + 1), ...L.slice(0, i)].find(p => !completedPassDate(p));
   return `<section class="tpass actpass ${ok ? "ok" : next ? "next" : ""}" aria-label="${esc(d.name)}">
     <span class="row between tp-top">${statusHtml}<span class="tag act">Aktivitet</span></span>
-    <span class="tp-namebtn"><span class="tp-name">${esc(d.name)}</span><span class="muted small tp-mus">${cap(INTENSITY[(d.act.int || 2) - 1].toLowerCase())}${info && info.km ? "" : ""}</span></span>
-    <div class="actgoal">${goal("Mål", `${d.act.min} min`)}${d.act.km ? goal("Sträcka", `${fmtNum(d.act.km)} km`) : ""}${goal("Ungefär", `${actDayKcal(d)} kcal`)}</div>
-    <div class="tp-acts">${actButtons(d)}</div>
-    ${w && w.done ? "" : `<div class="muted small actother">Gjorde du något annat? <button class="linkbtn2" data-actnew="" data-actdate="${TODAY}">Logga annan träning</button></div>`}</section>`;
+    <span class="tp-namebtn"><span class="tp-name">${esc(d.name)}</span><span class="muted small tp-mus">${cap(INTENSITY[((a || d.act).int || 2) - 1].toLowerCase())}</span></span>
+    <span class="klabel actsec">${a ? "Resultat" : "Mål"}</span>
+    <div class="actgoal">${tiles}</div>
+    <div class="tp-acts">${a ? `<button class="grow" ${attrs}>${icon("edit", 16)}Ändra</button>${nx ? `<button class="grow" data-trsel="${nx.id}">Nästa: ${esc(nx.name)}${icon("right", 14)}</button>` : ""}` : actButtons(d)}</div>
+    ${a ? "" : `<div class="muted small actother">Gjorde du något annat? <button class="linkbtn2" data-actnew="" data-actdate="${TODAY}">Logga annan träning</button></div>`}</section>`;
 }
 // Ett genomfört aktivitetspass i historiken
 function actPassSummary(w, date) {
