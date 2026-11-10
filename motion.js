@@ -118,3 +118,6 @@ function actSearch(q) {
     // Bara de som ligger nära bästa träffen, så att en felstavning inte ger brus när något passar bra
     .filter((x, _, all) => all[0].score < 3 || x.score >= Math.max(2, all[0].score / 3)).map(x => x.a.name);
 }
+
+// "2 av 3 pass", eller "4 pass · målet 3 nått" när veckans mål är passerat
+const passGoal = (passes, goal = S.plan.count) => passes > goal ? `${passes} pass · målet ${goal} nått` : `${passes} av ${goal} pass`;

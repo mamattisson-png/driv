@@ -481,7 +481,8 @@ def test_aktivitet_loggas_och_raknas_som_pass(page):
     page.click('[data-actmin="-15"]')   # 15 min: räknas inte som pass
     page.click("[data-actsave]")
     assert page.evaluate("S.log[TODAY].acts.length") == 2 and page.evaluate("weekSummary(weekStart(TODAY)).passes") == 1
-    assert "Kanotpaddling · 15 min" in page.inner_text(".homeacts")
+    go(page, "pass")
+    assert "Kanotpaddling" in page.inner_text("main") and "15 min" in page.inner_text("main")
     # Förbrända kcal läggs bara till när man valt det
     goal = page.evaluate("macros().kcal")
     prof(page, "aktiviteter")
@@ -491,7 +492,7 @@ def test_aktivitet_loggas_och_raknas_som_pass(page):
     assert f"{goal + page.evaluate('burnedOn(TODAY)'):,}".replace(",", "\xa0") in page.inner_text(".dayring")
     # Ändra och ta bort
     go(page, "pass")
-    page.click('.homeacts [data-actedit="1"]')
+    page.click('[data-actedit="1"]')
     page.click("[data-actdel]")
     assert page.evaluate("S.log[TODAY].acts.length") == 1
 

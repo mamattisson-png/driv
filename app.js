@@ -1248,7 +1248,7 @@ const VIEWS = {
       ${S.tourAsked !== false ? "" : `<section class="tour-offer"><span class="h3-ic">${icon("info", 20)}</span><span class="grow"><b>Ny i Driv?</b><small>En kort rundtur visar var allt finns.</small></span>
         <button class="small primary" data-tourstart>Visa</button><button class="small ghost" data-tourskip>Inte nu</button></section>`}
       <div class="muted h3-date">${date}</div><h1 class="h3-greet">${greeting}</h1>
-      <div class="muted h3-sub">${sub} · ${passes} av ${S.plan.count} pass i veckan</div>
+      <div class="muted h3-sub">${sub} · ${passGoal(passes)} i veckan</div>
       ${typeof friendsNudge === "function" ? friendsNudge() : ""}${accountNudge()}${installNudge()}
       <section class="h3-card h3-passcard ${done ? "done" : ""}"><button class="h3-head" data-seepass="${d.id}" aria-label="${passLab}: ${esc(d.name)}">${no(1, done)}
         <span class="grow"><span class="klabel ${done ? "oktext" : "accent"}">${passLab}</span><b class="h3-pass">${esc(t.rest ? "Vila" : d.name)}</b><small>${passInfo}</small></span>${icon("right", 18)}</button>
@@ -1779,7 +1779,7 @@ function passDoneView() {
   const sharing = typeof social !== "undefined" && social.profile && social.profile.sharing;
   return `<div class="passdone">
     <div class="pdtop">${confetti()}<span class="pdcheck" aria-hidden="true">${icon("check", 36)}</span><h1>Passet klart!</h1>
-      <span class="muted">${esc(d.name)} · ${when}</span><span class="muted small">${passes} av ${S.plan.count} pass den här veckan</span></div>
+      <span class="muted">${esc(d.name)} · ${when}</span><span class="muted small">${passGoal(passes)} den här veckan</span></div>
     <section class="pdstats ${stats.length % 2 ? "odd" : ""}" aria-label="Passet">${stats.join("")}</section>
     ${prs.length ? `<section class="card pdpbs" aria-label="Nya personbästa">${prs.map(p => `<div class="pdpb"><span class="grow col"><b>${esc(EX[p.id].name)}</b>
         <span class="muted small">${fmtSet2({ kg: +p.t.kg || 0, reps: +p.t.reps || 0 }, p.id)}</span></span><span class="pbtag">PB ${gain(p)}</span></div>`).join("")}</section>` : ""}

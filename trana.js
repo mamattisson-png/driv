@@ -118,18 +118,19 @@ function traningView() {
     <button class="linkbtn2" data-tab="upplagg">Ändra schema${icon("right", 14)}</button></section>`;
   const acts = actsOn(TODAY);
   const row = (ic, title, sub, attrs, end = "right") => `<button class="h3-row" ${attrs}><span class="h3-ic">${icon(ic, 18)}</span><span class="grow"><b>${title}</b><small>${sub}</small></span>${icon(end, 18)}</button>`;
-  return `<div class="muted small toplabel">Vecka ${weekNo(TODAY)} · ${passes} av ${S.plan.count} pass</div><h1>Träna</h1>
+  return `<div class="muted small toplabel">Vecka ${weekNo(TODAY)} · ${passGoal(passes)}</div><h1>Träna</h1>
     ${schema}
     <div class="klabel h3-sec">Veckans pass</div>
     ${tiles}
     ${list}
+    ${acts.length ? `<div class="klabel h3-sec">Utanför schemat idag</div>
+    <section class="h3-list">${acts.map((a, i) => row("aktivitet", esc(a.name), esc([actLine(a), `${actKcal(a)} kcal`, actCounts(a) ? "+1 pass" : ""].filter(Boolean).join(" · ")), `data-actedit="${i}" data-actdate="${TODAY}"`, "edit")).join("")}</section>` : ""}
     <div class="klabel h3-sec">Mer</div>
     <section class="h3-list">
       ${tpls().length ? row("trana", "Passmallar", esc(tpls().map(p => p.name).join(", ")), 'data-trsheet="tpls"') : ""}
       ${row("search", "Övningar", `${Object.keys(EX).length} övningar · sök och läs instruktioner`, "data-exlib")}
-      ${row("aktivitet", "Annan träning", acts.length ? esc(acts.map(a => `${a.name} ${+a.min} min`).join(", ")) : "Padel, löpning, cykling …", `data-actnew="" data-actdate="${TODAY}"`, "plus")}
+      ${row("aktivitet", "Logga annan träning", "Utanför schemat · padel, löpning, EMS …", `data-actnew="" data-actdate="${TODAY}"`, "plus")}
     </section>
-    ${acts.length ? `<div class="homeacts">${acts.map((a, i) => `<button class="dchip on" data-actedit="${i}" data-actdate="${TODAY}">${icon("check", 16)}${esc(a.name)} · ${+a.min} min</button>`).join("")}</div>` : ""}
     ${trSheet === "dailys" ? dailysSheet() : trSheet === "tpls" ? tplSheet() : ""}`;
 }
 
