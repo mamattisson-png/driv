@@ -89,7 +89,7 @@ def test_onboarding_gym_motion_both(page):
     from conftest import open_app
     open_app(page)
     page.evaluate("onb = 1; tab = 'upplagg'; render()")
-    assert page.locator(".onbkind").count() == 3
+    assert page.locator(".onbkind").count() == 4
     page.click('[data-onbkind="motion"]')
     assert page.locator("[data-prog]").count() == 0
     assert all(page.evaluate("draft.days.map(d => d.type === 'act')"))
@@ -98,3 +98,30 @@ def test_onboarding_gym_motion_both(page):
     assert page.locator('[data-prog="aktiviteter"]').count() == 0
     page.click('[data-onbkind="gym"]')
     assert page.evaluate("draft.days.map(d => d.name)") == ["Push", "Pull", "Legs"]
+
+
+def test_no_schedule_logs_freely(page):
+    from conftest import open_app, go
+    open_app(page)
+    page.evaluate("onb = 1; tab = 'upplagg'; render()")
+    page.click('[data-onbkind="free"]')
+    page.click('[data-onb="2"]')
+    page.click('[data-count="4"]')
+    page.click('[data-onb="3"]')
+    page.click('[data-savesetup]')
+    assert page.evaluate("[S.plan.free, S.plan.count]") == [True, 4]
+    page.evaluate("S.tourAsked = true; save(); render()")
+    page.click(".h3-passcard [data-freegym]")
+    page.locator("[data-libpick]").first.click()
+    assert page.evaluate("focus && focus.dayId") == "fritt"
+    page.evaluate("const w = workoutFor(freeDay()); w.done = true; w.end = Date.now(); endFocus(); day().acts = [{name: 'EMS', min: 20, int: 2}]; chosenDay = null; tab = 'idag'; save(); render()")
+    # Allt räknas mot målet, även kort motion
+    assert page.evaluate("weekSummary(weekStart(TODAY)).passes") == 2
+    go(page, "pass")
+    assert page.locator("[data-freegym]").count() == 1 and "Fritt pass" in page.inner_text("main")
+    # Tillbaka till ett schema: passen finns kvar
+    page.evaluate("draft = null; setupFrom = 'pass'; tab = 'upplagg'; render()")
+    assert page.inner_text(".freegoal .unum") == "4"
+    page.click('[data-onbkind="gym"]')
+    page.click('[data-savesetup]')
+    assert page.evaluate("[!!S.plan.free, S.plan.days.map(d => d.name).join()]") == [False, "Push,Pull,Legs"]

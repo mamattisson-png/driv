@@ -182,6 +182,8 @@ document.addEventListener("click", ev => {
     // Lägg till (eller byt) med den vanliga logiken, och tillbaka dit man kom ifrån
     const c = libCtx, name = EX[ds.libpick].name;
     addExercise(c.target, ds.libpick, c.replace, c.today);
+    // Fritt gympass (inget schema): första övningen startar passet
+    if (c.startFree) { libCtx = null; startFocus(c.target); save(); render(); window.scrollTo(0, 0); return; }
     // Tillagd mitt i ett pass: gå direkt till den nya övningen
     if (c.replace == null && focus && focus.dayId === c.target) { const k = exList(c.target).findIndex(e => e.id === ds.libpick); if (k >= 0) focus.idx = k; }
     libCtx = null; save(); render();

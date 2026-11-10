@@ -40,6 +40,7 @@ function todaysPass() {
   if (active) return { d: active, w: workoutOn(TODAY, active.id), rest: false, active: true };
   const todays = workoutsOn(TODAY);
   if (todays.length) { const d = dayById(todays[todays.length - 1].dayId); if (d) return { d, w: workoutOn(TODAY, d.id), rest: false }; }
+  if (S.plan.free) { const d = freeDay(); return { d, w: workoutOn(TODAY, d.id), rest: false, free: true }; }
   if (isFixed() && !scheduledDay(TODAY)) { const nx = nextScheduled(TODAY); return { d: nx.day, w: null, rest: true, next: nx.date }; }
   const d = suggestedDay();
   return { d, w: workoutOn(TODAY, d.id), rest: false };
@@ -60,6 +61,7 @@ function ring(pct, size = 64, cls = "") {
 }
 
 function traningView() {
+  if (S.plan.free) return freeTrainView();
   const t = todaysPass(), d = t.d, w = t.w, done = w && w.done, started = !done && (t.active || (w && Object.values(w.sets).some(a => a.some(x => x && x.ok))));
   const passes = weekSummary(weekStart(TODAY)).passes, n = S.plan.days.length;
   const dayCard = `<section class="card daypass" aria-label="${passLabel(t)}">

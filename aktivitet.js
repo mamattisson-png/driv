@@ -10,7 +10,7 @@ const INTENSITY = ["Lugnt", "Medel", "Hårt"];
 const actInfo = name => ACTIVITIES.find(a => a.name.toLowerCase() === String(name).trim().toLowerCase());
 const actIcon = () => icon("aktivitet", 20);
 const actsOn = date => (S.log[date] && S.log[date].acts) || [];
-const actCounts = a => S.actCount !== false && +a.min >= 45;
+const actCounts = a => S.plan.free ? +a.min > 0 : S.actCount !== false && +a.min >= 45;
 // Ungefär förbrända kcal: MET × kroppsvikt × timmar (okänd aktivitet räknas som medelhård, MET 5)
 function actKcal(a) {
   const info = actInfo(a.name), met = info ? info.met[(a.int || 2) - 1] : [3.5, 5, 7][(a.int || 2) - 1];

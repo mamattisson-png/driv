@@ -685,7 +685,7 @@ const exIdsOn = date => workoutsOn(date).flatMap(w => Object.keys(w.sets));
 // Passmallar (S.tpls) är pass utanför veckoschemat: samma form som schemats pass, så att fokusläget, loggen och historiken fungerar som vanligt
 const tpls = () => S.tpls || (S.tpls = []);
 const isTpl = d => !!d && tpls().includes(d);
-const dayById = id => S.plan.days.find(d => d.id === id) || tpls().find(d => d.id === id);
+const dayById = id => S.plan.days.find(d => d.id === id) || tpls().find(d => d.id === id) || (id === "fritt" ? freeDay() : undefined);
 // "flex": passen körs i ordning vilka dagar som helst. "fixed": varje pass har en veckodag.
 const isFixed = () => S.plan.mode === "fixed";
 function scheduledDay(date) {
@@ -710,7 +710,7 @@ function nextInRotation() {
   const last = lastW ? S.plan.days.findIndex(x => x.id === lastW.dayId) : -1;
   return S.plan.days[(last + 1) % S.plan.days.length];
 }
-const suggestedDay = () => isFixed() ? (scheduledDay(TODAY) || nextScheduled(TODAY).day) : nextInRotation();
+const suggestedDay = () => S.plan.free || !S.plan.days.length ? freeDay() : isFixed() ? (scheduledDay(TODAY) || nextScheduled(TODAY).day) : nextInRotation();
 // Text i rubrikbandet bredvid etiketten: passets nummer, och namnet om det inte redan står på etiketten
 const passBand = d => isTpl(d) ? `Passmall · <span class="nocaps">${esc(d.name)}</span>` : `Pass ${S.plan.days.indexOf(d) + 1}${norm(d.name) === norm(TYPES[d.type].label) ? "" : ` · <span class="nocaps">${esc(d.name)}</span>`}`;
 
@@ -988,7 +988,7 @@ function currentPassDay() {
   const L = S.log[TODAY];
   const todays = workoutsOn(logDate());
   const id = (focus && !editDate && !focus.suspended && focus.dayId) || chosenDay || (todays.length ? todays[todays.length - 1].dayId : suggestedDay().id);
-  return dayById(id) || S.plan.days[0];
+  return dayById(id) || S.plan.days[0] || freeDay();
 }
 
 // Schemat: kommande dagar med fasta veckodagar, annars passen i tur och ordning
@@ -1215,7 +1215,8 @@ const VIEWS = {
     const passes = weekSummary(weekStart(TODAY)).passes;
     const greeting = homeGreeting(hr, { done, dailysOk, started, rest: !!t.rest, passes, goal: S.plan.count, foodOk });
     // Samma etiketter som på Träna: Nästa pass (flexibelt) eller Dagens pass (fasta dagar), Pågående och Genomfört
-    const passLab = t.rest ? "Vilodag" : done ? "Genomfört idag" : started ? "Pågående pass" : passLabel(t);
+    const freeIdle = t.free && !done && !started;   // inget schema och inget loggat idag
+    const passLab = t.rest ? "Vilodag" : done ? "Genomfört idag" : started ? "Pågående pass" : freeIdle ? "Träning idag" : passLabel(t);
     // När passet är gjort: vad som är klart och vad som återstår av dagens mål
     const doneSub = () => {
       const ok = [["Träningen", true], ["Dailys", dailysOk || !total], ["kosten", foodOk]];
@@ -1223,15 +1224,16 @@ const VIEWS = {
       const list = a => cap(a.length > 1 ? `${a.slice(0, -1).join(", ")} och ${a[a.length - 1]}` : a[0]);
       return !kvar.length ? "Alla dagens mål är klara" : `${list(klar)} ${klar.length > 1 ? "är klara" : "är klar"} · ${list(kvar)} återstår`;
     };
-    const sub = t.rest ? "Vilodag idag" : done ? doneSub() : started ? `${esc(d.name)} är påbörjat` : `${esc(d.name)} står på schemat`;
+    const sub = t.rest ? "Vilodag idag" : done ? doneSub() : started ? `${esc(d.name)} är påbörjat` : freeIdle ? "Inget schema · logga det du gör" : `${esc(d.name)} står på schemat`;
     const date = cap(new Date().toLocaleDateString("sv-SE", { weekday: "long", day: "numeric", month: "long" }));
     // Siffran blir en grön bock när steget är klart; orange bara för det man trycker på
     const no = (n, ok) => `<span class="h3-no ${ok ? "ok" : ""}" aria-hidden="true">${ok ? icon("check", 14) : n}</span>`;
     const exN = `${d.ex.length} ${d.ex.length === 1 ? "övning" : "övningar"}`;
     const mins = Math.max(5, Math.round(d.ex.reduce((a, x) => a + (+x.sets || 0), 0) * 2.5 / 5) * 5);
-    const passInfo = t.rest ? `Återhämtning · nästa pass ${WD_LONG[weekdayOf(t.next)]}` : isActDay(d) ? esc(`Motion · ${done && w.act ? actLine(w.act) : actGoal(d)}`)
+    const passInfo = freeIdle ? "Logga ett gympass eller motion" : t.rest ? `Återhämtning · nästa pass ${WD_LONG[weekdayOf(t.next)]}` : isActDay(d) ? esc(`Motion · ${done && w.act ? actLine(w.act) : actGoal(d)}`)
       : [passMuscles(d), exN, d.ex.length ? `~${mins} min` : ""].filter(Boolean).map(esc).join(" · ");
     const passBtn = done ? `<button class="h3-btn ok" data-seepass="${d.id}">${icon("check", 16)}Passet klart · visa</button>`
+      : freeIdle ? `<div class="row h3-actbtns"><button class="h3-btn primary" data-freegym>${icon("trana", 16)}Gympass</button><button class="h3-btn" data-actnew="" data-actdate="${TODAY}">${icon("aktivitet", 16)}Motion</button></div>`
       : t.rest ? `<button class="h3-btn ghost" data-tab="pass">Kör ett pass ändå</button>`
       : isActDay(d) ? `<div class="row h3-actbtns">${actButtons(d, "h3-btn")}</div>`
       : d.ex.length ? `<button class="h3-btn" data-focusstart="${d.id}">${icon("play", 16)}${started ? "Fortsätt" : "Starta"} ${esc(d.name)}</button>`
@@ -1251,7 +1253,7 @@ const VIEWS = {
       <div class="muted h3-sub">${sub} · ${passGoal(passes)} i veckan</div>
       ${typeof friendsNudge === "function" ? friendsNudge() : ""}${accountNudge()}${installNudge()}
       <section class="h3-card h3-passcard ${done ? "done" : ""}"><button class="h3-head" data-seepass="${d.id}" aria-label="${passLab}: ${esc(d.name)}">${no(1, done)}
-        <span class="grow"><span class="klabel ${done ? "oktext" : "accent"}">${passLab}</span><b class="h3-pass">${esc(t.rest ? "Vila" : d.name)}</b><small>${passInfo}</small></span>${icon("right", 18)}</button>
+        <span class="grow"><span class="klabel ${done ? "oktext" : "accent"}">${passLab}</span><b class="h3-pass">${esc(t.rest ? "Vila" : freeIdle ? "Inget loggat än" : d.name)}</b><small>${passInfo}</small></span>${icon("right", 18)}</button>
         ${passBtn}</section>
       <button class="h3-card h3-head ${foodOk ? "done" : ""}" data-tab="kost">${no(2, foodOk)}<span class="grow"><b>${foodOk ? "Kalorimålet nått" : "Logga dagens mat"}</b>
         <small>${tnum(e.kcal)} / ${tnum(m.kcal)} kcal · ${tnum(e.protein)} / ${tnum(m.protein)} g protein</small>
@@ -1261,7 +1263,7 @@ const VIEWS = {
       <div class="klabel h3-sec">Övrigt idag</div>
       <section class="h3-list">
         ${row(stretchId ? figure(stretchId) : icon("utseende", 18), "Stretch", "Övningar som töjer · välj kroppsdel", 'data-tab="stretchguide"')}
-        ${row(icon("aktivitet", 18), "Annan träning", "Löpning, padel, promenad …", "data-homeactivity", "plus")}
+        ${S.plan.free ? "" : row(icon("aktivitet", 18), "Annan träning", "Löpning, padel, promenad …", "data-homeactivity", "plus")}
         ${S.hideWeight ? "" : row(icon("vikt", 18), "Vikt", weighed && avg ? `${fmtNum(avg)} kg den här veckan` : weighHint(), 'data-tab="vagning"')}
         ${row(icon("vanner", 18), "Vänner", friendSub, 'data-tab="vanner"')}
       </section></div>`;
@@ -2042,7 +2044,7 @@ function syncDone(d) {
 function saveSetup() {
   const back = S.setupDone ? setupFrom : null;
   const weekdays = draft.weekdays.slice().sort((a, b) => a - b);
-  S.plan = { program: draft.program, count: draft.days.length, mode: draft.mode, weekdays, days: draft.days };
+  S.plan = { program: draft.program, count: draft.free ? draft.count : draft.days.length, mode: draft.mode, weekdays, days: draft.days, ...(draft.free ? { free: true } : {}) };
   // Har man hoppat över kalorimålet påminner Kost om att ställa in det
   if (!S.setupDone && S.profileSet !== true) S.profileSet = false;
   if (!S.setupDone) S.tourAsked = false;   // nya användare erbjuds rundturen på Hem
@@ -2261,6 +2263,7 @@ document.addEventListener("click", ev => {
     [list[i], list[j]] = [list[j], list[i]];
   }
   else if (ds.ss) { const e = exList(ds.ss)[+ds.idx]; if (e.ss) delete e.ss; else e.ss = true; }
+  else if (ds.count && draft && draft.free) draft.count = Math.max(1, Math.min(7, +ds.count));
   else if (ds.count) {
     const extra = draft.days.filter(d => d.extra).length;
     draft.count = Math.max(1, Math.min(7 - extra, +ds.count));
