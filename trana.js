@@ -105,7 +105,7 @@ function traningView() {
       <span class="tp-sr">${started ? `<b>${nOk}</b>/` : ""}${e.sets} × ${reps}</span></li>`; };
   const sOk = !!completedPassDate(sel), sNext = sel === d && !t.rest && !sOk, sGoing = sel === d && started;
   const sets = sel.ex.reduce((a, e) => a + (+e.sets || 0), 0);
-  const list = `<section class="tpass ${sOk ? "ok" : sNext ? "next" : ""}" aria-label="${esc(sel.name)}">
+  const list = isActDay(sel) ? actPassCard(sel, sOk ? `<span class="pst ok">${icon("check", 12)}Klar</span>` : actRunning(sel) ? `<span class="pst accent">Pågår</span>` : status(sel, si), sOk, sNext) : `<section class="tpass ${sOk ? "ok" : sNext ? "next" : ""}" aria-label="${esc(sel.name)}">
       <span class="row between tp-top">${sOk ? `<span class="pst ok">${icon("check", 12)}Klar</span>` : status(sel, si)}<span class="muted small">${sel.ex.length} ${sel.ex.length === 1 ? "övning" : "övningar"}${sets ? ` · ~${Math.max(5, Math.round(sets * 2.5 / 5) * 5)} min` : ""}</span></span>
       <button class="tp-namebtn" data-pick="${sel.id}"><span class="tp-name">${esc(sel.name)}</span><span class="muted small tp-mus">${esc(passMuscles(sel))}</span></button>
       ${sel.ex.length ? `<ol class="tp-ex">${sel.ex.map((e, k) => exLine(sel, e, k)).join("")}</ol>` : `<span class="muted small">Inga övningar än</span>`}

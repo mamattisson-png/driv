@@ -11,13 +11,13 @@ let daysOpen = false;   // veckodagarna är utfällda i Upplägg
 function ensureDraft() {
   return draft = draft || {
     program: S.plan.program || "ppl",
-    count: S.plan.count,
+    count: S.plan.days.filter(d => !d.extra).length,
     mode: S.plan.mode || "flex",
     weekdays: S.plan.weekdays.slice(),
     days: JSON.parse(JSON.stringify(S.plan.days)),
   };
 }
-const draftOk = () => draft.mode !== "fixed" || draft.weekdays.length === draft.count;
+const draftOk = () => draft.mode !== "fixed" || draft.weekdays.length === draft.days.length;
 const brandBig = () => `<div class="welcome-brand"><img src="icons/icon-192-v2.png" alt="">
   <h1 class="ordbild"><span class="wordmark">DRIV</span><span class="slogan">Ditt mål. <em>Ditt driv.</em></span></h1></div>`;
 const stepTop = (n, back, label) => `<div class="row between steptop"><button class="backbtn" ${back}>${icon("left", 18)}${label}</button><span class="muted small">Steg ${n} av 3</span></div>
@@ -83,7 +83,7 @@ const progTiles = sel => `<div class="progtiles">${Object.entries(PROGRAMS).filt
     <span class="grow col"><b>Eget schema</b><span class="muted small">Döp passen och välj övningar själv</span></span></button>`;
 
 function daysPicker() {
-  const n = draft.count, fixed = draft.mode === "fixed", ok = draftOk();
+  const n = draft.days.length, fixed = draft.mode === "fixed", ok = draftOk();
   const sorted = draft.weekdays.slice().sort((a, b) => a - b);
   const plan = fixed && ok ? sorted.map((wd, i) => `${WD_LONG[wd]} ${esc(draft.days[i].name)}`).join(", ") : "";
   return `<div class="seg two">
@@ -129,17 +129,18 @@ function upplaggView() {
       <div class="row between"><span class="klabel accent">Ditt program</span><button class="linkbtn2" data-progtoggle aria-expanded="${progOpen}">${progOpen ? "Stäng" : "Byt program"}${icon(progOpen ? "up" : "right", 14)}</button></div>
       <div class="progname">${esc(pr.name)}</div>
       <div class="muted small">${esc(pr.info)}</div>
-      <div class="chips passchips">${draft.days.map(d => `<span class="chip">${esc(d.name)}</span>`).join("")}</div></section>
+      </section>
     ${progOpen ? `<div class="progpick">${progTiles(draft.program)}</div>` : ""}
     <div class="utiles">
-      <div class="card utile"><span class="klabel">Pass i veckan</span><b class="unum">${n}</b>
+      <div class="card utile"><span class="klabel">Pass i veckan</span><b class="unum">${draft.days.length}</b>
         <span class="row"><button class="grow" data-count="${n - 1}" ${n > c[0] ? "" : "disabled"} aria-label="Färre pass">${icon("minus", 18)}</button>
-          <button class="grow" data-count="${n + 1}" ${n < c[c.length - 1] ? "" : "disabled"} aria-label="Fler pass">${icon("plus", 18)}</button></span></div>
+          <button class="grow" data-count="${n + 1}" ${n < c[c.length - 1] && draft.days.length < 7 ? "" : "disabled"} aria-label="Fler pass">${icon("plus", 18)}</button></span></div>
       <button class="card utile" data-daysopen aria-expanded="${daysOpen}"><span class="row between"><span class="klabel">Dagar</span><span class="accenttext small">${daysOpen ? "Stäng" : "Ändra"}</span></span>
         <b class="uday">${fixed ? "Fasta dagar" : "Olika dagar"}</b>
         <span class="udots" aria-label="${fixed ? draft.weekdays.slice().sort((a, b) => a - b).map(i => WD_LONG[i]).join(", ") : "Nästa pass i tur"}">${WD.map((w, i) => `<i class="${fixed && draft.weekdays.includes(i) ? "on" : ""}">${w[0]}</i>`).join("")}</span></button></div>
     ${daysOpen || (fixed && !draftOk()) ? `<div class="dayspick">${daysPicker()}</div>` : ""}
-    <div class="muted small finish-note">Övningarna ändrar du i varje pass under Träna.</div>
+    ${planList()}
+    <div class="muted small finish-note">Övningarna i gympassen ändrar du under Träna. Aktiviteter har bara tid och mål.</div>
     <button class="primary wide bigbtn" data-savesetup ${draftOk() ? "" : "disabled"}>Spara schema</button>`;
 }
 
