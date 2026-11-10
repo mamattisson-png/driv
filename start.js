@@ -148,7 +148,11 @@ document.addEventListener("click", ev => {
   const t = ev.target.closest("[data-onb],[data-daysopen]");
   if (!t || t.disabled) return;
   if (t.dataset.daysopen !== undefined) daysOpen = !daysOpen;
-  else { onb = +t.dataset.onb; progOpen = false; }
+  else {
+    onb = +t.dataset.onb; progOpen = false;
+    // Tillbaka från steg 1 visar välkomstsidan även för den som är inloggad (annars hoppar appen direkt till steg 1)
+    if (!onb) welcomeAgain = true;
+  }
   render();
   window.scrollTo(0, 0);
 });
