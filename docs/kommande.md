@@ -84,6 +84,7 @@ Senast uppdaterad: 2026-11-06. Status bygger på dokumenterade publiceringar och
 | 80 | Tillbaka från första steget i starten fungerar även när man är inloggad | Start | Medel | Klar |
 | 81 | Startsidan ryms ovanför telefonens knapprad (Android) | Start | Medel | Klar |
 | 82 | Motion på Träna: mål och resultat som rutor som går att trycka på för att ändra, och Nästa pass | Träning | Hög | Klar |
+| 83 | Gym och Motion: valet Gym, Motion eller Båda i starten och namnet Motion i appen | Träning | Hög | Klar |
 
 ## Detaljer och acceptanskriterier
 
