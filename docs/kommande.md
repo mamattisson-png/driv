@@ -85,6 +85,8 @@ Senast uppdaterad: 2026-11-06. Status bygger på dokumenterade publiceringar och
 | 81 | Startsidan ryms ovanför telefonens knapprad (Android) | Start | Medel | Klar |
 | 82 | Motion på Träna: mål och resultat som rutor som går att trycka på för att ändra, och Nästa pass | Träning | Hög | Klar |
 | 83 | Gym och Motion: valet Gym, Motion eller Båda i starten och namnet Motion i appen | Träning | Hög | Klar |
+| 84 | 84 sökbara träningsformer med kcal (bl.a. EMS), sökfält, annan träning i egen lista och målet nått i veckotexten | Träning | Hög | Klar |
+| 85 | Inget schema: logga gympass och motion fritt mot ett veckomål | Träning | Hög | Klar |
 
 ## Detaljer och acceptanskriterier
 
