@@ -166,7 +166,7 @@ console.log(`${rows.length} new stretches: ${timed} timed, ${dynamic} dynamic; o
   });
   // Evaluate the real shared URL guard instead of reimplementing its behavior.
   const helperSource = fs.readFileSync(path.join(root, 'ovningar.js'), 'utf8')
-    .match(/const mwDirectUrl = [^\\n]+/);
+    .match(/const mwDirectUrl = [^\n]+/);
   assert.ok(helperSource, 'Shared direct-link helper missing');
   vm.runInContext(helperSource[0], sandbox);
   vm.runInContext(source.slice(start, end), sandbox);
@@ -180,7 +180,7 @@ console.log(`${rows.length} new stretches: ${timed} timed, ${dynamic} dynamic; o
   assert.ok(!missing.includes('musclewiki.com'), 'Unlinked stretch must not have a MW link');
   assert.ok(!category.includes('musclewiki.com'), 'Category link must be hidden');
   const appSource = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
-  assert.match(appSource, /const mwHref = e\\.cat === "stretch" \\? mwDirectUrl\\(modal\\.info\\) : mwUrl\\(modal\\.info\\)/, 'Exercise info modal must use strict direct-link guard');
-  assert.match(source, /const directMw = mwDirectUrl\\(id\\)/, 'Stretch detail must use shared guard');
+  assert.match(appSource, /const mwHref = e\.cat === "stretch" \? mwDirectUrl\(modal\.info\) : mwUrl\(modal\.info\)/, 'Exercise info modal must use strict direct-link guard');
+  assert.match(source, /const directMw = mwDirectUrl\(id\)/, 'Stretch detail must use shared guard');
   console.log('Stretch detail renders only direct MuscleWiki links; no generic browse fallback.');
 }
