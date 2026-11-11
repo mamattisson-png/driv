@@ -120,3 +120,42 @@ console.log(`${rows.length} new stretches: ${timed} timed, ${dynamic} dynamic; o
   }
   console.log('125 stretch audit entries match code: 31 reviewed direct links, 94 without exact match.');
 }
+
+
+// Render the actual mobile stretch-detail template in isolation. A generic
+// MuscleWiki browse link must never be presented as an exercise demonstration.
+{
+  const source = fs.readFileSync(path.join(root, 'muskelsok.js'), 'utf8');
+  const start = source.indexOf('function stretchPage(id) {');
+  const end = source.indexOf('// Menyn lämnar alltid biblioteket', start);
+  assert.ok(start >= 0 && end > start, 'Stretch detail renderer not found');
+  const ex = { name: 'Teststretch', cat: 'stretch', reps: '30 s', sets: 2, cues: ['Gör rörelsen lugnt.'] };
+  const mw = {
+    linked: 'exercise/child-pose-arms-extended',
+    category: 'exercises/chest/bodyweight',
+  };
+  const sandbox = vm.createContext({
+    EX: { linked: ex, missing: ex, category: ex },
+    MW: mw,
+    stretchMuscles: () => [],
+    MUSKEL_FRAM: [],
+    MUSKEL_NAMN: {},
+    anatSvg: () => '',
+    gearOf: () => null,
+    icon: () => '',
+    figure: () => '',
+    esc: value => value,
+    mwUrl: id => mw[id] ? 'https://musclewiki.com/' + mw[id] : null,
+  });
+  vm.runInContext(source.slice(start, end), sandbox);
+  const linked = vm.runInContext("stretchPage('linked')", sandbox);
+  const missing = vm.runInContext("stretchPage('missing')", sandbox);
+  const category = vm.runInContext("stretchPage('category')", sandbox);
+  assert.match(linked, /href="https:\/\/musclewiki\.com\/exercise\/child-pose-arms-extended"/);
+  for (const [name, html] of [['linked', linked], ['missing', missing], ['category', category]]) {
+    assert.ok(!html.includes('https://musclewiki.com/exercises'), name + ': generic browse link');
+  }
+  assert.ok(!missing.includes('musclewiki.com'), 'Unlinked stretch must not have a MW link');
+  assert.ok(!category.includes('musclewiki.com'), 'Category link must be hidden');
+  console.log('Stretch detail renders only direct MuscleWiki links; no generic browse fallback.');
+}
