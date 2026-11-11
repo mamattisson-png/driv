@@ -42,28 +42,26 @@ function recentActs(n) {
 }
 const actRow = (n, sub, attrs, end = icon("right", 16)) => `<button class="h3-row" ${attrs}><span class="h3-ic actic">${icon("aktivitet", 16)}</span><span class="grow"><b>${esc(n)}</b>${sub ? `<small>${sub}</small>` : ""}</span>${end}</button>`;
 
-// Steg 1: välj vad. Sökträffar, eller Senast, Populärt och alla träningsformer i grupper.
+// Steg 1: välj vad. Sökträffar, eller Senast och Populärt som rader; alla träningsformer bakom Visa alla.
+let actShowAll = false;
 function actChips(s) {
   const q = actQ.trim();
+  const kc = n => `ca ${actKcal({ name: n, min: 30, int: 2 })} kcal på 30 min`;
   if (q) {
-    const hits = actSearch(q).slice(0, 10), own = !hits.some(n => n.toLowerCase() === q.toLowerCase());
-    return `<section class="h3-list actlist">${hits.map(n => actRow(n, `ca ${actKcal({ name: n, min: 30, int: 2 })} kcal på 30 min`, `data-actpick="${esc(n)}"`)).join("")}
+    const hits = actSearch(q).slice(0, 12), own = !hits.some(n => n.toLowerCase() === q.toLowerCase());
+    return `<section class="h3-list actlist">${hits.map(n => actRow(n, kc(n), `data-actpick="${esc(n)}"`)).join("")}
       ${own ? `<button class="h3-row" data-actpick="${esc(q.slice(0, 30))}" data-actown><span class="h3-ic">${icon("plus", 16)}</span><span class="grow"><b>Lägg till ”${esc(q.slice(0, 30))}”</b><small>${hits.length ? "Något annat" : "Ingen träff"} · räknas som medelhård</small></span></button>` : ""}</section>`;
   }
   const recent = s.plan ? [] : recentActs(3);
-  const chip = n => `<button data-actpick="${esc(n)}">${esc(n)}</button>`;
+  const popular = POPULAR_ACTS.filter(n => !recent.some(a => a.name === n)).slice(0, 6);
   return `${recent.length ? `<div class="klabel actk">Senast</div><section class="h3-list actlist">${recent.map(a => actRow(a.name, esc(`${actLine(a)} · ${a.date === TODAY ? "idag" : dateLabel(a.date)}`), `data-actagain="${esc(a.name)}" data-min="${+a.min}" data-int="${a.int || 2}" data-km="${a.km || ""}"`, `<span class="accenttext small">Igen</span>`)).join("")}</section>` : ""}
-    <div class="klabel actk">Populärt</div><div class="chips actchips">${POPULAR_ACTS.slice(0, 12).map(chip).join("")}</div>
-    <div class="klabel actk">Alla träningsformer</div>
-    <section class="h3-list actgroups">${ACT_GROUPS.map(g => {
-      const list = ACTIVITIES.filter(a => a.group === g), open = actOpenGroup === g;
-      return `<button class="h3-row" data-actgroup="${esc(g)}" aria-expanded="${open}"><span class="grow"><b>${esc(g)}</b><small>${esc(list.slice(0, 4).map(a => a.name).join(", "))} …</small></span>${icon(open ? "up" : "down", 16)}</button>
-        ${open ? `<div class="chips actchips actgroupchips">${list.map(a => chip(a.name)).join("")}</div>` : ""}`;
-    }).join("")}</section>
-    <div class="muted small acthint">Hittar du inte det du gjort? Skriv det i sökrutan, så kan du lägga till det.</div>`;
+    <div class="klabel actk">${actShowAll ? "Alla träningsformer" : "Populärt"}</div>
+    ${actShowAll ? ACT_GROUPS.map(g => `<div class="muted small actgrp">${esc(g)}</div><section class="h3-list actlist">${ACTIVITIES.filter(a => a.group === g).map(a => actRow(a.name, "", `data-actpick="${esc(a.name)}"`)).join("")}</section>`).join("")
+      : `<section class="h3-list actlist">${popular.map(n => actRow(n, kc(n), `data-actpick="${esc(n)}"`)).join("")}
+      <button class="h3-row actall" data-actall><span class="grow"><b>Visa alla ${ACTIVITIES.length}</b></span>${icon("down", 16)}</button></section>`}`;
 }
 function openAct(date, idx, name) {
-  actQ = ""; actOpenGroup = null;
+  actQ = ""; actOpenGroup = null; actShowAll = false;
   const a = idx != null ? actsOn(date)[idx] : null;
   const info = name && actInfo(name);
   actSheet = a ? { date, origDate: date, idx, name: a.name, min: a.min, int: a.int || 2, km: a.km || "", custom: !actInfo(a.name) }
@@ -89,7 +87,7 @@ function actPage() {
     <button class="primary grow" data-actsave ${ok ? "" : "disabled"}>${saveLbl}</button></div></div>`;
   if (gym) return `${head}<label class="field" style="margin-top:14px">Namn på passet<input id="actname" value="${esc(s.name)}" placeholder="t.ex. Bröst och armar" maxlength="30" autocomplete="off"></label>
     <div class="muted small" style="margin-top:8px">Övningarna lägger du till i passet under Träna.</div>${planSheetDays(s)}${foot}`;
-  if (choosing) return `${head}<input id="actq" class="actq" type="search" placeholder="Sök: löpning, padel, EMS …" autocomplete="off" aria-label="Sök träningsform" value="${esc(actQ)}">
+  if (choosing) return `${head}<label class="actsearch">${icon("search", 18)}<input id="actq" type="search" enterkeyhint="search" placeholder="Sök träningsform" autocomplete="off" aria-label="Sök träningsform" value="${esc(actQ)}"></label>
     <div id="actchips">${actChips(s)}</div></div>`;
   // Steg 2: dag, tid, intensitet och sträcka
   const yest = shift(TODAY, -1), other = s.date !== TODAY && s.date !== yest;
@@ -147,7 +145,7 @@ document.addEventListener("input", ev => {
   if (ev.target.id === "actdate" && ev.target.value && ev.target.value <= TODAY) { actSheet.date = ev.target.value; render(); }
 });
 document.addEventListener("click", ev => {
-  const t = ev.target.closest("[data-actnew],[data-actedit],[data-actclose],[data-actpick],[data-actagain],[data-actgroup],[data-actday],[data-actmin],[data-actset],[data-actchoose],[data-actint],[data-actsave],[data-actdel]");
+  const t = ev.target.closest("[data-actnew],[data-actedit],[data-actclose],[data-actpick],[data-actagain],[data-actgroup],[data-actall],[data-actday],[data-actmin],[data-actset],[data-actchoose],[data-actint],[data-actsave],[data-actdel]");
   if (!t || t.disabled) return;
   if (t.classList.contains("overlay") && ev.target !== t) return;   // klick inne i fönstret
   const ds = t.dataset, s = actSheet;
@@ -164,6 +162,7 @@ document.addEventListener("click", ev => {
   else if (ds.actagain) { Object.assign(s, { name: ds.actagain, custom: !actInfo(ds.actagain), min: +ds.min || 30, int: +ds.int || 2, km: ds.km || "", choosing: false }); actQ = ""; window.scrollTo(0, 0); }
   else if (ds.actgroup) { actOpenGroup = actOpenGroup === ds.actgroup ? null : ds.actgroup; ev.stopImmediatePropagation(); render(); return; }
   else if (ds.actday) s.date = ds.actday;
+  else if (ds.actall !== undefined) { actShowAll = true; ev.stopImmediatePropagation(); render(); return; }
   else if (ds.actset) s.min = +ds.actset;
   else if (ds.actmin) s.min = Math.max(5, s.min + +ds.actmin);
   else if (ds.actint) s.int = +ds.actint;

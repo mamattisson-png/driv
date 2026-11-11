@@ -2024,7 +2024,12 @@ button.h3-card.h3-head { background: var(--card); padding: 12px 14px; }
 .actpage h1 { margin: 2px 0 12px; }
 .actpage .klabel.actk { display: block; margin: 18px 2px 8px; }
 .actpage .actchips { margin: 0; }
-.actpage .actq { margin-top: 0; min-height: 52px; font-size: 17px; }
+.actsearch { position: sticky; top: 0; z-index: 3; display: flex; align-items: center; gap: 10px; min-height: 54px; padding: 0 16px; margin: 0 -2px;
+  border-radius: 16px; border: 1.5px solid var(--line-strong); background: var(--card); color: var(--muted); box-shadow: 0 6px 16px var(--bg); }
+.actsearch:focus-within { border-color: var(--accent); color: var(--text); }
+.actsearch input { flex: 1; min-width: 0; border: 0; background: none; padding: 0; min-height: 50px; font-size: 17px; color: var(--text); outline: none; box-shadow: none; }
+.actgrp { margin: 12px 4px 6px; }
+.actall b { color: var(--accent-text); font-weight: 600; }
 .actgroups .h3-row small { color: var(--muted); }
 .actgroupchips { padding: 2px 0 14px; }
 .actdays { margin: 0; }
