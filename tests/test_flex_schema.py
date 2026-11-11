@@ -125,3 +125,40 @@ def test_no_schedule_logs_freely(page):
     page.click('[data-onbkind="gym"]')
     page.click('[data-savesetup]')
     assert page.evaluate("[!!S.plan.free, S.plan.days.map(d => d.name).join()]") == [False, "Push,Pull,Legs"]
+
+
+def test_free_pass_not_done_until_finished(page):
+    from conftest import start, go
+    start(page)
+    page.evaluate("S.tourAsked = true; S.plan.free = true; S.plan.count = 3; save(); tab = 'pass'; render()")
+    page.click("[data-freegym]")
+    page.locator("[data-libpick]").first.click()
+    d = page.evaluate("freeDay().ex[0].id")
+    page.evaluate(f"const w = workoutFor(freeDay()); w.sets['{d}'] = [1,2,3,4,5].map(() => ({{kg: 20, reps: 8, ok: true}})); syncDone(freeDay()); render()")
+    # Alla set gjorda men passet är inte klart: nästa övning eller avsluta
+    assert page.evaluate("workoutOn(TODAY, 'fritt').done") is False
+    assert page.locator(".fbar [data-faddex]").count() == 1
+    page.click(".fbar [data-finish]")
+    assert page.evaluate("workoutOn(TODAY, 'fritt').done") is True
+    page.evaluate("passDone = null; tab = 'pass'; render()")
+    # Raden heter efter övningen och öppnar dagen ovanpå Träna
+    assert page.evaluate(f"EX['{d}'].name") in page.inner_text("main")
+    page.click("[data-freeday]")
+    assert page.evaluate("tab") == "pass" and page.locator(".hsheet").count() == 1
+
+
+def test_free_pass_resume_goes_straight_to_focus(page):
+    from conftest import start, go
+    start(page)
+    page.evaluate("S.tourAsked = true; S.plan.free = true; S.plan.count = 3; save(); tab = 'pass'; render()")
+    page.click("[data-freegym]")
+    page.locator("[data-libpick]").first.click()
+    page.evaluate("const w = workoutFor(freeDay()); w.sets[freeDay().ex[0].id] = [{kg: 20, reps: 8, ok: true}]; save()")
+    go(page, "idag")
+    # Hem: tryck på kortet tar en direkt in i passet, inte till en passida
+    page.click(".h3-passcard .h3-head")
+    assert page.evaluate("[tab, !!focus && !focus.suspended, passOpen]") == ["pass", True, False]
+    # Historik: Ändra passet på dagens pågående fria pass fortsätter passet
+    page.evaluate("focus.suspended = true; histDay = TODAY; tab = 'historik'; render()")
+    page.click("[data-hpass='fritt']")
+    assert page.evaluate("[tab, !!focus && !focus.suspended, passOpen]") == ["pass", True, False]

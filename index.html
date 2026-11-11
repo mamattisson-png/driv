@@ -824,6 +824,8 @@
   body.set-editing .fbar-row > button:not(.fconfirm) { display: none; }
   .fbar-row { display: flex; gap: 10px; align-items: stretch; }
   .fbar-action { min-width: 0; }
+  .fbar-end { flex: none; padding: 0 16px; min-height: 52px; border-radius: 16px; font-weight: 600; }
+  .fbar [data-faddex] { display: inline-flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap; }
   .fbar .fdone { margin: 0; height: 100%; }
   .fbar { position: sticky; bottom: calc(96px + env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; gap: 8px; padding: 10px 0 12px; background: var(--bg); z-index: 4; }
   .fbar .primary { min-height: 60px; border-radius: 20px; font-size: 17px; }

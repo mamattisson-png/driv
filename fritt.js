@@ -30,7 +30,11 @@ function freeTrainView() {
       if (!x.done && !n && !(x.dayId === d.id && going && date === TODAY)) continue;
       if (x.act) { items.push(row("aktivitet", "actic", esc(x.act.name), esc(`${when} · ${actLine(x.act)}`), `data-freeday="${date}"`, icon("right", 18))); continue; }
       const live = !x.done && date === TODAY;
-      items.push(row("trana", "gymic", esc(p ? p.name : "Pass"), esc(`${when} · ${live ? "pågår · " : ""}${n} ${n === 1 ? "övning" : "övningar"}`),
+      // Fria pass heter efter övningarna ("Bänkpress, Hantelpress"), andra pass efter sitt namn
+      const exs = Object.keys(x.sets).filter(id => EX[id] && x.sets[id].some(hasData)).map(id => EX[id].name);
+      const title = x.dayId === "fritt" && exs.length ? exs.slice(0, 2).join(", ") + (exs.length > 2 ? " …" : "") : p ? p.name : "Pass";
+      const sets = Object.values(x.sets).reduce((a, arr) => a + arr.filter(hasData).length, 0);
+      items.push(row("trana", "gymic", esc(title), esc(`${when} · ${live ? "pågår · " : "gym · "}${sets} set`),
         live ? `data-focusstart="${x.dayId}"` : `data-freeday="${date}"`, live ? `<span class="accenttext small">Fortsätt</span>` : icon("right", 18)));
     }
     actsOn(date).forEach((a, i) => items.push(row("aktivitet", "actic", esc(a.name), esc(`${when} · ${actLine(a)} · ${actKcal(a)} kcal`), `data-actedit="${i}" data-actdate="${date}"`, icon("edit", 18))));
@@ -47,15 +51,27 @@ function freeTrainView() {
     <div class="klabel h3-sec">Den här veckan</div>
     ${items.length ? `<section class="h3-list">${items.join("")}</section>` : `<div class="muted small freeempty">Inget loggat än den här veckan.</div>`}
     <div class="klabel h3-sec">Mer</div>
-    <section class="h3-list">${row("search", "", "Övningar", `${Object.keys(EX).length} övningar · sök och läs instruktioner`, "data-exlib", icon("right", 18))}</section>`;
+    <section class="h3-list">${row("search", "", "Övningar", `${Object.keys(EX).length} övningar · sök och läs instruktioner`, "data-exlib", icon("right", 18))}</section>
+    ${histDay ? daySheet() : ""}`;
 }
 
+// Det fria passet har ett eget, rakt flöde: pågår det leder varje "se passet" och "fortsätt" direkt in i passet,
+// aldrig till schemats passida (som är byggd för pass med planerade övningar)
+const freeLive = () => { const w = workoutOn(TODAY, "fritt"); return !!(focus && focus.dayId === "fritt") || !!(w && !w.done && freeDay().ex.length); };
+function resumeFree() {
+  histDay = null; editDate = null; passOpen = false; chosenDay = null; editing = false; tab = "pass";
+  if (focus && focus.dayId === "fritt") focus.suspended = false; else startFocus("fritt");
+}
 document.addEventListener("click", ev => {
-  const t = ev.target.closest && ev.target.closest("[data-freegym],[data-freeday],[data-seepass='fritt']");
+  const t = ev.target.closest && ev.target.closest("[data-freegym],[data-freeday],[data-seepass='fritt'],[data-pick='fritt'],[data-hpass='fritt'],[data-focusstart='fritt']");
   if (!t) return;
+  const ds = t.dataset;
+  // Ändra ett avslutat fritt pass i Historiken sköts som vanligt
+  if (ds.hpass !== undefined && !(histDay === TODAY && freeLive())) return;
   ev.stopImmediatePropagation();
-  if (t.dataset.freegym !== undefined) startFreeGym();
-  else if (t.dataset.freeday) { histDay = t.dataset.freeday; tab = "historik"; }
-  else { tab = "pass"; passOpen = false; chosenDay = null; }   // Se passet på Hem: till Träna
+  if (ds.freegym !== undefined) startFreeGym();
+  else if (ds.freeday) histDay = ds.freeday;   // dagen öppnas ovanpå Träna
+  else if (freeLive()) resumeFree();
+  else { tab = "pass"; passOpen = false; chosenDay = null; histDay = null; }   // inget pågår: till Träna
   save(); render(); window.scrollTo(0, 0);
 }, true);

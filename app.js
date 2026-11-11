@@ -1231,7 +1231,7 @@ const VIEWS = {
     const no = (n, ok) => `<span class="h3-no ${ok ? "ok" : ""}" aria-hidden="true">${ok ? icon("check", 14) : n}</span>`;
     const exN = `${d.ex.length} ${d.ex.length === 1 ? "övning" : "övningar"}`;
     const mins = Math.max(5, Math.round(d.ex.reduce((a, x) => a + (+x.sets || 0), 0) * 2.5 / 5) * 5);
-    const passInfo = freeIdle ? "Logga ett gympass eller motion" : t.rest ? `Återhämtning · nästa pass ${WD_LONG[weekdayOf(t.next)]}` : isActDay(d) ? esc(`Motion · ${done && w.act ? actLine(w.act) : actGoal(d)}`)
+    const passInfo = freeIdle ? "Logga ett gympass eller motion" : d.id === "fritt" ? esc(`Gympass · ${d.ex.map(e => EX[e.id] ? EX[e.id].name : "").filter(Boolean).join(", ") || "inga övningar än"}`) : t.rest ? `Återhämtning · nästa pass ${WD_LONG[weekdayOf(t.next)]}` : isActDay(d) ? esc(`Motion · ${done && w.act ? actLine(w.act) : actGoal(d)}`)
       : [passMuscles(d), exN, d.ex.length ? `~${mins} min` : ""].filter(Boolean).map(esc).join(" · ");
     const passBtn = done ? `<button class="h3-btn ok" data-seepass="${d.id}">${icon("check", 16)}Passet klart · visa</button>`
       : freeIdle ? `<div class="row h3-actbtns"><button class="h3-btn primary" data-freegym>${icon("trana", 16)}Gympass</button><button class="h3-btn" data-actnew="" data-actdate="${TODAY}">${icon("aktivitet", 16)}Motion</button></div>`
@@ -2039,7 +2039,8 @@ function restoreOldSwaps() {
 }
 function syncDone(d) {
   const w = workoutOn(logDate(), d.id);
-  if (w) w.done = d.ex.length > 0 && d.ex.every(x => exDone(w, x));
+  // Ett fritt pass (inget schema) blir klart först när man trycker Avsluta: man lägger till övningar under tiden
+  if (w && d.id !== "fritt") w.done = d.ex.length > 0 && d.ex.every(x => exDone(w, x));
 }
 
 function saveSetup() {

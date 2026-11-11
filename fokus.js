@@ -67,7 +67,7 @@ function setFeedback(d, exId, s, o = {}) {
   if (o.warm) text = `Uppvärmning klar${val ? ` · ${val}` : ""}`;
   else if (changed && next && o.inRound) text = `Nästa i varvet: ${EX[next.id].name}`;
   else if (changed && next) text = [`${EX[exId].name} klar`, `Nästa: ${EX[next.id].name}`];
-  else if (d.ex.every(x => exDone(w, x))) text = "Alla övningar klara!";
+  else if (d.ex.every(x => exDone(w, x))) text = d.id === "fritt" ? `${EX[exId].name} klar` : "Alla övningar klara!";
   else text = `Set klart${val ? ` · ${val}` : ""}`;
   setFx = { text, big: changed, rest: !!o.rest, t: Date.now() };
   setTimeout(applySetFx, 0);
@@ -314,6 +314,7 @@ function focusView() {
   const main = !allDone
     ? `<div class="fbar-action grow">${setAction}</div>`
     : next ? `<button class="primary grow" data-focusgo="${nextIdx}">Nästa: ${esc(EX[next.id].name)}</button>`
+    : d.id === "fritt" ? `<button class="fbar-end" data-finish="${d.id}" data-focusend>Avsluta</button><button class="primary grow" data-faddex>${icon("plus", 16)}Nästa övning</button>`
     : w && w.done ? `<button class="primary grow" data-finish="${d.id}" data-focusend>Avsluta pass</button>`
     : `<button class="primary grow" data-finish="${d.id}" data-focusend>Spara och avsluta</button>`;
   const dList = dailyList(logDate()), dDone = dList.filter(e => dailyDone(logDate(), e.id)).length;
@@ -351,7 +352,7 @@ function focusView() {
     <div class="ftip">${icon("trend", 16)}<span>${tip}</span></div>
     ${completedView}
     ${currentRows ? `<ol class="fsets" aria-label="Set">${currentRows}</ol>` : ""}
-    ${allDone ? `<div class="fall">${icon("check", 16)}Alla set klara</div>` : ""}
+    ${allDone ? `<div class="fall">${icon("check", 16)}${d.id === "fritt" ? "Klart · lägg till nästa övning eller avsluta" : "Alla set klara"}</div>` : ""}
     ${ssPick}</div>
     <div class="focus-controls">${focusRemoved && Date.now() - focusRemoved.at < 5000 ? `<div class="fundo" role="status"><span>${esc(EX[focusRemoved.entry.id].name)} borttagen från dagens pass</span><button class="linkbtn2" data-fundo>Ångra</button></div>` : ""}${tools}
     <div class="fbar">${restBox ? `<div class="frestctl" role="group" aria-label="Vila"><button class="small" data-restadd="-15">−15</button>
