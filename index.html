@@ -995,7 +995,7 @@
   .homehead .brand .wordmark { font-size: 20px; }
   .homehead .brand .slogan { font-size: 11px; }
   .homehead .ordbild { gap: 5px; }
-  .gear.avbtn { position: static; width: 42px; height: 42px; border-radius: 99px; border: 0; background: var(--accent-soft); color: var(--accent-text); font-weight: 700; font-size: 16px; }
+  .gear.avbtn { position: static; width: 42px; height: 42px; min-height: 0; border-radius: 50%; border: 0; background: var(--accent-soft); color: var(--accent-text); font-weight: 700; font-size: 16px; }
   .homedate { font-size: 14px; }
   .greet { margin: 2px 0 18px; font-size: 30px; }
   .htiles { display: grid; grid-template-columns: 1.15fr 1fr; gap: 10px; margin-bottom: 12px; }
@@ -1439,7 +1439,7 @@
   .kmopen { display: flex; flex: 1; min-width: 0; align-items: center; gap: 12px; min-height: 64px; padding: 8px 0; border: 0; border-radius: 0;
     background: none; color: var(--text); text-align: left; font: inherit; }
   .kmopen .col { min-width: 0; gap: 1px; }
-  .kmadd { width: 40px; height: 40px; flex: none; padding: 0; border-radius: 20px; border: 0; background: var(--card-2); color: var(--accent-text);
+  .kmadd { width: 40px; height: 40px; min-height: 0; flex: none; padding: 0; border-radius: 20px; border: 0; background: var(--card-2); color: var(--accent-text);
     display: grid; place-items: center; }
   .kmrow:not(.empty) .kmadd { background: none; border: 1px solid var(--line-strong); }
   /* Kost, översikten: luftigare – datumrad, en ring i mitten, lugna rutor och ett kort per måltid */
@@ -1996,9 +1996,9 @@ button.h3-card.h3-head { background: var(--card); padding: 12px 14px; }
 .dlx-row { min-height: 60px; gap: 10px; }
 .dlx-row .thumb.exl { width: 44px; height: 44px; border-radius: 12px; flex: none; }
 .dlx-row.ok b { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--line-strong); }
-.dlx-play, .dlx-edit { width: 36px; height: 36px; flex: none; padding: 0; border: 0; border-radius: 18px; background: var(--card-2); color: var(--accent-text); display: grid; place-items: center; }
+.dlx-play, .dlx-edit { width: 40px; height: 40px; min-height: 0; flex: none; padding: 0; border: 0; border-radius: 50%; background: var(--card-2); color: var(--accent-text); display: grid; place-items: center; }
 .dlx-edit { background: none; color: var(--muted); }
-.dlx-check { width: 40px; height: 40px; flex: none; padding: 0; border-radius: 20px; border: 1.5px solid var(--line-strong); background: none; color: transparent; display: grid; place-items: center; }
+.dlx-check { width: 44px; height: 44px; min-height: 0; flex: none; padding: 0; border-radius: 50%; border: 1.5px solid var(--line-strong); background: none; color: transparent; display: grid; place-items: center; }
 .dlx-check.on { background: var(--ok-strong); border-color: var(--ok-strong); color: var(--on-color); }
 .dlx-sicon { font-size: 18px; }
 .dlx-addrow { min-height: 52px; }
