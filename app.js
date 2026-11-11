@@ -1716,13 +1716,14 @@ function renderModal() {
   }
   if (modal.info) {
     const e = EX[modal.info];
+    const mwHref = e.cat === "stretch" ? mwDirectUrl(modal.info) : mwUrl(modal.info);
     return `<div class="overlay" data-close><div class="sheet">
       <div class="row between"><h2>${esc(e.name)}</h2><button class="small ghost iconbtn" data-close aria-label="Stäng">${icon("close", 18)}</button></div>
       ${figure(modal.info, "big", true)}<div class="muted">${esc(e.muscles)}</div>
       ${gearOf(modal.info) ? `<div class="gearbox"><b>${GEAR[gearOf(modal.info)][0]}</b><div>${GEAR[gearOf(modal.info)][1]}</div></div>` : ""}
       <ol>${e.cues.map(c => `<li>${esc(c)}</li>`).join("")}</ol>
       ${libCtx ? "" : `<button class="wide sg-infoadd" data-sgadd="${modal.info}">${icon("plus", 16)}Lägg till i Dailys eller ett pass</button>`}
-      ${mwUrl(modal.info) && !(e.cat === "stretch" && MW[modal.info].startsWith("exercises/")) ? `<a class="mwlink" href="${mwUrl(modal.info)}" target="_blank" rel="noopener">${MW[modal.info].startsWith("exercises/") ? "Liknande övningar på MuscleWiki" : "Mer om övningen på MuscleWiki"} <span aria-hidden="true">↗</span></a>` : ""}</div></div>`;
+      ${mwHref ? `<a class="mwlink" href="${mwHref}" target="_blank" rel="noopener">${MW[modal.info].startsWith("exercises/") ? "Liknande övningar på MuscleWiki" : "Mer om övningen på MuscleWiki"} <span aria-hidden="true">↗</span></a>` : ""}</div></div>`;
   }
   return "";
 }
