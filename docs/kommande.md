@@ -88,6 +88,7 @@ Senast uppdaterad: 2026-11-06. Status bygger på dokumenterade publiceringar och
 | 84 | 84 sökbara träningsformer med kcal (bl.a. EMS), sökfält, annan träning i egen lista och målet nått i veckotexten | Träning | Hög | Klar |
 | 85 | Inget schema: logga gympass och motion fritt mot ett veckomål | Träning | Hög | Klar |
 | 86 | Logga motion som egen sida: tydlig sökruta, Senast med Igen, Populärt, alla 84 i grupper, dag, tid och intensitet | Träning | Hög | Klar |
+| 87 | Runda knappar i Dailys, på Kost och Hem (play, bock, plus, info) | Design | Låg | Klar |
 
 ## Detaljer och acceptanskriterier
 
