@@ -1,5 +1,17 @@
 # MuscleWiki – verifieringslogg för stretchbiblioteket
 
+## Oberoende textkontroll 2026-11-11
+
+- Den aktuella [granskningskön](docs/stretch-musclewiki-review-queue.md) omfattar **125 unika stretchövningar**: **31** med granskad direktlänk (`verified`), **94** utan verifierad exakt motsvarighet (`no_exact_match`), **0** väntande.
+- Fördelning: `ovningar.js` **15/26** med direktlänk; `stretch-extra.js` **11/83**; `stretch-guide.js` **5/16**.
+- Samtliga **30 unika MuscleWiki-adresser** bakom de 31 direktlänkarna har öppnats och deras publika *textinstruktioner* jämförts med respektive DRIV-övnings startposition, rörelse, utrustning och variant. Inga uppenbara felmatchningar hittades i denna textgranskning. Detta verifierar **inte** videornas visuella rörelse eller att sidorna förblir oförändrade.
+- Kodens nuvarande direktlänkar för stretch går till individuella `/exercise/<slug>`-sidor; generiska `/exercises/`-kategorier ska inte visas som stretchdemonstrationer. Regressionstestet `tests/test_stretch_extra.cjs` kontrollerar nu att granskningskö, 31 direktlänkar och 94 avsiktligt olänkade övningar överensstämmer.
+- [GitHub Actions 43059437382](https://github.com/mamattisson-png/driv/actions/runs/43059437382) var grön för teständringen, men **PR #30 har fortfarande mergekonflikter** och mobil-/funktionstester är inte dokumenterat godkända. Ingen merge eller publicering får göras utan användarens godkännande.
+
+## Historisk inventering från 2026-11-04
+
+*Texten nedan behålls som tidigare arbetsunderlag. Siffror och kvarstående uppgifter där är äldre och ersätts av statusen ovan samt den aktuella granskningskön.*
+
 Senast inventerad: 2026-11-04. Denna fil är intern arbetsstatus för PR #30, **inte** ett intyg om att länkarna är färdiga.
 
 ## Omfattning
