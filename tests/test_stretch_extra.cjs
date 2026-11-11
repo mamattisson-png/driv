@@ -36,14 +36,17 @@ for (const e of rows) {
   // No generic category link is acceptable as a direct stretch demonstration.
   // Explicit reviewed exercise pages only. Category/muscle pages must never masquerade as demos.
   const verifiedStretchPages = new Set([
+    "exercise/laying-chin-tucks",
+    "exercise/shoulders-stretch-variation-two",
     "exercise/chest-stretch-variation-two",
     "exercise/puppy-pose",
-    "exercise/biceps-stretch-variation-one",
-    "exercise/wrist-flexor-stretch-seated",
-    "exercise/wrist-extensor-stretch-seated",
     "exercise/adductor-stretch-dynamic-unilateral-4-point-position",
     "exercise/quad-stretch-floor-prone",
     "exercise/hamstrings-stretch-variation-two",
+    "exercise/soleus-stretch-static",
+    "exercise/calf-stretch-on-box-bilateral",
+    "exercise/calves-stretch-variation-one",
+    "exercise/ankle-circle",
   ]);
   assert.ok(e.wiki === undefined || verifiedStretchPages.has(e.wiki), `${e.id}: unreviewed or generic MuscleWiki link ${e.wiki}`);
   assert.ok(e.stretchTargets.length > 0);
