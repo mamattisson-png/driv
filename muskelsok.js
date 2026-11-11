@@ -117,6 +117,8 @@ function stretchPage(id) {
   if (typeof dailyClock !== "undefined" && dailyClock && dailyClock.id === id) return `<div class="msk st">${dailyClockView()}</div>`;
   const secs = (String(e.reps).match(/(\d+)\s*(s|sek)/) || [])[1];
   const tile = (v, l) => `<div><b>${v}</b><span>${l}</span></div>`;
+  // Only link a stretch to an individual exercise page, never a category.
+  const directMw = /^exercise\/[a-z0-9-]+$/.test(MW[id] || "") ? mwUrl(id) : null;
   const chip = (k, strong) => `<span class="msk-tchip ${strong ? "on" : ""}"><i></i>${MUSKEL_NAMN[k]}</span>`;
   const back = ms.some(k => !MUSKEL_FRAM.includes(k)), front = ms.some(k => MUSKEL_FRAM.includes(k));
   return `<div class="msk st"><button class="backbtn" data-mskdetail="">${icon("left", 18)}Stretch</button>
@@ -127,7 +129,7 @@ function stretchPage(id) {
     <div class="rstats three">${tile(secs ? `${secs} s` : esc(e.reps), secs ? "håll" : "reps")}${tile(`${e.sets} ×`, "gånger")}${tile(gearOf(id) ? "1" : "0", "utrustning")}</div>
     <section class="card msk-how"><div class="row" style="gap:14px;align-items:center"><span class="thumb msk-fig">${figure(id, "", true)}</span>
       <div><h2>Så här gör du</h2><span class="muted small">Det ska dra${most.length ? ` i ${MUSKEL_NAMN[most[0]].toLowerCase()}` : ""}, inte göra ont.</span></div></div>
-      <ol class="msk-steps">${(e.cues || []).map(c => `<li>${esc(c)}</li>`).join("")}</ol><a href="https://musclewiki.com/exercises" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:7px;margin-top:18px;color:#12b7a5;font-weight:700;text-decoration:none">Visa fler övningar på MuscleWiki ↗</a></section>
+      <ol class="msk-steps">${(e.cues || []).map(c => `<li>${esc(c)}</li>`).join("")}</ol>${directMw ? `<a href="${directMw}" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:7px;margin-top:18px;color:#12b7a5;font-weight:700;text-decoration:none">Mer om övningen på MuscleWiki ↗</a>` : ""}</section>
     <div class="pagefoot row"><button class="grow ghost" data-sgadd="${id}">${icon("plus", 16)}Lägg till</button>
       <button class="primary grow bigbtn" data-dclockstart="${id}">${icon("timer", 18)}Starta${secs ? ` · ${secs} s` : ""}</button></div></div>`;
 }
