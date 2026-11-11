@@ -9,6 +9,23 @@ const ctx = vm.createContext({ window: { matchMedia: () => ({ matches: false }) 
 const run = code => vm.runInContext(code, ctx);
 for (const file of ['ovningar.js', 'figur.js']) run(fs.readFileSync(path.join(root, file), 'utf8'));
 const before = run('JSON.stringify({EX,MW})');
+// Exercise-page URL validation is shared by the modal and the stretch detail view.
+{
+  const cases = [
+    ['exercise/chest-stretch-variation-one', 'https://musclewiki.com/exercise/chest-stretch-variation-one'],
+    ['exercises/chest/bodyweight', null],
+    ['browse/stretch', null],
+    ['exercise/chest-stretch?sort=popular', null],
+    ['https://musclewiki.com/exercise/chest-stretch', null],
+  ];
+  for (const [value, expected] of cases) {
+    run('MW.__directLinkTest = ' + JSON.stringify(value));
+    assert.equal(run('mwDirectUrl("__directLinkTest")'), expected, value);
+  }
+  run('delete MW.__directLinkTest');
+  assert.equal(run('mwDirectUrl("__directLinkTest")'), null);
+}
+
 const oldNames = new Set(JSON.parse(before).EX ? Object.values(JSON.parse(before).EX).map(e => e.name.toLocaleLowerCase('sv')) : []);
 run(fs.readFileSync(path.join(root, 'stretch-extra.js'), 'utf8'));
 const rows = JSON.parse(run('JSON.stringify(EXTRA_STRETCH_IDS.map(id => ({id,...EX[id],wiki:MW[id],svg:figure(id,"",true)})))'));
@@ -147,6 +164,11 @@ console.log(`${rows.length} new stretches: ${timed} timed, ${dynamic} dynamic; o
     esc: value => value,
     mwUrl: id => mw[id] ? 'https://musclewiki.com/' + mw[id] : null,
   });
+  // Evaluate the real shared URL guard instead of reimplementing its behavior.
+  const helperSource = fs.readFileSync(path.join(root, 'ovningar.js'), 'utf8')
+    .match(/const mwDirectUrl = [^\\n]+/);
+  assert.ok(helperSource, 'Shared direct-link helper missing');
+  vm.runInContext(helperSource[0], sandbox);
   vm.runInContext(source.slice(start, end), sandbox);
   const linked = vm.runInContext("stretchPage('linked')", sandbox);
   const missing = vm.runInContext("stretchPage('missing')", sandbox);
@@ -157,5 +179,8 @@ console.log(`${rows.length} new stretches: ${timed} timed, ${dynamic} dynamic; o
   }
   assert.ok(!missing.includes('musclewiki.com'), 'Unlinked stretch must not have a MW link');
   assert.ok(!category.includes('musclewiki.com'), 'Category link must be hidden');
+  const appSource = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  assert.match(appSource, /const mwHref = e\\.cat === "stretch" \\? mwDirectUrl\\(modal\\.info\\) : mwUrl\\(modal\\.info\\)/, 'Exercise info modal must use strict direct-link guard');
+  assert.match(source, /const directMw = mwDirectUrl\\(id\\)/, 'Stretch detail must use shared guard');
   console.log('Stretch detail renders only direct MuscleWiki links; no generic browse fallback.');
 }
