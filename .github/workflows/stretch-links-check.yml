@@ -5,6 +5,13 @@ on:
       - 'ovningar.js'
       - 'stretch-extra.js'
       - 'stretch-guide.js'
+      - 'app.js'
+      - 'muskelsok.js'
+      - 'figur.js'
+      - 'tests/test_stretch_extra.cjs'
+      - 'tests/test_release_safety.py'
+      - 'tests/sync.test.cjs'
+      - 'tools/sw-version.py'
       - 'docs/stretch-musclewiki-review-queue.md'
       - '.github/workflows/stretch-links-check.yml'
   push:
