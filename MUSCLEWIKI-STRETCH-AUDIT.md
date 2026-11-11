@@ -1,5 +1,13 @@
 # MuscleWiki – verifieringslogg för stretchbiblioteket
 
+## Mobil regression och direktlänksfix 2026-11-11
+
+- En mobilstor webbläsarkontroll av föregående förhandsversion upptäckte en blockerare i `muskelsok.js`: varje stretchdetalj visade en generisk `https://musclewiki.com/exercises`-länk oavsett övning. Det syntes inte i det tidigare datatestet eller i `app.js`-modalen.
+- Fix på enbart PR-grenen: `stretchPage(id)` visar nu endast en specifik `/exercise/<slug>`-länk när övningen har en granskad direktadress; annars visas ingen MuscleWiki-länk. `tests/test_stretch_extra.cjs` renderar stretchdetaljen isolerat och testar direktlänk, saknad länk och generisk kategori.
+- GitHub Actions [43070688851](https://github.com/mamattisson-png/driv/actions/runs/43070688851) passerade samtliga steg för commit `c4d9e4a6f931813272cac837d8c5916d3b607bf5`.
+- I [förhandsversionen för den commiten](https://974ca18f.driv-test.pages.dev) kontrollerades mobilstor vy (~390 × 844) utan konto: **Bröststretch i dörr** visade `/exercise/chest-stretch-variation-one`, medan **Snöänglar på golvet** saknade MuscleWiki-länk. Inga generiska länkar sågs i dessa två detaljer; tillbaka-navigation och listvisning fungerade.
+- Detta är ett **begränsat mobilstickprov**, inte ett godkänt komplett mobil-/funktionstest. Full regressionsgenomgång, visuell kontroll av MuscleWiki-rörelser och sammanslagningskonflikter återstår. PR får inte mergas eller publiceras utan godkännande.
+
 ## Oberoende textkontroll 2026-11-11
 
 - Den aktuella [granskningskön](docs/stretch-musclewiki-review-queue.md) omfattar **125 unika stretchövningar**: **31** med granskad direktlänk (`verified`), **94** utan verifierad exakt motsvarighet (`no_exact_match`), **0** väntande.
