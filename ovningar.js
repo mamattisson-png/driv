@@ -1242,6 +1242,8 @@ const MW = {
   sidliggande_benlyft: "exercises/glutes/bodyweight", hamstring_walkout: "exercises/hamstrings/bodyweight",
 };
 const mwUrl = id => MW[id] ? `https://musclewiki.com/${MW[id]}` : null;
+// Stretch demonstrations must point to a specific exercise, never a category or search page.
+const mwDirectUrl = id => /^exercise\/[a-z0-9-]+$/.test(MW[id] || "") ? mwUrl(id) : null;
 
 // ---------- Muskelkartan ----------
 // Grupperna som gubben ritar, och huvud- och hjälpmuskler per övning ("huvud|hjälp").
