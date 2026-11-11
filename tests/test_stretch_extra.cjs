@@ -63,3 +63,60 @@ assert.ok(timed >= 45 && dynamic >= 20, 'Include both held stretches and control
 assert.ok(poses.size >= 45, 'Use movement-specific poses');
 for (const tag of ['neck','shoulders','chest','lats','triceps','biceps','forearms','hip_flexors','glutes','adductors','quads','hamstrings','calves','ankles']) assert.ok(targets.has(tag), tag);
 console.log(`${rows.length} new stretches: ${timed} timed, ${dynamic} dynamic; old exercises/links unchanged; figures and targets valid.`);
+
+
+// Audit consistency across all 125 stretch exercises, not just the 83 extra ones.
+// This is an offline data regression test, NOT independent verification of MW content.
+{
+  const auditFile = fs.readFileSync(path.join(root, 'docs/stretch-musclewiki-review-queue.md'), 'utf8');
+  const auditRows = auditFile.split(/\r?\n/)
+    .filter(line => line.startsWith('| ') && /\| (?:verified|no_exact_match) \|/.test(line))
+    .map(line => {
+      const cells = line.split('|').map(cell => cell.trim());
+      return { id: cells[1], source: cells[3], url: cells[4], status: cells[5], evidence: cells[6] };
+    });
+  assert.equal(auditRows.length, 125, 'Audit queue must cover all 125 stretches');
+  assert.equal(new Set(auditRows.map(row => row.id)).size, 125, 'Duplicate audit ID');
+  for (const [source, count] of [['ovningar.js', 26], ['stretch-extra.js', 83], ['stretch-guide.js', 16]]) {
+    assert.equal(auditRows.filter(row => row.source === source).length, count, source);
+  }
+
+  // The guide's additional 16 exercises are not loaded in this data-only VM
+  // (its UI registers DOM handlers), so inspect its explicit link map instead.
+  const guideSource = fs.readFileSync(path.join(root, 'stretch-guide.js'), 'utf8');
+  const guideList = guideSource.split('const more = [')[1]?.split('\n  ];')[0];
+  assert.ok(guideList, 'Stretch guide exercise list not found');
+  const guideCodes = new Set([...guideList.matchAll(/^\s*\["([a-z0-9_]+)",\s*"/gm)].map(m => m[1]));
+  assert.equal(guideCodes.size, 16, 'Expected 16 guide stretches');
+  const guideMapBlock = guideSource.match(/const verifiedDirectLinks = \{([\s\S]*?)\n\s*\};/);
+  assert.ok(guideMapBlock, 'Guide direct-link map not found');
+  const guideLinks = Object.fromEntries(
+    [...guideMapBlock[1].matchAll(/\b([a-z0-9_]+):\s*"(exercise\/[a-z0-9-]+)"/g)]
+      .map(m => ['strg_' + m[1], m[2]])
+  );
+  const liveLinks = JSON.parse(run('JSON.stringify(MW)'));
+  const exerciseIds = new Set(JSON.parse(run('JSON.stringify(Object.keys(EX).filter(id => EX[id].cat === "stretch"))')));
+  const auditedIds = new Set(auditRows.map(row => row.id));
+  for (const id of exerciseIds) assert.ok(auditedIds.has(id), 'Unaudited stretch: ' + id);
+
+  for (const row of auditRows) {
+    assert.ok(row.evidence && row.evidence.length > 12, row.id + ': missing review evidence');
+    if (row.source === 'stretch-guide.js') {
+      assert.ok(guideCodes.has(row.id.replace(/^strg_/, '')), row.id + ': unknown guide exercise');
+    } else {
+      assert.ok(exerciseIds.has(row.id), row.id + ': missing exercise');
+    }
+    const actual = row.source === 'stretch-guide.js' ? guideLinks[row.id] : liveLinks[row.id];
+    if (row.status === 'verified') {
+      assert.match(row.url, /^https:\/\/musclewiki\.com\/exercise\/[a-z0-9-]+$/, row.id);
+      assert.equal(actual, row.url.replace('https://musclewiki.com/', ''), row.id + ': audit/code link mismatch');
+    } else {
+      assert.equal(row.url, '—', row.id + ': unverified URL in audit');
+      assert.ok(!actual || !actual.startsWith('exercise/'), row.id + ': unverified direct link in code');
+    }
+  }
+  for (const id of Object.keys(guideLinks)) {
+    assert.ok(auditedIds.has(id), id + ': unaudited guide direct link');
+  }
+  console.log('125 stretch audit entries match code: 31 reviewed direct links, 94 without exact match.');
+}
