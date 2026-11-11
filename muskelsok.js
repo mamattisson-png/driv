@@ -118,7 +118,7 @@ function stretchPage(id) {
   const secs = (String(e.reps).match(/(\d+)\s*(s|sek)/) || [])[1];
   const tile = (v, l) => `<div><b>${v}</b><span>${l}</span></div>`;
   // Only link a stretch to an individual exercise page, never a category.
-  const directMw = /^exercise\/[a-z0-9-]+$/.test(MW[id] || "") ? mwUrl(id) : null;
+  const directMw = mwDirectUrl(id);
   const chip = (k, strong) => `<span class="msk-tchip ${strong ? "on" : ""}"><i></i>${MUSKEL_NAMN[k]}</span>`;
   const back = ms.some(k => !MUSKEL_FRAM.includes(k)), front = ms.some(k => MUSKEL_FRAM.includes(k));
   return `<div class="msk st"><button class="backbtn" data-mskdetail="">${icon("left", 18)}Stretch</button>
