@@ -2018,6 +2018,28 @@ button.h3-card.h3-head { background: var(--card); padding: 12px 14px; }
 .okrad { width: 22px; height: 22px; flex: none; border-radius: 50%; border: 2px solid var(--line-strong); }
 .onbkind.on .okrad { border: 7px solid var(--accent-strong); }
 .actq { width: 100%; margin-top: 10px; }
+/* Logga motion som en sida */
+.actpage { display: flex; flex-direction: column; padding-bottom: 96px; }
+.actpage > .backbtn { align-self: flex-start; }
+.actpage h1 { margin: 2px 0 12px; }
+.actpage .klabel.actk { display: block; margin: 18px 2px 8px; }
+.actpage .actchips { margin: 0; }
+.actpage .actq { margin-top: 0; min-height: 52px; font-size: 17px; }
+.actgroups .h3-row small { color: var(--muted); }
+.actgroupchips { padding: 2px 0 14px; }
+.actdays { margin: 0; }
+.actdatepick { position: relative; display: inline-flex; align-items: center; padding: 0 14px; min-height: 40px; border-radius: 99px; border: 1px solid var(--line); background: var(--card); color: var(--text); font-size: 14px; }
+.actdatepick.on { background: var(--text); color: var(--bg); border-color: var(--text); }
+.actdatepick input { position: absolute; inset: 0; opacity: 0; width: 100%; }
+.actinthelp { margin: 8px 2px 0; }
+.actpage .qtyrow { gap: 10px; }
+.actpage .qtyrow .qcount { text-align: center; font-size: 24px; }
+.actpage .actmins { margin-top: 10px; }
+.actpage .actmins button { flex: 1; justify-content: center; }
+.actfoot { position: fixed; left: 0; right: 0; bottom: 0; z-index: 6; display: flex; gap: 10px; max-width: 640px; margin: 0 auto;
+  padding: 12px max(16px, env(safe-area-inset-right, 0px)) calc(12px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); background: var(--bg); border-top: 1px solid var(--line); }
+.actfoot .grow { flex: 1; min-height: 52px; font-size: 17px; }
+.actfoot .ghost { min-height: 52px; }
 .actsheet .klabel.actk { display: block; margin: 16px 2px 8px; }
 .actsheet .actchips { margin: 0; }
 .actlist { margin-top: 10px; background: var(--card-2); }
@@ -2026,6 +2048,8 @@ button.h3-card.h3-head { background: var(--card); padding: 12px 14px; }
 .actback { margin-top: 12px; }
 .actchosen { display: flex; align-items: center; gap: 12px; margin-top: 12px; padding: 12px 14px; border-radius: 16px; background: var(--card-2); }
 .actchosen b { font-size: 18px; font-weight: 600; }
+.actchosen .grow { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.actchosen small { color: var(--muted); font-size: 13px; }
 .actsheet .qtyrow { gap: 10px; }
 .actsheet .qtyrow .qcount { text-align: center; font-size: 22px; }
 .actmins { margin-top: 10px; }

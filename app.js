@@ -954,7 +954,7 @@ function render() {
   const nav = document.getElementById("nav");
   // Menyn är tillgänglig även under ett pågående pass.
   const inFocus = tab === "pass" && !!focus && !editing && !editDate && !focus.suspended && !libCtx;   // biblioteket (Byt övning) ska gå att scrolla
-  nav.classList.toggle("hidden", tab === "upplagg" || !!passDone);
+  nav.classList.toggle("hidden", tab === "upplagg" || !!passDone || !!actSheet);
   document.body.classList.toggle("onboard", tab === "upplagg" && !S.setupDone);
   document.body.classList.toggle("infocus", inFocus);
   nav.innerHTML = TABS.map(([id, ic, lbl]) =>
@@ -965,7 +965,8 @@ function render() {
   // Kugghjulet ligger på samma plats överallt; under ett pass har fokusvyn egna knappar där
   const gear = tab === "idag" || tab === "profil" || tab === "upplagg" || passDone || inFocus ? "" : `<button class="gear" data-tab="profil" aria-label="Inställningar">${GEAR_SVG}</button>`;
   document.getElementById("app").innerHTML = passDone ? passDoneView()
-    : gear + banner + focusBar() + (libCtx ? muscleView() : VIEWS[tab]()) + (modal ? renderModal() : "") + (actSheet ? actSheetView() : "") + (sgAdd && EX[sgAdd] ? stretchAddSheet(sgAdd) : "") + tourView();
+    : actSheet ? actPage() + tourView()   // Logga motion är en egen sida (aktivitet.js)
+    : gear + banner + focusBar() + (libCtx ? muscleView() : VIEWS[tab]()) + (modal ? renderModal() : "") + (sgAdd && EX[sgAdd] ? stretchAddSheet(sgAdd) : "") + tourView();
   if (tab === "recept" && typeof filterRecipes === "function") filterRecipes();
   const focusScroll = document.querySelector(".focus-scroll");
   if (focusScroll && focus) focusScroll.scrollTop = focus.scrollTop || 0;

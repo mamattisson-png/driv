@@ -102,7 +102,12 @@ const ACTIVITY_LIST = [
 ];
 // Snabbvalen innan man söker: de vanligaste först (efter det man själv loggat mest)
 const POPULAR_ACTS = ["Löpning", "Promenad", "Padel", "Cykling", "Styrketräning", "Yoga", "Simning", "Fotboll", "Gympa", "Spinning", "Vandring", "Tennis", "Golf", "Dans", "Skidor"];
-const ACTIVITIES = ACTIVITY_LIST.map(([name, met, km, words]) => ({ name, met, ...(km ? { km: true } : {}), words }));
+// Grupperna på sidan Logga motion: varje grupp börjar vid sin första träningsform i listan ovan
+const ACT_GROUP_START = { Promenad: "Gå, springa och cykla", Simning: "Vatten", Styrketräning: "Gym och gruppträning", Yoga: "Kropp och sinne",
+  Boxning: "Kampsport", Padel: "Racket och bollsport", Skidor: "Vinter och hjul", Klättring: "Övrigt" };
+let actGroupNow = "";
+const ACTIVITIES = ACTIVITY_LIST.map(([name, met, km, words]) => ({ name, met, ...(km ? { km: true } : {}), words, group: actGroupNow = ACT_GROUP_START[name] || actGroupNow }));
+const ACT_GROUPS = [...new Set(ACTIVITIES.map(a => a.group))];
 
 // Sök bland träningsformerna med samma tåliga sökning som övningarna (sok.js): synonymer, början av ord och felstavningar
 function actSearch(q) {

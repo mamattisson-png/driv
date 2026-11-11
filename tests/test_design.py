@@ -92,8 +92,10 @@ def views(page):
     yield "Avsluta passet", ".sheet"
     page.click(".sheet [data-fendclose]")
     page.click("[data-restskip]")
+    page.evaluate("openAct(TODAY, null, ''); render()")
+    yield "Logga motion, välj", ".actpage"
     page.evaluate("openAct(TODAY, null, 'Padel'); render()")
-    yield "Logga aktivitet", ".sheet"
+    yield "Logga motion, detaljer", ".actpage"
     page.evaluate("actSheet = null; render()")
     # Pass klart, och vännernas rutor (vänner kräver Supabase, så de ritas direkt här)
     page.evaluate("passDone = { dayId: S.plan.days[0].id, date: TODAY }; render()")
