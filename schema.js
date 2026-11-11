@@ -80,7 +80,7 @@ function openPlanSheet(i) {
   const free = WD.map((_, k) => k).filter(k => !sorted.includes(k));
   actSheet = d ? { plan: true, i, gym: !isActDay(d), name: d.name, min: d.act ? d.act.min : 30, int: d.act ? d.act.int || 2 : 2, km: d.act && d.act.km || "",
       custom: isActDay(d) && !actInfo(d.name), wd: fixed ? sorted[i] : null }
-    : { plan: true, i: null, gym: false, name: "Yoga", min: 30, int: 1, km: "", custom: false, wd: fixed ? free[0] ?? null : null };
+    : { plan: true, i: null, gym: false, name: "", min: 30, int: 2, km: "", custom: false, wd: fixed ? free[0] ?? null : null };
 }
 // Delar av bladet som bara finns för schemat eller för en aktivitet i schemat
 function planSheetTop(s) {
@@ -164,7 +164,7 @@ document.addEventListener("click", ev => {
   if (ds.actstart) { S.actRun = { dayId: ds.actstart, date: TODAY, start: Date.now() }; save(); }
   else if (ds.actstop) openActDay(TODAY, ds.actstop);
   else if (ds.actdaydone) openActDay(ds.actdate || TODAY, ds.actdaydone);
-  else if (ds.plankind) { const s = actSheet; s.gym = ds.plankind === "gym"; s.name = s.gym ? "" : "Yoga"; s.custom = false; }
+  else if (ds.plankind) { const s = actSheet; s.gym = ds.plankind === "gym"; s.name = ""; s.choosing = false; s.custom = false; }
   else if (ds.planwd) actSheet.wd = +ds.planwd;
   else if (ds.planmenu) planMenu = planMenu === +ds.planmenu ? null : +ds.planmenu;
   else if (ds.planedit) { planMenu = null; openPlanSheet(+ds.planedit); }

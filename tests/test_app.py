@@ -468,17 +468,19 @@ def test_aktivitet_loggas_och_raknas_som_pass(page):
     assert page.locator("text=Kommande").count() == 0
     page.click('.h3-row[data-actnew]')
     page.click('[data-actpick="Padel"]')
-    page.click('[data-actmin="15"]')   # 75 min
+    page.click('[data-actset="60"]')
+    page.click('[data-actmin="5"]')
+    page.click('[data-actmin="5"]')
+    page.click('[data-actmin="5"]')   # 75 min
     page.click('[data-actint="3"]')
     page.click("[data-actsave]")
     assert page.evaluate("S.log[TODAY].acts.map(({name,min,int}) => ({name,min,int}))") == [{"name": "Padel", "min": 75, "int": 3}]
     assert page.evaluate("weekSummary(weekStart(TODAY)).passes") == 1
     # En egen aktivitet, och dagens aktiviteter syns under rutorna i Träna
     page.click('.h3-row[data-actnew]')
-    page.fill("#actname", "Kanotpaddling")
-    page.click('[data-actmin="-15"]')
-    page.click('[data-actmin="-15"]')
-    page.click('[data-actmin="-15"]')   # 15 min: räknas inte som pass
+    page.fill("#actq", "Kanotpaddling")
+    page.click("[data-actown]")
+    page.click('[data-actset="15"]')   # 15 min: räknas inte som pass
     page.click("[data-actsave]")
     assert page.evaluate("S.log[TODAY].acts.length") == 2 and page.evaluate("weekSummary(weekStart(TODAY)).passes") == 1
     go(page, "pass")

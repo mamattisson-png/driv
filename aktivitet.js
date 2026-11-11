@@ -28,53 +28,67 @@ function favActs(n) {
   return [...new Set([...mine, ...POPULAR_ACTS, ...ACTIVITIES.map(a => a.name)])].slice(0, n);
 }
 
-let actSheet = null;
+let actSheet = null;   // { date, idx, name, min, int, km, custom } (plus plan/dayId för schemat, se schema.js)
 let actQ = "";   // sökningen i fönstret
-// Snabbval, eller träffarna när man söker. Det valda ligger alltid med.
+// Steg 1: välj vad. Sökträffar som rader, annars det man loggat senast och de vanligaste som knappar.
+// Finns det inte i listan läggs det man skrivit till som en egen träningsform.
 function actChips(s) {
-  const hits = actQ.trim() ? actSearch(actQ).slice(0, 14) : null;
-  const base = hits || (s.plan ? [...new Set(["Yoga", "Löpning", "Promenad", "Cykling", "Simning", ...favActs(30)])].slice(0, 12) : favActs(12));
-  const list = !hits && s.name && !s.custom && !base.includes(s.name) ? [s.name, ...base.slice(0, 11)] : base;
-  const own = actQ.trim() && !hits.some(n => n.toLowerCase() === actQ.trim().toLowerCase());
-  return `${list.map(n => `<button data-actpick="${esc(n)}" class="${!s.custom && s.name === n ? "on" : ""}">${esc(n)}</button>`).join("")}
-    ${hits && !hits.length ? `<span class="muted small actnohit">Ingen träff.</span>` : ""}
-    ${own ? `<button data-actpick="${esc(actQ.trim().slice(0, 30))}" data-actown>＋ Lägg till ”${esc(actQ.trim().slice(0, 30))}”</button>` : `<button data-actpick="" class="${s.custom ? "on" : ""}">＋ Annan</button>`}`;
-}   // { date, idx, name, min, int, km, custom }
+  const q = actQ.trim();
+  if (q) {
+    const hits = actSearch(q).slice(0, 8), own = !hits.some(n => n.toLowerCase() === q.toLowerCase());
+    return `<section class="h3-list actlist">${hits.map(n => `<button class="h3-row" data-actpick="${esc(n)}"><span class="h3-ic actic">${icon("aktivitet", 16)}</span><span class="grow"><b>${esc(n)}</b><small>ca ${actKcal({ name: n, min: 30, int: 2 })} kcal på 30 min</small></span>${icon("right", 16)}</button>`).join("")}
+      ${own ? `<button class="h3-row" data-actpick="${esc(q.slice(0, 30))}" data-actown><span class="h3-ic">${icon("plus", 16)}</span><span class="grow"><b>Lägg till ”${esc(q.slice(0, 30))}”</b><small>${hits.length ? "Något annat" : "Ingen träff"} · räknas som medelhård</small></span></button>` : ""}</section>`;
+  }
+  const count = {};
+  for (const L of Object.values(S.log)) for (const a of L.acts || []) count[a.name] = (count[a.name] || 0) + 1;
+  const recent = Object.keys(count).sort((x, y) => count[y] - count[x]).slice(0, 4);
+  const common = POPULAR_ACTS.filter(n => !recent.includes(n)).slice(0, recent.length ? 9 : 12);
+  const chip = n => `<button data-actpick="${esc(n)}">${esc(n)}</button>`;
+  return `${recent.length ? `<div class="klabel actk">Dina vanligaste</div><div class="chips actchips">${recent.map(chip).join("")}</div>` : ""}
+    <div class="klabel actk">Populärt</div><div class="chips actchips">${common.map(chip).join("")}</div>
+    <div class="muted small acthint">Hittar du inte det du gjort? Skriv det i sökrutan, så kan du lägga till det.</div>`;
+}
 function openAct(date, idx, name) {
   actQ = "";
   const a = idx != null ? actsOn(date)[idx] : null;
+  const info = name && actInfo(name);
   actSheet = a ? { date, idx, name: a.name, min: a.min, int: a.int || 2, km: a.km || "", custom: !actInfo(a.name) }
-    : { date, idx: null, name: name || "", min: 60, int: 2, km: "", custom: name === "" };
+    : { date, idx: null, name: info ? info.name : "", min: 30, int: 2, km: "", custom: false };
 }
+const ACT_MINS = [15, 30, 45, 60, 90];
 function actSheetView() {
   const s = actSheet, info = actInfo(s.name), showKm = s.custom || (info && info.km);
-  const kcal = s.name ? actKcal(s) : 0;
-  // s.plan: ett pass i schemat (upplägget). s.dayId: en aktivitet i schemat som markeras klar. Se schema.js.
+  const kcal = s.name ? actKcal(s) : 0, gym = s.plan && s.gym;
+  // Steg 1 (välja) när inget är valt eller man tryckt Byt; annars steg 2 (tid, intensitet, sträcka)
+  const choosing = !gym && !s.dayId && (!s.name || s.choosing);
   const title = s.plan ? (s.i != null ? `Ändra ${esc(s.name)}` : "Lägg till pass") : s.dayId ? `${esc(s.name)}${s.done ? "" : " klar"}`
-    : s.idx != null ? "Ändra aktivitet" : "Logga aktivitet";
-  const gym = s.plan && s.gym;
-  const note = s.plan ? `Ungefär ${kcal} kcal. Räknas som ett pass i veckan när du markerat den klar.`
-    : `Ungefär ${kcal} kcal förbrända${S.actKcal ? ", som läggs till dagens kalorimål" : ""}.${s.dayId || (s.min >= 45 && S.actCount !== false) ? " Räknas som ett pass den här veckan." : ""}`;
-  return `<div class="overlay" data-actclose><div class="sheet actsheet">
-    <div class="row between"><h2>${title}</h2><button class="small ghost" data-actclose aria-label="Stäng">${icon("close", 18)}</button></div>
+    : s.idx != null ? "Ändra träning" : "Logga motion";
+  const counts = s.plan || s.dayId || actCounts({ min: s.min });
+  const summary = `<div class="actsum"><b>ca ${kcal} kcal</b><span>${s.plan ? "räknas som pass när det är klart" : counts ? "räknas som pass i veckan" : `räknas som pass från 45 min`}${S.actKcal && !s.plan ? " · läggs till kalorimålet" : ""}</span></div>`;
+  const foot = `<div class="sheet-foot row">${s.idx != null || (s.dayId && s.done) ? `<button class="ghost" data-actdel>Ta bort</button>` : ""}
+      <button class="primary grow" data-actsave ${(s.name || "").trim() && !(s.plan && draft.mode === "fixed" && s.wd == null) ? "" : "disabled"}>${s.plan ? (s.i != null ? "Spara" : `Lägg till${s.name ? " " + esc(s.name) : ""}`) : s.dayId && !s.done ? "Klar" : "Spara"}</button></div>`;
+  const head = `<div class="row between"><h2>${title}</h2><button class="small ghost" data-actclose aria-label="Stäng">${icon("close", 18)}</button></div>
     ${s.date && s.date !== TODAY ? `<div class="muted small" style="margin-top:-6px">${dateLabel(s.date).replace(/^./, c => c.toUpperCase())}</div>` : ""}
-    ${s.plan ? planSheetTop(s) : ""}
-    ${gym ? `<label class="field" style="margin-top:10px">Namn på passet<input id="actname" value="${esc(s.name)}" placeholder="t.ex. Bröst och armar" maxlength="30" autocomplete="off"></label>
-      <div class="muted small" style="margin-top:8px">Övningarna lägger du till i passet under Träna.</div>`
-    : `${s.dayId ? "" : `${s.plan ? `<div class="klabel" style="margin-top:12px">Vad</div>` : ""}<input id="actq" class="actq" type="search" placeholder="Sök träningsform, t.ex. EMS, padel, spinning" autocomplete="off" aria-label="Sök träningsform" value="${esc(actQ)}">
-      <div class="chips actchips" id="actchips">${actChips(s)}</div>
-    ${s.custom ? `<label class="field" style="margin-top:10px">${s.plan ? "Vad vill du göra?" : "Vad gjorde du?"}<input id="actname" value="${esc(s.name)}" placeholder="t.ex. Bouldering" maxlength="30" autocomplete="off"></label>` : ""}`}
-    <div class="row qtyrow" style="margin-top:14px"><span class="grow">${s.plan ? "Mål, tid" : "Tid"}</span>
-      <button class="step" data-actmin="-15" ${s.min <= 15 ? "disabled" : ""} aria-label="Kortare">−</button><b class="qcount">${s.min} min</b>
-      <button class="step" data-actmin="15" aria-label="Längre">+</button></div>
-    <div class="seg three" style="margin-top:12px" role="radiogroup" aria-label="Hur tungt">${INTENSITY.map((n, i) =>
+    ${s.plan ? planSheetTop(s) : ""}`;
+  if (gym) return `<div class="overlay" data-actclose><div class="sheet actsheet">${head}
+    <label class="field" style="margin-top:10px">Namn på passet<input id="actname" value="${esc(s.name)}" placeholder="t.ex. Bröst och armar" maxlength="30" autocomplete="off"></label>
+    <div class="muted small" style="margin-top:8px">Övningarna lägger du till i passet under Träna.</div>${planSheetDays(s)}${foot}</div></div>`;
+  if (choosing) return `<div class="overlay" data-actclose><div class="sheet actsheet">${head}
+    <input id="actq" class="actq" type="search" placeholder="Sök: löpning, padel, EMS …" autocomplete="off" aria-label="Sök träningsform" value="${esc(actQ)}">
+    <div id="actchips">${actChips(s)}</div>
+    ${s.name ? `<button class="ghost wide actback" data-actchoose="0">Behåll ${esc(s.name)}</button>` : ""}</div></div>`;
+  return `<div class="overlay" data-actclose><div class="sheet actsheet">${head}
+    <div class="actchosen"><span class="h3-ic actic">${icon("aktivitet", 18)}</span><b class="grow">${esc(s.name)}</b>${s.dayId ? "" : `<button class="linkbtn2" data-actchoose="1">Byt</button>`}</div>
+    <div class="klabel actk">${s.plan ? "Mål, tid" : "Tid"}</div>
+    <div class="row qtyrow"><button class="step" data-actmin="-5" ${s.min <= 5 ? "disabled" : ""} aria-label="5 minuter kortare">−</button><b class="qcount grow">${s.min} min</b>
+      <button class="step" data-actmin="5" aria-label="5 minuter längre">+</button></div>
+    <div class="chips actmins">${ACT_MINS.map(m => `<button data-actset="${m}" class="${s.min === m ? "on" : ""}">${m}</button>`).join("")}</div>
+    <div class="klabel actk">Intensitet</div>
+    <div class="seg three" role="radiogroup" aria-label="Hur tungt">${INTENSITY.map((n, i) =>
       `<button data-actint="${i + 1}" class="${s.int === i + 1 ? "on" : ""}" role="radio" aria-checked="${s.int === i + 1}">${n}</button>`).join("")}</div>
-    ${showKm ? `<label class="field" style="margin-top:12px">${s.plan ? "Mål, sträcka i km (frivilligt)" : "Sträcka i km (frivilligt)"}<input id="actkm" type="number" inputmode="decimal" step="0.1" min="0" value="${s.km}"></label>` : ""}
-    ${s.name ? `<div class="muted small" style="margin-top:10px">${note}</div>` : ""}`}
+    ${showKm ? `<label class="field actkmf">${s.plan ? "Mål, sträcka (km, frivilligt)" : "Sträcka (km, frivilligt)"}<input id="actkm" type="number" inputmode="decimal" step="0.1" min="0" value="${s.km}" placeholder="–"></label>` : ""}
     ${s.plan ? planSheetDays(s) : ""}
-    <div class="sheet-foot row between">${s.idx != null || (s.dayId && s.done) ? `<button class="ghost" data-actdel>Ta bort</button>` : "<span></span>"}
-      <button class="primary" data-actsave ${(s.name || "").trim() && !(s.plan && draft.mode === "fixed" && s.wd == null) ? "" : "disabled"}>${s.plan ? (s.i != null ? "Spara" : `Lägg till${s.name ? " " + esc(s.name) : ""}`) : s.dayId && !s.done ? "Klar" : "Spara"}</button></div>
-  </div></div>`;
+    ${summary}${foot}</div></div>`;
 }
 
 // Dagens aktiviteter som rader, och knappar för att logga en ny
@@ -84,7 +98,7 @@ function actsCard(date, title = "Annan träning") {
     ${list.map((a, i) => `<button class="krow" data-actedit="${i}" data-actdate="${date}"><span class="hricon" aria-hidden="true">${actIcon(a.name)}</span>
       <span class="grow"><b>${esc(a.name)}</b><span class="muted small">${actLine(a)}${actCounts(a) ? " · räknas som pass" : ""}</span></span><span class="chev" aria-hidden="true">›</span></button>`).join("")}
     <div class="chips actchips" style="margin-top:${list.length ? 10 : 2}px">${favActs(4).map(n => `<button data-actnew="${esc(n)}" data-actdate="${date}">${esc(n)}</button>`).join("")}
-      <button data-actnew="" data-actdate="${date}">＋ Annan</button></div></section>`;
+      <button data-actnew="" data-actdate="${date}">＋ Mer</button></div></section>`;
 }
 
 // Vänner ser aktiviteten precis som ett pass: "Padel · 90 min"
@@ -108,7 +122,7 @@ document.addEventListener("input", ev => {
   if (ev.target.id === "actkm") actSheet.km = ev.target.value;
 });
 document.addEventListener("click", ev => {
-  const t = ev.target.closest("[data-actnew],[data-actedit],[data-actclose],[data-actpick],[data-actmin],[data-actint],[data-actsave],[data-actdel]");
+  const t = ev.target.closest("[data-actnew],[data-actedit],[data-actclose],[data-actpick],[data-actmin],[data-actset],[data-actchoose],[data-actint],[data-actsave],[data-actdel]");
   if (!t || t.disabled) return;
   if (t.classList.contains("overlay") && ev.target !== t) return;   // klick inne i fönstret
   const ds = t.dataset, s = actSheet;
@@ -117,10 +131,13 @@ document.addEventListener("click", ev => {
   else if (ds.actclose !== undefined) actSheet = null;
   else if (ds.actpick !== undefined) {
     // Ett eget namn från sökningen blir en egen aktivitet (medelhård om den inte finns i listan)
-    s.custom = ds.actpick === "" || (ds.actown !== undefined && !actInfo(ds.actpick)); s.name = ds.actown !== undefined && actInfo(ds.actpick) ? actInfo(ds.actpick).name : ds.actpick;
-    if (ds.actpick) actQ = "";
+    const info = actInfo(ds.actpick);
+    s.custom = !info; s.name = info ? info.name : ds.actpick.trim().slice(0, 30);
+    actQ = ""; s.choosing = false;
   }
-  else if (ds.actmin) s.min = Math.max(15, s.min + +ds.actmin);
+  else if (ds.actchoose !== undefined) { s.choosing = ds.actchoose === "1"; actQ = ""; }
+  else if (ds.actset) s.min = +ds.actset;
+  else if (ds.actmin) s.min = Math.max(5, s.min + +ds.actmin);
   else if (ds.actint) s.int = +ds.actint;
   else if (ds.actsave !== undefined) {
     const a = { name: s.name.trim().slice(0, 30), min: s.min, int: s.int };
@@ -140,4 +157,6 @@ document.addEventListener("click", ev => {
   ev.stopImmediatePropagation();
   save();
   render();
+  // Steg 1: direkt till sökrutan
+  if (actSheet && !actSheet.plan && !actSheet.dayId && (!actSheet.name || actSheet.choosing) && (ds.actnew !== undefined || ds.actchoose === "1")) { const q = document.getElementById("actq"); if (q) q.focus(); }
 }, true);

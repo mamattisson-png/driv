@@ -14,13 +14,13 @@ def test_search_finds_synonyms_and_typos(page):
 
 def test_search_in_sheet_and_own_name(page):
     start(page)
-    page.evaluate("S.tourAsked = true; openAct(TODAY, null, 'Löpning'); render()")
+    page.evaluate("S.tourAsked = true; openAct(TODAY, null, ''); render()")
     page.fill("#actq", "ems")
     assert page.evaluate("document.activeElement.id") == "actq"
     page.click("[data-actpick='EMS']")
     page.click("[data-actsave]")
     assert page.evaluate("actsOn(TODAY)[0].name") == "EMS"
-    page.evaluate("openAct(TODAY, null, 'Löpning'); render()")
+    page.evaluate("openAct(TODAY, null, ''); render()")
     page.fill("#actq", "Gokart")
     page.click("[data-actown]")
     assert page.evaluate("[actSheet.name, actSheet.custom]") == ["Gokart", True]
