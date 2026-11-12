@@ -72,6 +72,11 @@ class MobileStretchSmoke(unittest.TestCase):
         self.assertEqual(links.first.get_attribute("href"),
                          "https://musclewiki.com/exercise/chest-stretch-variation-one")
 
+    def test_mobile_touch_starts_stretch_timer(self):
+        self.render_stretch("brost_dorr")
+        self.page.locator('[data-dclockstart="brost_dorr"]').tap()
+        self.page.get_by_text("Träning pågår", exact=True).wait_for(timeout=5000)
+
     def test_mobile_unverified_stretch_has_no_link(self):
         self.render_stretch("strx_floor_angels")
         self.assert_mobile_width("Snöänglar på golvet")
