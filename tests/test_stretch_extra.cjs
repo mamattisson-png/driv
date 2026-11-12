@@ -201,6 +201,8 @@ console.log(`${rows.length} new stretches: ${timed} timed, ${dynamic} dynamic; o
   assert.ok(!category.includes('musclewiki.com'), 'Category link must be hidden');
   const appSource = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
   assert.match(appSource, /const mwHref = e\.cat === "stretch" \? mwDirectUrl\(modal\.info\) : mwUrl\(modal\.info\)/, 'Exercise info modal must use strict direct-link guard');
+  assert.match(appSource, /mwHref\\.includes\\(\\"\\/exercises\\/\\"\\)/, 'Modal label must derive from resolved URL');
+  assert.doesNotMatch(appSource, /MW\\[modal\\.info\\]\\.startsWith/, 'Modal must not depend on legacy MW registry');
   assert.match(source, /const directMw = mwDirectUrl\(id\)/, 'Stretch detail must use shared guard');
   console.log('Stretch detail renders only direct MuscleWiki links; no generic browse fallback.');
 }
