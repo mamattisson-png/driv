@@ -135,6 +135,26 @@ console.log(`${rows.length} new stretches: ${timed} timed, ${dynamic} dynamic; o
   for (const id of Object.keys(guideLinks)) {
     assert.ok(auditedIds.has(id), id + ': unaudited guide direct link');
   }
+  // main may provide a second MuscleWiki link registry (mw-lankar.js).
+  // Keep the audit authoritative when this branch is reconciled with main:
+  // never let an older registry silently restore rejected stretch links.
+  const registryPath = path.join(root, 'mw-lankar.js');
+  if (fs.existsSync(registryPath)) {
+    const registrySource = fs.readFileSync(registryPath, 'utf8');
+    const registry = JSON.parse(vm.runInNewContext(registrySource + '\nJSON.stringify(MW_LANK)'));
+    for (const row of auditRows) {
+      const slug = registry[row.id];
+      if (row.status === 'verified') {
+        if (slug !== undefined) {
+          assert.equal('https://musclewiki.com/exercise/' + slug, row.url,
+            row.id + ': alternate MuscleWiki registry disagrees with verified audit');
+        }
+      } else {
+        assert.equal(slug, undefined,
+          row.id + ': alternate MuscleWiki registry restores an unverified stretch link');
+      }
+    }
+  }
   console.log('125 stretch audit entries match code: 31 reviewed direct links, 94 without exact match.');
 }
 
