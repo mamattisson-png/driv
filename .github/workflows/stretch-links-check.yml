@@ -10,6 +10,7 @@ on:
       - 'mw-lankar.js'
       - 'figur.js'
       - 'tests/test_stretch_extra.cjs'
+      - 'tests/test_stretch_mobile.py'
       - 'tests/test_release_safety.py'
       - 'tests/sync.test.cjs'
       - 'tools/sw-version.py'
@@ -36,6 +37,12 @@ jobs:
         run: python -m unittest discover -s tests -p 'test_release_safety.py' -v
       - name: Validate stretch exercise data and direct-link allowlist
         run: node tests/test_stretch_extra.cjs
+      - name: Install Chromium for 390x844 mobile smoke checks
+        run: |
+          python -m pip install playwright==1.56.0
+          python -m playwright install --with-deps chromium
+      - name: Test stretch details at 390x844 mobile viewport
+        run: python -m unittest discover -s tests -p 'test_stretch_mobile.py' -v
       - name: Test concurrent and offline sync merging
         run: node --test tests/sync.test.cjs
       - name: Verify offline cache generation without modifying branch
