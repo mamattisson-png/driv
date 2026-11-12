@@ -7,6 +7,7 @@ on:
       - 'stretch-guide.js'
       - 'app.js'
       - 'muskelsok.js'
+      - 'mw-lankar.js'
       - 'figur.js'
       - 'tests/test_stretch_extra.cjs'
       - 'tests/test_release_safety.py'
