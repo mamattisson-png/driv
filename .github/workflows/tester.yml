@@ -27,4 +27,9 @@ jobs:
       - name: Kör testerna
         env:
           PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS: "1"
-        run: python -m pytest tests -v
+        run: |
+          # Pytest's async loop conflicts with the synchronous Playwright unittest
+          # class setup. Run those six browser tests in a separate Python process
+          # instead of skipping their coverage.
+          python -m pytest tests -v --ignore=tests/test_stretch_mobile.py
+          python -m unittest discover -s tests -p 'test_stretch_mobile.py' -v
