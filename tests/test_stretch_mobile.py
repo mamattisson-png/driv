@@ -84,5 +84,30 @@ class MobileStretchSmoke(unittest.TestCase):
         self.assertEqual(self.page.locator('main a[href*="musclewiki.com"]').count(), 0)
 
 
+    def test_all_audited_stretch_pages_respect_links_and_mobile_width(self):
+        """Exercise every audited stretch detail at 390x844, not only two samples."""
+        audit = (ROOT / "docs" / "stretch-musclewiki-review-queue.md").read_text(encoding="utf-8")
+        rows = []
+        for line in audit.splitlines():
+            if not line.startswith("| "):
+                continue
+            cells = [cell.strip() for cell in line.split("|")]
+            if len(cells) > 6 and cells[5] in ("verified", "no_exact_match"):
+                rows.append((cells[1], cells[4], cells[5]))
+        self.assertEqual(len(rows), 125, "Every stretch must be covered by the mobile test")
+
+        for exercise_id, expected_url, status in rows:
+            with self.subTest(exercise=exercise_id):
+                self.render_stretch(exercise_id)
+                self.assert_mobile_width(exercise_id)
+                links = self.page.locator('main a[href*="musclewiki.com"]')
+                hrefs = links.evaluate_all("(nodes) => nodes.map(a => a.href)")
+                if status == "verified":
+                    self.assertEqual(hrefs, [expected_url], exercise_id)
+                else:
+                    self.assertEqual(expected_url, "—", exercise_id)
+                    self.assertEqual(hrefs, [], exercise_id)
+
+
 if __name__ == "__main__":
     unittest.main()
