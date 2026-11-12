@@ -1169,11 +1169,24 @@ const MW = {
   sittande_bencurl: "exercise/machine-seated-leg-curl", kettlebellsving: "exercise/kettlebell-swing", sidoplanka: "exercise/elbow-side-plank",
   mountain_climbers: "exercise/mountain-climber", dead_bug: "exercise/dead-bug", cykelcrunch: "exercise/bicycle-crunch",
   pallof: "exercise/cable-pallof-press", superman: "exercise/supermans",
-  framatfallning: "exercises/hamstrings/stretches", hoftbojare_stretch: "exercise/hip-flexor-stretch-kneeling-lunge-1",
+   
+  figur_fyra: "exercise/reclining-pigeon-pose",
+  brost_dorr: "exercise/chest-stretch-variation-one",
+  katt_ko: "exercise/cat-pose",
+  framatfallning: "exercise/standing-forward-bend",
+  sittande_framatfallning: "exercise/seated-forward-bend",
+  hander_bakom_ryggen: "exercise/chest-stretch-variation-three",
+  arm_over_brost: "exercise/shoulders-stretch-variation-four",
+  triceps_stretch: "exercise/triceps-stretch-variation-one",
+  nedatgaende_hund: "exercise/downward-dog",
+  supine_twist: "exercise/lumbar-rotation-1-supine-passive",
+  sphinx: "exercise/sphinx-pose",
+  single_knee: "exercise/glute-stretch-static-unilateral",
+  happy_baby: "exercise/happy-baby",
+  side_lunge: "exercise/bodyweight-cossack-squat",
+  kna_mot_brost: "exercise/glute-stretch-static-unilateral",
   framsida_lar_stretch: "exercise/quads-stretch-variation-one", vadstretch: "exercise/calves-stretch-variation-two",
-  duvan: "exercise/double-pigeon-pose", barnets_position: "exercise/child-pose-arms-extended", katt_ko: "exercises/lowerback/stretches",
-  brost_dorr: "exercise/chest-stretch-variation-four", triceps_stretch: "exercises/triceps/stretches",
-  sittande_framatfallning: "exercise/hamstring-stretch-seated-single-leg-isometric", fjarilen: "exercise/bodyweight-butterfly-stretch",
+  barnets_position: "exercise/child-pose-arms-extended", 
   kobran: "exercise/cobra-stretch-2",
   armhavningar_bank: "exercise/incline-push-up", nedlutande_bankpress: "exercise/dumbbell-decline-bench-press",
   flyes_maskin: "exercise/machine-pec-fly", rackpull: "exercise/barbell-rack-pull", pendlayrodd: "exercise/barbell-pronated-pendlay-row",
@@ -1185,12 +1198,11 @@ const MW = {
   vaggsittning: "exercise/wall-sit", nordic: "exercise/nordic-hamstring-curl", magrulle: "exercise/barbell-roll-outs",
   hangande_knalyft: "exercise/hanging-knee-raises", kabelcrunch: "exercise/cable-rope-kneeling-crunch", fallkniven: "exercise/reverse-crunch",
   bird_dog: "exercise/bird-dog", fladdersparkar: "exercise/laying-alternating-leg-raise",
-  dodhang: "exercise/dead-hang", nedatgaende_hund: "exercise/downward-dog", varldens_basta: "exercise/runners-lunge",
-  djup_knaboj: "exercises/quads/stretches", halv_split: "exercises/hamstrings/stretches", kna_mot_brost: "exercises/lowerback/stretches",
-  liggande_hamstring: "exercises/hamstrings/stretches", figur_fyra: "exercise/glutes-stretch-variation-two",
-  sittande_vridning: "exercises/lowerback/stretches", trad_nalen: "exercises/shoulders/stretches", arm_over_brost: "exercises/shoulders/stretches",
-  latsstretch_bank: "exercises/lats/stretches", grodan: "exercise/adductor-stretch-seated-bilateral-static",
-  hander_bakom_ryggen: "exercises/chest/stretches",
+  dodhang: "exercise/dead-hang", nedatgaende_hund: "exercise/downward-dog", 
+    
+   
+    
+   
   lutande_flyes: "exercise/dumbbell-incline-chest-fly", smith_bankpress: "exercise/smith-machine-bench-press",
   smith_lutande: "exercise/smith-machine-incline-bench-press", kabelpress: "exercise/cable-chest-press",
   lutande_brostpress_maskin: "exercise/machine-plate-loaded-incline-chest-press", golvpress: "exercise/barbell-floor-press",
@@ -1230,7 +1242,11 @@ const MW = {
   sidliggande_benlyft: "exercises/glutes/bodyweight", hamstring_walkout: "exercises/hamstrings/bodyweight",
 };
 // Bara kontrollerade länkar direkt till övningen (mw-lankar.js); listor med liknande övningar visas inte
-const mwUrl = id => typeof MW_LANK !== "undefined" && MW_LANK[id] ? `https://musclewiki.com/exercise/${MW_LANK[id]}` : null;
+const mwUrl = id => {
+  const slug = typeof MW_LANK !== "undefined" ? MW_LANK[id] : null;
+  return typeof slug === "string" && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)
+    ? `https://musclewiki.com/exercise/${slug}` : null;
+};
 // MuscleWikis egna adresser ändras och kan inte kontrolleras härifrån, så länken söker efter övningen
 // på MuscleWiki i stället. Det engelska namnet tas från adressen när det finns, annars det svenska.
 const mwSearch = id => {

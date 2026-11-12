@@ -22,7 +22,8 @@ const EXTRA_STRETCH_IDS = [];
     if (EX[id]) throw new Error("Övnings-id finns redan: " + id);
     EX[id] = Object.assign({ name, cat: "stretch", bw: true, muscles, sets: 2, reps, cues,
       stretchTargets: targets.split(" "), A }, B ? { B } : {}, extras);
-    MW[id] = list.startsWith("exercise/") ? list : "exercises/" + list + "/stretches";
+    // Länka bara till en specifik övningssida, aldrig en generell stretchlista.
+    if (list.startsWith("exercise/")) MW[id] = list;
     EXTRA_STRETCH_IDS.push(id);
   }
 
@@ -35,7 +36,7 @@ const EXTRA_STRETCH_IDS = [];
     "neck", "traps", mod(standing, { a: [60, 81] }), mod(standing, { a: [60, 81] }));
   add("neck_nod", "Små nickningar i ryggliggande", "Djupa nackmuskler, nackens baksida", "8",
     ["Ligg på rygg med huvudet vilande på en tunn vikt handduk.", "Gör en liten nickning som om du säger ja utan att lyfta huvudet.", "Släpp tillbaka till neutralt läge och upprepa långsamt."],
-    "neck", "traps", mod(supine, { a: [30, 94], f: [79, 95], kb: -1 }), mod(supine, { a: [30, 94], f: [79, 95], kb: -1 }));
+    "neck", "exercise/laying-chin-tucks", mod(supine, { a: [30, 94], f: [79, 95], kb: -1 }), mod(supine, { a: [30, 94], f: [79, 95], kb: -1 }));
   add("neck_diagonal", "Diagonal nackstretch utan handdrag", "Skulderbladshöjaren, nackens baksida", "20 s/sida",
     ["Sitt på en stol och låt ena handen vila under sätets kant.", "Vrid huvudet lite åt motsatt sida och sänk blicken mot armhålan.", "Håll en mild sträckning utan att trycka på huvudet; byt sida."],
     "neck", "traps", mod(seated, { a: [39, 65], a2: [64, 64] }), undefined, { scene: chair });
@@ -55,7 +56,7 @@ const EXTRA_STRETCH_IDS = [];
     "shoulders", "shoulders", { h: [60, 54], a: [98, 17] }, { h: [60, 54], a: [97, 36] }, { view: "front" });
   add("shoulder_rolls", "Lugna skuldercirklar", "Kappmuskeln, skulderbladsmuskler", "8/riktning",
     ["Stå upprätt med armarna avslappnade vid sidorna.", "För axlarna uppåt, bakåt och nedåt i en lugn cirkel.", "Vänd cirkeln utan att skjuta fram huvudet."],
-    "shoulders neck", "shoulders", mod(standing, { s: [58, 20], a: [60, 50] }), mod(standing, { s: [54, 27], a: [55, 57] }));
+    "shoulders neck", "exercise/shoulders-stretch-variation-two", mod(standing, { s: [58, 20], a: [60, 50] }), mod(standing, { s: [54, 27], a: [55, 57] }));
   add("wall_external_rotation", "Utåtrotation av axeln mot dörrkarm", "Axelns inåtrotatorer, bröstmuskler", "20 s/sida",
     ["Håll armbågen böjd intill midjan och lägg handflatan mot en dörrkarm.", "Vrid kroppen lite bort från handen medan armbågen stannar vid sidan.", "Stanna vid en mild sträckning och byt arm."],
     "shoulders chest", "shoulders", mod(standing, { h: [75, 54], a: [101, 49], f: [73, 95], eb: 1 }), undefined, { scene: wall });
@@ -89,7 +90,7 @@ const EXTRA_STRETCH_IDS = [];
   // Rygg, sida och lats.
   add("open_book", "Öppen bok med raka armar", "Bröstryggens muskler, bröstmuskler", "6/sida",
     ["Ligg på sidan med böjda knän och raka armar framför bröstet.", "För den övre armen i en båge bakåt medan knäna ligger kvar.", "Följ handen med blicken och återgå utan att pressa rotationen."],
-    "thoracic_back chest", "lowerback", mod(supine, { a: [25, 61], a2: [25, 62], f: [64, 91], kb: 1 }), mod(supine, { a: [2, 91], a2: [25, 62], f: [64, 91], kb: 1 }));
+    "thoracic_back chest", "exercise/chest-stretch-variation-two", mod(supine, { a: [25, 61], a2: [25, 62], f: [64, 91], kb: 1 }), mod(supine, { a: [2, 91], a2: [25, 62], f: [64, 91], kb: 1 }));
   add("quadruped_rotation", "Bröstryggsrotation på alla fyra", "Bröstryggens rotatorer, baksida axlar", "8/sida",
     ["Stå på alla fyra och lägg ena handen lätt bakom huvudet.", "Vrid bröstkorgen så att armbågen förs lugnt mot taket.", "För armbågen tillbaka under bröstet och behåll höften stilla."],
     "thoracic_back shoulders", "lowerback", mod(four, { a2: [75, 72], eb2: -1 }), mod(four, { a2: [77, 46], eb2: -1 }));
@@ -107,7 +108,7 @@ const EXTRA_STRETCH_IDS = [];
     "lats shoulders", "lats", { h: [44, 59], t: 114, a: [101, 31], a2: [60, 76], f: [44, 95], f2: [30, 95] }, undefined, { scene: wall });
   add("puppy", "Valpens position", "Breda ryggmuskeln, bröstmuskler, axlar", "30 s",
     ["Börja på alla fyra och behåll höften ovanför knäna.", "Gå fram med händerna och sänk bröstet mot golvet.", "Stanna i ett bekvämt läge utan att pressa ned ländryggen."],
-    "lats chest shoulders", "lats", { h: [39, 66], s: [66, 81], a: [94, 94], f: [20, 94], kb: -1, eb: -1 } );
+    "lats chest shoulders", "exercise/puppy-pose", { h: [39, 66], s: [66, 81], a: [94, 94], f: [20, 94], kb: -1, eb: -1 } );
   add("upper_back_hug", "Sittande stretch mellan skulderbladen", "Rombmuskler, mellersta kappmuskeln", "25 s",
     ["Sitt stadigt och knäpp händerna framför bröstet.", "Sträck händerna framåt och låt skulderbladen glida isär.", "Håll nacken lång och andas lugnt utan att falla ihop över benen."],
     "upper_back shoulders", "shoulders", mod(seated, { t: 165, a: [82, 35], a2: [81, 36] }), undefined, { scene: chair });
@@ -231,7 +232,7 @@ const EXTRA_STRETCH_IDS = [];
     "quads hip_flexors", "quads", mod(supine, { a: [51, 87], a2: [4, 89], f: [79, 95], f2: [51, 87], kb: 1, kb2: -1 }));
   add("quad_prone", "Magliggande framsida lårstretch", "Främre lårmusklerna, raka lårmuskeln", "30 s/ben",
     ["Ligg på magen och böj ena knät med låret kvar i golvet.", "Ta tag i fotleden och för hälen försiktigt mot sätet.", "Behåll bäckenet tungt och byt ben utan att svanka."],
-    "quads", "quads", mod(prone, { a: [59, 66], a2: [85, 93], f2: [59, 66], kb2: 1, eb: 1 }));
+    "quads", "exercise/quad-stretch-floor-prone", mod(prone, { a: [59, 66], a2: [85, 93], f2: [59, 66], kb2: 1, eb: 1 }));
   add("couch", "Couchstretch med bakre fot på bänk", "Raka lårmuskeln, höftböjare", "30 s/sida",
     ["Stå i halvt knästående med det bakre knät på en mjuk matta nära en låg bänk.", "Lägg bakre fotryggen på bänken och spänn samma sidas säte.", "Res bröstet utan att svanka och byt ben efter en mild hållen stretch."],
     "quads hip_flexors", "quads", mod(kneel, { f2: [27, 63], kb2: 1 }), undefined, { scene: [["rect", 8, 63, 27, 4], ["line", 13, 67, 13, 95]] });
@@ -251,7 +252,7 @@ const EXTRA_STRETCH_IDS = [];
     "hamstrings hip_rotators", "hamstrings", mod(floorSit, { t: 133, a: [74, 92], f2: [51, 93], kb2: 1 }));
   add("hamstring_stagger", "Baksida lår i kort gångställning", "Hamstrings, stora sätesmuskeln", "25 s/ben",
     ["Stå med ena foten ett kort steg framför den andra och främre hälen tung.", "Böj bakre knät och för höften bakåt medan främre benet hålls långt.", "Fäll från höften med lång rygg och byt ben efter hålltiden."],
-    "hamstrings glutes", "hamstrings", { h: [48, 61], t: 133, a: [76, 75], f: [78, 95], f2: [45, 95], kb: -1, kb2: -1 } );
+    "hamstrings glutes", "exercise/hamstrings-stretch-variation-two", { h: [48, 61], t: 133, a: [76, 75], f: [78, 95], f2: [45, 95], kb: -1, kb2: -1 } );
   add("hamstring_scoops", "Gående skopsteg för baksida lår", "Hamstrings, vadmuskler", "8/ben",
     ["Ta ett kort steg med hälen framför kroppen och tårna lätt uppåt.", "Böj stödbenet och för höften bakåt medan händerna sveper mot framfoten.", "Res dig, ta ett nytt steg och växla ben utan att studsa."],
     "hamstrings calves", "hamstrings", { h: [49, 60], t: 123, a: [80, 88], f: [79, 95], f2: [45, 95], kb: -1 }, mod(standing, { a: [77, 57], f: [65, 95], f2: [43, 95] }));
@@ -265,13 +266,13 @@ const EXTRA_STRETCH_IDS = [];
   // Vader, fotleder och fotens undersida.
   add("soleus_wall", "Vadstretch med böjt bakre knä", "Djupa vadmuskeln (soleus)", "30 s/ben",
     ["Stå med händerna mot väggen och ena foten ett kort steg bakåt.", "Böj båda knäna och för kroppen framåt med bakre hälen i golvet.", "Behåll foten riktad framåt och byt ben efter hålltiden."],
-    "calves ankles", "calves", { h: [69, 65], t: 166, a: [101, 37], f: [86, 95], f2: [48, 95], kb: -1, kb2: -1 }, undefined, { scene: wall });
+    "calves ankles", "exercise/soleus-stretch-static", { h: [69, 65], t: 166, a: [101, 37], f: [86, 95], f2: [48, 95], kb: -1, kb2: -1 }, undefined, { scene: wall });
   add("calf_step_hold", "Hållen vadstretch på trappkant", "Ytliga vadmuskeln (gastrocnemius)", "30 s/ben",
     ["Stå med ena framfoten på en låg trappkant och håll i räcket.", "Låt hälen sjunka lugnt under kanten medan knät hålls nästan rakt.", "Avlasta med det andra benet när du kliver av och byt sida."],
-    "calves ankles", "calves", mod(standing, { h: [62, 48], a: [101, 24], f: [64, 89], f2: [45, 86] }), undefined, { scene: [...wall, ["rect", 66, 91, 20, 4]] });
+    "calves ankles", "exercise/calf-stretch-on-box-bilateral", mod(standing, { h: [62, 48], a: [101, 24], f: [64, 89], f2: [45, 86] }), undefined, { scene: [...wall, ["rect", 66, 91, 20, 4]] });
   add("calf_toe_wall", "Vadstretch med framfoten mot vägg", "Ytliga vadmuskeln, fotens böjmuskler", "30 s/ben",
     ["Sätt ena framfoten mot väggen med hälen kvar i golvet.", "Håll knät nästan rakt och luta kroppen lite mot väggen.", "Stanna vid en mild sträckning och byt fot efter hålltiden."],
-    "calves ankles", "calves", { h: [77, 55], t: 169, a: [101, 26], f: [97, 94], f2: [60, 95], kb: -1 }, undefined, { scene: wall });
+    "calves ankles", "exercise/calves-stretch-variation-one", { h: [77, 55], t: 169, a: [101, 26], f: [97, 94], f2: [60, 95], kb: -1 }, undefined, { scene: wall });
   add("calf_towel_seat", "Sittande vadstretch med handduk", "Ytliga vadmuskeln, fotens böjmuskler", "30 s/ben",
     ["Sitt med ena benet långt och lägg en handduk runt framfoten.", "Håll ryggen upprätt och för foten försiktigt mot dig med handduken.", "Behåll knät mjukt och byt ben utan att rycka i handduken."],
     "calves ankles", "calves", mod(floorSit, { a: [61, 70], a2: [62, 72], f2: [49, 94], kb2: 1 }), undefined, { scene: [["line", 61, 70, 79, 94], ["line", 62, 72, 79, 94]] });
@@ -280,7 +281,7 @@ const EXTRA_STRETCH_IDS = [];
     "calves ankles", "calves", { h: [74, 62], t: 180, a: [101, 35], f: [95, 95], f2: [52, 95], kb: -1 }, { h: [81, 66], t: 173, a: [101, 35], f: [95, 95], f2: [52, 95], kb: -1 }, { scene: wall });
   add("ankle_circles", "Sittande fotledscirklar", "Underbenets fram-, bak- och sidomuskler", "8/riktning",
     ["Sitt på en stol och lyft ena foten lätt från golvet.", "Rita långsamma cirklar med foten medan knät hålls stilla.", "Byt riktning och sedan fot utan att låta hela benet rotera."],
-    "ankles calves", "calves", mod(seated, { a: [63, 65], f2: [86, 80] }), mod(seated, { a: [63, 65], f2: [83, 87] }), { scene: chair });
+    "ankles calves", "exercise/ankle-circle", mod(seated, { a: [63, 65], f2: [86, 80] }), mod(seated, { a: [63, 65], f2: [83, 87] }), { scene: chair });
   add("shin_kneel", "Fotryggsstretch i knäsittande", "Främre skenbensmuskeln, fotledens sträckmuskler", "20 s",
     ["Stå på knä med fotryggarna i golvet på en mjuk matta.", "Sänk sätet delvis mot hälarna och stöd händerna vid sidorna.", "Låt vikten vara lätt och lyft sätet när du lämnar positionen."],
     "ankles shins", "calves", { h: [44, 81], t: 180, a: [65, 94], f: [29, 95], kb: -1 } );
