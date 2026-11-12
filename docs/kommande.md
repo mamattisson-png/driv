@@ -67,7 +67,7 @@ Senast uppdaterad: 2026-11-06. Status bygger på dokumenterade publiceringar och
 | 63 | Träna: listan visar klara, påbörjade och superset-övningar | Träning | Medel | Klar |
 | 64 | Ändra från listan på Träna leder tillbaka till listan | Bugg | Medel | Klar |
 | 65 | Korrigera dagens avslutade pass direkt från Träna | Träning | Hög | Klar |
-| 66 | Stretch under vilan mellan set | Träning | Medel | Kommande |
+| 66 | Stretch under vilan mellan set | Träning | Medel | Klar |
 | 67 | Ta bort övning under pågående pass | Träning | Hög | Klar |
 | 68 | Förbättra menyn Avsluta passet | Design | Medel | Klar |
 | 69 | Anpassa hälsningen efter alla dagens mål | Hem | Medel | Klar |
