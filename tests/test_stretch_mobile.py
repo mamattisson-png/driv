@@ -22,7 +22,7 @@ class MobileStretchSmoke(unittest.TestCase):
         cls.thread = Thread(target=cls.server.serve_forever, daemon=True)
         cls.thread.start()
         cls.playwright = sync_playwright().start()
-        cls.browser = cls.playwright.chromium.launch(headless=True)
+        cls.browser = cls.playwright.chromium.launch(headless=True, channel="chrome")
         cls.context = cls.browser.new_context(
             viewport={"width": 390, "height": 844},
             device_scale_factor=2,
