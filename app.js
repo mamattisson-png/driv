@@ -28,6 +28,8 @@ const TYPES = {
   hfull: { label: "Hantlar", color: "full", muscles: "Hela kroppen med hantlar", cats: ["push", "pull", "legs"] },
   glutes: { label: "Rumpa", color: "lower", muscles: "Säte, baksida lår", cats: ["legs"] },
   custom: { label: "Pass", color: "full", muscles: "Dina egna övningar", cats: ["all"] },
+  // Aktivitet i schemat (yoga, löpning …): inga övningar, bara tid och mål (schema.js)
+  act: { label: "Motion", color: "act", muscles: "Annan träning", cats: [] },
 };
 // Program: vilka passtyper som ingår för varje antal pass i veckan
 const PROGRAMS = {
@@ -53,6 +55,8 @@ const PROGRAMS = {
     2: ["hfull", "hfull"], 3: ["hfull", "hfull", "hfull"], 4: ["hfull", "hfull", "hfull", "hfull"] } },
   rumpa: { name: "Rumpa & ben", info: "Extra fokus på säte och baksida lår, plus ett överkroppspass.", days: {
     3: ["glutes", "upper", "lower"], 4: ["glutes", "upper", "glutes", "lower"] } },
+  aktiviteter: { name: "Bara motion", info: "Promenad, löpning, yoga, cykling … utan gymövningar. Du väljer vad och hur länge.", days: {
+    1: ["act"], 2: ["act", "act"], 3: ["act", "act", "act"], 4: Array(4).fill("act"), 5: Array(5).fill("act"), 6: Array(6).fill("act"), 7: Array(7).fill("act") } },
   eget: { name: "Eget schema", info: "Bygg helt själv: välj antal pass, döp dem och lägg till dina egna övningar.", days: {
     1: ["custom"], 2: ["custom", "custom"], 3: ["custom", "custom", "custom"], 4: ["custom", "custom", "custom", "custom"],
     5: ["custom", "custom", "custom", "custom", "custom"], 6: ["custom", "custom", "custom", "custom", "custom", "custom"] } },
@@ -158,7 +162,11 @@ function addExercise(target, id, replace, today) {
     // Bara i dag: det gamla läggs tillbaka i passet när det sparas (eller nästa dag)
     if (today) { const w = workoutFor(dayById(target)); (w.swap = w.swap || []).push({ id: e.id, orig }); }
   }
-  else if (!list.some(e => e.id === id)) list.push(exEntry(id));
+  else if (!list.some(e => e.id === id)) {
+    list.push(exEntry(id));
+    // Bara i dag: övningen tas bort ur passet igen nästa dag (eller om passet avbryts). Setten ligger kvar i loggen.
+    if (today) { const w = workoutFor(dayById(target)); (w.added = w.added || []).push(id); }
+  }
 }
 function exEntry(spec) {
   const [id, sr] = spec.split("@");
@@ -176,11 +184,21 @@ function makeDays(prog, count, old = []) {
     const repeated = !TYPES[type].fixedName && types.filter(t => t === type).length > 1;
     const name = TYPES[type].label + (repeated ? " " + "ABCDEFG"[(round - 1) % 7] : "");
     const prev = old[i];
-    // Ett pass man själv döpt behåller sitt namn
-    if (prev && prev.type === type) return prev.named ? prev : { ...prev, name };
+    // Ett pass man själv döpt behåller sitt namn, en aktivitet allt man valt
+    if (prev && prev.type === type) return prev.named || type === "act" ? prev : { ...prev, name };
+    if (type === "act") return newActDay({ name: ACT_CYCLE[i % ACT_CYCLE.length], min: 30, int: 2 }, false, i);
     const list = DEFAULT_EX[round > 1 && DEFAULT_EX[type + round] ? type + round : type];
     return { id: `d${i + 1}-${type}-${Date.now().toString(36)}`, type, name, ex: list.map(exEntry) };
   });
+}
+
+// Passen i programmet byggs om, men pass man lagt till själv (extra) ligger kvar på sin plats
+function planDays(prog, count, old = []) {
+  const base = makeDays(prog, count, old.filter(d => !d.extra)), out = [];
+  let k = 0;
+  for (const d of old) if (d.extra) out.push(d); else if (k < base.length) out.push(base[k++]);
+  while (k < base.length) out.push(base[k++]);
+  return out;
 }
 
 function freshState() {
@@ -193,6 +211,7 @@ function freshState() {
     learned: {},           // rätter som Claude räknat ut, så att de känns igen nästa gång
     plan: { program: "ppl", count: 3, mode: "flex", weekdays: DEFAULT_WEEKDAYS[3].slice(), days: makeDays("ppl", 3) },
     daily: DEFAULT_DAILY.map(exEntry),
+    tpls: [],
     log: {},
   };
 }
@@ -580,7 +599,7 @@ function reminderIcs(time) {
     "BEGIN:VALARM", "ACTION:DISPLAY", "DESCRIPTION:Dags för dina dailys", "TRIGGER:PT0M", "END:VALARM",
     "END:VEVENT", "END:VCALENDAR"].join("\r\n");
 }
-const dailiesLeft = () => S.daily.filter(e => !dailyDone(TODAY, e.id)).length;
+const dailiesLeft = () => dailyList(TODAY).filter(e => !dailyDone(TODAY, e.id)).length;
 
 // Siffra på appikonen med antal dailys kvar (där systemet stöder det)
 function updateBadge() {
@@ -597,7 +616,7 @@ async function remindIfDue() {
   if (now.getHours() * 60 + now.getMinutes() < hh * 60 + mm || r.lastNotified === TODAY || !dailiesLeft()) return;
   r.lastNotified = TODAY;
   save();
-  const body = `${dailiesLeft()} av ${S.daily.length} dailys kvar idag.`;
+  const body = `${dailiesLeft()} av ${dailyList(TODAY).length} dailys kvar idag.`;
   const opts = { body, icon: "icons/icon-192-v2.png", tag: "dailys" };
   // Installerade appar visar notiser via service workern; annars en vanlig notis
   try {
@@ -617,8 +636,8 @@ function reminderCard() {
       <button class="small" data-remcal style="align-self:flex-end">Lägg till i kalendern</button></div>
     <div class="muted small" style="margin-top:6px">Kalendern påminner dig även när appen är stängd.</div>
     ${canNotify ? (perm === "granted"
-      ? `<label class="row" style="margin-top:10px"><input type="checkbox" data-remnotify ${r.notify ? "checked" : ""}>
-          <span>Notis när jag öppnar appen efter den tiden och något är ogjort</span></label>`
+      ? `<label class="card psw" style="margin-top:10px"><span class="grow">Notis när jag öppnar appen efter den tiden och något är ogjort</span>
+          <input type="checkbox" class="switch" data-remnotify ${r.notify ? "checked" : ""}></label>`
       : perm === "default" ? `<button class="small" style="margin-top:10px" data-remperm>Tillåt notiser från Driv</button>`
       : `<div class="muted small" style="margin-top:6px">Notiser är avstängda för Driv i telefonens inställningar.</div>`) : ""}</div>`;
 }
@@ -658,11 +677,15 @@ function day(date = logDate()) {
 }
 // En dag kan ha flera pass, men bara ett av varje pass i upplägget
 const workoutsOn = date => (S.log[date] && S.log[date].workouts) || [];
-const workoutOn = (date, dayId) => workoutsOn(date).find(w => w.dayId === dayId) || null;
+// Samma pass kan köras flera gånger samma dag (Kör igen): det senaste gäller
+const workoutOn = (date, dayId) => workoutsOn(date).filter(w => w.dayId === dayId).pop() || null;
 // Alla set för en övning en dag, från alla pass
 const setsOn = (date, exId) => workoutsOn(date).flatMap(w => w.sets[exId] || []);
 const exIdsOn = date => workoutsOn(date).flatMap(w => Object.keys(w.sets));
-const dayById = id => S.plan.days.find(d => d.id === id);
+// Passmallar (S.tpls) är pass utanför veckoschemat: samma form som schemats pass, så att fokusläget, loggen och historiken fungerar som vanligt
+const tpls = () => S.tpls || (S.tpls = []);
+const isTpl = d => !!d && tpls().includes(d);
+const dayById = id => S.plan.days.find(d => d.id === id) || tpls().find(d => d.id === id) || (id === "fritt" ? freeDay() : undefined);
 // "flex": passen körs i ordning vilka dagar som helst. "fixed": varje pass har en veckodag.
 const isFixed = () => S.plan.mode === "fixed";
 function scheduledDay(date) {
@@ -680,13 +703,16 @@ function nextScheduled(from) {
 // Passet efter det senast avklarade, oavsett veckodag
 function nextInRotation() {
   const dates = Object.keys(S.log).filter(d => d < TODAY && workoutsOn(d).some(w => w.done)).sort();
-  const lastW = dates.length ? workoutsOn(dates[dates.length - 1]).filter(w => w.done).pop() : null;
+  // Pass från en mall flyttar inte schemat framåt
+  const inPlan = w => w.done && S.plan.days.some(x => x.id === w.dayId);
+  const lastDate = dates.filter(d => workoutsOn(d).some(inPlan)).pop();
+  const lastW = lastDate ? workoutsOn(lastDate).filter(inPlan).pop() : null;
   const last = lastW ? S.plan.days.findIndex(x => x.id === lastW.dayId) : -1;
   return S.plan.days[(last + 1) % S.plan.days.length];
 }
-const suggestedDay = () => isFixed() ? (scheduledDay(TODAY) || nextScheduled(TODAY).day) : nextInRotation();
+const suggestedDay = () => S.plan.free || !S.plan.days.length ? freeDay() : isFixed() ? (scheduledDay(TODAY) || nextScheduled(TODAY).day) : nextInRotation();
 // Text i rubrikbandet bredvid etiketten: passets nummer, och namnet om det inte redan står på etiketten
-const passBand = d => `Pass ${S.plan.days.indexOf(d) + 1}${norm(d.name) === norm(TYPES[d.type].label) ? "" : ` · <span class="nocaps">${esc(d.name)}</span>`}`;
+const passBand = d => isTpl(d) ? `Passmall · <span class="nocaps">${esc(d.name)}</span>` : `Pass ${S.plan.days.indexOf(d) + 1}${norm(d.name) === norm(TYPES[d.type].label) ? "" : ` · <span class="nocaps">${esc(d.name)}</span>`}`;
 
 // ---------- Kalorier ----------
 // Mifflin–St Jeor
@@ -759,7 +785,7 @@ function dailyDone(date, id) {
   const v = S.log[date] && S.log[date].dailies[id];
   return isRun(id) ? !!(v && (v.km || v.min)) : v === true;
 }
-const allDailiesDone = date => S.daily.length > 0 && S.daily.every(e => dailyDone(date, e.id));
+const allDailiesDone = date => { const L = dailyList(date); return L.length > 0 && L.every(e => dailyDone(date, e.id)); };
 // Antal dagar i rad som test(datum) gäller, räknat från idag eller igår
 function streakOf(test) {
   let n = 0, d = test(TODAY) ? TODAY : shift(TODAY, -1);
@@ -775,7 +801,7 @@ function weekSummary(ws) {
     passes: logged.reduce((a, d) => a + workoutsOn(d).filter(w => w.done).length + actsOn(d).filter(actCounts).length, 0),
     // Löpning loggas som daily eller som aktivitet
     km: logged.reduce((a, d) => a + (+(S.log[d].dailies.lop || {}).km || 0)
-      + actsOn(d).filter(x => x.name === "Löpning").reduce((k, x) => k + (+x.km || 0), 0), 0),
+      + [...actsOn(d), ...schedActs(d)].filter(x => x.name === "Löpning").reduce((k, x) => k + (+x.km || 0), 0), 0),
     dailies: dates.filter(allDailiesDone).length,
     kcal: kcalDays.length ? Math.round(kcalDays.reduce((a, d) => a + eaten(d).kcal, 0) / kcalDays.length) : 0,
   };
@@ -809,6 +835,11 @@ function logWeight(kg, date = logDate()) {
 // sedan bara veckans vikt och skillnaden mot förra veckan.
 let weightEditing = false;
 const weighDay = () => S.weighDay ?? 0;
+// Raden Vikt på Hem innan veckans vägning: dagen den ska göras, idag, eller att den saknas om dagen har passerat
+function weighHint() {
+  const wd = weekdayOf(TODAY), d = weighDay();
+  return wd < d ? `Väg dig ${WD_LONG[d]}` : wd === d ? "Väg dig idag" : "Inte vägd den här veckan · väg dig idag";
+}
 // På Hem visas vägningen bara när den är dags; vikten över tid finns under Historik
 function weighCardDue() {
   const ws = weekStart(TODAY), weighed = weekDates(ws).some(d => d <= TODAY && weights()[d] > 0);
@@ -887,7 +918,7 @@ let importMsg = "";
 const GEAR_SVG = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Z"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06-1.87 1.87-.06-.06A1.7 1.7 0 0 0 16 18.4a1.7 1.7 0 0 0-1 1.56V21h-6v-1.04A1.7 1.7 0 0 0 8 18.4a1.7 1.7 0 0 0-1.87.34l-.06.06-1.87-1.87.06-.06A1.7 1.7 0 0 0 4.6 15 1.7 1.7 0 0 0 3 14H2v-4h1a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.34-1.87L4.2 7.07 6.07 5.2l.06.06A1.7 1.7 0 0 0 8 5.6 1.7 1.7 0 0 0 9 4V3h6v1a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.87-.34l.06-.06 1.87 1.87-.06.06A1.7 1.7 0 0 0 19.4 9 1.7 1.7 0 0 0 21 10h1v4h-1a1.7 1.7 0 0 0-1.6 1Z"/></svg>`;
 // Uppmuntran: när sista dailyn bockas i firas det med konfetti och ett peppande besked.
 // Jämför med förra ritningen, så att det bara sker när man själv gör klart, inte när appen öppnas.
-const allDailysToday = () => { const a = S.supplements || [], ex = S.daily || [];
+const allDailysToday = () => { const a = S.supplements || [], ex = dailyList(logDate());
   return ex.length + a.length > 0 && ex.every(e => dailyDone(logDate(), e.id)) && a.every(x => day().dailies["supp:" + x.id]); };
 let cheerState = null;   // { date, done } från förra ritningen
 let lastCheck = null;   // bocken man senast tryckte på, så att konfettin kommer därifrån
@@ -923,18 +954,19 @@ function render() {
   const nav = document.getElementById("nav");
   // Menyn är tillgänglig även under ett pågående pass.
   const inFocus = tab === "pass" && !!focus && !editing && !editDate && !focus.suspended && !libCtx;   // biblioteket (Byt övning) ska gå att scrolla
-  nav.classList.toggle("hidden", tab === "upplagg" || !!passDone);
+  nav.classList.toggle("hidden", tab === "upplagg" || !!passDone || !!actSheet);
   document.body.classList.toggle("onboard", tab === "upplagg" && !S.setupDone);
   document.body.classList.toggle("infocus", inFocus);
   nav.innerHTML = TABS.map(([id, ic, lbl]) =>
-    `<button data-tab="${id}" class="${tab === id || (tab === "recept" && id === "kost") ? "on" : ""}" ${tab === id ? 'aria-current="page"' : ""}>${icon(ic, 22)}${lbl}</button>`).join("");
+    `<button data-tab="${id}" class="${tab === id || (tab === "recept" && id === "kost") ? "on" : ""} ${id === "pass" && focus && !editDate ? "live" : ""}" ${tab === id ? 'aria-current="page"' : ""}>${icon(ic, 22)}${lbl}${id === "pass" && focus && !editDate ? `<i class="navdot" aria-label="Pass pågår"></i>` : ""}</button>`).join("");
   const banner = editDate && (tab === "kost" || (tab === "pass" && focus && !editing))
     ? `<div class="editbar">Du ändrar <b>${dateLabel(editDate)}</b><button class="small" data-editdone>Klar</button></div>` : "";
   // Samma inställningsknapp på alla huvudvyer. Hem har knappen i sin egen header.
   // Kugghjulet ligger på samma plats överallt; under ett pass har fokusvyn egna knappar där
-  const gear = tab === "idag" || tab === "profil" || tab === "upplagg" || passDone || (focus && tab === "pass" && !libCtx) ? "" : `<button class="gear" data-tab="profil" aria-label="Inställningar">${GEAR_SVG}</button>`;
+  const gear = tab === "idag" || tab === "profil" || tab === "upplagg" || passDone || inFocus ? "" : `<button class="gear" data-tab="profil" aria-label="Inställningar">${GEAR_SVG}</button>`;
   document.getElementById("app").innerHTML = passDone ? passDoneView()
-    : gear + banner + (libCtx ? muscleView() : VIEWS[tab]()) + (modal ? renderModal() : "") + (actSheet ? actSheetView() : "") + (sgAdd && EX[sgAdd] ? stretchAddSheet(sgAdd) : "") + tourView();
+    : actSheet ? actPage() + tourView()   // Logga motion är en egen sida (aktivitet.js)
+    : gear + banner + focusBar() + (libCtx ? muscleView() : VIEWS[tab]()) + (modal ? renderModal() : "") + (sgAdd && EX[sgAdd] ? stretchAddSheet(sgAdd) : "") + tourView();
   if (tab === "recept" && typeof filterRecipes === "function") filterRecipes();
   const focusScroll = document.querySelector(".focus-scroll");
   if (focusScroll && focus) focusScroll.scrollTop = focus.scrollTop || 0;
@@ -957,7 +989,7 @@ function currentPassDay() {
   const L = S.log[TODAY];
   const todays = workoutsOn(logDate());
   const id = (focus && !editDate && !focus.suspended && focus.dayId) || chosenDay || (todays.length ? todays[todays.length - 1].dayId : suggestedDay().id);
-  return dayById(id) || S.plan.days[0];
+  return dayById(id) || S.plan.days[0] || freeDay();
 }
 
 // Schemat: kommande dagar med fasta veckodagar, annars passen i tur och ordning
@@ -971,7 +1003,7 @@ function dailySeconds(e) {
 }
 function dailyClockView() {
   if (!dailyClock) return "";
-  const c = dailyClock, e = S.daily.find(x => x.id === c.id) || (EX[c.id] && { id: c.id, sets: EX[c.id].sets, reps: EX[c.id].reps });
+  const c = dailyClock, e = dailyList().find(x => x.id === c.id) || (EX[c.id] && { id: c.id, sets: EX[c.id].sets, reps: EX[c.id].reps });
   if (!e) return "";
   const left = c.paused ? Math.ceil(c.remaining / 1000) : Math.max(0, Math.ceil((c.end - Date.now()) / 1000));
   const fmt = n => String(Math.floor(n/60)).padStart(2,"0")+":"+String(n%60).padStart(2,"0");
@@ -1004,7 +1036,7 @@ function dailyClockAdvance() {
   dailyClockSound();
   if (c.phase === "work") {
     if (c.set >= c.total) {
-      if (S.daily.some(x => x.id === c.id)) day().dailies[c.id] = true;
+      if (dailyList().some(x => x.id === c.id)) day().dailies[c.id] = true;
       c.phase = "done"; clearInterval(dailyClockTick); dailyClockTick = null;
       save(); render(); return;
     }
@@ -1043,7 +1075,7 @@ document.addEventListener("click", ev => {
   ev.stopImmediatePropagation();
   const d = t.dataset;
   if (d.dclockstart) {
-    const e = S.daily.find(x => x.id === d.dclockstart) || (EX[d.dclockstart] && { id: d.dclockstart, sets: EX[d.dclockstart].sets, reps: EX[d.dclockstart].reps }); if (!e) return;
+    const e = dailyList().find(x => x.id === d.dclockstart) || (EX[d.dclockstart] && { id: d.dclockstart, sets: EX[d.dclockstart].sets, reps: EX[d.dclockstart].reps }); if (!e) return;
     const timed = /\d+\s*(?:sek|s)\b/i.test(e.reps || "");
     const work = dailySeconds(e);
     dailyClock = {id:e.id,work,timed,reps:e.reps||"",rest:30,total:Math.max(1,+e.sets||1),set:1,phase:"work",end:Date.now()+work*1000,paused:false};
@@ -1071,14 +1103,14 @@ document.addEventListener("submit", ev => {
 }, true);
 
 function dailiesCard(inPass, banded) {
-  const n = S.daily.length, date = logDate(), L = day(date);
-  if (dailyEditing) return `<div class="card"><div class="row between"><h2>Redigera dailys</h2><button class="small ghost" data-dedit>Klar</button></div>
+  const date = logDate(), L = day(date), list = dailyList(date), n = list.length;
+  if (dailyEditing === true) return `<div class="card"><div class="row between"><h2>Redigera dailys</h2><button class="small ghost" data-dedit>Klar</button></div>
     ${exRows("daily", S.daily, true)}
     </div>`;
   if (!n) return `<div class="card"><h2>Dailys</h2><div class="muted">Det du vill göra varje dag, till exempel plankan eller hängande benlyft.</div>
     <button style="margin-top:10px" data-openpick="daily">+ Lägg till daily</button></div>`;
-  const done = S.daily.filter(e => dailyDone(date, e.id)).length, st = streakOf(allDailiesDone);
-  const rows = S.daily.map(e => {
+  const done = list.filter(e => dailyDone(date, e.id)).length, st = streakOf(allDailiesDone);
+  const rows = list.map(e => {
     const id = e.id, ok = dailyDone(date, id), its = streakOf(d => dailyDone(d, id)), v = L.dailies[id] || {};
     const sub = isRun(id) ? "" : EX[id].cat === "cardio" ? esc(e.reps || "") : `${e.sets} × ${esc(e.reps)}`;
     const check = `${icon("check", 18)}`;
@@ -1112,16 +1144,18 @@ const VIEWS = {
 
   dailys() {
     if (dailyClock) return `<div class="dlx">${dailyClockView()}</div>`;
-    const a = S.supplements || [], ex = S.daily || [], date = logDate();
+    if (rutPage) return rutinerView();
+    const a = S.supplements || [], date = logDate(), ex = dailyList(date), rut = routineOn(date), every = (S.daily || []).filter(e => EX[e.id]);
     const n = ex.filter(e => dailyDone(date, e.id)).length, sn = a.filter(x => day().dailies["supp:" + x.id]).length;
     const total = ex.length + a.length, count = n + sn, allOk = total > 0 && count === total, st = streakOf(allDailiesDone);
     // Veckan bakåt till idag: grön prick när allt var klart, orange när något var gjort
     const week = Array.from({ length: 7 }, (_, i) => shift(TODAY, i - 6)).map(d => {
-      const L = S.log[d], done = ex.filter(e => L && dailyDone(d, e.id)).length + a.filter(x => L && L.dailies && L.dailies["supp:" + x.id]).length;
-      const cls = total && done === total ? "ok" : done ? "part" : "";
+      const L = S.log[d], dl = dailyList(d), all = dl.length + a.length;
+      const done = dl.filter(e => L && dailyDone(d, e.id)).length + a.filter(x => L && L.dailies && L.dailies["supp:" + x.id]).length;
+      const cls = all && done === all ? "ok" : done ? "part" : "";
       return `<span class="dlx-day ${d === TODAY ? "on" : ""}"><small>${WD[weekdayOf(d)].slice(0, 2)}</small><b>${+d.slice(-2)}</b><i class="${cls}"></i></span>`;
     }).join("");
-    const rows = ex.map(e => {
+    const rowsOf = list => list.filter(e => EX[e.id]).map(e => {
       const ok = dailyDone(date, e.id);
       return `<div class="h3-row dlx-row ${ok ? "ok" : ""}">${thumb(e.id, "exl")}<span class="grow"><b>${esc(EX[e.id].name)}</b><small>${e.sets} × ${esc(e.reps || "")}</small></span>
         ${ok ? "" : `<button class="dlx-play" data-dclockstart="${e.id}" aria-label="Starta ${esc(EX[e.id].name)}">${icon("play", 16)}</button>`}
@@ -1134,15 +1168,26 @@ const VIEWS = {
         <button class="dlx-check ${ok ? "on" : ""}" data-suppcheck="${esc(x.id)}" aria-pressed="${ok}" aria-label="${esc(x.name)} tagen">${icon("check", 18)}</button></div>`;
     }).join("");
     const addRow = (attr, text) => `<button class="h3-row dlx-addrow" ${attr}><span class="h3-ic">${icon("plus", 16)}</span><span class="grow"><b>${text}</b></span></button>`;
+    const cnt = list => `${list.filter(e => EX[e.id] && dailyDone(date, e.id)).length}/${list.filter(e => EX[e.id]).length}`;
+    // En lista med rubrik och Ändra; target är "daily" (Varje dag) eller "rut:<id>"
+    const section = (label, list, target, editAttr) => {
+      const ed = target === "daily" ? dailyEditing === true : dailyEditing === target;
+      return `<div class="row between dlx-sec"><span class="klabel">${label} · ${cnt(list)}</span><button class="linkbtn2" ${editAttr}>${ed ? "Klar" : "Ändra"}</button></div>
+      ${ed ? exRows(target, target === "daily" ? S.daily : list, true) : `<section class="h3-list">${rowsOf(list)}${addRow(`data-openpick="${target}"`, "Lägg till övning")}</section>`}`;
+    };
+    const exSecs = rut
+      ? `${section(esc(rut.name), rut.ex, "rut:" + rut.id, `data-rutedit="rut:${esc(rut.id)}"`)}${section("Varje dag", every, "daily", "data-dedit")}`
+      : `${section("Övningar", every, "daily", "data-dedit")}
+        <button class="dlx-rutlink" data-rutpage>${icon("kalender", 16)}<span class="grow">Rutiner · växla övningar mellan dagarna</span>${icon("right", 16)}</button>`;
     return `<div class="dlx"><h1>Dailys</h1>
       <div class="muted dlx-sub">Idag · ${count} av ${total} klara${st > 1 ? ` · ${st} dagar i rad` : ""}</div>
       <section class="dlx-top ${allOk ? "ok" : ""}"><span class="dlx-ring">${ring(total ? count / total : 0, 60, allOk ? "ok" : "")}<b>${total ? Math.round(count / total * 100) : 0}%</b></span>
         <div class="dlx-week">${week}</div></section>
-      <div class="row between dlx-sec"><span class="klabel">Övningar · ${n}/${ex.length}</span><button class="linkbtn2" data-dedit>${dailyEditing ? "Klar" : "Ändra"}</button></div>
-      ${dailyEditing ? exRows("daily", S.daily, true) : `<section class="h3-list">${rows}${addRow('data-openpick="daily"', "Lägg till övning")}</section>`}
+      ${routineHead(date)}
+      ${exSecs}
       <div class="row between dlx-sec"><span class="klabel">Kosttillskott · ${sn}/${a.length}</span></div>
       <section class="h3-list">${supp}${supplementEditing === null ? addRow("data-suppadd", "Lägg till kosttillskott") : ""}</section>
-      ${supplementForm()}</div>`;
+      ${supplementForm()}${rutinSheet()}</div>`;
   },
   stretchguide() { return muscleView(); },
   vagning() {
@@ -1156,29 +1201,42 @@ const VIEWS = {
       <h3 class="klabel" style="margin-top:18px">Vägning</h3>
       <section class="card">
         <label class="field">Vägningsdag<select data-weighday>${WD.map((w, i) => `<option value="${i}" ${weighDay() === i ? "selected" : ""}>${WD_LONG[i].replace(/^./, c => c.toUpperCase())}</option>`).join("")}</select></label>
-        <label class="row" style="margin-top:12px"><input type="checkbox" data-showweight ${S.hideWeight ? "" : "checked"}><span>Visa vikt på Hem och i Historik</span></label>
+        <label class="psw" style="margin-top:12px"><span class="grow">Visa vikt på Hem och i Historik</span><input type="checkbox" class="switch" data-showweight ${S.hideWeight ? "" : "checked"}></label>
         <div class="muted small" style="margin-top:4px">Döljer du vikten används den ändå i kalorimålet, och sparade vägningar finns kvar.</div></section></div>`;
   },
   idag() {
     const m = macros(), e = eaten(), t = todaysPass(), d = t.d, w = t.w;
     m.kcal += burnedOn(TODAY);
-    const done = !!(w && w.done), started = !done && (t.active || (w && d.ex.some(x => ((w.sets[x.id]) || []).some(z => z && z.ok))));
-    const dailyEx = S.daily || [], supp = S.supplements || [];
+    const done = !!(w && w.done), started = !done && (t.active || !!actRunning(d) || (w && d.ex.some(x => ((w.sets[x.id]) || []).some(z => z && z.ok))));
+    const dailyEx = dailyList(logDate()), supp = S.supplements || [];
     const completed = dailyEx.filter(x => dailyDone(logDate(), x.id)).length + supp.filter(x => day().dailies["supp:" + x.id]).length;
     const total = dailyEx.length + supp.length, dailysOk = total > 0 && completed === total;
     const foodOk = m.kcal > 0 && e.kcal >= m.kcal;
     const hr = new Date().getHours();
     const passes = weekSummary(weekStart(TODAY)).passes;
-    const greeting = homeGreeting(hr, { done, dailysOk, started, rest: !!t.rest, passes, goal: S.plan.count });
-    const sub = t.rest ? "Vilodag idag" : done ? "Dagens pass är klart" : started ? `${esc(d.name)} är påbörjat` : `${esc(d.name)} står på schemat`;
+    const greeting = homeGreeting(hr, { done, dailysOk, started, rest: !!t.rest, passes, goal: S.plan.count, foodOk });
+    // Samma etiketter som på Träna: Nästa pass (flexibelt) eller Dagens pass (fasta dagar), Pågående och Genomfört
+    const freeIdle = t.free && !done && !started;   // inget schema och inget loggat idag
+    const passLab = t.rest ? "Vilodag" : done ? "Genomfört idag" : started ? "Pågående pass" : freeIdle ? "Träning idag" : passLabel(t);
+    // När passet är gjort: vad som är klart och vad som återstår av dagens mål
+    const doneSub = () => {
+      const ok = [["Träningen", true], ["Dailys", dailysOk || !total], ["kosten", foodOk]];
+      const klar = ok.filter(x => x[1]).map(x => x[0]), kvar = ok.filter(x => !x[1]).map(x => x[0]);
+      const list = a => cap(a.length > 1 ? `${a.slice(0, -1).join(", ")} och ${a[a.length - 1]}` : a[0]);
+      return !kvar.length ? "Alla dagens mål är klara" : `${list(klar)} ${klar.length > 1 ? "är klara" : "är klar"} · ${list(kvar)} återstår`;
+    };
+    const sub = t.rest ? "Vilodag idag" : done ? doneSub() : started ? `${esc(d.name)} är påbörjat` : freeIdle ? "Inget schema · logga det du gör" : `${esc(d.name)} står på schemat`;
     const date = cap(new Date().toLocaleDateString("sv-SE", { weekday: "long", day: "numeric", month: "long" }));
     // Siffran blir en grön bock när steget är klart; orange bara för det man trycker på
     const no = (n, ok) => `<span class="h3-no ${ok ? "ok" : ""}" aria-hidden="true">${ok ? icon("check", 14) : n}</span>`;
     const exN = `${d.ex.length} ${d.ex.length === 1 ? "övning" : "övningar"}`;
     const mins = Math.max(5, Math.round(d.ex.reduce((a, x) => a + (+x.sets || 0), 0) * 2.5 / 5) * 5);
-    const passInfo = t.rest ? `Återhämtning · nästa pass ${WD_LONG[weekdayOf(t.next)]}` : [passMuscles(d), exN, d.ex.length ? `~${mins} min` : ""].filter(Boolean).map(esc).join(" · ");
+    const passInfo = freeIdle ? "Logga ett gympass eller motion" : d.id === "fritt" ? esc(`Gympass · ${d.ex.map(e => EX[e.id] ? EX[e.id].name : "").filter(Boolean).join(", ") || "inga övningar än"}`) : t.rest ? `Återhämtning · nästa pass ${WD_LONG[weekdayOf(t.next)]}` : isActDay(d) ? esc(`Motion · ${done && w.act ? actLine(w.act) : actGoal(d)}`)
+      : [passMuscles(d), exN, d.ex.length ? `~${mins} min` : ""].filter(Boolean).map(esc).join(" · ");
     const passBtn = done ? `<button class="h3-btn ok" data-seepass="${d.id}">${icon("check", 16)}Passet klart · visa</button>`
+      : freeIdle ? `<div class="row h3-actbtns"><button class="h3-btn primary" data-freegym>${icon("trana", 16)}Gympass</button><button class="h3-btn" data-actnew="" data-actdate="${TODAY}">${icon("aktivitet", 16)}Motion</button></div>`
       : t.rest ? `<button class="h3-btn ghost" data-tab="pass">Kör ett pass ändå</button>`
+      : isActDay(d) ? `<div class="row h3-actbtns">${actButtons(d, "h3-btn")}</div>`
       : d.ex.length ? `<button class="h3-btn" data-focusstart="${d.id}">${icon("play", 16)}${started ? "Fortsätt" : "Starta"} ${esc(d.name)}</button>`
       : `<button class="h3-btn ghost" data-seepass="${d.id}">Lägg till övningar</button>`;
     const row = (ic, title, sub, attrs, end = "right") => `<button class="h3-row" ${attrs}><span class="h3-ic">${ic}</span><span class="grow"><b>${title}</b><small>${sub}</small></span>${icon(end, 18)}</button>`;
@@ -1193,9 +1251,10 @@ const VIEWS = {
       ${S.tourAsked !== false ? "" : `<section class="tour-offer"><span class="h3-ic">${icon("info", 20)}</span><span class="grow"><b>Ny i Driv?</b><small>En kort rundtur visar var allt finns.</small></span>
         <button class="small primary" data-tourstart>Visa</button><button class="small ghost" data-tourskip>Inte nu</button></section>`}
       <div class="muted h3-date">${date}</div><h1 class="h3-greet">${greeting}</h1>
-      <div class="muted h3-sub">${sub} · ${passes} av ${S.plan.count} pass i veckan</div>
-      <section class="h3-card ${done ? "done" : ""}"><button class="h3-head" data-seepass="${d.id}" aria-label="Dagens pass: ${esc(d.name)}">${no(1, done)}
-        <span class="grow"><span class="klabel ${done ? "oktext" : "accent"}">${t.rest ? "Vilodag" : "Dagens pass"}</span><b class="h3-pass">${esc(t.rest ? "Vila" : d.name)}</b><small>${passInfo}</small></span>${icon("right", 18)}</button>
+      <div class="muted h3-sub">${sub} · ${passGoal(passes)} i veckan</div>
+      ${typeof friendsNudge === "function" ? friendsNudge() : ""}${accountNudge()}${installNudge()}
+      <section class="h3-card h3-passcard ${done ? "done" : ""}"><button class="h3-head" data-seepass="${d.id}" aria-label="${passLab}: ${esc(d.name)}">${no(1, done)}
+        <span class="grow"><span class="klabel ${done ? "oktext" : "accent"}">${passLab}</span><b class="h3-pass">${esc(t.rest ? "Vila" : freeIdle ? "Inget loggat än" : d.name)}</b><small>${passInfo}</small></span>${icon("right", 18)}</button>
         ${passBtn}</section>
       <button class="h3-card h3-head ${foodOk ? "done" : ""}" data-tab="kost">${no(2, foodOk)}<span class="grow"><b>${foodOk ? "Kalorimålet nått" : "Logga dagens mat"}</b>
         <small>${tnum(e.kcal)} / ${tnum(m.kcal)} kcal · ${tnum(e.protein)} / ${tnum(m.protein)} g protein</small>
@@ -1205,8 +1264,8 @@ const VIEWS = {
       <div class="klabel h3-sec">Övrigt idag</div>
       <section class="h3-list">
         ${row(stretchId ? figure(stretchId) : icon("utseende", 18), "Stretch", "Övningar som töjer · välj kroppsdel", 'data-tab="stretchguide"')}
-        ${row(icon("aktivitet", 18), "Annan träning", "Löpning, padel, promenad …", "data-homeactivity", "plus")}
-        ${row(icon("vikt", 18), "Vikt", weighed && avg ? `${fmtNum(avg)} kg den här veckan` : `Väg dig ${WD_LONG[weighDay()]}`, 'data-tab="vagning"')}
+        ${S.plan.free ? "" : row(icon("aktivitet", 18), "Annan träning", "Löpning, padel, promenad …", "data-homeactivity", "plus")}
+        ${S.hideWeight ? "" : row(icon("vikt", 18), "Vikt", weighed && avg ? `${fmtNum(avg)} kg den här veckan` : weighHint(), 'data-tab="vagning"')}
         ${row(icon("vanner", 18), "Vänner", friendSub, 'data-tab="vanner"')}
       </section></div>`;
   },
@@ -1229,10 +1288,10 @@ const VIEWS = {
 
   vanner() { return friendsView(); },
 
-  kommande: () => `<button class="backbtn" data-tab="profil">${icon("left", 18)}Inställningar</button>${upcomingFeaturesPage()}`,
+  kommande: () => upcomingFeaturesPage(),
 
   profil() {
-    checkPush();
+    checkPush(); PROF_PAGES = {};
     const p = S.profile, m = macros(), rs = restSettings(), r = S.reminder;
     const cloudText = {
       cloud: account.step === "in" ? `✓ Sparas på ditt konto (${esc(account.email)}).` : "✓ Sparas på ditt konto och följer med mellan mobil och dator.",
@@ -1256,44 +1315,51 @@ const VIEWS = {
       `<button role="radio" data-theme-set="${k}" class="${themeNow() === k ? "on" : ""}" aria-checked="${themeNow() === k}" aria-pressed="${themeNow() === k}">${k === "auto" ? "Auto" : n}</button>`).join("")}</div>`;
     const figSeg = `<div class="tseg" role="radiogroup" aria-label="Figur">${[["m", "Man"], ["k", "Kvinna"]].map(([k, n]) =>
       `<button role="radio" data-figure-set="${k}" class="${figK() === (k === "k") ? "on" : ""}" aria-checked="${figK() === (k === "k")}">${n}</button>`).join("")}</div>`;
-    return `<button class="backbtn" data-tab="${profBack}">${icon("left", 18)}${{ idag: "Hem", pass: "Träna", kost: "Kost", historik: "Historik" }[profBack] || "Tillbaka"}</button>
+    const main = `<button class="backbtn" data-tab="${profBack}">${icon("left", 18)}${{ idag: "Hem", pass: "Träna", kost: "Kost", historik: "Historik" }[profBack] || "Tillbaka"}</button>
       <h1 class="ptitle">Inställningar</h1>
       <section class="card pcard" aria-label="Du"><div class="row"><span class="avatar" aria-hidden="true">${esc(name.slice(0, 1).toUpperCase())}</span>
-          <div class="grow col"><b>${esc(name)}</b><span class="muted small">${cloud.status === "cloud" ? "Sparas på ditt konto" : "Sparas på den här enheten"}</span></div>
-          <button class="small" data-editprof>Ändra</button></div>
+          <div class="grow col"><b>${esc(name)}</b><span class="muted small">${account.step === "in" ? esc(account.email) : sbEnabled ? "Inte inloggad · sparas bara i telefonen" : "Sparas i den här telefonen"}</span></div>
+          <button class="linkbtn2" data-psec="konto">${account.step === "in" || !sbEnabled ? "Konto" : "Logga in"}${icon("right", 14)}</button></div>
         <div class="pstats"><div><b>${S.plan.count}</b><span>pass i veckan</span></div><div><b>${tnum(m.kcal)}</b><span>kcal om dagen</span></div>
           <div><b>${fmtNum(last ? last.kg : p.weight)}</b><span>kg senast</span></div></div></section>
-      ${group("Träning", `${profRow("vila", "timer", "Vilotimer", rs.on ? `På · ${rs.compound} / ${rs.iso} sek` : "Av", `
-          <label class="row"><input type="checkbox" data-resttoggle ${rs.on ? "checked" : ""}><span>Starta en vilotimer när jag bockar av ett set</span></label>
+      ${group("Träning", `<div class="prow"><div class="prow-line"><button class="prow-head" data-tab="upplagg"><span class="pic">${icon("upplagg", 20)}</span><span class="grow"><b>Träningsschema</b>
+          <span class="muted small">${esc(PROGRAMS[S.plan.program || "ppl"].name)} · ${S.plan.count} pass i veckan</span></span><span class="chev">${icon("right", 18)}</span></button></div></div>
+        ${profRow("vila", "timer", "Vilotimer", rs.on ? `På · ${rs.compound} / ${rs.iso} sek` : "Av", `
+          <label class="card psw"><span class="grow">Starta en vilotimer när jag bockar av ett set</span><input type="checkbox" class="switch" data-resttoggle ${rs.on ? "checked" : ""}></label>
           <div class="grid2" style="margin-top:10px">
             <label class="field">Basövningar (sek)<input type="number" inputmode="numeric" id="restcompound" value="${rs.compound}"></label>
             <label class="field">Isolering och mage (sek)<input type="number" inputmode="numeric" id="restiso" value="${rs.iso}"></label></div>`)}
         ${profRow("aktiviteter", "aktivitet", "Annan träning", [S.actCount !== false ? "Räknas som pass" : "", S.actKcal ? "kcal läggs till" : ""].filter(Boolean).join(" · ") || "Padel, vandring och annat", `
-          <label class="row"><input type="checkbox" data-actcount ${S.actCount !== false ? "checked" : ""}><span>En aktivitet på minst 45 minuter räknas som ett pass i veckan</span></label>
-          <label class="row" style="margin-top:8px"><input type="checkbox" data-actkcal ${S.actKcal ? "checked" : ""}><span>Lägg till förbrända kcal i dagens kalorimål</span></label>
+          <label class="card psw"><span class="grow">En aktivitet på minst 45 minuter räknas som ett pass i veckan</span><input type="checkbox" class="switch" data-actcount ${S.actCount !== false ? "checked" : ""}></label>
+          <label class="card psw"><span class="grow">Lägg till förbrända kcal i dagens kalorimål</span><input type="checkbox" class="switch" data-actkcal ${S.actKcal ? "checked" : ""}></label>
           <div class="muted small" style="margin-top:6px">Förbrända kcal är en uppskattning efter aktivitet, tid och din vikt. Den blir lätt för hög, därför är det avstängt från början.</div>`)}`)}
-      ${group("Kost och kropp", `${profRow("kalori", "kost", "Kalorimål", `${tnum(m.kcal)} kcal · ${GOALS[p.goal][0].split(" (")[0]}`, `${profileFields(p)}
+      ${group("Kost och kropp", `${profRow("kalori", "kost", "Kalorimål", `${tnum(m.kcal)} kcal · ${GOALS[p.goal][0].split(" (")[0]}`, `<section class="card pbig"><b>${tnum(m.kcal)}</b><span>kcal om dagen · Protein ${m.protein} g · Fett ${m.fat} g · Kolhydrater ${m.carbs} g</span></section>
+          <section class="card">${profileFields(p)}
           <div class="muted" style="margin-top:10px">Underhåll (TDEE): ${tdee(p)} kcal · Mål: ${m.kcal} kcal</div>
           <div class="muted">Protein ${m.protein} g · Fett ${m.fat} g · Kolhydrater ${m.carbs} g</div>
           <label class="field" style="margin-top:10px">Eget kalorimål (lämna tomt för beräknat)
-            <input type="number" inputmode="numeric" id="override" value="${S.kcalOverride || ""}" placeholder="${m.kcal}"></label>`)}
+            <input type="number" inputmode="numeric" id="override" value="${S.kcalOverride || ""}" placeholder="${m.kcal}"></label></section>`)}
         <div class="prow" id="p-vikt"><div class="prow-line"><button class="prow-head" data-tab="vagning"><span class="pic">${icon("vikt", 20)}</span><span class="grow"><b>Vikt</b>
           <span class="muted small">${S.hideWeight ? "Dold" : `Vägning varje ${WD_LONG[weighDay()]}`}</span></span><span class="chev">${icon("right", 18)}</span></button></div></div>`)}
       ${group(sbEnabled ? "Vänner och notiser" : "Notiser", `${sbEnabled ? `<div class="prow" id="p-vanner"><div class="prow-line"><button class="prow-head" data-tab="vanner"><span class="pic">${icon("vanner", 20)}</span><span class="grow"><b>Vänner</b>
           <span class="muted small">${friends}</span></span><span class="chev">${icon("right", 18)}</span></button></div></div>` : ""}
         ${profRow("notiser", "bell", "Notiser", pushSummary(), pushBody(), pushSwitch)}
-        ${S.daily.length ? profRow("paminnelse", "kalender", "Påminnelse i kalendern", r ? `För dina dailys · kl. ${esc(r.time)}` : "För dina dailys · ingen vald", reminderCard()) : ""}`)}
+        ${hasDailies() ? profRow("paminnelse", "kalender", "Påminnelse i kalendern", r ? `För dina dailys · kl. ${esc(r.time)}` : "För dina dailys · ingen vald", reminderCard()) : ""}`)}
       ${group("Appen", `${profRow("utseende", "utseende", "Utseende", "", null, themeSeg)}
         ${profRow("figur", "profil", "Figur", "I kroppskartan", null, figSeg)}
         ${profRow("guide", "info", "Appguide", "En kort rundtur genom flikarna", null, `<button class="small" data-tourstart>Starta</button>`)}
-        ${profRow("konto", "data", sbEnabled ? "Konto och data" : "Data", account.step === "in" ? esc(account.email) : sbEnabled ? "Inloggning, exportera, importera" : "Exportera, importera",
-          `${accountCard()}${data}`)}
+        ${(profRow("konto", "data", sbEnabled ? "Konto och data" : "Data", "", `<section class="card"><div class="row"><span class="avatar" aria-hidden="true">${esc(name.slice(0, 1).toUpperCase())}</span>
+          <label class="field grow">Namn<input id="pname" maxlength="40" autocomplete="given-name" value="${esc(name === "Du" ? "" : name)}" placeholder="Ditt namn"></label></div>
+          ${sbEnabled ? `<div class="muted small" style="margin-top:6px">Namnet syns för dina vänner.</div>` : ""}
+          <button class="wide" style="margin-top:12px" data-pnamesave ${social.busy ? "disabled" : ""}>Spara namnet</button></section>
+          ${accountCard()}<section class="card">${data}</section>`), "")}
         <div class="prow"><div class="prow-line"><button class="prow-head" data-tab="kommande"><span class="pic">${icon("idea", 20)}</span><span class="grow"><b>Kommande funktioner</b>
           <span class="muted small">Se vad som är på gång i Driv</span></span><span class="chev">${icon("right", 18)}</span></button></div></div>
         ${sbEnabled ? profRow("tyck", "chat", "Tyck till", "Vad saknas, vad är krångligt?", feedbackCard()) : ""}
         ${isDevAccount() ? `<div class="prow"><div class="prow-line"><button class="prow-head" data-opentest><span class="pic">${icon("test", 20)}</span><span class="grow"><b>Testläge</b>
           <span class="muted small">Egen data som inte rör ditt konto</span></span><span class="chev">${icon("right", 18)}</span></button></div></div>` : ""}`)}
       ${account.step === "in" ? `<button class="wide plogout" data-signout>${icon("logout", 18)}Logga ut</button>` : ""}`;
+    return profOpen && PROF_PAGES[profOpen] ? profPage(profOpen) : main;
   },
 };
 
@@ -1333,10 +1399,13 @@ const fnvHash = str => { let h = 0x811c9dc5; for (const b of new TextEncoder().e
 const isDevAccount = () => account.step === "in" && fnvHash(String(account.email || "").trim().toLowerCase()) === "b24ae646";
 // Namnet i profilen: det vännerna ser, annars det sparade, annars början på e-posten
 // Hälsningen på Hem: dagens läge först (klart, påbörjat, vilodag, veckan klar), annars tiden på dygnet
-function homeGreeting(hr, { done, dailysOk, started, rest, passes, goal }) {
+// "Allt klart" bara när träningen (eller vilodagen), Dailys och kalorimålet är klara.
+// foodOk saknas i äldre anrop och räknas då som klart.
+function homeGreeting(hr, { done, dailysOk, started, rest, passes, goal, foodOk = true }) {
   const night = hr < 5, eve = hr >= 21;
-  if (done && dailysOk) return eve || night ? "Allt klart, sov gott" : "Allt klart för idag";
-  if (done) return hr < 12 ? "Passet är gjort" : "Bra jobbat idag";
+  if (done && dailysOk && foodOk) return eve || night ? "Allt klart, sov gott" : "Allt klart för idag";
+  if (done && dailysOk) return eve || night ? "Bra jobbat, sov gott" : "Bra jobbat idag!";
+  if (done) return eve || night ? "Bra jobbat, sov gott" : hr < 12 ? "Passet är gjort" : "Bra jobbat idag";
   if (started) return "Fortsätt där du var";
   if (night) return "God natt";
   if (goal && passes >= goal) return "Veckans pass är klara";
@@ -1345,20 +1414,33 @@ function homeGreeting(hr, { done, dailysOk, started, rest, passes, goal }) {
 }
 const profName = () => (social.profile && social.profile.name) || S.name || (account.step === "in" ? account.email.split("@")[0] : "Du");
 // body null: raden fälls inte ut (valet ligger direkt i raden). extra: en kontroll till höger, t.ex. en strömbrytare.
+// En rad i Inställningar. Har den innehåll (body) öppnar den en egen sida med samma upplägg som de andra;
+// annars är reglaget (extra) själva raden, som Utseende och Figur.
+let PROF_PAGES = {};
+const PROF_INTRO = {
+  vila: "Efter varje set räknar en timer ned vilan. Basövningar behöver längre vila än isolering och mage.",
+  aktiviteter: "Padel, löpning, vandring och annat som du loggar med tid.",
+  kalori: "Räknas fram från dig och ditt mål. Ändra det som inte stämmer.",
+  notiser: "Driv kan påminna dig även när appen är stängd.",
+  paminnelse: "En daglig påminnelse i telefonens kalender om dina dailys.",
+  konto: "Ditt namn, inloggning och säkerhetskopia av allt du loggat.",
+};
 function profRow(id, ic, title, summary, body, extra = "") {
-  const open = profOpen === id || body === null;
   const inner = `<span class="pic">${icon(ic, 20)}</span><span class="grow"><b>${title}</b>${summary ? `<span class="muted small">${summary}</span>` : ""}</span>`;
-  const head = body === null ? `<div class="prow-head">${inner}</div>`
-    : `<button class="prow-head" data-psec="${id}" aria-expanded="${open}">${inner}${extra ? "" : `<span class="chev">${icon("right", 18)}</span>`}</button>`;
-  return `<div class="prow ${open ? "open" : ""}" id="p-${id}"><div class="prow-line">${head}${extra}</div>
-    ${open && body ? `<div class="prow-body">${body}</div>` : ""}</div>`;
+  if (body === null) return `<div class="prow" id="p-${id}"><div class="prow-line"><div class="prow-head">${inner}</div>${extra}</div></div>`;
+  PROF_PAGES[id] = { title, body: (extra ? `<div class="card psw">${inner}${extra}</div>` : "") + body };
+  return `<div class="prow" id="p-${id}"><div class="prow-line"><button class="prow-head" data-psec="${id}">${inner}<span class="chev">${icon("right", 18)}</span></button></div></div>`;
+}
+function profPage(id) {
+  const p = PROF_PAGES[id];
+  return `<button class="backbtn" data-psec="">${icon("left", 18)}Inställningar</button>
+    <h1 class="ptitle">${p.title}</h1>${PROF_INTRO[id] ? `<p class="muted pintro">${PROF_INTRO[id]}</p>` : ""}
+    <div class="ppage">${p.body}</div>`;
 }
 function openProfRow(id, focusId) {
-  tab = "profil"; profOpen = id; render();
-  const el = document.getElementById(`p-${id}`);
-  if (el && el.scrollIntoView) el.scrollIntoView({ block: "start" });
+  tab = "profil"; profOpen = id; render(); window.scrollTo(0, 0);
   const f = focusId && document.getElementById(focusId);
-  if (f) f.focus({ preventScroll: true });
+  if (f) f.focus();
 }
 
 // Unika livsmedel/måltider från loggen, senast först
@@ -1429,11 +1511,12 @@ const ssLabel = (d, idx) => { const g = ssGroup(d, idx); return g ? `Superset ${
 // Övningslistor kan ligga i ett passdag-id, "draft:<index>" (upplägget) eller "daily"
 function exList(target) {
   if (target === "daily") return S.daily;
+  if (target.startsWith("rut:")) return routineById(target.slice(4)).ex;
   if (target.startsWith("draft:")) return draft.days[+target.slice(6)].ex;
   return dayById(target).ex;
 }
 function targetCats(target) {
-  if (target === "daily") return ["core"];
+  if (isDailyT(target)) return ["core"];
   const d = target.startsWith("draft:") ? draft.days[+target.slice(6)] : dayById(target);
   return TYPES[d.type].cats;
 }
@@ -1441,7 +1524,7 @@ function targetCats(target) {
 // Rader med byt/ta bort; withOrder lägger till sortering och set × reps
 function exRows(target, list, withOrder) {
   return list.map((e, i) => `<div class="subex">${thumb(e.id, "sm")}
-      <div class="grow"><b>${esc(EX[e.id].name)}</b>${target === "daily" ? "" : muscleLine(e.id)}${EX[e.id].cat === "cardio" ? `<div class="muted">${esc(e.reps || EX[e.id].muscles)}</div>`
+      <div class="grow"><b>${esc(EX[e.id].name)}</b>${isDailyT(target) ? "" : muscleLine(e.id)}${EX[e.id].cat === "cardio" ? `<div class="muted">${esc(e.reps || EX[e.id].muscles)}</div>`
         : `<div class="row" style="margin-top:4px">
         <input type="number" inputmode="numeric" min="1" style="width:52px" value="${e.sets}" data-ed="${i}" data-t="${target}" data-f="sets" aria-label="Antal set"><span class="muted">×</span>
         <input type="text" inputmode="numeric" style="width:76px" value="${esc(e.reps)}" data-ed="${i}" data-t="${target}" data-f="reps" aria-label="Reps"></div>`}</div>
@@ -1449,9 +1532,9 @@ function exRows(target, list, withOrder) {
         <button class="small ghost" data-mv="1" data-t="${target}" data-idx="${i}" ${i < list.length - 1 ? "" : "disabled"} aria-label="Flytta ned">↓</button></div>` : ""}
       <button class="small" data-swap="${target}" data-idx="${i}">Byt</button>
       <button class="small ghost" data-xdel="${target}" data-idx="${i}" aria-label="Ta bort">${icon("close", 18)}</button></div>
-      ${withOrder && target !== "daily" && i < list.length - 1 ? `<button class="sslink ${e.ss ? "on" : ""}" data-ss="${target}" data-idx="${i}" aria-pressed="${!!e.ss}">${e.ss
+      ${withOrder && !isDailyT(target) && i < list.length - 1 ? `<button class="sslink ${e.ss ? "on" : ""}" data-ss="${target}" data-idx="${i}" aria-pressed="${!!e.ss}">${e.ss
         ? `Superset med ${esc(EX[list[i + 1].id].name)} <span class="muted">· tryck för att dela</span>` : "＋ Superset med nästa"}</button>` : ""}`).join("") +
-    `<button class="small" style="margin-top:8px" data-openpick="${target}">+ Lägg till ${target === "daily" ? "daily" : "övning"}</button>`;
+    `<button class="small" style="margin-top:8px" data-openpick="${target}">+ Lägg till ${isDailyT(target) ? "daily" : "övning"}</button>`;
 }
 
 // ---------- Muskelkartan ----------
@@ -1626,7 +1709,7 @@ function weekLetter(ws) {
   const stat = (label, value, extra = "") => `<div class="lstat"><div class="klabel">${label}</div><div class="lbig">${value}</div>${extra}</div>`;
   const stats = [
     stat("Pass", `${cur.passes} av ${goalPasses}`, prev.passes || cur.passes ? deltaBadge(cur.passes - prev.passes, "mot förra") : ""),
-    S.daily.length ? stat("Alla dailys", `${cur.dailies} av 7 dagar`) : "",
+    hasDailies() ? stat("Alla dailys", `${cur.dailies} av 7 dagar`) : "",
     !S.hideWeight && wNow != null ? stat("Vikt, snitt", `${fmtNum(wNow)} kg`, wPrev != null ? weightBadge(wNow - wPrev) : "") : "",
     cur.kcal ? stat("Kalorier per dag", tnum(cur.kcal), `<span class="muted small">mål ${tnum(macros().kcal)}</span>`) : "",
     cur.km || prev.km ? stat("Löpning", `${fmtNum(cur.km)} km`) : "",
@@ -1666,6 +1749,22 @@ function confetti() {
 }
 
 // Skärmen när ett pass är klart: tid, set, nya personbästa och total vikt, och delning med vänner
+// Efter passet: ett diskret val att spara det som passmall, med eget namn
+function tplOffer(d) {
+  if (isTpl(d) || !passDone.ex || !passDone.ex.length) return "";
+  if (passDone.tplSaved) return `<div class="pdtpl saved">${icon("check", 16)}<span>Sparad som passmall: <b>${esc(passDone.tplSaved)}</b></span></div>`;
+  if (passDone.tplNaming) return `<section class="card pdtpl naming" aria-label="Spara som passmall">
+      <label class="klabel" for="tplname">Namn på mallen</label>
+      <input id="tplname" type="text" maxlength="40" placeholder="T.ex. Jobbet, Gymmet, Hemma" value="${esc(d.name)}" autocomplete="off">
+      <div class="row sheetbtns"><button class="grow" data-tplcancel>Avbryt</button><button class="grow primary" data-tplsave>Spara mall</button></div></section>`;
+  return `<button class="ghost wide pdtplbtn" data-tplname>${icon("plus", 16)}Spara som passmall</button>`;
+}
+function saveTpl(name) {
+  const src = dayById(passDone.dayId), id = "tpl-" + Date.now().toString(36);
+  const ex = passDone.ex.map(e => { const c = Object.assign({}, e); delete c.done; return c; });
+  tpls().push({ id, type: src ? src.type : "push", name, named: true, ex });
+  passDone.tplSaved = name; passDone.tplNaming = false;
+}
 function passDoneView() {
   const d = dayById(passDone.dayId), date = passDone.date;
   if (!d) { passDone = null; return VIEWS[tab](); }
@@ -1683,12 +1782,13 @@ function passDoneView() {
   const sharing = typeof social !== "undefined" && social.profile && social.profile.sharing;
   return `<div class="passdone">
     <div class="pdtop">${confetti()}<span class="pdcheck" aria-hidden="true">${icon("check", 36)}</span><h1>Passet klart!</h1>
-      <span class="muted">${esc(d.name)} · ${when}</span><span class="muted small">${passes} av ${S.plan.count} pass den här veckan</span></div>
+      <span class="muted">${esc(d.name)} · ${when}</span><span class="muted small">${passGoal(passes)} den här veckan</span></div>
     <section class="pdstats ${stats.length % 2 ? "odd" : ""}" aria-label="Passet">${stats.join("")}</section>
     ${prs.length ? `<section class="card pdpbs" aria-label="Nya personbästa">${prs.map(p => `<div class="pdpb"><span class="grow col"><b>${esc(EX[p.id].name)}</b>
         <span class="muted small">${fmtSet2({ kg: +p.t.kg || 0, reps: +p.t.reps || 0 }, p.id)}</span></span><span class="pbtag">PB ${gain(p)}</span></div>`).join("")}</section>` : ""}
     ${sharing ? `<label class="card pdshare"><span class="grow col"><b>Dela med vänner</b><span class="muted small">De ser att du kört ${esc(d.name)}, inga vikter</span></span>
       <input type="checkbox" role="switch" class="switch" data-pdshare ${passDone.shared === false ? "" : "checked"} aria-label="Dela passet med vänner"></label>` : ""}
+    ${tplOffer(d)}
     ${inviteCard()}
     <div class="pdspace"></div>
     <button class="wide bigbtn lightbtn" data-passdoneclose>Klar</button>
@@ -1716,14 +1816,13 @@ function renderModal() {
   }
   if (modal.info) {
     const e = EX[modal.info];
-    const mwHref = e.cat === "stretch" ? mwDirectUrl(modal.info) : mwUrl(modal.info);
     return `<div class="overlay" data-close><div class="sheet">
       <div class="row between"><h2>${esc(e.name)}</h2><button class="small ghost iconbtn" data-close aria-label="Stäng">${icon("close", 18)}</button></div>
       ${figure(modal.info, "big", true)}<div class="muted">${esc(e.muscles)}</div>
       ${gearOf(modal.info) ? `<div class="gearbox"><b>${GEAR[gearOf(modal.info)][0]}</b><div>${GEAR[gearOf(modal.info)][1]}</div></div>` : ""}
       <ol>${e.cues.map(c => `<li>${esc(c)}</li>`).join("")}</ol>
       ${libCtx ? "" : `<button class="wide sg-infoadd" data-sgadd="${modal.info}">${icon("plus", 16)}Lägg till i Dailys eller ett pass</button>`}
-      ${mwHref ? `<a class="mwlink" href="${mwHref}" target="_blank" rel="noopener">${mwHref.includes("/exercises/") ? "Liknande övningar på MuscleWiki" : "Mer om övningen på MuscleWiki"} <span aria-hidden="true">↗</span></a>` : ""}</div></div>`;
+      ${mwUrl(modal.info) ? `<a class="mwlink" href="${mwUrl(modal.info)}" target="_blank" rel="noopener">Mer om övningen på MuscleWiki <span aria-hidden="true">↗</span></a>` : ""}</div></div>`;
   }
   return "";
 }
@@ -1736,7 +1835,7 @@ const areaLabel = a => PASS_FILTER[a] ? PASS_FILTER[a].split(":")[0] : AREAS[a];
 // ---------- Logg ----------
 function workoutFor(d) {
   const L = day();
-  let w = L.workouts.find(x => x.dayId === d.id);
+  let w = L.workouts.filter(x => x.dayId === d.id).pop();
   if (!w) L.workouts.push(w = { dayId: d.id, sets: {}, done: false });
   // Klockan i fokusläget: passet räknas från när det startades
   if (!w.start && focus && focus.dayId === d.id && !editDate) w.start = focus.start;
@@ -1913,19 +2012,41 @@ function restoreSwaps(d, w) {
   }
   delete w.swap;
 }
+// Övningar som lagts till bara för ett pass tas bort ur passet igen
+function dropAdded(d, w) {
+  if (!w.added) return;
+  if (d) d.ex = d.ex.filter(x => !w.added.includes(x.id));
+  delete w.added;
+}
+// Övningar som tagits bort bara för ett pass läggs tillbaka på sin plats i passet
+function restoreRemoved(d, w) {
+  if (!w.removed) return;
+  if (d) for (const r of w.removed.slice().reverse()) {
+    if (d.ex.some(x => x.id === r.entry.id)) continue;
+    const i = Math.min(r.idx, d.ex.length);
+    d.ex.splice(i, 0, Object.assign({}, r.entry));
+    if (i > 0 && r.prevSs) d.ex[i - 1].ss = true;
+  }
+  delete w.removed;
+}
 // Byten från tidigare dagar som aldrig sparades läggs också tillbaka
 function restoreOldSwaps() {
-  for (const [date, L] of Object.entries(S.log || {})) if (date < TODAY) for (const w of L.workouts || []) if (w.swap) restoreSwaps(dayById(w.dayId), w);
+  for (const [date, L] of Object.entries(S.log || {})) if (date < TODAY) for (const w of L.workouts || []) {
+    if (w.swap) restoreSwaps(dayById(w.dayId), w);
+    if (w.added) dropAdded(dayById(w.dayId), w);
+    if (w.removed) restoreRemoved(dayById(w.dayId), w);
+  }
 }
 function syncDone(d) {
   const w = workoutOn(logDate(), d.id);
-  if (w) w.done = d.ex.length > 0 && d.ex.every(x => exDone(w, x));
+  // Ett fritt pass (inget schema) blir klart först när man trycker Avsluta: man lägger till övningar under tiden
+  if (w && d.id !== "fritt") w.done = d.ex.length > 0 && d.ex.every(x => exDone(w, x));
 }
 
 function saveSetup() {
   const back = S.setupDone ? setupFrom : null;
   const weekdays = draft.weekdays.slice().sort((a, b) => a - b);
-  S.plan = { program: draft.program, count: draft.count, mode: draft.mode, weekdays, days: draft.days };
+  S.plan = { program: draft.program, count: draft.free ? draft.count : draft.days.length, mode: draft.mode, weekdays, days: draft.days, ...(draft.free ? { free: true } : {}) };
   // Har man hoppat över kalorimålet påminner Kost om att ställa in det
   if (!S.setupDone && S.profileSet !== true) S.profileSet = false;
   if (!S.setupDone) S.tourAsked = false;   // nya användare erbjuds rundturen på Hem
@@ -1971,15 +2092,19 @@ document.addEventListener("click", ev => {
   if (ds.chart) { modal = { chart: ds.chart }; render(); return; }
   if (ds.letter) { modal = { letter: ds.letter }; render(); return; }
   // Lägg till och byt övning sker i det gemensamma övningsbiblioteket (muskelsok.js)
-  if (ds.openpick) { modal = null; openLibrary({ kind: ds.openpick === "daily" ? "daily" : "workout", target: ds.openpick }); render(); return; }
-  if (ds.swap) { exSheet = null; openLibrary({ kind: "workout", target: ds.swap, replace: +ds.idx }); render(); return; }
+  if (ds.openpick) { modal = null; openLibrary({ kind: isDailyT(ds.openpick) ? "daily" : "workout", target: ds.openpick }); render(); return; }
+  if (ds.swap) { exSheet = null; openLibrary({ kind: isDailyT(ds.swap) ? "daily" : "workout", target: ds.swap, replace: +ds.idx }); render(); return; }
   if (ds.askai !== undefined) { askClaude(); return; }
+  if (ds.tplname !== undefined && passDone) { passDone.tplNaming = true; render(); const f = $("tplname"); if (f) { f.focus(); f.select(); } return; }
+  if (ds.tplcancel !== undefined && passDone) { passDone.tplNaming = false; render(); return; }
+  if (ds.tplsave !== undefined && passDone) { const f = $("tplname"); saveTpl((f && f.value.trim()) || dayById(passDone.dayId).name); save(); render(); toast("Passmallen är sparad"); return; }
   if (ds.passdoneclose !== undefined) { passDone = null; tab = "idag"; render(); window.scrollTo(0, 0); return; }
   if (ds.tab) {
     if (ds.tab === "vanner" && tab !== "vanner") vannerBack = tab;
     if (ds.tab === "vagning" && tab !== "vagning") vikBack = tab;
     passDone = null;
-    if (ds.tab === "pass" && focus) focus.suspended = false;
+    // Under passet: Träna visar översikten (passet fortsätter i bakgrunden); från en annan flik tar Träna dig tillbaka till passet
+    if (ds.tab === "pass" && focus) focus.suspended = prevTab === "pass" && !focus.suspended && !editing && !libCtx && !editDate;
     tab = ds.tab; editing = false; dailyEditing = false; draft = null; editDate = null; histDay = null;
     chosenDay = null; passOpen = false; exLib = null; kostDay = false; mealPage = null; foodSheet = null; foodItem = null; recipeOpen = null; recipeEdit = null;
     editSnap = null; exSheet = null; ordna = false; trSheet = null;
@@ -1988,12 +2113,12 @@ document.addEventListener("click", ev => {
   }
   else if (ds.themeSet) setTheme(ds.themeSet);
   else if (ds.figureSet) S.figure = ds.figureSet;
-  else if (ds.psec) profOpen = profOpen === ds.psec ? null : ds.psec;
+  else if (ds.psec !== undefined) { profOpen = ds.psec || null; window.scrollTo(0, 0); }
   else if (ds.go) { tab = ds.go; if (ds.day) chosenDay = ds.day; if (tab === "kost") { mealPage = null; foodSheet = null; foodItem = null; } }
   else if (ds.pick) { chosenDay = ds.pick; passOpen = true; if (!editDate) window.scrollTo(0, 0); }
   else if (ds.edit !== undefined) {
     editing = !editing;
-    if (editing) startEdit(currentPassDay()); else { editSnap = null; exSheet = null; ordna = false; }
+    if (editing) startEdit(currentPassDay()); else { editSnap = null; exSheet = null; ordna = false; if (typeof leaveEdit === "function") leaveEdit(); }
     window.scrollTo(0, 0);
   }
   // Övningarna ändras bara i Träna; från Hem kommer man dit med passet öppet för ändring
@@ -2004,6 +2129,7 @@ document.addEventListener("click", ev => {
     s.ok = !s.ok;
     if (s.ok && ex) { const h = warmHint(d, ex, +ds.i); if (s.reps === undefined || s.reps === "") s.reps = h.reps; if ((s.kg === undefined || s.kg === "") && +h.kg) s.kg = h.kg; }
     if (focus && !editDate && !focus.suspended) focus.sel = null;
+    if (s.ok) setFeedback(d, ds.ok, s, { warm: true });
   }
   else if (ds.ok) {
     const d = currentPassDay(), s = setAt(d, ds.ok, +ds.i);
@@ -2014,7 +2140,9 @@ document.addEventListener("click", ev => {
     const exo = d.ex[idx], toDrop = exo && exo.last === "drop" && +ds.i >= exo.sets - 1 && +ds.i < exo.sets - 1 + nd(exo);   // dropen körs direkt, utan vila   // dropen körs direkt, utan vila
     if (s.ok) { fillFromHint(d, ds.ok, +ds.i); checkRecord(ds.ok, s); if (!editDate && !inRound && !toDrop) startRest(ds.ok); }
     syncDone(d);
+    const from = focus && focus.idx;
     if (s.ok) focusAfterSet(d, idx, +ds.i);
+    if (s.ok) setFeedback(d, ds.ok, s, { from, rest: !editDate && !inRound && !toDrop, inRound, drop: toDrop });
   }
   else if (ds.exok) {
     const d = currentPassDay(), ex = d.ex.find(x => x.id === ds.exok);
@@ -2039,6 +2167,8 @@ document.addEventListener("click", ev => {
     // Avsluta från fokusläget ska aldrig öppna ett redan automatiskt sparat pass igen.
     w.done = ds.focusend !== undefined ? true : !w.done;
     if (w.done) {
+      // Passet som det faktiskt kördes (med byten och tillagda övningar), om man vill spara det som mall
+      var ranEx = JSON.parse(JSON.stringify(dayById(ds.finish).ex));
       restoreSwaps(dayById(ds.finish), w);
       if (w.start && !editDate) w.end = Date.now();
       // Historiska loggar ska inte avbryta vilan i ett pågående pass.
@@ -2047,7 +2177,7 @@ document.addEventListener("click", ev => {
     shareWorkout(dayById(ds.finish), logDate(), w.done);
     // Ett sparat pass visar skärmen Pass klart; i efterhand går man tillbaka till dagen i Historik
     if (w.done && editDate) { histDay = editDate; editDate = null; tab = "historik"; }
-    else if (w.done) { passDone = { dayId: ds.finish, date: logDate() }; tab = "idag"; }
+    else if (w.done) { passDone = { dayId: ds.finish, date: logDate(), ex: ranEx }; tab = "idag"; }
   }
   // Uppvärmning under passet: ett lättare set läggs före arbetsseten och blir det man står på
   // Dropset: en drop till, ytterligare ca 25 % lättare
@@ -2068,7 +2198,7 @@ document.addEventListener("click", ev => {
     syncDone(d);
   }
   else if (ds.dcheck) day().dailies[ds.dcheck] = !dailyDone(logDate(), ds.dcheck);
-  else if (ds.dedit !== undefined) dailyEditing = !dailyEditing;
+  else if (ds.dedit !== undefined) dailyEditing = dailyEditing === true ? false : true;
   else if (ds.letterclose) S.letterSeen = ds.letterclose;
   else if (ds.showweight !== undefined) S.hideWeight = !t.checked;
   else if (ds.wsave !== undefined) {
@@ -2135,10 +2265,12 @@ document.addEventListener("click", ev => {
     [list[i], list[j]] = [list[j], list[i]];
   }
   else if (ds.ss) { const e = exList(ds.ss)[+ds.idx]; if (e.ss) delete e.ss; else e.ss = true; }
+  else if (ds.count && draft && draft.free) draft.count = Math.max(1, Math.min(7, +ds.count));
   else if (ds.count) {
-    draft.count = Math.max(1, Math.min(7, +ds.count));
-    draft.days = makeDays(draft.program, draft.count, draft.days);
-    if (draft.weekdays.length !== draft.count) draft.weekdays = DEFAULT_WEEKDAYS[draft.count].slice();
+    const extra = draft.days.filter(d => d.extra).length;
+    draft.count = Math.max(1, Math.min(7 - extra, +ds.count));
+    draft.days = planDays(draft.program, draft.count, draft.days);
+    if (draft.weekdays.length !== draft.days.length) draft.weekdays = DEFAULT_WEEKDAYS[draft.days.length].slice();
   }
   else if (ds.mode) draft.mode = ds.mode;
   else if (ds.progtoggle !== undefined) progOpen = !progOpen;
@@ -2147,13 +2279,14 @@ document.addEventListener("click", ev => {
     if (S.setupDone) progOpen = false;
     const c = counts(ds.prog);
     if (!c.includes(draft.count)) draft.count = c.includes(3) ? 3 : c[0];
-    if (draft.weekdays.length !== draft.count) draft.weekdays = DEFAULT_WEEKDAYS[draft.count].slice();
-    draft.days = makeDays(draft.program, draft.count, draft.days);
+    draft.count = Math.min(draft.count, 7 - draft.days.filter(d => d.extra).length);
+    draft.days = planDays(draft.program, draft.count, draft.days);
+    if (draft.weekdays.length !== draft.days.length) draft.weekdays = DEFAULT_WEEKDAYS[draft.days.length].slice();
   }
   else if (ds.wd) {
     const i = +ds.wd, w = draft.weekdays;
     if (w.includes(i)) w.splice(w.indexOf(i), 1);
-    else if (w.length < draft.count) w.push(i);
+    else if (w.length < draft.days.length) w.push(i);
   }
   else if (ds.savesetup !== undefined) { saveSetup(); onb = 0; daysOpen = false; progOpen = false; }
   else if (ds.cancelsetup !== undefined) { draft = null; tab = setupFrom || "profil"; }
@@ -2174,7 +2307,7 @@ document.addEventListener("click", ev => {
   // En ny flik börjar högst upp
   if (tab !== prevTab) window.scrollTo(0, 0);
   // En utfälld rad längst ned rullas upp så att innehållet syns ovanför flikraden
-  if (ds.psec && profOpen) { const r = document.getElementById(`p-${profOpen}`); if (r && r.scrollIntoView) r.scrollIntoView({ block: "nearest" }); }
+
 });
 
 document.addEventListener("change", ev => {

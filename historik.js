@@ -7,6 +7,7 @@
 let histMonth = null;     // "YYYY-MM" som visas, null = den här månaden
 let histDay = null;       // öppen dag i kalendern
 let histView = "kalender";
+let histSub = null;       // "dailys" eller "vikt" när en del av dagen ändras i fönstret
 let weekExOpen = false;      // alla övningar i veckokortet visas
 
 const MONTHS = ["januari", "februari", "mars", "april", "maj", "juni", "juli", "augusti", "september", "oktober", "november", "december"];
@@ -37,34 +38,75 @@ function calendar() {
       <h2 style="margin:0">${MONTHS[mo - 1].replace(/^./, c => c.toUpperCase())} ${y}</h2>
       <button class="roundbtn ghost" data-hmonth="1" ${atNow ? "disabled" : ""} aria-label="Nästa månad">${icon("right", 20)}</button></div>
     <div class="cal">${WD.map(w => `<b aria-hidden="true">${w[0]}</b>`).join("")}${cells}</div>
-    <div class="legend muted small"><span><i class="lg-pass"></i>Pass</span>${S.daily.length ? `<span><i class="lg-daily"></i>Alla dailys</span>` : ""}<span><i class="lg-today"></i>Idag</span></div></section>`;
+    <div class="legend muted small"><span><i class="lg-pass"></i>Pass</span>${hasDailies() ? `<span><i class="lg-daily"></i>Alla dailys</span>` : ""}<span><i class="lg-today"></i>Idag</span></div></section>`;
 }
 
-function daySheet() {
-  const d = histDay, e = eaten(d), m = macros(), food = (S.log[d] && S.log[d].food) || [];
-  const passes = workoutsOn(d).map(w => {
-    const p = dayById(w.dayId), n = Object.values(w.sets).filter(sets => sets.some(hasData)).length;
-    return `<div class="hrow"><div class="grow">${p ? `${tag(p.type)} <b>${esc(p.name)}</b>` : "<b>Pass</b>"}
-        <div class="muted small">${n} övningar loggade${w.done ? " · sparat" : ""}</div></div>
-      ${p ? `<button class="small" data-hpass="${p.id}">Ändra</button>` : ""}</div>`;
+// Ett set som "65 × 8", "10 reps +10 kg" eller "45 s"
+function setTxt(st, id) {
+  const kg = +st.kg || 0, r = +st.reps || 0, u = isTimed(id) ? " s" : "";
+  if (!kg) return `${r}${u || (EX[id] && EX[id].bw ? " reps" : "")}`;
+  return EX[id] && EX[id].bw ? `${r} +${fmtNum(kg)} kg` : `${fmtNum(kg)} × ${r}${u}`;
+}
+// Skillnaden mot förra gången: kg om övningen körs med vikt, annars reps/sekunder
+function setGain(cur, prev, id) {
+  if (!cur || !prev) return "";
+  const kg = (+cur.kg || 0) - (+prev.kg || 0), r = (+cur.reps || 0) - (+prev.reps || 0);
+  const [v, u] = (+cur.kg || +prev.kg) && kg ? [kg, "kg"] : [r, repUnit(id) === "s" ? "s" : "reps"];
+  if (!v) return `<span class="hgain same">±0</span>`;
+  return `<span class="hgain ${v > 0 ? "up" : "down"}">${v > 0 ? "+" : "−"}${fmtNum(Math.abs(v))} ${u}</span>`;
+}
+// Förra gången samma pass kördes, före den här dagen
+function prevSamePass(dayId, date) {
+  const dates = Object.keys(S.log).filter(x => x < date).sort().reverse();
+  for (const x of dates) { const w = workoutOn(x, dayId); if (w && Object.values(w.sets).some(a => a.some(hasData))) return { date: x, w }; }
+  return null;
+}
+// Ett pass som en lättläst sammanfattning: tid, set, total vikt och varje övnings set med PB och skillnad mot förra gången
+function passSummary(w, d) {
+  if (w.act) return actPassSummary(w, d);
+  const p = dayById(w.dayId), prev = prevSamePass(w.dayId, d);
+  const order = [...(p ? p.ex.map(e => e.id) : []), ...Object.keys(w.sets)].filter((id, i, a) => a.indexOf(id) === i && EX[id]);
+  const rows = order.map(id => ({ id, sets: (w.sets[id] || []).filter(hasData) })).filter(r => r.sets.length);
+  const all = rows.flatMap(r => r.sets.map(st => ({ st, id: r.id })));
+  const vol = all.reduce((a, { st, id }) => a + (EX[id].bw ? 0 : (+st.kg || 0) * (+st.reps || 0)), 0);
+  const min = w.start && w.end ? Math.max(1, Math.round((w.end - w.start) / 60000)) : null;
+  const meta = [min ? `${min} min` : "", `${all.length} set`, vol ? (vol >= 1000 ? `${fmtNum(Math.round(vol / 100) / 10)} t` : `${Math.round(vol)} kg`) : ""].filter(Boolean).join(" · ");
+  const exRows = rows.map(({ id, sets }) => {
+    const t = topSet(sets), b = bestBefore(id, d), pb = t && b && betterSet(t, b);
+    const pt = prev && topSet((prev.w.sets[id] || []).filter(hasData));
+    return `<button class="hex" data-chart="${id}"><span class="grow"><b>${esc(EX[id].name)}${pb ? `<span class="pbtag">PB</span>` : ""}</b>
+      <span class="hsets">${sets.map(st => setTxt(st, id)).join(" · ")}</span></span>${setGain(t, pt, id)}</button>`;
   }).join("");
-  const meals = MEALS.map(([n], i) => [n, food.filter(f => f.meal === i).reduce((a, f) => a + (+f.kcal || 0), 0)]).filter(([, k]) => k);
-  return `<div class="overlay" data-hclose><div class="sheet">
-    <div class="row between"><h2>${dateLabel(d).replace(/^./, c => c.toUpperCase())}</h2><button class="small ghost iconbtn" data-hclose aria-label="Stäng">${icon("close", 18)}</button></div>
-    <h3 class="sheet-sub">Träning</h3>
-    ${passes || `<div class="muted">Inget pass loggat.</div>`}
-    ${actsOn(d).map((a, i) => `<button class="hrow linkrow" data-actedit="${i}" data-actdate="${d}"><span class="grow"><b>${esc(a.name)}</b>
-      <div class="muted small">${actLine(a)}</div></span><span class="chev">›</span></button>`).join("")}
-    <div class="row wrap" style="margin-top:8px"><button class="small" data-hpass="">+ Logga ett pass${d === TODAY ? "" : " i efterhand"}</button>
-      <button class="small" data-actnew="" data-actdate="${d}">+ Aktivitet</button></div>
-    <h3 class="sheet-sub">Mat</h3>
-    <div>${e.kcal ? `<b>${e.kcal}</b> / ${m.kcal} kcal · ${e.protein} g protein` : `<span class="muted">Ingen mat loggad.</span>`}</div>
-    ${meals.length ? `<div class="muted small">${meals.map(([n, k]) => `${n} ${k}`).join(" · ")}</div>` : ""}
-    <button class="small" style="margin-top:8px" data-hfood>${food.length ? "Ändra mat" : "+ Logga mat"}</button>
-    <div style="margin-top:18px">${dailiesCard()}</div>
-    ${S.hideWeight ? "" : `<h3 class="sheet-sub">Vikt</h3><div class="row"><input id="wkg" type="number" inputmode="decimal" step="0.1"
-      placeholder="kg" aria-label="Vikt i kg" value="${weights()[d] ?? ""}"><button data-wsave>${weights()[d] ? "Ändra" : "Spara"}</button></div>`}
-    <button class="wide" data-hclose style="margin-top:14px">Stäng</button>
+  return `<section class="hpass" aria-label="${esc(p ? p.name : "Pass")}">
+    <div class="row between hpass-top"><span class="row" style="gap:8px">${p ? tag(p.type) : ""}<b>${esc(p ? p.name : "Pass")}</b></span><span class="muted small">${meta}</span></div>
+    ${exRows || `<div class="muted small">Inga set loggade${w.done ? "" : " än"}.</div>`}
+    ${prev && rows.length ? `<div class="muted small hprev">Jämfört med förra ${esc(p ? p.name : "passet")} ${shortDate(prev.date)}</div>` : ""}
+    ${p ? `<button class="small hedit" data-hpass="${p.id}">${icon("edit", 14)}Ändra passet</button>` : ""}</section>`;
+}
+function daySheet() {
+  const d = histDay, e = eaten(d), title = dateLabel(d).replace(/^./, c => c.toUpperCase());
+  const head = back => `<div class="row between hsheet-top">${back ? `<button class="backbtn" data-hsub="">${icon("left", 18)}${title}</button>` : `<h2>${title}</h2>`}
+    <button class="small ghost iconbtn" data-hclose aria-label="Stäng">${icon("close", 18)}</button></div>`;
+  // Underlägen: dailys och vikt ändras i samma fönster
+  if (histSub === "dailys") return `<div class="overlay" data-hclose><div class="sheet hsheet">${head(true)}${dailiesCard()}</div></div>`;
+  if (histSub === "vikt") return `<div class="overlay" data-hclose><div class="sheet hsheet">${head(true)}<h3 class="sheet-sub">Vikt</h3>
+    <div class="row"><input id="wkg" type="number" inputmode="decimal" step="0.1" placeholder="kg" aria-label="Vikt i kg" value="${weights()[d] ?? ""}"><button class="primary" data-wsave data-wdate="${d}">Spara</button></div></div></div>`;
+  const ws = workoutsOn(d);   // även påbörjade pass utan set, så att de går att fortsätta i efterhand
+  const dl = dailyList(d), n = dl.length, done = dl.filter(x => dailyDone(d, x.id)).length;
+  const line = (ic, name, val, attrs) => `<button class="hline" ${attrs}><span class="hl-ic">${ic}</span><span class="grow">${name}</span><span class="muted">${val}</span>${icon("right", 16)}</button>`;
+  const ring = `<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="var(--line)" stroke-width="3"/>
+    <circle cx="12" cy="12" r="9" fill="none" stroke="var(--ok)" stroke-width="3" stroke-dasharray="${(n ? done / n : 0) * 56.5} 56.5" transform="rotate(-90 12 12)" stroke-linecap="round"/></svg>`;
+  return `<div class="overlay" data-hclose><div class="sheet hsheet">${head(false)}
+    ${ws.map(w => passSummary(w, d)).join("")}
+    ${actsOn(d).map((a, i) => `<button class="hline" data-actedit="${i}" data-actdate="${d}"><span class="hl-ic">${icon("aktivitet", 18)}</span><span class="grow">${esc(a.name)}</span><span class="muted">${actLine(a)}</span>${icon("right", 16)}</button>`).join("")}
+    ${!ws.length && !actsOn(d).length ? `<div class="muted hnone">Ingen träning loggad.</div>` : ""}
+    <div class="hlines">
+      ${n ? line(ring, "Dailys", `${done} av ${n}`, 'data-hsub="dailys"') : ""}
+      ${line(icon("kost", 18), "Mat", e.kcal ? `${tnum(e.kcal)} kcal · ${e.protein} g protein` : "Inget loggat", "data-hfood")}
+      ${S.hideWeight ? "" : line(icon("vikt", 18), "Vikt", weights()[d] ? `${fmtNum(weights()[d])} kg` : "Ingen vägning", 'data-hsub="vikt"')}
+    </div>
+    <div class="hadd"><button class="linkbtn2" data-hpass="">${icon("plus", 16)}Logga pass${d === TODAY ? "" : " i efterhand"}</button>
+      <button class="linkbtn2" data-actnew="" data-actdate="${d}">${icon("plus", 16)}Aktivitet</button></div>
   </div></div>`;
 }
 
@@ -89,7 +131,7 @@ function weekSection() {
   const wNow = weekAvgWeight(ws), wPrev = weekAvgWeight(prevWs);
   const tiles = [
     tile("Pass", cur.passes, `av ${S.plan.count}`, diff(cur.passes, prev.passes, true)),
-    S.daily.length ? tile("Dailys", cur.dailies, "av 7 dagar", diff(cur.dailies, prev.dailies, true)) : "",
+    hasDailies() ? tile("Dailys", cur.dailies, "av 7 dagar", diff(cur.dailies, prev.dailies, true)) : "",
     tile("Kalorier", cur.kcal ? tnum(cur.kcal) : "–", "snitt", cur.kcal && prev.kcal ? diff(cur.kcal, prev.kcal, null) : `<span class="muted small">mål ${tnum(macros().kcal)}</span>`),
     S.hideWeight ? "" : tile("Vikt", wNow != null ? fmtNum(wNow) : "–", "kg", wNow != null && wPrev != null ? diff(wNow, wPrev, null, " kg") : `<span class="muted small">${wNow != null ? "Första vägningen" : "Ingen vägning"}</span>`),
     cur.km || prev.km ? tile("Löpning", fmtNum(cur.km), "km", diff(cur.km, prev.km, true, " km")) : "",
@@ -109,9 +151,13 @@ function weekSection() {
 // ---------- Utveckling ----------
 // Allt sedan start: personbästa per övning med ökningen från första gången, pass per vecka och vikt.
 const shortDate = d => `${+d.slice(8)} ${MONTHS[+d.slice(5, 7) - 1].slice(0, 3)}`;
-function progressData() {
-  const dates = Object.keys(S.log).sort(), ex = {};
-  let passes = 0, first = null;
+const PERIODS = [["4v", "4 veckor", 28], ["3m", "3 mån", 91], ["1y", "1 år", 365], ["all", "Allt", 0]];
+let histPer = "3m", strAll = false;
+const perFrom = () => { const p = PERIODS.find(x => x[0] === histPer) || PERIODS[1]; return p[2] ? shift(TODAY, -p[2] + 1) : "0000"; };
+// Utvecklingen under perioden: per övning första och bästa toppset, och bästa set vecka för vecka (till kurvan)
+function progressData(from = "0000") {
+  const dates = Object.keys(S.log).filter(d => d >= from && d <= TODAY).sort(), ex = {};
+  let passes = 0, first = null, pbs = 0;
   for (const d of dates) {
     const ws = workoutsOn(d);
     if (ws.some(w => w.done)) { passes += ws.filter(w => w.done).length; first = first || d; }
@@ -119,30 +165,62 @@ function progressData() {
       if (!EX[id]) continue;
       const top = topSet(setsOn(d, id));
       if (!top) continue;
-      const e = ex[id] || (ex[id] = { id, first: top, firstDate: d, best: top, bestDate: d, last: d, times: 0 });
+      const e = ex[id] || (ex[id] = { id, first: top, firstDate: d, best: top, bestDate: d, last: d, times: 0, weeks: {} });
       e.times++; e.last = d;
       if (betterSet(top, e.best)) { e.best = top; e.bestDate = d; }
+      const wk = weekStart(d); if (betterSet(top, e.weeks[wk])) e.weeks[wk] = top;
+      const b = bestBefore(id, d); if (b && betterSet(top, b)) pbs++;
     }
   }
-  return { passes, first, ex: Object.values(ex).sort((a, b) => b.last.localeCompare(a.last)) };
+  for (const e of Object.values(ex)) {
+    const kg = +e.best.kg || +e.first.kg;
+    e.unit = kg ? "kg" : repUnit(e.id);
+    e.gain = kg ? (+e.best.kg || 0) - (+e.first.kg || 0) : (+e.best.reps || 0) - (+e.first.reps || 0);
+  }
+  return { passes, first, pbs, ex: Object.values(ex).sort((a, b) => b.last.localeCompare(a.last)) };
 }
-// Ökningen från första gången: kg om övningen körs med vikt, annars reps eller sekunder
-function gain(e) {
-  const a = e.first, b = e.best;
-  if (+b.kg || +a.kg) { const d = (+b.kg || 0) - (+a.kg || 0); return d ? deltaBadge(d, "kg") : ""; }
-  const d = (+b.reps || 0) - (+a.reps || 0);
-  return d ? deltaBadge(d, repUnit(e.id)) : "";
+function gain(e) { return e.times > 1 && e.gain ? deltaBadge(e.gain, e.unit) : ""; }
+// Liten kurva över bästa set vecka för vecka
+function spark(e) {
+  const pts = Object.keys(e.weeks).sort().map(k => e.unit === "kg" ? +e.weeks[k].kg || 0 : +e.weeks[k].reps || 0);
+  if (pts.length < 2) return `<span class="spark"></span>`;
+  const lo = Math.min(...pts), hi = Math.max(...pts), W = 64, H = 26;
+  const xy = pts.map((v, i) => `${(i / (pts.length - 1) * W).toFixed(1)},${(H - 3 - (hi > lo ? (v - lo) / (hi - lo) : .5) * (H - 6)).toFixed(1)}`).join(" ");
+  return `<svg class="spark ${e.gain > 0 ? "up" : e.gain < 0 ? "down" : ""}" viewBox="0 0 ${W} ${H}" aria-hidden="true"><polyline points="${xy}"/></svg>`;
 }
-function weekBars() {
+// Veckor i rad (bakåt från förra veckan, eller den här om målet redan nåtts) med minst målets antal pass
+function weekStreak() {
+  let ws = weekStart(TODAY), n = 0;
+  if (weekSummary(ws).passes < S.plan.count) ws = shift(ws, -7);
+  while (n < 200 && weekSummary(ws).passes >= S.plan.count) { n++; ws = shift(ws, -7); }
+  return n;
+}
+const passesIn = (from, to) => Object.keys(S.log).filter(d => d >= from && d <= to).reduce((a, d) => a + workoutsOn(d).filter(w => w.done).length, 0);
+// Framsteg: bara sådant som verkligen hänt, högst tre
+function wins(p) {
+  const out = [];
+  const best = p.ex.filter(e => e.times > 1 && e.gain > 0).sort((a, b) => (b.unit === "kg") - (a.unit === "kg") || b.gain - a.gain)[0];
+  if (best) out.push(["up", `${EX[best.id].name} +${fmtNum(best.gain)} ${best.unit}`, `${fmtSet(best.first, best.id)} → ${fmtSet(best.best, best.id)} sedan ${shortDate(best.firstDate)}`]);
+  // Månaden: den här när den kommit en bit (eller redan slagit förra), annars förra. Jämförs med månaden innan.
+  const mon = k => { const [y, mo] = TODAY.slice(0, 7).split("-").map(Number), dt = new Date(y, mo - 1 - k, 1);
+    const m = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}`; return { i: dt.getMonth(), n: passesIn(m + "-01", m + "-31") }; };
+  const c0 = mon(0), c1 = mon(1), useCur = c0.n && (+TODAY.slice(8) >= 15 || c0.n > c1.n);
+  const [m, before] = useCur ? [c0, c1] : [c1, mon(2)];
+  if (m.n) out.push(["check", `${m.n} pass i ${MONTHS[m.i]}`, before.n && m.n > before.n ? `Fler än ${MONTHS[before.i]} (${before.n})` : `Ditt mål är ${S.plan.count} i veckan`]);
+  const st = weekStreak();
+  if (st >= 2) out.push(["num", `${st} veckor i rad`, `med minst ${S.plan.count} pass, ditt mål`, st]);
+  return out;
+}
+function weekBars(count = 12) {
   const weeks = [];
-  for (let k = 11; k >= 0; k--) { const ws = shift(weekStart(TODAY), -7 * k); weeks.push({ ws, n: weekSummary(ws).passes }); }
-  const max = Math.max(S.plan.count, ...weeks.map(w => w.n)), W = 320, H = 120, bw = W / 12;
+  for (let k = count - 1; k >= 0; k--) { const ws = shift(weekStart(TODAY), -7 * k); weeks.push({ ws, n: weekSummary(ws).passes }); }
+  const max = Math.max(S.plan.count, ...weeks.map(w => w.n)), W = 320, H = 120, bw = W / count, every = Math.ceil(count / 6);
   return `<svg class="chart wbars" viewBox="0 0 ${W} ${H + 18}" role="img" aria-label="Pass per vecka de senaste tolv veckorna">
     <line class="grid" x1="0" x2="${W}" y1="${(H - S.plan.count / max * (H - 8)).toFixed(1)}" y2="${(H - S.plan.count / max * (H - 8)).toFixed(1)}"/>
     ${weeks.map((w, i) => { const h = w.n / max * (H - 8);
-      return `<rect class="wbar ${w.n >= S.plan.count ? "full" : ""}" x="${(i * bw + 4).toFixed(1)}" y="${(H - h).toFixed(1)}" width="${(bw - 8).toFixed(1)}" height="${h.toFixed(1)}" rx="3"/>
-        ${i % 2 ? `<text class="axis" x="${(i * bw + bw / 2).toFixed(1)}" y="${H + 14}" text-anchor="middle">v.${weekNo(w.ws)}</text>` : ""}`; }).join("")}
-  </svg><div class="muted small">Linjen är ditt mål, ${S.plan.count} pass i veckan.</div>`;
+      return `<rect class="wbar ${w.n >= S.plan.count ? "full" : ""}" x="${(i * bw + bw * .12).toFixed(1)}" y="${(H - h).toFixed(1)}" width="${(bw * .76).toFixed(1)}" height="${h.toFixed(1)}" rx="3"/>
+        ${(count - 1 - i) % every === 0 ? `<text class="axis" x="${(i * bw + bw / 2).toFixed(1)}" y="${H + 14}" text-anchor="middle">v.${weekNo(w.ws)}</text>` : ""}`; }).join("")}
+  </svg>`;
 }
 function actSummary() {
   const from = shift(weekStart(TODAY), -77), by = {};
@@ -160,21 +238,31 @@ function actSummary() {
 const weightSection = (w, wFirst, wLast) => !S.hideWeight && w.length ? `<section class="card kmeal"><button class="khead wlink" data-tab="vagning"><span class="grow">Vikt</span><span class="wl-kg">${fmtNum(wLast)} kg${icon("right", 16)}</span></button>
       <div class="kbody">${w.length > 1 ? `<div style="margin-bottom:8px">${weightBadge(wLast - wFirst)} <span class="muted small">sedan ${shortDate(w[0])}</span></div>` : ""}${weightChart()}</div></section>` : "";
 function progressView() {
-  const p = progressData(), recent = [0, 1, 2, 3].reduce((a, k) => a + weekSummary(shift(weekStart(TODAY), -7 * k)).passes, 0);
+  const from = perFrom(), p = progressData(from), all = progressData();
   const w = Object.keys(weights()).sort(), wFirst = w.length ? weights()[w[0]] : null, wLast = w.length ? weights()[w[w.length - 1]] : null;
-  if (!p.ex.length && !p.passes) return `<div class="card"><h2>Här växer din utveckling fram</h2>
-    <div class="muted">När du sparat några pass visas dina personbästa, hur mycket du ökat och hur ofta du tränar.</div></div>${weightSection(w, wFirst, wLast)}`;
-  const rows = p.ex.map(e => `<button class="krow" data-chart="${e.id}"><span class="thumb xs" aria-hidden="true">${figure(e.id)}</span>
-      <span class="grow"><b>${esc(EX[e.id].name)}</b><span class="muted small">${e.times > 1 ? `Första gången ${fmtSet(e.first, e.id)} · ${shortDate(e.firstDate)}` : `Loggad en gång · ${shortDate(e.firstDate)}`}</span></span>
-      <span class="pbcol"><b>${fmtSet(e.best, e.id)}</b>${e.times > 1 ? gain(e) : ""}</span></button>`).join("");
-  return `<div class="card"><div class="kstats">
-      <div class="kstat"><div class="klabel">Pass totalt</div><div class="kbig">${p.passes}</div><div class="muted small">${p.first ? `sedan ${shortDate(p.first)}` : "inga sparade än"}</div></div>
-      <div class="kstat"><div class="klabel">Senaste 4 veckor</div><div class="kbig">${recent}</div><div class="muted small">${fmtNum(recent / 4)} pass i veckan</div></div></div></div>
-    <section class="card kmeal"><div class="khead"><span class="grow">Pass per vecka</span><span>12 veckor</span></div><div class="kbody">${weekBars()}</div></section>
-    ${rows ? `<section class="card kmeal exlist"><div class="khead"><span class="grow">Personbästa</span><span>${p.ex.length} övningar</span></div>${rows}
-      <div class="muted small kfoot">Tryck på en övning för att se grafen vecka för vecka.</div></section>` : ""}
+  if (!all.ex.length && !all.passes) return `<div class="card"><h2>Här växer din utveckling fram</h2>
+    <div class="muted">När du sparat några pass visas dina framsteg, personbästa och hur ofta du tränar.</div></div>${weightSection(w, wFirst, wLast)}`;
+  const chips = `<div class="hper" role="radiogroup" aria-label="Period">${PERIODS.map(([k, n]) => `<button role="radio" data-hper="${k}" class="${histPer === k ? "on" : ""}" aria-checked="${histPer === k}">${n}</button>`).join("")}</div>`;
+  const wl = wins(p);
+  const winsHtml = wl.length ? `<div class="klabel hsec">Framsteg</div><div class="hwins">${wl.map(([ic, t, sub, num]) =>
+    `<div class="hwin"><span class="hwin-ic">${ic === "num" ? num : icon(ic === "up" ? "trend" : "check", 16)}</span><span class="col"><b>${esc(t)}</b><span class="muted small">${esc(sub)}</span></span></div>`).join("")}</div>` : "";
+  // Veckor i perioden (för snittet och stapeldiagrammet), från första passet om det är senare
+  const start = from > (all.first || TODAY) ? from : (all.first || TODAY);
+  const weeks = Math.max(1, Math.round((parse(TODAY) - parse(weekStart(start))) / 6048e5) + 1);
+  const tile = (l, v, sub) => `<div class="hstat"><span class="klabel">${l}</span><b>${v}</b><span class="muted small">${sub}</span></div>`;
+  const stats = `<div class="hstats">${tile("Pass", p.passes, histPer === "all" ? "totalt" : "perioden")}${tile("Snitt", fmtNum(p.passes / weeks), "pass/vecka")}${tile("Nya PB", p.pbs, histPer === "all" ? "totalt" : "perioden")}</div>`;
+  const bars = Math.min(26, Math.max(4, weeks));
+  // Styrka: de som ökat mest under perioden först, övriga under Visa alla
+  const str = p.ex.slice().sort((a, b) => (b.times > 1) - (a.times > 1) || (b.unit === "kg") - (a.unit === "kg") || b.gain - a.gain || b.last.localeCompare(a.last));
+  const shown = strAll ? str : str.slice(0, 5);
+  const rows = shown.map(e => `<button class="hstr" data-chart="${e.id}"><span class="grow"><b>${esc(EX[e.id].name)}</b><span class="muted small">${fmtSet(e.best, e.id)}${e.times > 1 ? "" : " · loggad en gång"}</span></span>
+      ${spark(e)}<span class="hstr-g">${gain(e) || `<span class="delta same">±0</span>`}</span></button>`).join("");
+  return `${chips}${winsHtml}${stats}
+    <section class="hblock"><div class="row between hsec2"><h2>Pass per vecka</h2><span class="muted small">mål ${S.plan.count}</span></div>${weekBars(bars)}</section>
+    ${rows ? `<section class="hblock"><div class="row between hsec2"><h2>Styrka</h2><span class="muted small">ökning under perioden</span></div>${rows}
+      ${str.length > 5 ? `<button class="ghost wide" data-hstrall aria-expanded="${strAll}">${strAll ? "Visa färre" : `Visa alla ${str.length} övningar`}${icon(strAll ? "up" : "down", 16)}</button>` : ""}</section>`
+      : `<div class="muted hnone">Inga övningar loggade under perioden.</div>`}
     ${actSummary()}
-
     ${weightSection(w, wFirst, wLast)}`;
 }
 
@@ -187,14 +275,19 @@ function historikView() {
 }
 
 document.addEventListener("click", ev => {
-  const t = ev.target.closest("[data-histday],[data-hclose],[data-hmonth],[data-hpass],[data-hfood],[data-hview],[data-weekex]");
+  const t = ev.target.closest("[data-histday],[data-hclose],[data-hmonth],[data-hpass],[data-hfood],[data-hview],[data-weekex],[data-hsub],[data-hper],[data-hstrall],[data-wsave]");
   if (!t || t.disabled) return;
   if (t.classList.contains("overlay") && ev.target !== t) return;   // klick inne i fönstret
   const ds = t.dataset;
+  // Vikten sparas av app.js; fönstret går tillbaka till dagen när värdet är giltigt
+  if (ds.wsave !== undefined) { const v = +String(($("wkg") || {}).value || "").replace(",", "."); if (histSub === "vikt" && v > 0) histSub = null; return; }
   if (ds.weekex !== undefined) weekExOpen = !weekExOpen;
+  else if (ds.hsub !== undefined) histSub = ds.hsub || null;
+  else if (ds.hper) histPer = ds.hper;
+  else if (ds.hstrall !== undefined) strAll = !strAll;
   else if (ds.hview) histView = ds.hview;
-  else if (ds.histday) histDay = ds.histday;
-  else if (ds.hclose !== undefined) { histDay = null; editDate = null; }
+  else if (ds.histday) { histDay = ds.histday; histSub = null; }
+  else if (ds.hclose !== undefined) { histDay = null; histSub = null; editDate = null; }
   else if (ds.hmonth) {
     const [y, mo] = (histMonth || TODAY.slice(0, 7)).split("-").map(Number), dt = new Date(y, mo - 1 + +ds.hmonth, 1);
     histMonth = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}`;

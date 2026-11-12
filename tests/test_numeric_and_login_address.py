@@ -6,7 +6,7 @@ from test_app import SB_CONFIG, SUPABASE_MOCK, prof
 
 def test_daily_history_edit_uses_numeric_keyboard_and_keeps_reps(page):
     start(page)
-    page.evaluate("histDay=TODAY;tab='historik';dailyEditing=true;render()")
+    page.evaluate("histDay=TODAY;histSub='dailys';tab='historik';dailyEditing=true;render()")
     reps=page.locator('[data-t="daily"][data-f="reps"]').first
     assert reps.get_attribute('inputmode')=='numeric'
     reps.fill('45')

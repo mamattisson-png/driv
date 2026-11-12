@@ -37,7 +37,8 @@ function scanStatus(msg) {
 async function startCamera() {
   const video = scanner.el.querySelector("video");
   try {
-    scanner.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false });
+    // Högre upplösning gör de tunna strecken läsbara; iPhone ger annars en liten bild
+    scanner.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: false });
     video.srcObject = scanner.stream;
     await video.play();
   } catch (e) {
@@ -60,13 +61,34 @@ async function startCamera() {
     tick();
     return;
   }
+  // ZXing (iPhone och andra utan inbyggd läsare): en egen slinga som läser mitten av bilden några gånger i sekunden.
+  // ZXings egen videoslinga väntar på att videon ska börja spela, vilket den redan har gjort här, och startar därför aldrig.
   try {
     await loadScript(ZXING_URL);
-    scanner.zx = new window.ZXing.BrowserMultiFormatReader();
-    scanner.zx.decodeFromVideoElementContinuously(video, res => { if (res && scanner.stream) onBarcode(res.getText()); });
   } catch (e) {
     scanStatus("Streckkodsläsaren gick inte att ladda. Skriv in streckkoden under i stället.");
+    return;
   }
+  const ZX = window.ZXing, F = ZX.BarcodeFormat;
+  const reader = new ZX.MultiFormatReader();
+  reader.setHints(new Map([[ZX.DecodeHintType.POSSIBLE_FORMATS, [F.EAN_13, F.EAN_8, F.UPC_A, F.UPC_E]], [ZX.DecodeHintType.TRY_HARDER, true]]));
+  const canvas = document.createElement("canvas"), ctx = canvas.getContext("2d", { willReadFrequently: true });
+  const tick = () => {
+    if (!scanner.stream) return;
+    const w = video.videoWidth, h = video.videoHeight;
+    if (w && h && video.readyState >= 2) {
+      // Mitten av bilden (där ramen är), högst 1000 punkter bred
+      const sw = Math.round(w * .85), sh = Math.round(h * .5), k = Math.min(1, 1000 / sw);
+      canvas.width = Math.round(sw * k); canvas.height = Math.round(sh * k);
+      ctx.drawImage(video, (w - sw) / 2, (h - sh) / 2, sw, sh, 0, 0, canvas.width, canvas.height);
+      try {
+        const res = reader.decodeWithState(new ZX.BinaryBitmap(new ZX.HybridBinarizer(new ZX.HTMLCanvasElementLuminanceSource(canvas))));
+        return onBarcode(res.getText());
+      } catch (e) { /* ingen kod i bilden än */ }
+    }
+    scanner.timer = setTimeout(tick, 120);
+  };
+  tick();
 }
 
 function stopCamera() {

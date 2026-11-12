@@ -135,7 +135,7 @@ def test_home_reflects_active_selected_workout_before_first_set(page):
     pick(page, selected["id"])
     page.click('[data-focusstart]')
     page.click('#nav [data-tab="idag"]')
-    assert page.inner_text('.passtile .hname').lower() == selected['name'].lower()
-    assert page.text_content('.passtile .klabel') == 'Pågående pass'
+    assert page.inner_text('.h3-passcard .h3-pass').lower() == selected['name'].lower()
+    assert page.text_content('.h3-passcard .klabel') == 'Pågående pass'
     page.click('#nav [data-tab="pass"]')
     assert page.evaluate('focus.dayId') == selected['id']

@@ -57,6 +57,15 @@ function anatSvg(side, { strong = [], soft = [], labels = true, mode = "ex", vb,
 }
 
 // Biblioteket öppnas i ett sammanhang: "browse" (Träna, Hem), "workout" (lägg till eller byt i ett pass) eller "daily".
+// Passtyperna i filtret följer det valda schemat: Push/Pull/Legs, Överkropp/Underkropp, Helkropp …
+const schemaTypes = () => [...new Set(S.plan.days.map(d => d.type))].filter(t => TYPES[t]);
+const typeOf = cat => cat && cat.startsWith("t:") && TYPES[cat.slice(2)] && schemaTypes().includes(cat.slice(2)) ? cat.slice(2) : null;
+function catMatches(id, cat) {
+  const t = typeOf(cat);
+  if (!t) return true;
+  const cats = TYPES[t].cats;
+  return cats.includes("bw") ? !!EX[id].bw && EX[id].cat !== "cardio" : cats.includes(EX[id].cat);
+}
 // libCtx = { kind, target, replace, today } medan biblioteket visas ovanpå den vy man kom från.
 let libCtx = null;
 // Öppna biblioteket från ett pass eller Dailys: listan börjar på passets typ, eller den övning som ska bytas
@@ -64,13 +73,13 @@ function openLibrary(ctx) {
   libCtx = { ...ctx, tab };
   const list = exList(ctx.target), orig = ctx.replace != null ? list[ctx.replace] : null;
   const d = ctx.kind === "workout" ? (ctx.target.startsWith("draft:") ? draft.days[+ctx.target.slice(6)] : dayById(ctx.target)) : null;
-  const typeCat = d && { push: "push", cpush: "push", pull: "pull", cpull: "pull", legs: "legs", lower: "legs", clegs: "legs" }[d.type];
+  const typeCat = d && TYPES[d.type] ? "t:" + d.type : null;
   msk = { ...msk, mode: orig && EX[orig.id].cat === "stretch" ? "st" : "ex", sel: null, view: "f", q: "", limit: 30,
-    cat: orig ? (PASS_FILTER[EX[orig.id].cat] ? EX[orig.id].cat : "alla") : typeCat || "alla", gear: "alla" };
+    cat: typeCat || "alla", gear: "alla" };
   mskDetail = null;
   window.scrollTo(0, 0);
 }
-const libTargetName = t => t === "daily" ? "Dailys" : t.startsWith("draft:") ? draft.days[+t.slice(6)].name : dayById(t).name;
+const libTargetName = t => t === "daily" ? "Dailys" : String(t).startsWith("rut:") ? (routineById(t.slice(4)) || { name: "Dailys" }).name : t.startsWith("draft:") ? draft.days[+t.slice(6)].name : dayById(t).name;
 
 function muscleView() {
   if (mskDetail && EX[mskDetail]) return stretchPage(mskDetail);
@@ -80,10 +89,13 @@ function muscleView() {
   const replacing = !browse && ctx.replace != null ? exList(ctx.target)[ctx.replace] : null;
   // Kondition passar i Dailys men inte i ett pass; stretch finns under sin egen flik
   const pool = Object.keys(EX).filter(id => (st ? EX[id].cat === "stretch" : EX[id].cat !== "stretch") && (ctx.kind !== "workout" || EX[id].cat !== "cardio"));
-  const list = pool.filter(id => (!replacing || id !== replacing.id) && (!q || norm(EX[id].name + " " + (EX[id].muscles || "") + " " + (PASS_WORDS[EX[id].cat] || "")).includes(q))
+  // Sökningen tål engelska, felstavning och förkortningar (sok.js); bäst träff först
+  const score = q ? Object.fromEntries(pool.map(id => [id, exSearchScore(id, msk.q)])) : null;
+  const list = pool.filter(id => (!replacing || id !== replacing.id) && (!q || score[id] > 0)
     && (q || !msk.sel || (st ? stretchMuscles(id).includes(msk.sel) : trainsMuscle(id, msk.sel)))
-    && (st || cat === "alla" || EX[id].cat === cat) && (gear === "alla" || gearGroup(id) === gear));
-  const title = q ? "Sökresultat" : msk.sel ? MUSKEL_NAMN[msk.sel] : st ? "Alla stretchövningar" : cat !== "alla" ? `Alla ${areaLabel(cat).toLowerCase()}-övningar` : "Alla övningar";
+    && (st || catMatches(id, cat)) && (gear === "alla" || gearGroup(id) === gear));
+  if (q) list.sort((a, b) => score[b] - score[a]);
+  const title = q ? "Sökresultat" : msk.sel ? MUSKEL_NAMN[msk.sel] : st ? "Alla stretchövningar" : typeOf(cat) ? `Övningar för ${TYPES[typeOf(cat)].label.toLowerCase()}` : "Alla övningar";
   const heading = replacing ? `Byt ut ${esc(EX[replacing.id].name)}` : ctx.kind === "daily" ? "Lägg till daily" : ctx.kind === "workout" ? `Lägg till i ${esc(libTargetName(ctx.target))}` : "Övningar";
   const back = browse ? `<button class="backbtn" ${msk.back === "idag" ? 'data-tab="idag"' : "data-exlibclose"}>${icon("left", 18)}${msk.back === "idag" ? "Hem" : "Träna"}</button>`
     : `<button class="backbtn" data-libclose>${icon("left", 18)}${ctx.kind === "daily" ? "Dailys" : esc(libTargetName(ctx.target))}</button>`;
@@ -91,10 +103,10 @@ function muscleView() {
   const action = id => browse ? addBtn(id)
     : have.includes(id) && !replacing ? `<span class="sg-add have" aria-label="Finns redan">${icon("check", 18)}</span>`
     : `<button class="sg-add" data-libpick="${id}" aria-label="${replacing ? "Välj" : "Lägg till"} ${esc(EX[id].name)}">${icon(replacing ? "right" : "plus", 18)}</button>`;
-  const rows = list.slice(0, msk.limit).map(id => `<div class="h3-row sg-row msk-row ${have.includes(id) ? "have" : ""}"><button class="sg-open" ${st && browse ? `data-mskdetail="${id}"` : `data-info="${id}"`} aria-label="Visa ${esc(EX[id].name)}">
+  const rows = list.slice(0, msk.limit).map(id => `<div class="h3-row sg-row msk-row ${have.includes(id) ? "have" : ""}"><button class="sg-open" ${browse ? `data-mskdetail="${id}"` : `data-info="${id}"`} aria-label="Visa ${esc(EX[id].name)}">
       <span class="thumb exl">${figure(id)}</span><span class="grow"><b>${esc(EX[id].name)}</b><small>${EX[id].sets} × ${esc(EX[id].reps)} · ${esc(EX[id].muscles || "")}</small></span></button>${action(id)}</div>`).join("");
-  const filters = `<div class="pfilters msk-filters">${st ? "" : `<label class="pfilter ${cat !== "alla" ? "on" : ""}"><span class="sr">Passtyp</span><select data-mskcat aria-label="Passtyp">
-      <option value="alla">Alla passtyper</option>${Object.keys(PASS_FILTER).map(k => `<option value="${k}" ${cat === k ? "selected" : ""}>${areaLabel(k)}</option>`).join("")}</select>${icon("down", 16)}</label>`}
+  const filters = `<div class="pfilters msk-filters">${st ? "" : `<label class="pfilter ${typeOf(cat) ? "on" : ""}"><span class="sr">Passtyp</span><select data-mskcat aria-label="Passtyp">
+      <option value="alla">Alla passtyper</option>${schemaTypes().map(t => `<option value="t:${t}" ${typeOf(cat) === t ? "selected" : ""}>${esc(TYPES[t].label)}</option>`).join("")}</select>${icon("down", 16)}</label>`}
     <label class="pfilter ${gear !== "alla" ? "on" : ""}"><span class="sr">Utrustning</span><select data-mskgear aria-label="Utrustning">
       <option value="alla">All utrustning</option>${Object.entries(GEAR_FILTER).map(([k, n]) => `<option value="${k}" ${gear === k ? "selected" : ""}>${n}</option>`).join("")}</select>${icon("down", 16)}</label></div>`;
   return `<div class="msk ${st ? "st" : ""} ${browse ? "" : "msk-ctx"}">${back}
@@ -111,27 +123,38 @@ function muscleView() {
     ${list.length > msk.limit ? `<button class="wide sg-more" data-mskmore>Visa fler (${list.length - msk.limit})</button>` : ""}</div>`;
 }
 
-// En stretchövning: vad som töjs, hur länge, hur man gör, Starta och Lägg till
+// En övning eller stretch på en egen sida: musklerna på kroppen, upplägget, hur man gör och Lägg till.
+// Stretch har dessutom Starta (Dailys-timern). Samma sida för båda, så att de känns likadana.
 function stretchPage(id) {
-  const e = EX[id], ms = stretchMuscles(id), most = ms.slice(0, 1), also = ms.slice(1);
-  if (typeof dailyClock !== "undefined" && dailyClock && dailyClock.id === id) return `<div class="msk st">${dailyClockView()}</div>`;
+  const e = EX[id], st = e.cat === "stretch";
+  if (st && typeof dailyClock !== "undefined" && dailyClock && dailyClock.id === id) return `<div class="msk st">${dailyClockView()}</div>`;
+  let most, also;
+  if (st) { const ms = stretchMuscles(id); most = ms.slice(0, 1); also = ms.slice(1); }
+  else {
+    most = MUSKLER.map(m => m[0]).filter(k => trainsMuscle(id, k));
+    also = [...new Set((e.sec || []).flatMap(g => GROUP_TO_MUSKEL[g] || []))].filter(k => !most.includes(k));
+  }
+  const ms = [...most, ...also];
   const secs = (String(e.reps).match(/(\d+)\s*(s|sek)/) || [])[1];
   const tile = (v, l) => `<div><b>${v}</b><span>${l}</span></div>`;
-  // Only link a stretch to an individual exercise page, never a category.
-  const directMw = mwDirectUrl(id);
   const chip = (k, strong) => `<span class="msk-tchip ${strong ? "on" : ""}"><i></i>${MUSKEL_NAMN[k]}</span>`;
   const back = ms.some(k => !MUSKEL_FRAM.includes(k)), front = ms.some(k => MUSKEL_FRAM.includes(k));
-  return `<div class="msk st"><button class="backbtn" data-mskdetail="">${icon("left", 18)}Stretch</button>
+  const mode = st ? "st" : "ex", g = gearOf(id);
+  const words = st ? ["Töjs mest", "Töjs också"] : ["Tränas mest", "Tränas också"];
+  return `<div class="msk ${st ? "st" : ""}"><button class="backbtn" data-mskdetail="">${icon("left", 18)}${st ? "Stretch" : "Övningar"}</button>
     <h1 class="msk-h">${esc(e.name)}</h1>
     <div class="msk-tchips">${most.map(k => chip(k, true)).join("")}${also.map(k => chip(k, false)).join("")}</div>
-    <section class="msk-map msk-both" aria-label="Muskler som töjs">${front || !back ? anatSvg("f", { strong: most, soft: also, labels: false, mode: "st", vb: "0 30 640 1190" }) : ""}${back ? anatSvg("b", { strong: most, soft: also, labels: false, mode: "st", vb: "620 30 640 1190" }) : ""}
-      <div class="msk-legend"><span><i class="on"></i>Töjs mest</span>${also.length ? `<span><i></i>Töjs också</span>` : ""}</div></section>
-    <div class="rstats three">${tile(secs ? `${secs} s` : esc(e.reps), secs ? "håll" : "reps")}${tile(`${e.sets} ×`, "gånger")}${tile(gearOf(id) ? "1" : "0", "utrustning")}</div>
+    <section class="msk-map msk-both" aria-label="${st ? "Muskler som töjs" : "Muskler som tränas"}">${front || !back ? anatSvg("f", { strong: most, soft: also, labels: false, mode, vb: "0 30 640 1190" }) : ""}${back ? anatSvg("b", { strong: most, soft: also, labels: false, mode, vb: "620 30 640 1190" }) : ""}
+      <div class="msk-legend"><span><i class="on"></i>${words[0]}</span>${also.length ? `<span><i></i>${words[1]}</span>` : ""}</div></section>
+    <div class="rstats three">${tile(`${e.sets} ×`, st ? "gånger" : "set")}${tile(secs ? `${secs} s` : esc(String(e.reps).replace(/(\d)\s*-\s*(\d)/g, "$1–$2")), secs ? "håll" : "reps")}${tile(g ? GEAR[g][0] : "Ingen", "utrustning")}</div>
     <section class="card msk-how"><div class="row" style="gap:14px;align-items:center"><span class="thumb msk-fig">${figure(id, "", true)}</span>
-      <div><h2>Så här gör du</h2><span class="muted small">Det ska dra${most.length ? ` i ${MUSKEL_NAMN[most[0]].toLowerCase()}` : ""}, inte göra ont.</span></div></div>
-      <ol class="msk-steps">${(e.cues || []).map(c => `<li>${esc(c)}</li>`).join("")}</ol>${directMw ? `<a href="${directMw}" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:7px;margin-top:18px;color:#12b7a5;font-weight:700;text-decoration:none">Mer om övningen på MuscleWiki ↗</a>` : ""}</section>
-    <div class="pagefoot row"><button class="grow ghost" data-sgadd="${id}">${icon("plus", 16)}Lägg till</button>
-      <button class="primary grow bigbtn" data-dclockstart="${id}">${icon("timer", 18)}Starta${secs ? ` · ${secs} s` : ""}</button></div></div>`;
+      <div><h2>Så här gör du</h2><span class="muted small">${st ? `Det ska dra${most.length ? ` i ${MUSKEL_NAMN[most[0]].toLowerCase()}` : ""}, inte göra ont.` : esc(e.muscles || "")}</span></div></div>
+      <ol class="msk-steps">${(e.cues || []).map(c => `<li>${esc(c)}</li>`).join("")}</ol>
+      ${g && !st ? `<div class="gearbox"><b>${GEAR[g][0]}</b><div>${GEAR[g][1]}</div></div>` : ""}
+      ${mwUrl(id) ? `<a class="mwlink" href="${mwUrl(id)}" target="_blank" rel="noopener">Mer om övningen på MuscleWiki <span aria-hidden="true">↗</span></a>` : ""}</section>
+    <div class="pagefoot row">${st ? `<button class="grow ghost" data-sgadd="${id}">${icon("plus", 16)}Lägg till</button>
+      <button class="primary grow bigbtn" data-dclockstart="${id}">${icon("timer", 18)}Starta${secs ? ` · ${secs} s` : ""}</button>`
+      : `<button class="primary grow bigbtn" data-sgadd="${id}">${icon("plus", 18)}Lägg till i Dailys eller ett pass</button>`}</div></div>`;
 }
 
 // Menyn lämnar alltid biblioteket, även till fliken man kom från
@@ -159,8 +182,12 @@ document.addEventListener("click", ev => {
     // Lägg till (eller byt) med den vanliga logiken, och tillbaka dit man kom ifrån
     const c = libCtx, name = EX[ds.libpick].name;
     addExercise(c.target, ds.libpick, c.replace, c.today);
+    // Fritt gympass (inget schema): första övningen startar passet
+    if (c.startFree) { libCtx = null; startFocus(c.target); save(); render(); window.scrollTo(0, 0); return; }
+    // Tillagd mitt i ett pass: gå direkt till den nya övningen
+    if (c.replace == null && focus && focus.dayId === c.target) { const k = exList(c.target).findIndex(e => e.id === ds.libpick); if (k >= 0) focus.idx = k; }
     libCtx = null; save(); render();
-    toast(c.replace != null ? `Bytt till ${name}` : `${name} tillagd i ${libTargetName(c.target)}`);
+    toast(c.replace != null ? `Bytt till ${name}` : `${name} tillagd i ${c.today ? "dagens pass" : libTargetName(c.target)}`);
     return;
   }
   else if (ds.libclose !== undefined) libCtx = null;

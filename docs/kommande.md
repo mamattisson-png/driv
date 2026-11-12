@@ -1,6 +1,6 @@
 # DRIV – Kommande förbättringar
 
-Senast uppdaterad: 2026-11-03. Status bygger på dokumenterade publiceringar och kontrollerad kod. Ej verifierade funktioner behåller pågående status.
+Senast uppdaterad: 2026-11-06. Status bygger på dokumenterade publiceringar och kontrollerad kod. Ej verifierade funktioner behåller pågående status.
 
 | Nr | Förbättring | Kategori | Prioritet | Status |
 |---|---|---|---|---|
@@ -8,26 +8,26 @@ Senast uppdaterad: 2026-11-03. Status bygger på dokumenterade publiceringar och
 | 2 | Kompaktare avslutade set | Träning | Hög | Klar |
 | 3 | Skalbar träningsvy | Träning | Hög | Klar |
 | 4 | Facelift av hemskärmen | Design | Hög | Klar |
-| 5 | Tillskott och hälsorutiner i Dailys | Dailys | Medel | I test |
+| 5 | Tillskott och hälsorutiner i Dailys | Dailys | Medel | Klar |
 | 6 | Interaktiv stretchguide | Dailys | Medel | Klar |
 | 7 | Tydligare övningsfigurer och animationer | Design | Hög | Klar |
 | 8 | Smart grönmarkering av måltider | Kost | Medel | Klar |
 | 9 | Tydligare avklarade aktiviteter | Design | Hög | Klar |
-| 10 | Körbara tränings-Dailys | Dailys | Hög | Ej påbörjad |
+| 10 | Körbara tränings-Dailys | Dailys | Hög | Klar |
 | 11 | Frivillig appguide | Ny funktion | Medel | Klar |
-| 12 | Enhetlig profil- och inställningsikon | Design | Medel | Ej påbörjad |
-| 13 | Färdigställ uppvärmningsset | Träning | Medel | Ej påbörjad |
-| 14 | Lägg till övning under pågående pass | Träning | Hög | Ej påbörjad |
-| 15 | Tydligare Historik och Utveckling | Historik | Hög | Ej påbörjad |
-| 16 | Numeriskt tangentbord för alla sifferfält | UX | Hög | Under arbete |
+| 12 | Enhetlig profil- och inställningsikon | Design | Medel | Klar |
+| 13 | Färdigställ uppvärmningsset | Träning | Medel | Klar |
+| 14 | Lägg till övning under pågående pass | Träning | Hög | Klar |
+| 15 | Tydligare Historik och Utveckling | Historik | Hög | Klar |
+| 16 | Numeriskt tangentbord för alla sifferfält | UX | Hög | Klar |
 | 17 | Ingen inloggningsblinkning vid uppdatering | Bugg | Hög | Klar |
-| 18 | Sista steget i Kom igång: konto eller fortsätt utan | Onboarding | Hög | Ej påbörjad |
+| 18 | Sista steget i Kom igång: konto eller fortsätt utan | Onboarding | Hög | Klar |
 | 19 | Tydligare e-postadress när inloggningskod inväntas | Konto | Medel | Klar |
-| 20 | Enhetliga DRIV-mejl med kod, länk och original-logga | Konto | Hög | Påbörjad |
+| 20 | Enhetliga DRIV-mejl med kod, länk och original-logga | Konto | Hög | Klar |
 | 21 | Bekräfta viktinmatning med OK istället för att avsluta set | Träning | Hög | Klar |
-| 22 | Tydlig återkoppling när set avslutas och nästa öppnas | Träning | Hög | Hanteras av Claude |
-| 23 | Spara genomfört pass som namngiven passmall | Träning | Hög | Ej påbörjad |
-| 24 | Testlägets extrabalk får inte skymma träningsvyn | Bugg | Hög | Ej påbörjad |
+| 22 | Tydlig återkoppling när set avslutas och nästa öppnas | Träning | Hög | Klar |
+| 23 | Spara genomfört pass som namngiven passmall | Träning | Hög | Klar |
+| 24 | Testlägets extrabalk får inte skymma träningsvyn | Bugg | Hög | Klar |
 | 27 | Sök och filtrera övningar på passtyp (Push, Pull, Ben) | Träning | Medel | Klar |
 | 28 | Träna som en sida och övningsbibliotek | Träning | Hög | Klar |
 | 29 | Kroppskarta i bibliotek och stretchguide, alla övningar kan läggas till | Träning | Hög | Klar |
@@ -36,7 +36,7 @@ Senast uppdaterad: 2026-11-03. Status bygger på dokumenterade publiceringar och
 | 32 | Sök på muskel: övningar och stretch med realistisk anatomibild | Träning | Hög | Klar |
 | 33 | Ta bort dubbla muskelknappar under kroppskartan | UX | Låg | Klar |
 | 34 | MuscleWiki-länk från stretchövningens detaljsida | Stretch | Medel | Klar |
-| 35 | Direktlänkar till rätt MuscleWiki-övning | Stretch | Medel | Ej påbörjad |
+| 35 | Direktlänkar till rätt MuscleWiki-övning | Stretch | Medel | Klar |
 | 36 | Gemensamt övningsbibliotek för pass, Dailys och byten | Träning | Hög | Klar |
 | 37 | Testbalken trycker inte ut innehåll utanför skärmen | Testläge | Låg | Klar |
 | 38 | Hela kroppen i Sök på muskel | Träning | Medel | Klar |
@@ -55,6 +55,41 @@ Senast uppdaterad: 2026-11-03. Status bygger på dokumenterade publiceringar och
 | 51 | Ändra pass: alltid pilar, vikt per övning, dropset och max reps | Träning | Hög | Klar |
 | 52 | Avslutat pass visar vikter, PB och sammanfattning | Träning | Medel | Klar |
 | 53 | Sparat pass är låst tills man öppnar det igen | Bugg | Medel | Klar |
+| 54 | Övningar får samma sida som stretch | Träning | Medel | Klar |
+| 55 | Inställningar: en sida per sak med samma upplägg | Design | Hög | Klar |
+| 56 | MuscleWiki-länkar tillbaka, kontrollerade | Träning | Medel | Klar |
+| 57 | Kör igen startar ett nytt pass i stället för att öppna det avslutade | Bugg | Hög | Klar |
+| 58 | Alla tester gröna; måltidens innehåll, sparade måltider och kontokort tillbaka | Kvalitet | Hög | Klar |
+| 59 | Hem: raden Vikt säger när veckans vägning saknas | Hem | Medel | Klar |
+| 60 | Fokusläget: påbörjade övningar får en ring i raden överst | Träning | Medel | Klar |
+| 61 | Kortare vila för övningar med ett ben eller en arm i taget | Träning | Medel | Klar |
+| 62 | Sök övningar på engelska, med felstavning och förkortningar | Träning | Hög | Klar |
+| 63 | Träna: listan visar klara, påbörjade och superset-övningar | Träning | Medel | Klar |
+| 64 | Ändra från listan på Träna leder tillbaka till listan | Bugg | Medel | Klar |
+| 65 | Korrigera dagens avslutade pass direkt från Träna | Träning | Hög | Klar |
+| 66 | Stretch under vilan mellan set | Träning | Medel | Klar |
+| 67 | Ta bort övning under pågående pass | Träning | Hög | Klar |
+| 68 | Förbättra menyn Avsluta passet | Design | Medel | Klar |
+| 69 | Anpassa hälsningen efter alla dagens mål | Hem | Medel | Klar |
+| 70 | Flexibelt träningsschema för alla aktiviteter | Träning | Hög | Klar |
+| 71 | Anpassningsbara Dailys med sparade rutiner och rotation | Dailys | Hög | Klar |
+| 72 | Profiler med statistik och profilbild | Vänner | Medel | Kommande |
+| 73 | Fokusläget: en rad under setet med Mer, och dra övningar för att flytta dem | Träning | Hög | Klar |
+| 74 | Dra övningar som i andra appar (de andra gör plats) och diskret tips | Träning | Medel | Klar |
+| 75 | Övningsbiblioteket: passtyperna följer det valda schemat | Träning | Medel | Klar |
+| 76 | Träna går att nå under ett pågående pass, med en rad som tar en tillbaka | Träning | Hög | Klar |
+| 77 | Övningsgubbar: rätt håll på kroppen och knän som böjer rätt | Träning | Hög | Klar |
+| 78 | MuscleWiki: bara kontrollerade länkar direkt till rätt övning (304 av 533) | Träning | Hög | Klar |
+| 79 | Streckkodsskannern fungerar på iPhone (egen läsning av kamerabilden när telefonen saknar inbyggd läsare) | Kost | Hög | Klar |
+| 80 | Tillbaka från första steget i starten fungerar även när man är inloggad | Start | Medel | Klar |
+| 81 | Startsidan ryms ovanför telefonens knapprad (Android) | Start | Medel | Klar |
+| 82 | Motion på Träna: mål och resultat som rutor som går att trycka på för att ändra, och Nästa pass | Träning | Hög | Klar |
+| 83 | Gym och Motion: valet Gym, Motion eller Båda i starten och namnet Motion i appen | Träning | Hög | Klar |
+| 84 | 84 sökbara träningsformer med kcal (bl.a. EMS), sökfält, annan träning i egen lista och målet nått i veckotexten | Träning | Hög | Klar |
+| 85 | Inget schema: logga gympass och motion fritt mot ett veckomål | Träning | Hög | Klar |
+| 86 | Logga motion som egen sida: tydlig sökruta, Senast med Igen, Populärt, alla 84 i grupper, dag, tid och intensitet | Träning | Hög | Klar |
+| 87 | Runda knappar i Dailys, på Kost och Hem (play, bock, plus, info) | Design | Låg | Klar |
+| 88 | Fritt pass med eget flöde: klart först vid Avsluta, Nästa övning, Fortsätt leder direkt in i passet | Träning | Hög | Klar |
 
 ## Detaljer och acceptanskriterier
 
@@ -127,6 +162,24 @@ Senast uppdaterad: 2026-11-03. Status bygger på dokumenterade publiceringar och
 51. **Ändra pass och sista setet (Klar, publicerad 2026-11-03):** Pilarna för att flytta övningar finns alltid när man ändrar ett pass (Ordna behövs inte). Vikten kan ställas in per övning, med − och + eller genom att skriva in den, och blir startvikten i passet. Sista setet kan vara Dropset (en drop ca 25 % lättare utan vila, med En drop till efter den här) eller Max reps.
 52. **Avslutat pass (Klar, publicerad 2026-11-03):** Ett genomfört pass visar tid, set, total vikt och antal PB överst, och varje övning de set man gjorde som vikt × reps med PB-märke när toppsetet slog tidigare rekord.
 53. **Låst sparat pass (Klar, publicerad 2026-11-03):** Övningarna i ett avslutat pass går inte att trycka på. Man öppnar passet med Öppna igen först. Ändringar i efterhand görs som förut från Historik.
+54. **Övningens sida (Klar, publicerad 2026-11-03):** Ett tryck på en övning i biblioteket öppnar samma slags sida som en stretch: musklerna på kroppen, set, reps, utrustning, hur man gör och Lägg till. Länkarna till MuscleWiki togs först bort men är tillbaka (punkt 56).
+
+55. **Nya Inställningar (Klar, publicerad 2026-11-03):** Varje rad öppnar en egen sida med tillbakaknapp, rubrik och en mening om vad den gör, i stället för att fällas ut. Brytare i stället för kryssrutor, Kalorimål visar målet stort, namn, inloggning och data på Konto och data, Träningsschema under Träning och en tillbakaknapp på Kommande funktioner.
+56. **MuscleWiki-länkar (Klar, publicerad 2026-11-03):** 524 av 533 övningar och stretchar länkar till MuscleWiki igen, på övningens sida, stretchens sida och i bladet inifrån passet. Adressformatet är kontrollerat mot MuscleWikis sökträffar; 189 går direkt till övningen och resten till en lista med liknande övningar. Ett test kontrollerar formatet.
+
+66. **Stretch under vilan mellan set:** Frivilliga, relevanta stretchförslag under vilotimern, med instruktioner och befintliga animationer. Timern fortsätter och passets set/loggar påverkas inte.
+
+67. **Ta bort övning under pågående pass:** Ta bort hela övningen och dess set endast från den aktuella sessionen. Övriga övningar påverkas inte. Visa Ångra i 5 sekunder. Behåll övningen i bibliotek och sparade passmallar.
+
+68. **Förbättra menyn Avsluta passet:** Ge alternativen Pausa och fortsätt senare, Avbryt passet utan att spara och Fortsätt träna en konsekvent visuell hierarki, tydliga tryckytor, jämna avstånd och enhetliga knapphöjder. Pausa som primär handling, Fortsätt träna som sekundär och Avbryt som diskret destruktiv handling. Behåll befintligt beteende och säkerställ god läsbarhet i mörkt och ljust läge.
+
+69. **Anpassa hälsningen efter alla dagens mål:** Visa inte ”Allt klart” när kostmålet återstår, även om träningspass och Dailys är klara. Hälsningen ska skilja på genomförd träning, Dailys och uppnått kalorimål. Exempel när träning och Dailys är klara men kosten återstår: ”Bra jobbat idag!” med ”Träningen och Dailys är klara · Kosten återstår”. Sent på kvällen kan en vänlig sov gott-hälsning användas utan att påstå att allt är klart. ”Allt klart, sov gott” reserveras för dagar där samtliga relevanta mål är uppnådda. Bevara befintlig design och hantera dagar utan planerat pass.
+
+70. **Flexibelt träningsschema för alla aktiviteter:** Träningsschemat ska kunna användas utan gymövningar. Användaren väljer styrketräning, annan aktivitet eller en blandning per schemalagd dag, exempelvis yoga, promenad, löpning eller cykling. Varje aktivitet ska kunna planeras med namn, dag, varaktighet och relevanta mål, markeras som genomförd och visas i historik och veckans framsteg. Behåll nuvarande set/reps/vikt för gympass, men kräv inte dessa fält för andra aktiviteter. Anpassa Träna-vyn och hemskärmens dagens pass så att de fungerar även när inget gympass finns. Undvik parallella scheman och bevara befintlig data och funktionalitet. Visa designförslag före implementation.
+
+71. **Anpassningsbara Dailys med sparade rutiner och rotation:** Låt användaren skapa, namnge, spara, redigera, kopiera och välja flera Dailys-rutiner med egna övningar, set, repetitioner och tider. Stöd tre lägen: fritt val av sparad rutin för dagen, automatisk växling varannan dag mellan två rutiner och automatisk rotation mellan exempelvis 3–4 rutiner. Tillåt fasta dagliga Dailys och kosttillskott som visas oberoende av vald rutin. Visa dagens aktiva rutin tydligt och låt användaren byta den utan att förlora redan registrerade genomföranden. Bevara befintlig Dailys-historik, avprickning och synk; utforma och testa innan implementation.
+
+72. **Profiler med statistik och profilbild:** En profilsida för användaren och för varje vän. Steg 1: statistik som pass den här månaden, veckor i rad med nått mål, pass totalt, senaste passen och vanligaste passtyp; vänner ser bara att man tränat, aldrig vikter, mat eller kroppsvikt, och det som delas styrs av Dela med vänner. Profilbild som färg och bokstav, emoji eller ikon, utan lagring. Steg 2 (efter lansering, om efterfrågat): riktiga foton i privat Supabase Storage som bara vänner kan se, förminskade i telefonen, raderas med kontot, med möjlighet att anmäla eller ta bort och en rad om bilder i integritetspolicyn. Visa mockup före implementation.
 
 ## Arbetsregler
 

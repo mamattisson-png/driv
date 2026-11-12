@@ -11,14 +11,15 @@ const load = name => run(fs.readFileSync(path.join(root, name), 'utf8'));
 load('ovningar.js'); load('figur.js');
 const before = run('JSON.stringify(EX)');
 const oldIds = run('Object.keys(EX)');
-const oldFigures = oldIds.map(id=>run(`figure(${JSON.stringify(id)}, '', true)`));
+// Varje ritning får löpnummer i sina id:n (fg12c0); de jämförs inte
+const svgOf = id => run(`figure(${JSON.stringify(id)}, '', true)`).replace(/\bfg\d+/g, 'fg');
+const oldFigures = oldIds.map(svgOf);
 assert.ok(fs.existsSync(path.join(root,'styrka-extra.js')), 'strength extension exists');
 load('styrka-extra.js');
 assert.equal(run('EXTRA_STRENGTH_IDS.length'), 240, '240 hand-selected strength exercises');
 assert.equal(run('Object.keys(EX).length'), oldIds.length+240);
 assert.equal(run(`JSON.stringify(Object.fromEntries(${JSON.stringify(oldIds)}.map(id=>[id,EX[id]])))`),before,'old data unchanged');
-const normalizeFigureIds = svg => svg.replace(/fg\d+/g, 'fgID');
-oldIds.forEach((id,i)=>assert.equal(normalizeFigureIds(run(`figure(${JSON.stringify(id)}, '', true)`)),normalizeFigureIds(oldFigures[i]),id+' old SVG unchanged'));
+oldIds.forEach((id,i)=>assert.equal(svgOf(id),oldFigures[i],id+' old SVG unchanged'));
 run(`(() => {
   const ids = EXTRA_STRENGTH_IDS;
   const names = Object.values(EX).map(e=>e.name.toLocaleLowerCase('sv').trim());
@@ -47,7 +48,8 @@ run(`(() => {
     check(!e.duration && !e.timed,'no hidden time flags');
     check(!/\\bs(?:\\/|$)/.test(e.reps) || !e.B,'timed holds have static illustration');
     check(typeof MW[id]==='string' && /^(exercise\\/[a-z0-9-]+|exercises\\/[a-z0-9-]+\\/[a-z0-9-]+)$/.test(MW[id]),'source link');
-    check(mwUrl(id).startsWith('https://musclewiki.com/'),'wiki coverage');
+    // Länken visas bara när den är kontrollerad (mw-lankar.js), och går då direkt till övningen
+    check(mwUrl(id)===null || mwUrl(id).startsWith('https://musclewiki.com/exercise/'),'wiki link');
     for(const animate of [false,true]) {
       const svg=figure(id,'',animate);
       check(svg.includes('<svg') && !/NaN|Infinity|undefined/.test(svg),'finite SVG');
