@@ -145,10 +145,8 @@ console.log(`${rows.length} new stretches: ${timed} timed, ${dynamic} dynamic; o
     for (const row of auditRows) {
       const slug = registry[row.id];
       if (row.status === 'verified') {
-        if (slug !== undefined) {
-          assert.equal('https://musclewiki.com/exercise/' + slug, row.url,
-            row.id + ': alternate MuscleWiki registry disagrees with verified audit');
-        }
+        assert.equal('https://musclewiki.com/exercise/' + slug, row.url,
+          row.id + ': verified direct link must exist in the integrated MuscleWiki registry');
       } else {
         assert.equal(slug, undefined,
           row.id + ': alternate MuscleWiki registry restores an unverified stretch link');
