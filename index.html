@@ -2068,6 +2068,25 @@ button.h3-card.h3-head { background: var(--card); padding: 12px 14px; }
 .actsheet .sheet-foot { gap: 10px; }
 .actsheet .sheet-foot .grow { flex: 1; min-height: 50px; }
 .actnohit { align-self: center; padding: 0 4px; }
+/* Stretch under vilan */
+.vstretch { display: flex; align-items: center; gap: 12px; width: 100%; height: auto; min-height: 68px; flex: none; margin: 10px 0 4px; padding: 10px 12px; border-radius: 16px; text-align: left; font: inherit;
+  border: 1px solid color-mix(in srgb, var(--ok) 35%, transparent); background: var(--ok-soft); color: var(--text); }
+.vsfig { width: 48px; height: 48px; flex: none; border-radius: 12px; background: var(--bg); overflow: hidden; display: grid; place-items: center; }
+.vsfig svg { width: 100%; height: 100%; }
+.vstretch .grow { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.vstretch .klabel { color: var(--ok-text); }
+.vstretch b { font-size: 15px; font-weight: 600; }
+.vstretch small { color: var(--muted); font-size: 12.5px; }
+.vsgo { display: inline-flex; align-items: center; gap: 2px; color: var(--ok-text); font-weight: 600; font-size: 14px; flex: none; }
+.vssheet .vsk { color: var(--ok-text); }
+.vssheet .sheeth { font: 800 21px "Unbounded", sans-serif; margin: 2px 0 6px; }
+.vstime { display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 14px; border: 1.5px solid var(--accent); font-weight: 700; flex: none; }
+.vsanim { height: 200px; border-radius: 18px; background: var(--bg); display: grid; place-items: center; margin: 10px 0 8px; overflow: hidden; }
+.vsanim svg { height: 100%; width: auto; max-width: 100%; }
+.vscues { margin: 8px 0 0; padding-left: 20px; line-height: 1.5; font-size: 14.5px; }
+.vsbtns { gap: 10px; margin-top: 14px; }
+.vsbtns button { min-height: 50px; border-radius: 14px; font-weight: 600; }
+.vsnote { text-align: center; margin-top: 10px; }
 /* Inget schema */
 .freebar { display: flex; gap: 6px; margin: 10px 0 4px; }
 .freebar span { flex: 1; height: 8px; border-radius: 4px; background: var(--card-2); }
@@ -2231,6 +2250,7 @@ button.acttile { min-height: 64px; cursor: pointer; }
 <script src="schema.js"></script>
 <script src="fritt.js"></script>
 <script src="fokus.js"></script>
+<script src="vilastretch.js"></script>
 <script src="trana.js"></script>
 <script src="start.js"></script>
 <script src="kost.js"></script>

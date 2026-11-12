@@ -339,6 +339,7 @@ function focusView() {
     <section class="h3-list">
       ${moreRow("plus", "Lägg till övning", "", "data-faddex")}
       ${d.ex.length > 1 ? moreRow("list", "Ändra ordning", "", "data-forder") : ""}
+      ${moreRow("timer", "Stretch under vilan", S.restStretch === false ? "Av · tryck för att visa förslag" : "På · tryck för att stänga av", "data-vsoff")}
     </section></div></div>` : "";
   return `<div class="focus"><div class="focus-scroll">
     <header class="fhead"><button class="fhbtn" data-fend>Avsluta</button>
@@ -350,7 +351,7 @@ function focusView() {
       <div class="grow"><span class="muted small">Övning ${focus.idx + 1} av ${d.ex.length} · ${repsText(ex)}${nW ? ` · +${nW} uppv.` : ""}</span>
       <h2>${esc(EX[ex.id].name)}</h2></div></div>
     <div class="ftip">${icon("trend", 16)}<span>${tip}</span></div>
-    ${completedView}
+    ${completedView}${typeof restStretchRow === "function" ? restStretchRow(ex.id) : ""}
     ${currentRows ? `<ol class="fsets" aria-label="Set">${currentRows}</ol>` : ""}
     ${allDone ? `<div class="fall">${icon("check", 16)}${d.id === "fritt" ? "Klart · lägg till nästa övning eller avsluta" : "Alla set klara"}</div>` : ""}
     ${ssPick}</div>
@@ -360,7 +361,7 @@ function focusView() {
       <div class="fbar-row">${main}<button class="primary grow fconfirm" data-setconfirm aria-label="Bekräfta inmatning">OK</button>${restBox}</div></div></div>
   </div>${focusDailies ? `<div class="overlay" data-fdclose><div class="sheet">
     <div class="row between"><span class="muted small">Fläta in i passet</span>${dailyClock ? "" : `<button class="small ghost iconbtn" data-fdclose aria-label="Stäng">${icon("close", 18)}</button>`}</div>
-    ${dailyClock ? dailyClockView() : dailiesCard(true)}<button class="wide" data-fdclose style="margin-top:14px">Tillbaka till passet</button></div></div>` : ""}${focusOrder ? orderSheet(d, w) : ""}${focusEnd ? endSheet(d, w) : ""}${moreSheet}`;
+    ${dailyClock ? dailyClockView() : dailiesCard(true)}<button class="wide" data-fdclose style="margin-top:14px">Tillbaka till passet</button></div></div>` : ""}${focusOrder ? orderSheet(d, w) : ""}${focusEnd ? endSheet(d, w) : ""}${moreSheet}${typeof restStretchSheet === "function" ? restStretchSheet() : ""}`;
 }
 // Avsluta: spara passet, pausa det till senare eller fortsätta träna
 function endSheet(d, w) {
