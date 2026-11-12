@@ -152,5 +152,52 @@ class MobileStretchSmoke(unittest.TestCase):
             page.close()
 
 
+    def test_real_stretch_add_to_dailys_with_touch(self):
+        """Tap from the real stretch list through the add sheet and start timer."""
+        page = self.context.new_page()
+        try:
+            page.goto(f"http://127.0.0.1:{self.server.server_port}/",
+                      wait_until="domcontentloaded")
+            page.wait_for_function(
+                "typeof render === 'function' && typeof stretchPage === 'function' && !!EX.strx_floor_angels",
+                timeout=20000,
+            )
+            # Isolate the account setup; exercise list, add sheet, storage and
+            # timer still use the application's real click handlers.
+            page.evaluate("""() => {
+                tab = 'stretchguide';
+                msk = {...msk, mode: 'st', sel: null, q: 'Snöänglar',
+                       gear: 'alla', limit: 30};
+                mskDetail = null;
+                render();
+            }""")
+            page.locator('main [data-mskdetail="strx_floor_angels"]').tap()
+            self.assert_mobile_width_for_page(page, "Stretch detail before adding")
+            page.locator('main [data-sgadd="strx_floor_angels"]').tap()
+            self.assertTrue(page.get_by_role("dialog", name="Lägg till Snöänglar på golvet").is_visible())
+            page.locator('[data-sgto="daily"]').tap()
+            self.assertTrue(page.evaluate(
+                "() => S.daily.some(e => e.id === 'strx_floor_angels')"
+            ), "Adding from the stretch detail should update Dailys")
+            self.assertIsNone(page.evaluate("() => sgAdd"), "Add sheet should close")
+            self.assert_mobile_width_for_page(page, "Stretch detail after adding")
+            page.locator('main [data-dclockstart="strx_floor_angels"]').tap()
+            self.assertEqual(page.evaluate("() => dailyClock && dailyClock.id"),
+                             "strx_floor_angels")
+        finally:
+            page.close()
+
+    def assert_mobile_width_for_page(self, page, label):
+        dims = page.evaluate("""() => ({
+            width: innerWidth,
+            height: innerHeight,
+            documentWidth: document.documentElement.scrollWidth,
+            bodyWidth: document.body.scrollWidth,
+        })""")
+        self.assertEqual((dims["width"], dims["height"]), (390, 844), label)
+        self.assertLessEqual(dims["documentWidth"], 391, f"{label}: {dims}")
+        self.assertLessEqual(dims["bodyWidth"], 391, f"{label}: {dims}")
+
+
 if __name__ == "__main__":
     unittest.main()
