@@ -9,6 +9,7 @@ on:
       - 'muskelsok.js'
       - 'index.html'
       - 'mw-lankar.js'
+      - 'sw.js'
       - 'figur.js'
       - 'tests/test_stretch_extra.cjs'
       - 'tests/test_stretch_mobile.py'
@@ -48,4 +49,6 @@ jobs:
       - name: Verify offline cache generation without modifying branch
         run: python tools/sw-version.py
       - name: Check generated service worker diff
-        run: git diff --check
+        run: |
+          git diff --check
+          git diff --exit-code -- sw.js
