@@ -75,7 +75,8 @@ class MobileStretchSmoke(unittest.TestCase):
     def test_mobile_touch_starts_stretch_timer(self):
         self.render_stretch("brost_dorr")
         self.page.locator('[data-dclockstart="brost_dorr"]').tap()
-        self.page.get_by_text("Träning pågår", exact=True).wait_for(timeout=5000)
+        self.assertEqual(self.page.evaluate("dailyClock && dailyClock.id"), "brost_dorr")
+        self.assertIn("Träning pågår", self.page.evaluate("stretchPage('brost_dorr')"))
 
     def test_mobile_unverified_stretch_has_no_link(self):
         self.render_stretch("strx_floor_angels")
