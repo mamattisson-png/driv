@@ -109,5 +109,48 @@ class MobileStretchSmoke(unittest.TestCase):
                     self.assertEqual(hrefs, [], exercise_id)
 
 
+    def test_real_library_navigation_and_link_visibility(self):
+        """Tap through the actual library/detail/back handlers, without HTML injection."""
+        page = self.context.new_page()
+        try:
+            page.goto(f"http://127.0.0.1:{self.server.server_port}/",
+                      wait_until="domcontentloaded")
+            page.wait_for_function(
+                "typeof render === 'function' && typeof muscleView === 'function' && !!EX.brost_dorr",
+                timeout=20000,
+            )
+            # Skip account setup only; the list, details and navigation use real app events.
+            page.evaluate("""() => {
+                tab = 'stretchguide';
+                msk = {...msk, mode: 'st', sel: null, q: 'Bröststretch i dörr',
+                       gear: 'alla', limit: 30};
+                mskDetail = null;
+                render();
+            }""")
+            page.locator('main [data-mskdetail="brost_dorr"]').tap()
+            self.assertEqual(page.locator("main h1.msk-h").inner_text(),
+                             "Bröststretch i dörr")
+            self.assertEqual(
+                page.locator('main a[href*="musclewiki.com"]').first.get_attribute("href"),
+                "https://musclewiki.com/exercise/chest-stretch-variation-one",
+            )
+            page.locator('main [data-mskdetail=""]').tap()
+            self.assertTrue(page.locator('main [data-mskdetail="brost_dorr"]').is_visible())
+
+            page.evaluate("() => { msk.q = 'Snöänglar'; render(); }")
+            page.locator('main [data-mskdetail="strx_floor_angels"]').tap()
+            self.assertEqual(page.locator("main h1.msk-h").inner_text(),
+                             "Snöänglar på golvet")
+            self.assertEqual(page.locator('main a[href*="musclewiki.com"]').count(), 0)
+            dims = page.evaluate("""() => ({
+                width: innerWidth,
+                scrollWidth: document.documentElement.scrollWidth
+            })""")
+            self.assertEqual(dims["width"], 390)
+            self.assertLessEqual(dims["scrollWidth"], 391)
+        finally:
+            page.close()
+
+
 if __name__ == "__main__":
     unittest.main()
