@@ -1723,7 +1723,7 @@ function renderModal() {
       ${gearOf(modal.info) ? `<div class="gearbox"><b>${GEAR[gearOf(modal.info)][0]}</b><div>${GEAR[gearOf(modal.info)][1]}</div></div>` : ""}
       <ol>${e.cues.map(c => `<li>${esc(c)}</li>`).join("")}</ol>
       ${libCtx ? "" : `<button class="wide sg-infoadd" data-sgadd="${modal.info}">${icon("plus", 16)}Lägg till i Dailys eller ett pass</button>`}
-      ${mwHref ? `<a class="mwlink" href="${mwHref}" target="_blank" rel="noopener">${MW[modal.info].startsWith("exercises/") ? "Liknande övningar på MuscleWiki" : "Mer om övningen på MuscleWiki"} <span aria-hidden="true">↗</span></a>` : ""}</div></div>`;
+      ${mwHref ? `<a class="mwlink" href="${mwHref}" target="_blank" rel="noopener">${mwHref.includes("/exercises/") ? "Liknande övningar på MuscleWiki" : "Mer om övningen på MuscleWiki"} <span aria-hidden="true">↗</span></a>` : ""}</div></div>`;
   }
   return "";
 }
