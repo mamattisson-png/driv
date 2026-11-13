@@ -50,7 +50,9 @@ function feedRow(a) {
 
 // Profilbild: första bokstaven på en färg som räknas fram ur namnet, så att den är stabil
 function nameHue(name) { let h = 0; for (const c of String(name)) h = (h * 31 + c.codePointAt(0)) % 360; return h; }
-const avatar = (name, cls = "") => `<span class="av ${cls}" style="--h:${nameHue(name)}" aria-hidden="true">${esc(String(name).slice(0, 1).toUpperCase())}</span>`;
+// Med ett foto (profil.js) visas fotot i stället för bokstaven
+const avatar = (name, cls = "") => typeof avatarHtml === "function" ? avatarHtml(name, cls)
+  : `<span class="av ${cls}" style="--h:${nameHue(name)}" aria-hidden="true">${esc(String(name).slice(0, 1).toUpperCase())}</span>`;
 function avatars(names, max = 3) {
   if (!names.length) return "";
   return `<span class="avs" aria-hidden="true">${names.slice(0, max).map(n => avatar(n, "sm")).join("")}${names.length > max ? `<span class="av sm more">+${names.length - max}</span>` : ""}</span>`;
@@ -124,8 +126,9 @@ function friendsHead(back, title, extra = "") {
   return `<button class="backbtn" ${back}>${icon("left", 18)}${label}</button><header class="phead"><h1 class="grow">${title}</h1>${extra}</header>`;
 }
 function friendsView() {
+  if (profView && social.profile) return profileView();
   if (friendsPage === "lista" && social.profile) return friendsListPage();
-  const head = friendsHead(`data-tab="${vannerBack}"`, "Vänner");
+  const head = friendsHead(`data-tab="${vannerBack}"`, "Vänner", social.profile ? `<button class="pfme" data-profile="me" aria-label="Din profil">${avatar(social.profile.name, "sm")}</button>` : "");
   if (!sbEnabled || account.step !== "in" || !social.profile || social.error) return head + friendsCard();
   const others = social.feed.filter(a => !a.mine), today = others.filter(a => a.day === TODAY);
   const days = [];
@@ -193,6 +196,7 @@ function friendsSheetView() {
   const last = friendLast(f);
   return wrap(f.name, `<div class="row between"><span class="row">${avatar(f.name)}<span class="col"><b class="sheeth">${esc(f.name)}</b>
       <span class="muted small">${friendWeek(f)} pass den här veckan${last ? ` · senast ${feedWhen(last)}` : ""}</span></span></span>${close}</div>
+    ${profView ? "" : `<button class="wide" data-profile="${esc(String(f.id))}">Visa profil</button>`}
     <button class="wide dangerbtn" data-unfriend="${f.id}">Ta bort ${esc(f.name)} som vän</button>
     <div class="muted small">Ni slutar se varandras pass. Ni kan bli vänner igen med koden.</div>`);
 }
@@ -207,8 +211,8 @@ function friendsListPage() {
   const rows = list.map(({ f, last, n }) => {
     const first = f.name.charAt(0).toUpperCase();
     const headr = friendsSort === "namn" && first !== letter ? (letters.push(first), `<div class="klabel rletter" id="fl-${esc(first)}" data-rgroup="${esc(first)}">${esc(letter = first)}</div>`) : "";
-    return `${headr}<div class="frrow rrow" data-rq="${esc(norm(f.name))}" data-rl="${esc(first)}">${avatar(f.name)}<span class="grow col"><b>${esc(f.name)}</b>
-      <span class="muted small">${friendsSort === "aktiva" ? `${n} pass den här veckan` : last ? `Senast tränat ${feedWhen(last)}` : "Inga delade pass senaste veckorna"}</span></span>
+    return `${headr}<div class="frrow rrow" data-rq="${esc(norm(f.name))}" data-rl="${esc(first)}"><button class="frprof" data-profile="${esc(String(f.id))}" aria-label="Visa ${esc(f.name)}s profil">${avatar(f.name)}<span class="grow col"><b>${esc(f.name)}</b>
+      <span class="muted small">${friendsSort === "aktiva" ? `${n} pass den här veckan` : last ? `Senast tränat ${feedWhen(last)}` : "Inga delade pass senaste veckorna"}</span></span></button>
       <button class="iconbtn fmenu" data-fsheet="${esc(String(f.id))}" aria-label="Mer om ${esc(f.name)}">···</button></div>`;
   }).join("");
   const sort = (k, t) => `<button class="flink ${friendsSort === k ? "on" : ""}" data-fsort="${k}" aria-pressed="${friendsSort === k}">${t}</button>`;

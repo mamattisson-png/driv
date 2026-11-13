@@ -2068,6 +2068,31 @@ button.h3-card.h3-head { background: var(--card); padding: 12px 14px; }
 .actsheet .sheet-foot { gap: 10px; }
 .actsheet .sheet-foot .grow { flex: 1; min-height: 50px; }
 .actnohit { align-self: center; padding: 0 4px; }
+/* Profiler */
+.av.avphoto { padding: 0; overflow: hidden; background: var(--card-2); }
+.av.avphoto img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.pfme { width: 44px; height: 44px; min-height: 0; padding: 0; border: 0; border-radius: 50%; background: none; flex: none; display: grid; place-items: center; }
+.frprof { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; min-height: 0; padding: 0; border: 0; background: none; color: var(--text); text-align: left; font: inherit; }
+.pfpage { display: flex; flex-direction: column; }
+.pfpage > .backbtn { align-self: flex-start; }
+.pfhead { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 4px; margin: 6px 0 4px; }
+.pfhead h1 { margin: 6px 0 0; }
+.av.pfav { width: 104px; height: 104px; font-size: 40px; }
+.pfavbtn { position: relative; width: 104px; height: 104px; min-height: 0; padding: 0; border: 0; border-radius: 50%; background: none; }
+.pfedit { position: absolute; right: 0; bottom: 2px; width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; background: var(--card-2); border: 2px solid var(--bg); color: var(--text); }
+.pfpill { margin-top: 6px; padding: 5px 12px; border-radius: 99px; background: var(--ok-soft); color: var(--ok-text); font-size: 13px; font-weight: 600; }
+.pfphotobtns { justify-content: center; gap: 8px; margin-top: 10px; }
+.pfphotobtns button { display: inline-flex; align-items: center; gap: 6px; }
+.pfmsg { text-align: center; margin-top: 6px; }
+.pfgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 16px; }
+.pftile { display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; border-radius: 16px; background: var(--card); }
+.pftile b { font: 700 22px "Unbounded", sans-serif; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pfk { display: block; margin: 18px 4px 8px; }
+.pflist { padding: 2px 14px; }
+.pfrow { display: flex; align-items: center; gap: 10px; min-height: 50px; }
+.pfrow + .pfrow { border-top: 1px solid var(--line); }
+.pfnote { margin: 12px 4px 0; }
+.pfrm { margin-top: 14px; }
 /* Stretch under vilan */
 .vstretch { display: flex; align-items: center; gap: 12px; width: 100%; height: auto; min-height: 68px; flex: none; margin: 10px 0 4px; padding: 10px 12px; border-radius: 16px; text-align: left; font: inherit;
   border: 1px solid color-mix(in srgb, var(--ok) 35%, transparent); background: var(--ok-soft); color: var(--text); }
@@ -2256,6 +2281,7 @@ button.acttile { min-height: 64px; cursor: pointer; }
 <script src="kost.js"></script>
 <script src="historik.js"></script>
 <script src="social.js"></script>
+<script src="profil.js"></script>
 <script src="notiser.js"></script>
 <script src="motion.js"></script>
 <script src="aktivitet.js"></script>
