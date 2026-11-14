@@ -79,7 +79,8 @@ function loginView() {
     <div class="l3prov">${prov("google", GOOGLE_G, "Google")}${prov("azure", MS_LOGO, "Microsoft")}${prov("facebook", FB_LOGO_C, "Facebook")}</div>
     <div class="l3foot muted small">${create ? `Har du ett konto? <button class="link" data-welcomelogin="login">Logga in</button>`
       : `Ny här? <button class="link" data-welcomelogin="create">Skapa konto</button>`}
-      <span class="l3dot">·</span><a href="integritet.html" target="_blank" rel="noopener">Dina uppgifter</a></div></div>`;
+      <span class="l3dot">·</span><a href="integritet.html" target="_blank" rel="noopener">Dina uppgifter</a></div>
+    ${S.setupDone ? "" : `<button class="link l3skip" data-onb="1">Fortsätt utan konto</button>`}</div>`;
 }
 
 // Inloggad men utan sparat upplägg: ett besked överst i stegen

@@ -64,3 +64,11 @@ def test_google_button_and_disabled_provider_message(page):
     assert page.locator("[data-oauth]").count() == 3
     assert "inte påslagen" in page.evaluate("account.msg")
     assert page.evaluate("location.search") == ""
+
+
+def test_login_page_lets_you_skip_account(page):
+    from conftest import open_app
+    open_app(page)
+    page.evaluate("welcomeLogin = 'create'; document.getElementById('app').innerHTML = loginView()")
+    page.click(".l3skip")
+    assert page.evaluate("onb") == 1 and page.locator(".onbkind").count() == 4
