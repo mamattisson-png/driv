@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Driv – integritet och dina uppgifter</title>
+<link rel="icon" href="icons/favicon-v2.png">
+<style>
+  :root { color-scheme: light dark; --bg: #f5f4f1; --card: #fff; --text: #141518; --muted: #5d6168; --accent: #b03f00; --line: #e3e0da; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #0d0e10; --card: #16181b; --text: #f4f2ef; --muted: #9ea3aa; --accent: #ff8a47; --line: #2a2d32; } }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 680px; margin: 0 auto; padding: 32px 18px 56px; }
+  h1 { font-size: 28px; line-height: 1.2; margin: 16px 0 6px; }
+  h2 { font-size: 18px; margin: 28px 0 6px; }
+  p, li { color: var(--text); }
+  .muted { color: var(--muted); }
+  a { color: var(--accent); }
+  section { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 4px 18px 10px; margin-top: 14px; }
+  .logo { display: flex; align-items: center; gap: 10px; font-weight: 700; letter-spacing: .3em; }
+  .logo img { width: 40px; height: 40px; border-radius: 11px; }
+</style>
+</head>
+<body>
+<main>
+  <a class="logo" href="./"><img src="icons/icon-192-v2.png" alt="">DRIV</a>
+  <h1>Integritet och dina uppgifter</h1>
+  <p class="muted">Senast ändrad 14 november 2026</p>
+
+  <section id="vad">
+    <h2>Vad Driv sparar</h2>
+    <p>Det du själv loggar: träningsschema, pass och set, motion, mat, dailys, kroppsvikt och dina inställningar.
+      Utan konto ligger allt bara i din telefon. Med konto sparas det också i ditt konto, så att det följer med till dina andra enheter.</p>
+  </section>
+
+  <section id="konto">
+    <h2>Konto och inloggning</h2>
+    <p>Du loggar in med en kod till din e-post, eller med Google, Microsoft eller Facebook. Från dem får Driv bara din e-postadress
+      och ett id, inget annat. E-posten används bara för att logga in, aldrig för reklam. Det finns inget lösenord.</p>
+    <p>Kontot och lagringen sköts av Supabase. Varje användare kan bara läsa sina egna uppgifter.</p>
+  </section>
+
+  <section id="vanner">
+    <h2>Vänner</h2>
+    <p>Om du lägger till vänner ser de ditt namn, din profilbild om du lagt till en, att du har tränat och vilket pass, samt statistik över antal pass.
+      De ser aldrig vikter, mat eller kroppsvikt. Du kan stänga av delningen under Vänner, och ta bort en vän när som helst.</p>
+  </section>
+
+  <section id="ovrigt">
+    <h2>Övrigt</h2>
+    <ul>
+      <li>När du skannar en streckkod skickas koden till Open Food Facts för att hämta näringsvärden.</li>
+      <li>Synpunkter du skickar via Tyck till sparas så att vi kan läsa dem.</li>
+      <li>Påminnelser och notiser skickas bara om du själv slår på dem.</li>
+      <li>Driv säljer inga uppgifter och visar ingen reklam.</li>
+    </ul>
+  </section>
+
+  <section id="radera">
+    <h2>Radera dina uppgifter</h2>
+    <p>Gå till Inställningar i appen och välj <b>Radera konto</b>. Då raderas kontot och allt som hör till det: loggar, profil, profilbild, vänner och pass.
+      Utan konto raderar du allt genom att välja Nollställ allt i Inställningar, eller genom att rensa webbplatsens data i webbläsaren.</p>
+    <p>Har du loggat in med Facebook kan du också ta bort Driv under Inställningar → Appar och webbplatser på Facebook.</p>
+  </section>
+
+  <section id="kontakt">
+    <h2>Frågor</h2>
+    <p>Skriv till oss via Tyck till under Inställningar i appen.</p>
+  </section>
+</main>
+</body>
+</html>

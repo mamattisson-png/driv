@@ -54,3 +54,21 @@ def test_session_error_does_not_claim_user_is_signed_out(page):
     assert page.locator('[data-gokonto]').count() == 0
     assert page.locator('.home3').count() == 1
     assert page.evaluate('day().food.length') == 1
+
+
+def test_google_button_and_disabled_provider_message(page):
+    from conftest import open_app
+    open_app(page)
+    page.evaluate("""history.replaceState(null, '', location.pathname + '?error=server_error&error_description=Unsupported+provider%3A+provider+is+not+enabled');
+      oauthError(); document.getElementById('app').innerHTML = loginView()""")
+    assert page.locator("[data-oauth]").count() == 3
+    assert "inte påslagen" in page.evaluate("account.msg")
+    assert page.evaluate("location.search") == ""
+
+
+def test_login_page_lets_you_skip_account(page):
+    from conftest import open_app
+    open_app(page)
+    page.evaluate("welcomeLogin = 'create'; document.getElementById('app').innerHTML = loginView()")
+    page.click(".l3skip")
+    assert page.evaluate("onb") == 1 and page.locator(".onbkind").count() == 4

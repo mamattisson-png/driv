@@ -119,6 +119,7 @@ function switchLocalAccount(uid) {
 
 async function connectSupabase() {
   if (!sbEnabled) return;
+  if (!account.oauthChecked) { account.oauthChecked = true; oauthError(); }
   if (account.connecting) return account.connecting;
   const epoch = account.epoch || 0;
   const task = (async () => {
@@ -146,6 +147,45 @@ async function connectSupabase() {
   account.connecting = task;
   try { await task; } finally { if (account.connecting === task) account.connecting = null; }
 }
+
+// Inloggning med Google, Microsoft eller Facebook: Supabase skickar en dit och tillbaka hit, där sessionen läses ur adressen.
+// Samma e-post som tidigare ger samma konto. Varje tjänst slås på i Supabase (Authentication → Providers), se docs/inloggning.md.
+const OAUTH = { google: "Google", azure: "Microsoft", facebook: "Facebook" };
+async function signInWithProvider(provider) {
+  account.busy = true; account.msg = ""; render();
+  try { sessionStorage.setItem("driv-oauth", provider); } catch (e) { /* privat läge */ }
+  try {
+    const sb = await supabaseClient();
+    const options = { redirectTo: location.origin + location.pathname };
+    if (provider === "google") options.queryParams = { prompt: "select_account" };
+    if (provider === "azure") options.scopes = "email";
+    const { error } = await sb.auth.signInWithOAuth({ provider, options });
+    if (error) throw error;
+  } catch (e) {
+    account.busy = false; account.msg = `Inloggning med ${OAUTH[provider]} fungerar inte just nu. Använd e-post i stället.`;
+    render();
+  }
+}
+const signInWithGoogle = () => signInWithProvider("google");
+// Kom man tillbaka med ett fel visas det, och adressen rensas
+function oauthError() {
+  const q = new URLSearchParams(location.search + "&" + location.hash.replace(/^#/, ""));
+  const err = q.get("error_description") || q.get("error");
+  if (!err) return;
+  let p = "";
+  try { p = OAUTH[sessionStorage.getItem("driv-oauth")] || ""; } catch (e) { /* privat läge */ }
+  account.msg = /provider is not enabled|Unsupported provider/i.test(err) ? `Inloggning med ${p || "den tjänsten"} är inte påslagen än. Använd e-post så länge.`
+    : `Inloggningen${p ? ` med ${p}` : ""} avbröts. Försök igen eller använd e-post.`;
+  welcomeLogin = "login";
+  history.replaceState(null, "", location.pathname);
+}
+
+// Enter i e-postfältet skickar koden, Enter i kodfältet loggar in
+document.addEventListener("keydown", ev => {
+  if (ev.key !== "Enter" || account.busy) return;
+  if (ev.target.id === "acctemail") { ev.preventDefault(); sendLoginCode(); }
+  else if (ev.target.id === "acctcode") { ev.preventDefault(); verifyLoginCode(); }
+});
 
 async function sendLoginCode() {
   const email = ($("acctemail").value || "").trim();

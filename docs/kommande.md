@@ -73,7 +73,7 @@ Senast uppdaterad: 2026-11-06. Status bygger på dokumenterade publiceringar och
 | 69 | Anpassa hälsningen efter alla dagens mål | Hem | Medel | Klar |
 | 70 | Flexibelt träningsschema för alla aktiviteter | Träning | Hög | Klar |
 | 71 | Anpassningsbara Dailys med sparade rutiner och rotation | Dailys | Hög | Klar |
-| 72 | Profiler med statistik och profilbild | Vänner | Medel | Kommande |
+| 72 | Profiler med statistik och profilbild | Vänner | Medel | Klar |
 | 73 | Fokusläget: en rad under setet med Mer, och dra övningar för att flytta dem | Träning | Hög | Klar |
 | 74 | Dra övningar som i andra appar (de andra gör plats) och diskret tips | Träning | Medel | Klar |
 | 75 | Övningsbiblioteket: passtyperna följer det valda schemat | Träning | Medel | Klar |
@@ -90,6 +90,7 @@ Senast uppdaterad: 2026-11-06. Status bygger på dokumenterade publiceringar och
 | 86 | Logga motion som egen sida: tydlig sökruta, Senast med Igen, Populärt, alla 84 i grupper, dag, tid och intensitet | Träning | Hög | Klar |
 | 87 | Runda knappar i Dailys, på Kost och Hem (play, bock, plus, info) | Design | Låg | Klar |
 | 88 | Fritt pass med eget flöde: klart först vid Avsluta, Nästa övning, Fortsätt leder direkt in i passet | Träning | Hög | Klar |
+| 89 | Inloggning med Google, Microsoft och Facebook på en lättare sida, Fortsätt utan konto kvar, och integritetssida | Konto | Hög | Klar |
 
 ## Detaljer och acceptanskriterier
 
