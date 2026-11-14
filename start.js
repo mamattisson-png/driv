@@ -47,6 +47,7 @@ const GOOGLE_G = `<svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="t
 // Microsofts fyra rutor och Facebooks "f", enligt deras riktlinjer för inloggningsknappar
 const MS_LOGO = `<svg width="18" height="18" viewBox="0 0 21 21" aria-hidden="true"><rect x="1" y="1" width="9" height="9" fill="#F25022"/><rect x="11" y="1" width="9" height="9" fill="#7FBA00"/><rect x="1" y="11" width="9" height="9" fill="#00A4EF"/><rect x="11" y="11" width="9" height="9" fill="#FFB900"/></svg>`;
 const FB_LOGO = `<svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="12" style="fill:#fff;stroke:none"/><path style="fill:#0866FF;stroke:none" d="M16.2 7.6h-1.9c-.7 0-1 .5-1 1.1v1.7h2.8l-.4 2.9h-2.4V24h-3.1V13.3H7.8v-2.9h2.4V8.4c0-2.4 1.4-3.7 3.6-3.7 1 0 2.1.1 2.4.2v2.7z"/></svg>`;
+const FB_LOGO_C = `<svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="12" style="fill:#0866FF;stroke:none"/><path style="fill:#fff;stroke:none" d="M16.2 7.6h-1.9c-.7 0-1 .5-1 1.1v1.7h2.8l-.4 2.9h-2.4V24h-3.1V13.3H7.8v-2.9h2.4V8.4c0-2.4 1.4-3.7 3.6-3.7 1 0 2.1.1 2.4.2v2.7z"/></svg>`;
 // Inloggning: e-post, sedan koden från mejlet. Kontot har allt man loggat.
 function loginView() {
   const a = account;
@@ -64,20 +65,21 @@ function loginView() {
         <span class="muted small">Har kontot inget schema än får du välja ett först.</span></div></div>`;
   }
   const create = welcomeLogin === "create";
-  const prov = (id, cls, logo, name) => `<button class="lprov ${cls}" data-oauth="${id}" ${a.busy ? "disabled" : ""}><span class="lplogo">${logo}</span><span class="lpname">Fortsätt med ${name}</span></button>`;
-  return `<div class="login loginv2"><div class="welcome-glow" aria-hidden="true"></div>
+  const prov = (id, logo, name) => `<button class="lprov2" data-oauth="${id}" ${a.busy ? "disabled" : ""} aria-label="Fortsätt med ${name}">${logo}<span>${name}</span></button>`;
+  return `<div class="login loginv3"><div class="welcome-glow" aria-hidden="true"></div>
     <button class="backbtn" data-welcomelogin="">${icon("left", 18)}Tillbaka</button>
-    <div class="lhero"><img class="lhlogo" src="icons/icon-192-v2.png" alt="">
-      <h1>${create ? "Skapa ditt konto" : "Välkommen tillbaka"}</h1>
-      <p class="muted">${create ? "Ett konto sparar allt du loggar och låter dig träna med vänner." : "Logga in för att fortsätta där du var."}</p></div>
-    <div class="lproviders">${prov("google", "g", GOOGLE_G, "Google")}${prov("azure", "ms", MS_LOGO, "Microsoft")}${prov("facebook", "fb", FB_LOGO, "Facebook")}</div>
-    <div class="ordivider"><span>eller med e-post</span></div>
-    <label class="lemail">${icon("mail", 20)}<input id="acctemail" type="email" autocomplete="email" inputmode="email" placeholder="din@epost.se" value="${esc(a.email)}" aria-label="E-post"></label>
-    <button class="primary wide bigbtn lsend" data-sendcode ${a.busy ? "disabled" : ""}>Skicka kod</button>
+    <div class="l3hero"><img class="l3logo" src="icons/icon-192-v2.png" alt="">
+      <h1>${create ? "Skapa konto" : "Logga in"}</h1>
+      <p class="muted">${create ? "Spara allt du loggar och träna med vänner." : "Välkommen tillbaka."}</p></div>
+    <div class="l3email"><input id="acctemail" type="email" autocomplete="email" inputmode="email" enterkeyhint="send" placeholder="Din e-post" value="${esc(a.email)}" aria-label="E-post">
+      <button class="l3go" data-sendcode ${a.busy ? "disabled" : ""} aria-label="Skicka kod">${icon("right", 20)}</button></div>
+    <div class="muted small l3hint">Vi mejlar en kod. Inget lösenord.</div>
     ${msg}
-    <div class="ltrust">${icon("data", 16)}<span>Inget lösenord. Allt du loggat följer med till alla dina enheter, och e-posten används bara för att logga in. <a href="integritet.html" target="_blank" rel="noopener">Om dina uppgifter</a></span></div>
-    <div class="lswitch muted">${create ? `Har du redan ett konto? <button class="link" data-welcomelogin="login">Logga in</button>`
-      : `Inget konto än? <button class="link" data-welcomelogin="create">Skapa konto</button>`}</div></div>`;
+    <div class="ordivider l3or"><span>eller</span></div>
+    <div class="l3prov">${prov("google", GOOGLE_G, "Google")}${prov("azure", MS_LOGO, "Microsoft")}${prov("facebook", FB_LOGO_C, "Facebook")}</div>
+    <div class="l3foot muted small">${create ? `Har du ett konto? <button class="link" data-welcomelogin="login">Logga in</button>`
+      : `Ny här? <button class="link" data-welcomelogin="create">Skapa konto</button>`}
+      <span class="l3dot">·</span><a href="integritet.html" target="_blank" rel="noopener">Dina uppgifter</a></div></div>`;
 }
 
 // Inloggad men utan sparat upplägg: ett besked överst i stegen

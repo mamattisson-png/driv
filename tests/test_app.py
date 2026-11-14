@@ -1063,7 +1063,7 @@ def test_logga_in_fran_startsidan(page):
     page.reload()
     assert page.locator('.welcome [data-onb="1"]').count() == 1
     page.click('[data-welcomelogin="login"]')
-    assert "Välkommen tillbaka" in page.inner_text(".login h1")
+    assert "Logga in" in page.inner_text(".login h1")
     assert "bara för att logga in" in page.inner_text(".login")
     page.fill("#acctemail", "test@exempel.se")
     page.click("[data-sendcode]")
@@ -2232,9 +2232,9 @@ def test_valkomstsidan_tre_vagar_in_och_rundtur(page):
     assert "Varför Driv? Det är enkelt." in page.inner_text(".welcome")
     # Skapa konto och Logga in går till samma kodinloggning med olika rubrik
     page.click('[data-welcomelogin="create"]')
-    assert "Skapa ditt konto" in page.inner_text(".login h1")
+    assert "Skapa konto" in page.inner_text(".login h1")
     page.click('.login [data-welcomelogin="login"]')
-    assert "Välkommen tillbaka" in page.inner_text(".login h1")
+    assert "Logga in" in page.inner_text(".login h1")
     page.click('.login .backbtn')
     # Utan konto: varning om att datan bara finns i telefonen
     page.click(".wnoacct")

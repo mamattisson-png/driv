@@ -180,6 +180,13 @@ function oauthError() {
   history.replaceState(null, "", location.pathname);
 }
 
+// Enter i e-postfältet skickar koden, Enter i kodfältet loggar in
+document.addEventListener("keydown", ev => {
+  if (ev.key !== "Enter" || account.busy) return;
+  if (ev.target.id === "acctemail") { ev.preventDefault(); sendLoginCode(); }
+  else if (ev.target.id === "acctcode") { ev.preventDefault(); verifyLoginCode(); }
+});
+
 async function sendLoginCode() {
   const email = ($("acctemail").value || "").trim();
   if (!/^\S+@\S+\.\S+$/.test(email)) { account.msg = "Skriv en giltig e-postadress."; return render(); }
