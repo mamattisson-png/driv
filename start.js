@@ -73,7 +73,7 @@ function loginView() {
       <p class="muted">${create ? "Spara allt du loggar och träna med vänner." : "Välkommen tillbaka."}</p></div>
     <div class="l3email"><input id="acctemail" type="email" autocomplete="email" inputmode="email" enterkeyhint="send" placeholder="Din e-post" value="${esc(a.email)}" aria-label="E-post">
       <button class="l3go" data-sendcode ${a.busy ? "disabled" : ""} aria-label="Skicka kod">${icon("right", 20)}</button></div>
-    <div class="muted small l3hint">Vi mejlar en kod. Inget lösenord.</div>
+    <div class="muted small l3hint">Vi mejlar en kod, inget lösenord. E-posten används bara för att logga in.</div>
     ${msg}
     <div class="ordivider l3or"><span>eller</span></div>
     <div class="l3prov">${prov("google", GOOGLE_G, "Google")}${prov("azure", MS_LOGO, "Microsoft")}${prov("facebook", FB_LOGO_C, "Facebook")}</div>
