@@ -61,6 +61,6 @@ def test_google_button_and_disabled_provider_message(page):
     open_app(page)
     page.evaluate("""history.replaceState(null, '', location.pathname + '?error=server_error&error_description=Unsupported+provider%3A+provider+is+not+enabled');
       oauthError(); document.getElementById('app').innerHTML = loginView()""")
-    assert page.locator("[data-google]").count() == 1
+    assert page.locator("[data-oauth]").count() == 3
     assert "inte påslagen" in page.evaluate("account.msg")
     assert page.evaluate("location.search") == ""

@@ -148,26 +148,34 @@ async function connectSupabase() {
   try { await task; } finally { if (account.connecting === task) account.connecting = null; }
 }
 
-// Inloggning med Google: Supabase skickar en till Google och tillbaka hit, där sessionen läses ur adressen.
-// Samma e-post som tidigare ger samma konto. Kräver att Google är påslaget i Supabase (Authentication → Providers).
-async function signInWithGoogle() {
+// Inloggning med Google, Microsoft eller Facebook: Supabase skickar en dit och tillbaka hit, där sessionen läses ur adressen.
+// Samma e-post som tidigare ger samma konto. Varje tjänst slås på i Supabase (Authentication → Providers), se docs/inloggning.md.
+const OAUTH = { google: "Google", azure: "Microsoft", facebook: "Facebook" };
+async function signInWithProvider(provider) {
   account.busy = true; account.msg = ""; render();
+  try { sessionStorage.setItem("driv-oauth", provider); } catch (e) { /* privat läge */ }
   try {
     const sb = await supabaseClient();
-    const { error } = await sb.auth.signInWithOAuth({ provider: "google", options: { redirectTo: location.origin + location.pathname, queryParams: { prompt: "select_account" } } });
+    const options = { redirectTo: location.origin + location.pathname };
+    if (provider === "google") options.queryParams = { prompt: "select_account" };
+    if (provider === "azure") options.scopes = "email";
+    const { error } = await sb.auth.signInWithOAuth({ provider, options });
     if (error) throw error;
   } catch (e) {
-    account.busy = false; account.msg = "Inloggning med Google fungerar inte just nu. Använd e-post i stället.";
+    account.busy = false; account.msg = `Inloggning med ${OAUTH[provider]} fungerar inte just nu. Använd e-post i stället.`;
     render();
   }
 }
-// Kom man tillbaka från Google med ett fel visas det, och adressen rensas
+const signInWithGoogle = () => signInWithProvider("google");
+// Kom man tillbaka med ett fel visas det, och adressen rensas
 function oauthError() {
   const q = new URLSearchParams(location.search + "&" + location.hash.replace(/^#/, ""));
   const err = q.get("error_description") || q.get("error");
   if (!err) return;
-  account.msg = /provider is not enabled|Unsupported provider/i.test(err) ? "Inloggning med Google är inte påslagen än. Använd e-post så länge."
-    : "Inloggningen med Google avbröts. Försök igen eller använd e-post.";
+  let p = "";
+  try { p = OAUTH[sessionStorage.getItem("driv-oauth")] || ""; } catch (e) { /* privat läge */ }
+  account.msg = /provider is not enabled|Unsupported provider/i.test(err) ? `Inloggning med ${p || "den tjänsten"} är inte påslagen än. Använd e-post så länge.`
+    : `Inloggningen${p ? ` med ${p}` : ""} avbröts. Försök igen eller använd e-post.`;
   welcomeLogin = "login";
   history.replaceState(null, "", location.pathname);
 }

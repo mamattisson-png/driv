@@ -2216,7 +2216,7 @@ document.addEventListener("click", ev => {
   }
   else if (ds.resttoggle !== undefined) S.rest = Object.assign({}, restSettings(), { on: t.checked });
   else if (ds.sendcode !== undefined) { sendLoginCode(); return; }
-  else if (ds.google !== undefined) { signInWithGoogle(); return; }
+  else if (ds.oauth) { signInWithProvider(ds.oauth); return; }
   else if (ds.fbsend !== undefined) { sendFeedback(); return; }
   else if (ds.fbagain !== undefined) { feedback.sent = false; feedback.msg = ""; }
   else if (ds.verifycode !== undefined) { verifyLoginCode(); return; }

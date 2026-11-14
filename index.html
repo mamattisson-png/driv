@@ -2068,10 +2068,30 @@ button.h3-card.h3-head { background: var(--card); padding: 12px 14px; }
 .actsheet .sheet-foot { gap: 10px; }
 .actsheet .sheet-foot .grow { flex: 1; min-height: 50px; }
 .actnohit { align-self: center; padding: 0 4px; }
-/* Inloggning med Google */
-.googlebtn { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 16px; background: #fff; color: #1f1f1f; border: 1px solid #dadce0; font-weight: 600; }
-.ordivider { display: flex; align-items: center; gap: 12px; margin: 16px 2px 4px; color: var(--muted); font-size: 13px; }
+/* Inloggning: tjänster och e-post */
+.loginv2 { position: relative; }
+.lhero { position: relative; display: flex; flex-direction: column; align-items: center; text-align: center; margin: 8px 0 22px; }
+.lhlogo { width: 76px; height: 76px; border-radius: 22px; box-shadow: 0 14px 34px color-mix(in srgb, var(--accent) 28%, transparent); margin-bottom: 18px; }
+.lhero h1 { margin: 0 0 6px; }
+.lhero p { margin: 0; font-size: 15px; max-width: 300px; }
+.lproviders { position: relative; display: flex; flex-direction: column; gap: 10px; }
+.lprov { position: relative; display: flex; align-items: center; justify-content: center; width: 100%; min-height: 54px; padding: 0 52px; border-radius: 16px; font: 600 16px "Lexend", sans-serif; }
+.lprov .lplogo { position: absolute; left: 18px; top: 50%; transform: translateY(-50%); display: grid; place-items: center; width: 24px; height: 24px; }
+.lprov.g { background: #fff; color: #1f1f1f; border: 1px solid #dadce0; }
+.lprov.ms { background: #2f2f2f; color: #fff; border: 1px solid #2f2f2f; }
+.lprov.fb { background: #0866ff; color: #fff; border: 1px solid #0866ff; }
+.lprov:disabled { opacity: .6; }
+.ordivider { display: flex; align-items: center; gap: 12px; margin: 22px 2px 14px; color: var(--muted); font-size: 13px; }
 .ordivider::before, .ordivider::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+.lemail { display: flex; align-items: center; gap: 10px; min-height: 54px; padding: 0 16px; border-radius: 16px; border: 1.5px solid var(--line-strong); background: var(--card); color: var(--muted); }
+.lemail:focus-within { border-color: var(--accent); color: var(--text); }
+.lemail input { flex: 1; min-width: 0; min-height: 50px; border: 0; padding: 0; background: none; color: var(--text); font-size: 17px; outline: none; box-shadow: none; }
+.lsend { margin-top: 10px; }
+.loginv2 .loginmsg { margin: 10px 4px 0; text-align: center; }
+.ltrust { display: flex; gap: 10px; align-items: flex-start; margin-top: 18px; padding: 12px 14px; border-radius: 14px; background: var(--card); color: var(--muted); font-size: 13px; line-height: 1.45; }
+.ltrust svg { flex: none; margin-top: 1px; color: var(--accent-text); }
+.ltrust a { color: var(--accent-text); white-space: nowrap; }
+.lswitch { margin-top: auto; padding: 18px 0 6px; text-align: center; font-size: 14px; }
 /* Stretch under vilan */
 .vstretch { display: flex; align-items: center; gap: 12px; width: 100%; height: auto; min-height: 68px; flex: none; margin: 10px 0 4px; padding: 10px 12px; border-radius: 16px; text-align: left; font: inherit;
   border: 1px solid color-mix(in srgb, var(--ok) 35%, transparent); background: var(--ok-soft); color: var(--text); }
