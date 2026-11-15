@@ -54,8 +54,6 @@ for (const e of rows) {
   // Explicit reviewed exercise pages only. Category/muscle pages must never masquerade as demos.
   const verifiedStretchPages = new Set([
     "exercise/laying-chin-tucks",
-    "exercise/shoulders-stretch-variation-two",
-    "exercise/chest-stretch-variation-two",
     "exercise/puppy-pose",
     "exercise/adductor-stretch-dynamic-unilateral-4-point-position",
     "exercise/quad-stretch-floor-prone",
@@ -112,6 +110,9 @@ console.log(`${rows.length} new stretches: ${timed} timed, ${dynamic} dynamic; o
       .map(m => ['strg_' + m[1], m[2]])
   );
   const liveLinks = JSON.parse(run('JSON.stringify(MW)'));
+  // These two variants do not exactly match MuscleWiki's demonstrated motion.
+  assert.equal(liveLinks.strx_open_book, undefined, 'Straight-arm open book must not link to bent-arm variation');
+  assert.equal(liveLinks.strx_shoulder_rolls, undefined, 'Bidirectional shoulder circles must not link to single-direction demo');
   const exerciseIds = new Set(JSON.parse(run('JSON.stringify(Object.keys(EX).filter(id => EX[id].cat === "stretch"))')));
   const auditedIds = new Set(auditRows.map(row => row.id));
   for (const id of exerciseIds) assert.ok(auditedIds.has(id), 'Unaudited stretch: ' + id);
@@ -153,7 +154,7 @@ console.log(`${rows.length} new stretches: ${timed} timed, ${dynamic} dynamic; o
       }
     }
   }
-  console.log('125 stretch audit entries match code: 31 reviewed direct links, 94 without exact match.');
+  console.log('125 stretch audit entries match code: 29 reviewed direct links, 96 without exact match.');
 }
 
 
