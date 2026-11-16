@@ -10,3 +10,6 @@
 - main publiceras direkt till https://driv.driveify.se (GitHub Pages).
 
 - Uppdatera alltid `docs/kommande.md` när något färdigställs och publiceras. Markera verifierat klara punkter som Klar; lägg till en avslutad punkt om ändringen saknas i listan.
+- Varje uppgift finns på ett enda ställe i appen. Samma sak (t.ex. vikt, BMI, kalorimål, rutiner) får aldrig gå att
+  mata in eller ändra på flera sidor, och visas inte som dubblett. Andra sidor får högst en länk dit. Kontrollera
+  detta i varje mockup innan den visas.
