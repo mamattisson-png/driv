@@ -136,3 +136,19 @@ def test_week_edit_routine_and_today_switch_only_today(page):
     # Ingen "Ändra"-text i veckovyn
     page.click('[data-dlview=vecka]')
     assert 'Ändra' not in page.inner_text('.dlx')
+
+
+def test_routines_page_every_day_move_and_colors(page):
+    prepare(page, "manual")
+    page.evaluate("rutPage = true; render()")
+    colors = page.evaluate("dailyRoutines().map(r => rutColor(r))")
+    # Varje dag fälls ut på samma sida som rutinerna
+    page.click('[data-rutopen="daily"]')
+    assert page.locator('.rutevery [data-xdel="daily"]').count() == 1
+    # Flytta via menyn; färgen följer rutinen, inte platsen
+    page.click('[data-rutmenu=ra]')
+    page.click('[data-rutmv="1"][data-rutmvid=ra]')
+    assert page.evaluate("dailyRoutines().map(r => r.id)") == ['rb', 'ra', 'rc']
+    assert page.evaluate("rutColor(routineById('ra'))") == colors[0]
+    # Handtaget för att dra går att använda med fingret (scrollar inte sidan)
+    assert page.evaluate("getComputedStyle(document.querySelector('.rutgrip')).touchAction") == 'none'

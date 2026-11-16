@@ -2334,7 +2334,25 @@ button.acttile { min-height: 64px; cursor: pointer; }
 .rutopen small { color: var(--muted); font-size: 13px; }
 .rutdots { width: 40px; height: 40px; flex: none; padding: 0; border: 0; background: none; color: var(--muted); font-size: 20px; letter-spacing: 1px; }
 .rutmenu { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 0 12px 40px; }
-.rutex { padding: 0 0 12px; }
+.rutex { padding: 0 6px 10px; }
+.rutex .subex .thumb, .dl-edit .subex .thumb { width: 48px; height: 48px; flex: none; }
+.subex > .col { flex: none; gap: 2px; }
+.subex > .grow { min-width: 0; }
+.rutex .subex .row, .dl-edit .subex .row { flex-wrap: nowrap; gap: 6px; }
+.rutex .subex input[data-f="sets"], .dl-edit .subex input[data-f="sets"] { width: 44px !important; }
+.rutex .subex input[data-f="reps"], .dl-edit .subex input[data-f="reps"] { width: auto !important; flex: 1 1 auto !important; min-width: 0; }
+.subex > .col button { width: 34px; min-height: 30px; padding: 0; }
+.rutrow.open { background: var(--card-2); }
+.rutgrip { width: 30px; height: 40px; flex: none; display: grid; place-items: center; color: var(--muted); cursor: grab; touch-action: none; margin-left: -6px; }
+.ruttag { width: 30px; height: 30px; flex: none; border-radius: 10px; display: grid; place-items: center; font: 700 13px "Lexend", sans-serif; color: #0d0e10; }
+.ruttag.every { background: var(--text); color: var(--bg); }
+.rutsub { display: flex; align-items: center; gap: 10px; margin-top: 4px; }
+.rutfigs { display: flex; }
+.rutfigs span { width: 26px; height: 26px; border-radius: 13px; background: #0b0c0e; border: 2px solid var(--card); margin-right: -7px; overflow: hidden; display: grid; place-items: center; }
+.rutfigs span:last-child { margin-right: 0; }
+.rutfigs span svg { height: 22px; width: auto; }
+.rutchev { color: var(--muted); display: grid; place-items: center; flex: none; }
+.rutevery { margin-bottom: 18px; }
 .rutname { display: flex; flex: 1; gap: 6px; align-items: center; min-width: 0; padding: 6px 0; }
 .rutname input { flex: 1; min-width: 0; }
 @media (prefers-reduced-motion: reduce) { .rutrow { transition: none; } }

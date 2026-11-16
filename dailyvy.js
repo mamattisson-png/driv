@@ -12,7 +12,14 @@ let plDraft = null;   // veckan som planeras: rutinens id per veckodag, "" är v
 let plSel = "";       // rutinen man "målar" med
 
 const RUT_COLORS = ["#ff8a47", "#5aa7f0", "#4cc583", "#b49cff", "#f0c04c", "#ec6a8e"];
-const rutColor = r => RUT_COLORS[Math.max(0, dailyRoutines().indexOf(r)) % RUT_COLORS.length];
+// Varje rutin behåller sin färg även när ordningen ändras: den får första lediga färgen och sparar den
+function rutColor(r) {
+  if (!r.color) {
+    const used = dailyRoutines().map(x => x.color).filter(Boolean);
+    r.color = RUT_COLORS.find(c => !used.includes(c)) || RUT_COLORS[dailyRoutines().indexOf(r) % RUT_COLORS.length];
+  }
+  return r.color;
+}
 // Bokstaven i veckotabellen: "Mage A" → A, "Rörlighet" → R
 function rutLetter(r) {
   const w = r.name.trim().split(/\s+/), last = w[w.length - 1];
@@ -49,7 +56,7 @@ function plannerView() {
   const days = plDraft.map((id, i) => { const r = routineById(id);
     return `<button class="pl-dy ${dates[i] === TODAY ? "t" : ""}" data-plday="${i}" aria-label="${cap(WD_LONG[i])}: ${r ? esc(r.name) : "vila"}"><small>${WD[i].slice(0, 3)}</small>
       <span class="pl-s ${r ? "" : "v"}" style="${r ? `--rc:${rutColor(r)}` : ""}">${r ? esc(rutLetter(r)) : "Vila"}</span></button>`; }).join("");
-  const mini = arr => `<span class="pl-mn">${arr.map(k => `<i style="background:${k == null ? "var(--card-2)" : RUT_COLORS[k % RUT_COLORS.length]}"></i>`).join("")}</span>`;
+  const mini = arr => `<span class="pl-mn">${arr.map(k => `<i style="background:${k == null || !L[k] ? "var(--card-2)" : rutColor(L[k])}"></i>`).join("")}</span>`;
   const n = Math.max(1, L.length), sel = routineById(plSel);
   return `<div class="dlx pl"><button class="backbtn" data-plclose>${icon("left", 18)}Dailys</button><h1>Planera veckan</h1>
     <div class="muted pl-sub">Välj en rutin och tryck på dagarna där den ska köras. Gäller varje vecka.</div>
