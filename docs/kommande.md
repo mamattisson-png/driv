@@ -93,6 +93,7 @@ Senast uppdaterad: 2026-11-06. Status bygger på dokumenterade publiceringar och
 | 89 | Inloggning med Google, Microsoft och Facebook på en lättare sida, Fortsätt utan konto kvar, och integritetssida | Konto | Hög | Klar |
 | 90 | Träningsschema i numrerade steg, inga gymprogram för Motion, Tomt schema för motion med veckovy där passen landar | Träning | Hög | Klar |
 | 91 | Dina värden: egen sida med linjaler för ålder, längd och vikt, BMI-skala och aktivitet; motionens kcal räknas efter profilen. Visa fler i Övningar hoppar inte längre till toppen | Kropp | Hög | Klar |
+| 92 | Din profil: egen sida med bild, siffror, veckan, pass per vecka och rekord; profil, data och konto på samma sida, namnet ändras på plats | Konto | Hög | Klar |
 
 ## Detaljer och acceptanskriterier
 

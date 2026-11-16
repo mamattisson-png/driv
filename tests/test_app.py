@@ -2,7 +2,7 @@
 import pytest
 from conftest import finish_setup, go, open_app, start, to_step, pick
 
-KONTO = '.card:has(h2:text-is("Konto"))'
+KONTO = '.mepage2'   # profilsidan visar kontot längst ned (e-post, logga ut)
 
 
 def open_ex(page, ex_id):
@@ -38,6 +38,15 @@ def prof(page, sec):
         return
     if sec == "vikt":
         page.click('#p-vikt [data-tab="vagning"]')
+        return
+    # Kontot finns på profilsidan; utan inloggning öppnas inloggningen därifrån
+    if sec == "konto":
+        page.click(".pcardbtn")
+        if page.locator("#acctemail").count():   # inloggningen är redan öppen
+            return
+        # Konto och data ligger längst ned på profilsidan; utan inloggning öppnas inloggningen därifrån
+        if page.locator("[data-melogin]").count():
+            page.click("[data-melogin]")
         return
     # Varje rad öppnar en egen sida; Utseende och Figur ändras direkt i listan
     if page.evaluate("profOpen") != sec and page.locator(f'[data-psec="{sec}"]').count():
@@ -146,8 +155,8 @@ def test_guide_for_hemskarmen_pa_iphone(page):
     page.click("[data-installlater]")
     assert page.locator(".nudge").count() == 0
     go(page, "profil")
-    page.click("[data-psec=konto] >> nth=0")
-    assert "Lägg till på hemskärmen" in page.inner_text(".ppage")
+    page.click(".pcardbtn")
+    assert "Lägg till på hemskärmen" in page.inner_text(".mepage2")
 
 def test_fasta_dagar_kraver_ratt_antal(page):
     open_app(page)
@@ -1216,7 +1225,7 @@ def test_paminnelse_om_konto_efter_tre_dagar(page):
     assert page.locator(".nudge").count() == 0
     page.evaluate("S.nudgeUntil = null; render()")
     page.click("[data-gokonto]")
-    assert page.evaluate("tab") == "profil"
+    assert page.evaluate("tab") == "minprofil"
     assert page.evaluate("document.activeElement.id") == "acctemail"
     login(page)
     go(page, "idag")
@@ -2214,7 +2223,7 @@ def test_nollstall_allt_borjar_pa_valkomstsidan(page):
     # Även inloggad hamnar man på välkomstsidan, precis som en ny användare
     page.evaluate("account.step = 'in'; account.email = 'a@b.se'; cloud.status = 'cloud'")
     go(page, "profil")
-    page.click('[data-psec="konto"] >> nth=0')
+    page.click(".pcardbtn")
     page.click("[data-reset]")
     page.click("[data-reset]")
     assert page.evaluate("[tab, onb, S.setupDone]") == ["upplagg", 0, False]
