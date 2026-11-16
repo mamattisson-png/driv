@@ -91,6 +91,7 @@ Senast uppdaterad: 2026-11-06. Status bygger på dokumenterade publiceringar och
 | 87 | Runda knappar i Dailys, på Kost och Hem (play, bock, plus, info) | Design | Låg | Klar |
 | 88 | Fritt pass med eget flöde: klart först vid Avsluta, Nästa övning, Fortsätt leder direkt in i passet | Träning | Hög | Klar |
 | 89 | Inloggning med Google, Microsoft och Facebook på en lättare sida, Fortsätt utan konto kvar, och integritetssida | Konto | Hög | Klar |
+| 90 | Träningsschema i numrerade steg, inga gymprogram för Motion, Tomt schema för motion med veckovy där passen landar | Träning | Hög | Klar |
 
 ## Detaljer och acceptanskriterier
 
