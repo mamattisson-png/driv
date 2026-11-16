@@ -1226,7 +1226,6 @@ const VIEWS = {
       <section class="h3-list">
         ${row(stretchId ? figure(stretchId) : icon("utseende", 18), "Stretch", "Övningar som töjer · välj kroppsdel", 'data-tab="stretchguide"')}
         ${S.plan.free ? "" : row(icon("aktivitet", 18), "Annan träning", "Löpning, padel, promenad …", "data-homeactivity", "plus")}
-        ${S.hideWeight ? "" : row(icon("vikt", 18), "Vikt", weighed && avg ? `${fmtNum(avg)} kg den här veckan` : weighHint(), 'data-tab="vagning"')}
         ${row(icon("vanner", 18), "Vänner", friendSub, 'data-tab="vanner"')}
       </section></div>`;
   },
