@@ -37,3 +37,19 @@ def test_friend_profile_shows_stats(page):
     text = page.inner_text(".pfpage")
     assert "Sara" in text and "Löpning" in text and "Tränat 3 gånger" in text
     assert page.locator(".pfpage [data-kudos='7']").count() == 1
+
+
+def test_profile_and_account_page_changes_photo(page, tmp_path):
+    start(page)
+    page.evaluate(STUB)
+    page.evaluate("tab = 'profil'; render()")
+    page.click("[data-psec='konto']")
+    assert "Profil och" in page.inner_text("h1")   # "Profil och konto" med konto, "Profil och data" utan
+    img = tmp_path / "me.png"
+    img.write_bytes(bytes(page.evaluate("""(() => { const c = document.createElement('canvas'); c.width = 200; c.height = 300;
+      c.getContext('2d').fillRect(0, 0, 200, 300); return Array.from(atob(c.toDataURL('image/png').split(',')[1]), ch => ch.charCodeAt(0)); })()""")))
+    page.set_input_files("#pfphotoinput", str(img))
+    page.wait_for_function("social.profile.photo")
+    assert page.locator(".pfcard img").count() == 1
+    page.click("[data-psec='']")
+    assert page.locator(".pcard img").count() == 1   # fotot syns även överst i Inställningar

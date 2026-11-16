@@ -1317,9 +1317,9 @@ const VIEWS = {
       `<button role="radio" data-figure-set="${k}" class="${figK() === (k === "k") ? "on" : ""}" aria-checked="${figK() === (k === "k")}">${n}</button>`).join("")}</div>`;
     const main = `<button class="backbtn" data-tab="${profBack}">${icon("left", 18)}${{ idag: "Hem", pass: "Träna", kost: "Kost", historik: "Historik" }[profBack] || "Tillbaka"}</button>
       <h1 class="ptitle">Inställningar</h1>
-      <section class="card pcard" aria-label="Du"><div class="row"><span class="avatar" aria-hidden="true">${esc(name.slice(0, 1).toUpperCase())}</span>
+      <section class="card pcard" aria-label="Du"><div class="row">${myAvatar(name, "avatar")}
           <div class="grow col"><b>${esc(name)}</b><span class="muted small">${account.step === "in" ? esc(account.email) : sbEnabled ? "Inte inloggad · sparas bara i telefonen" : "Sparas i den här telefonen"}</span></div>
-          <button class="linkbtn2" data-psec="konto">${account.step === "in" || !sbEnabled ? "Konto" : "Logga in"}${icon("right", 14)}</button></div>
+          <button class="linkbtn2" data-psec="konto">${account.step === "in" || !sbEnabled ? "Profil" : "Logga in"}${icon("right", 14)}</button></div>
         <div class="pstats"><div><b>${S.plan.count}</b><span>pass i veckan</span></div><div><b>${tnum(m.kcal)}</b><span>kcal om dagen</span></div>
           <div><b>${fmtNum(last ? last.kg : p.weight)}</b><span>kg senast</span></div></div></section>
       ${group("Träning", `<div class="prow"><div class="prow-line"><button class="prow-head" data-tab="upplagg"><span class="pic">${icon("upplagg", 20)}</span><span class="grow"><b>Träningsschema</b>
@@ -1348,10 +1348,7 @@ const VIEWS = {
       ${group("Appen", `${profRow("utseende", "utseende", "Utseende", "", null, themeSeg)}
         ${profRow("figur", "profil", "Figur", "I kroppskartan", null, figSeg)}
         ${profRow("guide", "info", "Appguide", "En kort rundtur genom flikarna", null, `<button class="small" data-tourstart>Starta</button>`)}
-        ${(profRow("konto", "data", sbEnabled ? "Konto och data" : "Data", "", `<section class="card"><div class="row"><span class="avatar" aria-hidden="true">${esc(name.slice(0, 1).toUpperCase())}</span>
-          <label class="field grow">Namn<input id="pname" maxlength="40" autocomplete="given-name" value="${esc(name === "Du" ? "" : name)}" placeholder="Ditt namn"></label></div>
-          ${sbEnabled ? `<div class="muted small" style="margin-top:6px">Namnet syns för dina vänner.</div>` : ""}
-          <button class="wide" style="margin-top:12px" data-pnamesave ${social.busy ? "disabled" : ""}>Spara namnet</button></section>
+        ${(profRow("konto", "profil", sbEnabled ? "Profil och konto" : "Profil och data", sbEnabled ? "Profilbild, namn, inloggning och säkerhetskopia" : "Namn och säkerhetskopia", `${profileCard(name)}
           ${accountCard()}<section class="card">${data}</section>`), "")}
         <div class="prow"><div class="prow-line"><button class="prow-head" data-tab="kommande"><span class="pic">${icon("idea", 20)}</span><span class="grow"><b>Kommande funktioner</b>
           <span class="muted small">Se vad som är på gång i Driv</span></span><span class="chev">${icon("right", 18)}</span></button></div></div>
@@ -1423,7 +1420,7 @@ const PROF_INTRO = {
   kalori: "Räknas fram från dig och ditt mål. Ändra det som inte stämmer.",
   notiser: "Driv kan påminna dig även när appen är stängd.",
   paminnelse: "En daglig påminnelse i telefonens kalender om dina dailys.",
-  konto: "Ditt namn, inloggning och säkerhetskopia av allt du loggat.",
+  konto: "Din profilbild och ditt namn, inloggning och säkerhetskopia av allt du loggat.",
 };
 function profRow(id, ic, title, summary, body, extra = "") {
   const inner = `<span class="pic">${icon(ic, 20)}</span><span class="grow"><b>${title}</b>${summary ? `<span class="muted small">${summary}</span>` : ""}</span>`;

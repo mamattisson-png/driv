@@ -132,3 +132,25 @@ async function savePhoto(photo) {
 }
 // Byter man flik stängs profilen
 document.addEventListener("click", ev => { if (ev.target.closest && ev.target.closest("[data-tab]")) profView = null; }, true);
+
+// Ens egen bild: fotot om det finns, annars första bokstaven (cls "avatar" i Inställningar)
+function myAvatar(name, cls = "avatar") {
+  const photo = photoOf("me");
+  return photo ? `<span class="${cls} avphoto" aria-hidden="true"><img src="${esc(photo)}" alt=""></span>`
+    : `<span class="${cls}" aria-hidden="true">${esc(String(name).slice(0, 1).toUpperCase())}</span>`;
+}
+// Kortet överst på Profil och konto: stor profilbild att trycka på, namnet och vägen till statistiken
+function profileCard(name) {
+  const canPhoto = !!social.profile;   // profilen finns bara när man är inloggad
+  const photo = photoOf("me");
+  return `<section class="card pfcard">
+    ${canPhoto ? `<button class="pfavbtn" data-pfphoto aria-label="${photo ? "Byt" : "Lägg till"} profilbild">${myAvatar(name, "av pfav")}<span class="pfedit">${icon("edit", 14)}</span></button>
+      <input type="file" id="pfphotoinput" accept="image/*" hidden>
+      <div class="row pfphotobtns"><button class="small" data-pfphoto>${icon("plus", 14)}${photo ? "Byt bild" : "Lägg till bild av dig"}</button>${photo ? `<button class="small ghost" data-pfphotodel>Ta bort bild</button>` : ""}</div>
+      ${profMsg ? `<div class="muted small pfmsg" role="status">${esc(profMsg)}</div>` : ""}`
+    : `${myAvatar(name, "av pfav")}${sbEnabled ? `<div class="muted small pfmsg">${account.step === "in" ? "Välj ett namn för att kunna lägga till en profilbild." : "Med ett konto kan du lägga till en profilbild och träna med vänner."}</div>` : ""}`}
+    <label class="field pfname">Namn<input id="pname" maxlength="40" autocomplete="given-name" value="${esc(name === "Du" ? "" : name)}" placeholder="Ditt namn"></label>
+    ${sbEnabled ? `<div class="muted small pfnamehint">Namnet och bilden syns för dina vänner.</div>` : ""}
+    <button class="wide" data-pnamesave ${social.busy ? "disabled" : ""}>Spara namnet</button>
+    ${social.profile ? `<button class="wide primary pfstats" data-profile="me">${icon("historik", 16)}Din profil och statistik</button>` : ""}</section>`;
+}
