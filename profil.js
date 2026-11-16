@@ -153,40 +153,37 @@ function myProfilePage() {
   // Den här veckan: tränade dagar fyllda, idag med orange kant
   const ws = weekStart(TODAY), wsum = weekSummary(ws).passes;
   const trained = d => workoutsOn(d).some(w => w.done) || actsOn(d).some(actCounts);
-  const week = weekDates(ws).map(d => `<span class="mewd"><small>${WD[weekdayOf(d)][0]}</small><i class="${trained(d) ? "on" : ""} ${d === TODAY ? "today" : ""}"></i></span>`).join("");
+  const week = weekDates(ws).map(d => `<span class="mewd ${d === TODAY ? "today" : ""}"><small>${WD[weekdayOf(d)][0]}</small><i class="${trained(d) ? "on" : ""}"></i></span>`).join("");
   // Pass per vecka, tolv veckor; den här veckan i orange
   const weeks = Array.from({ length: 12 }, (_, i) => weekSummary(shift(ws, (i - 11) * 7)).passes), max = Math.max(1, S.plan.count, ...weeks);
   const bars = weeks.map((n, i) => `<rect x="${i * 25 + 4}" y="${(60 - Math.max(n ? 4 : 2, n / max * 60)).toFixed(1)}" width="17" height="${Math.max(n ? 4 : 2, n / max * 60).toFixed(1)}" rx="2" class="${i === 11 ? "now" : ""}"/>`).join("");
   // Rekord: de övningar med störst framsteg
   const recs = prog.ex.filter(e => e.unit === "kg" && +e.best.kg > 0).sort((a, b) => b.gain - a.gain || b.best.kg - a.best.kg).slice(0, 3);
-  return `<div class="mepage2"><div class="mebar"><button class="backbtn" data-tab="${meBack}">${icon("left", 18)}${back}</button>
-      <button class="megear" data-pfsheet="settings" aria-label="Profil och konto">${GEAR_SVG}</button></div>
-    <button class="me2" data-pfsheet="settings">${myAvatar(name, "av me2av")}<span class="grow"><b>${esc(name)}</b>
-      <small>${p ? (since ? `Medlem sedan ${since}` : "Medlem") : sbEnabled ? "Utan konto · sparas i telefonen" : "Sparas i telefonen"}</small></span></button>
+  return `<div class="mepage2"><div class="mebar"><button class="backbtn" data-tab="${meBack}">${icon("left", 18)}${back}</button></div>
+    <div class="me2">${p ? `<button class="me2pic" data-pfphoto aria-label="Byt bild">${myAvatar(name, "av me2av")}</button>` : myAvatar(name, "av me2av")}<span class="grow"><b>${esc(name)}</b>
+      <small>${p ? (since ? `Medlem sedan ${since}` : "Medlem") : sbEnabled ? "Utan konto · sparas i telefonen" : "Sparas i telefonen"}</small></span></div>
     <section class="mesec menums"><div><b>${st.total}</b><span>Pass</span></div><div><b>${st.weeks}</b><span>Veckor i rad</span></div><div><b>${prog.pbs}</b><span>Rekord</span></div></section>
     <section class="mesec"><div class="meh"><b>Den här veckan</b><span>${wsum} av ${S.plan.count} pass</span></div><div class="meweek">${week}</div></section>
     <section class="mesec"><div class="meh"><b>Pass per vecka</b><span>12 veckor</span></div>
       <svg class="mebars" viewBox="0 0 300 60" preserveAspectRatio="none" aria-label="Pass per vecka de senaste tolv veckorna">${bars}</svg></section>
     ${recs.length ? `<section class="mesec"><div class="meh"><b>Rekord</b><button class="linkbtn2 small" data-tab="historik" data-mehist>Alla</button></div>
       <div class="merecs">${recs.map(e => `<div><span>${esc(EX[e.id] ? EX[e.id].name : e.id)}</span><span><b>${fmtNum(+e.best.kg)} kg</b>${e.gain > 0 ? `<em>+${fmtNum(e.gain)}</em>` : ""}</span></div>`).join("")}</div></section>` : ""}
-    ${pfSheetView(name)}</div>`;
+    ${meSettings(name)}</div>`;
 }
-function pfSheetView(name) {
-  if (!pfSheet) return "";
-  const p = social.profile, inAcct = account.step === "in";
+let pfNameEdit = false;   // namnraden är en skrivruta
+// Profil, data och konto längst ned på samma sida
+function meSettings(name) {
+  const p = social.profile, inAcct = account.step === "in", photo = photoOf("me");
   const row = (title, end, attrs, cls = "") => `<button class="merow ${cls}" ${attrs}><span class="grow">${title}</span>${end ? `<span class="muted">${end}</span>` : ""}${cls.includes("red") || cls.includes("plain") ? "" : icon("right", 16)}</button>`;
-  const wrap = (label, inner) => `<div class="overlay" data-pfsheet=""><div class="sheet mesheet2" role="dialog" aria-label="${label}"><span class="megrab" aria-hidden="true"></span>${inner}</div></div>`;
-  if (pfSheet === "name") return wrap("Namn", `<div class="row between"><h2 class="sheeth">Namn</h2><button class="small ghost iconbtn" data-pfsheet="settings" aria-label="Tillbaka">${icon("close", 18)}</button></div>
-    <input id="pname" class="mename2" maxlength="40" autocomplete="given-name" value="${esc(name === "Du" ? "" : name)}" placeholder="Ditt namn" aria-label="Namn">
-    <div class="muted small">${sbEnabled ? "Namnet syns för dina vänner." : ""}</div>
-    <button class="primary wide mesave" data-pnamesave ${social.busy ? "disabled" : ""}>Spara</button>`);
-  const photo = photoOf("me");
-  return wrap("Profil och konto", `<div class="mesheethead">${myAvatar(name, "av mesheetav")}<span class="grow"><b>${esc(name)}</b><small>${inAcct ? esc(account.email) : "Utan konto"}</small></span></div>
-    ${profMsg ? `<div class="muted small pfmsg" role="status">${esc(profMsg)}</div>` : ""}
+  const nameRow = pfNameEdit
+    ? `<div class="merow meedit"><input id="pname" maxlength="40" autocomplete="given-name" value="${esc(name === "Du" ? "" : name)}" placeholder="Ditt namn" aria-label="Namn">
+        <button class="small ghost" data-pfname="0">Avbryt</button><button class="small primary" data-pnamesave ${social.busy ? "disabled" : ""}>Spara</button></div>`
+    : row("Namn", esc(name), 'data-pfname="1"');
+  return `${profMsg ? `<div class="muted small pfmsg" role="status">${esc(profMsg)}</div>` : ""}
     <div class="melbl">Profil</div><div class="megrp">
       ${p ? row(photo ? "Byt bild" : "Lägg till bild", "", "data-pfphoto") : ""}
       ${p && photo ? row("Ta bort bild", "", "data-pfphotodel", "plain") : ""}
-      ${row("Namn", esc(name), 'data-pfsheet="name"')}
+      ${nameRow}
       ${p ? row("Delning med vänner", p.sharing ? "På" : "Av", 'data-tab="vanner" data-fsheet-open="dela"') : ""}</div>
     ${p ? `<input type="file" id="pfphotoinput" accept="image/*" hidden>` : ""}
     <div class="melbl">Data</div><div class="megrp">
@@ -194,24 +191,25 @@ function pfSheetView(name) {
       ${row(confirmReset ? "Tryck igen för att radera allt" : "Nollställ allt", "", "data-reset", "red")}</div>
     ${importMsg ? `<div class="muted small pfmsg">${esc(importMsg)}</div>` : ""}
     <input type="file" id="importfile" accept="application/json" class="hidden">
-    ${sbEnabled ? `<div class="melbl">Konto</div><div class="megrp">${inAcct ? `${row("Logga ut", "", "data-signout", "plain")}${row(account.confirmDelete ? "Tryck igen för att radera kontot" : "Radera konto", "", "data-delacct", "red")}`
+    ${sbEnabled ? `<div class="melbl">Konto</div><div class="megrp">${inAcct ? `${row(esc(account.email), "Inloggad", "disabled", "plain")}${row("Logga ut", "", "data-signout", "plain")}${row(account.confirmDelete ? "Tryck igen för att radera kontot" : "Radera konto", "", "data-delacct", "red")}`
       : row("Logga in eller skapa konto", "", "data-melogin")}</div>
       ${account.confirmDelete ? `<div class="muted small pfmsg">Kontot, molnkopian, vänner och delade pass raderas. En lokal säkerhetskopia ligger kvar på den här enheten.</div>` : ""}` : ""}
-    ${typeof installHelp === "function" ? installHelp() : ""}`);
+    ${typeof installHelp === "function" ? installHelp() : ""}`;
 }
 document.addEventListener("click", ev => {
-  const t = ev.target.closest && ev.target.closest("[data-pfsheet],[data-melogin],[data-tab='minprofil'],[data-fsheet-open]");
+  const t = ev.target.closest && ev.target.closest("[data-pfsheet],[data-pfname],[data-melogin],[data-tab='minprofil'],[data-fsheet-open]");
   if (!t) return;
   const ds = t.dataset;
-  if (ds.tab === "minprofil") { if (tab !== "minprofil") meBack = tab; pfSheet = null; profMsg = ""; return; }   // själva bytet sköts av app.js
+  if (ds.tab === "minprofil") { if (tab !== "minprofil") meBack = tab; pfSheet = null; pfNameEdit = false; profMsg = ""; return; }   // själva bytet sköts av app.js
   if (ds.fsheetOpen) { setTimeout(() => { friendsSheet = ds.fsheetOpen; render(); }, 0); return; }   // Vänner öppnas med rätt blad
   if (t.classList.contains("overlay") && ev.target !== t) return;
   ev.stopImmediatePropagation();
   if (ds.melogin !== undefined) { welcomeLogin = "login"; account.msg = ""; pfSheet = null; }
+  else if (ds.pfname !== undefined) { pfNameEdit = ds.pfname === "1"; render(); if (pfNameEdit) { const f = document.getElementById("pname"); if (f) { f.focus(); f.select(); } } return; }
   else { pfSheet = ds.pfsheet || null; profMsg = ""; confirmReset = false; }
   render();
 }, true);
 // Alla rekord: Historik, Utveckling
 document.addEventListener("click", ev => { if (ev.target.closest && ev.target.closest("[data-mehist]")) histView = "utveckling"; }, true);
 // Sparat namn: tillbaka till bladet
-document.addEventListener("click", ev => { if (ev.target.closest && ev.target.closest("[data-pnamesave]") && tab === "minprofil") setTimeout(() => { pfSheet = "settings"; render(); }, 300); });
+document.addEventListener("click", ev => { if (ev.target.closest && ev.target.closest("[data-pnamesave]") && tab === "minprofil") setTimeout(() => { pfNameEdit = false; render(); }, 300); });

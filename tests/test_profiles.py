@@ -13,7 +13,6 @@ def test_own_profile_photo_is_cropped_and_small(page, tmp_path):
     start(page)
     page.evaluate(STUB)
     page.evaluate("tab = 'minprofil'; render()")
-    page.click(".megear")
     # En liten testbild: 300 × 200 punkter, rött
     img = tmp_path / "selfie.png"
     img.write_bytes(bytes(page.evaluate("""(() => { const c = document.createElement('canvas'); c.width = 300; c.height = 200;
@@ -46,13 +45,11 @@ def test_profile_and_account_page_changes_photo(page, tmp_path):
     page.evaluate("tab = 'profil'; render()")
     page.click(".pcardbtn")
     assert page.locator(".me2").count() == 1
-    page.click(".megear")
     img = tmp_path / "me.png"
     img.write_bytes(bytes(page.evaluate("""(() => { const c = document.createElement('canvas'); c.width = 200; c.height = 300;
       c.getContext('2d').fillRect(0, 0, 200, 300); return Array.from(atob(c.toDataURL('image/png').split(',')[1]), ch => ch.charCodeAt(0)); })()""")))
     page.set_input_files("#pfphotoinput", str(img))
     page.wait_for_function("social.profile.photo")
-    assert page.locator(".mesheet2 img").count() == 1
-    page.evaluate("pfSheet = null; render()")
+    assert page.locator(".me2 img").count() == 1
     page.click(".mebar .backbtn")
     assert page.locator(".pcard img").count() == 1   # fotot syns även överst i Inställningar
