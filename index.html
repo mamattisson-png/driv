@@ -2447,6 +2447,75 @@ button.acttile { min-height: 64px; cursor: pointer; }
 .vsrow { display: flex; justify-content: space-between; align-items: baseline; padding: 12px 0; border-bottom: 1px solid var(--line); }
 .vsrow:last-child { border-bottom: 0; } .vsrow span { color: var(--muted); } .vsrow b { font: 700 17px "Unbounded", sans-serif; } .vsrow small { font: 400 12px "Lexend", sans-serif; color: var(--muted); }
 .vreset { display: block; width: 100%; text-align: center; margin: 18px 0 0; }
+
+/* Dailys: Dag och Vecka */
+.dl-tg { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; border-radius: 14px; background: var(--card); margin: 10px 0 4px; }
+.dl-tg button { min-height: 40px; border: 0; border-radius: 10px; background: none; color: var(--muted); font: inherit; font-size: 14px; font-weight: 600; }
+.dl-tg button.on { background: var(--text); color: var(--bg); }
+.dl-h { display: flex; align-items: flex-end; gap: 12px; margin: 20px 4px 8px; }
+.dl-k { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+.dl-k i { width: 10px; height: 10px; border-radius: 5px; }
+.dl-h b { display: block; font: 800 28px/1.1 "Unbounded", sans-serif; margin-top: 4px; }
+.dl-h .linkbtn2 { padding-bottom: 6px; flex: none; }
+.dl-p { display: flex; align-items: center; gap: 10px; margin: 0 4px 14px; }
+.dl-p span { display: flex; gap: 4px; flex: 1; }
+.dl-p i { flex: 1; height: 6px; border-radius: 3px; background: var(--card-2); }
+.dl-p i.on { background: var(--pc); }
+.dl-p small { color: var(--muted); font-size: 13px; }
+.dl-p.pulse { animation: dlpulse .8s ease; }
+@keyframes dlpulse { 50% { transform: scale(1.03); } }
+.dl-rows { display: flex; flex-direction: column; gap: 10px; }
+.dl-row { display: flex; align-items: center; gap: 14px; padding: 12px 14px; border-radius: 22px; background: var(--card); border: 1px solid var(--line); }
+.dl-row .thumb.dl-f { width: 64px; height: 64px; border-radius: 32px; flex: none; padding: 0; overflow: hidden; background: #0b0c0e; border: 0; }
+.dl-row .grow { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.dl-row b { font-size: 16px; font-weight: 600; }
+.dl-row small { color: var(--muted); font-size: 13px; }
+.dl-row.ok { background: var(--ok-soft); border-color: transparent; }
+.dl-row.ok b { color: var(--muted); }
+.dl-ck, .dl-play { width: 50px; height: 50px; border-radius: 25px; flex: none; display: grid; place-items: center; padding: 0; }
+.dl-ck { border: 2px solid var(--line-strong); background: none; color: transparent; }
+.dl-ck.on { background: var(--ok); border-color: var(--ok); color: #0d0e10; }
+.dl-play { border: 0; background: var(--accent-strong); color: var(--on-accent); }
+.dl-empty { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 26px 16px; border-radius: 22px; border: 1.5px dashed var(--line-strong); text-align: center; }
+.dl-sec { margin: 22px 4px 10px; }
+.dl-pills { display: flex; flex-wrap: wrap; gap: 10px; }
+.dl-pill { display: flex; align-items: center; gap: 8px; min-height: 46px; padding: 8px 16px 8px 9px; border-radius: 99px; background: var(--card); border: 1px solid var(--line); color: var(--text); font: inherit; font-size: 14px; font-weight: 600; }
+.dl-pill small { color: var(--muted); font-weight: 400; }
+.dl-pc { width: 26px; height: 26px; border-radius: 13px; border: 2px solid var(--line-strong); display: grid; place-items: center; }
+.dl-pill.on { background: var(--ok-soft); border-color: transparent; }
+.dl-pill.on .dl-pc { background: var(--ok); border-color: var(--ok); color: #0d0e10; }
+.dl-pill.add { color: var(--accent-text); padding-left: 16px; }
+.dl-wsub { margin: 12px 4px 10px; }
+.wk-tbl { background: var(--card); border: 1px solid var(--line); border-radius: 22px; padding: 6px 10px 10px; }
+.wk-r { display: grid; grid-template-columns: 104px repeat(7, minmax(0, 1fr)); align-items: center; min-height: 40px; }
+.wk-c { display: flex; justify-content: center; align-items: center; align-self: stretch; border-left: 1px solid var(--line); }
+.wk-c.t { background: rgba(255, 138, 71, .08); }
+.wk-hd { border-bottom: 1px solid var(--line); }
+.wk-day { flex-direction: column; gap: 2px; padding: 8px 0; border-top: 0; border-right: 0; border-bottom: 0; border-radius: 0; background: none; color: var(--text); font: inherit; min-height: 0; }
+.wk-day.t { background: rgba(255, 138, 71, .08); border-radius: 12px 12px 0 0; }
+.wk-day small { font: 600 11px "Lexend", sans-serif; color: var(--muted); }
+.wk-day b { font: 700 15px "Unbounded", sans-serif; }
+.wk-day.t small, .wk-day.t b { color: var(--accent-text); }
+.wk-tag { width: 24px; height: 24px; margin-top: 4px; border-radius: 8px; display: grid; place-items: center; font: 700 11px "Lexend", sans-serif; color: #0d0e10; flex: none; }
+.wk-tag.v { background: none; color: var(--muted); }
+.wk-g { grid-column: 1 / -1; display: flex; align-items: center; gap: 8px; min-height: 36px; padding: 8px 2px 2px; border: 0; background: none; color: var(--muted); font: inherit; font-size: 13px; font-weight: 600; text-align: left; }
+.wk-g i { width: 8px; height: 8px; border-radius: 4px; }
+.wk-g span { margin-left: auto; color: var(--accent-text); font-size: 12.5px; }
+.wk-n { display: flex; align-items: center; gap: 8px; min-width: 0; font-size: 13.5px; }
+.wk-n > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wk-f { width: 28px; height: 28px; border-radius: 14px; flex: none; overflow: hidden; background: #0b0c0e; display: grid; place-items: center; }
+.wk-f svg { height: 24px; width: auto; }
+.wk-sn { border: 0; background: none; color: var(--text); font: inherit; font-size: 13.5px; padding: 0; text-align: left; min-height: 40px; }
+.wk-d { display: block; width: 14px; height: 14px; border-radius: 7px; }
+.wk-d.ok { background: var(--pc); }
+.wk-d.p { border: 2px solid var(--pc); opacity: .55; }
+.wk-d.x { border: 2px solid var(--line-strong); }
+.wk-none { grid-column: 1 / -1; padding: 14px 4px; }
+.wk-btns { gap: 8px; margin: 10px 0 14px; }
+.wk-sh { min-height: 40px; padding: 0 2px; }
+.wk-key { display: flex; gap: 16px; margin: 12px 6px 0; font-size: 12.5px; color: var(--muted); }
+.wk-key span { display: flex; align-items: center; gap: 6px; }
+.dl-editmore { display: block; margin: 16px auto 0; }
 </style>
 </head>
 <body>
@@ -2483,6 +2552,7 @@ button.acttile { min-height: 64px; cursor: pointer; }
 <script src="kommande.js"></script>
 <script src="guide.js"></script>
 <script src="rutiner.js"></script>
+<script src="dailyvy.js"></script>
 <script src="varden.js"></script>
 <script src="app.js"></script>
 <script src="livsmedel.js" async></script>

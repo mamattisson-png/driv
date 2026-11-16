@@ -1,6 +1,6 @@
 """Webbläsartester för Driv. Kör med: python -m pytest tests"""
 import pytest
-from conftest import finish_setup, go, open_app, start, to_step, pick
+from conftest import finish_setup, go, open_app, start, to_step, pick, open_daily_add, back_to_day
 
 KONTO = '.mepage2'   # profilsidan visar kontot längst ned (e-post, logga ut)
 
@@ -1531,14 +1531,16 @@ def test_testlage_har_egen_data(page):
 def test_stretch_som_daily(page):
     start(page)
     go(page, "dailys")
-    page.click('[data-openpick="daily"]')
+    open_daily_add(page)
     page.click('[data-mskmode="st"]')
     count = page.evaluate("Object.values(EX).filter(e => e.cat === 'stretch').length")
     assert f"{count} stretchövningar" in page.inner_text(".sg-head")
     page.fill("#mskq", "duvan")
     page.click('[data-libpick="duvan"]')
     assert page.evaluate("tab") == "dailys" and page.evaluate("libCtx") is None
-    assert "Duvan" in page.inner_text("#app") and "2 × 45 s/sida" in page.inner_text("#app")
+    assert "Duvan" in page.inner_text("#app")
+    back_to_day(page)
+    assert "2 × 45 s/sida" in page.inner_text("#app")
     page.click('[data-dcheck="duvan"]')
     assert page.evaluate("dailyDone(TODAY, 'duvan')") is True
     # Stretch hålls en tid: i ett pass syns bara sekunder, ingen vikt
@@ -1653,7 +1655,7 @@ def test_lagg_till_fran_pass_och_dailys(page):
     # Från Dailys: samma bibliotek, tillbaka till Dailys, befintliga dailys orörda
     go(page, "dailys")
     before = page.evaluate("JSON.stringify(S.daily)")
-    page.click('[data-openpick="daily"]')
+    open_daily_add(page)
     assert "Lägg till daily" in page.inner_text(".msk h1")
     page.fill("#mskq", "bänkpress")
     page.click('[data-libpick="bankpress"]')
@@ -1668,7 +1670,7 @@ def test_lagg_till_fran_pass_och_dailys(page):
     page.click('#nav [data-tab="kost"]')
     assert page.locator(".msk").count() == 0 and page.evaluate("tab") == "kost"
     go(page, "dailys")
-    page.click('[data-openpick="daily"]')
+    open_daily_add(page)
     page.click('#nav [data-tab="dailys"]')
     assert page.locator(".msk").count() == 0 and page.evaluate("libCtx") is None
 
@@ -2347,7 +2349,7 @@ def test_firande_nar_alla_dailys_ar_klara(page):
         page.click(f'[data-dcheck="{i}"]')
         assert page.locator(".burst").count() == 0
     page.click(f'[data-dcheck="{ids[-1]}"]')
-    assert page.locator(".burst").count() == 1 and page.locator(".dlx-ring.pulse").count() == 1
+    assert page.locator(".burst").count() == 1 and page.locator(".dlx-prog.pulse").count() == 1
     # Öppnas appen igen med allt klart blir det inget nytt firande
     page.reload()
     go(page, "dailys")

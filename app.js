@@ -931,7 +931,7 @@ function cheerCheck() {
 // Litet och på plats: konfetti ur bocken man tryckte på, och ringen överst pulserar en gång
 function celebrate() {
   const btn = lastCheck && [...document.querySelectorAll(lastCheck)].find(e => e.getClientRects().length);
-  const ring = document.querySelector(".dlx-ring");
+  const ring = document.querySelector(".dlx-prog");
   if (ring) ring.classList.add("pulse");
   const at = (btn || ring);
   if (at) {
@@ -1146,49 +1146,7 @@ const VIEWS = {
   dailys() {
     if (dailyClock) return `<div class="dlx">${dailyClockView()}</div>`;
     if (rutPage) return rutinerView();
-    const a = S.supplements || [], date = logDate(), ex = dailyList(date), rut = routineOn(date), every = (S.daily || []).filter(e => EX[e.id]);
-    const n = ex.filter(e => dailyDone(date, e.id)).length, sn = a.filter(x => day().dailies["supp:" + x.id]).length;
-    const total = ex.length + a.length, count = n + sn, allOk = total > 0 && count === total, st = streakOf(allDailiesDone);
-    // Veckan bakåt till idag: grön prick när allt var klart, orange när något var gjort
-    const week = Array.from({ length: 7 }, (_, i) => shift(TODAY, i - 6)).map(d => {
-      const L = S.log[d], dl = dailyList(d), all = dl.length + a.length;
-      const done = dl.filter(e => L && dailyDone(d, e.id)).length + a.filter(x => L && L.dailies && L.dailies["supp:" + x.id]).length;
-      const cls = all && done === all ? "ok" : done ? "part" : "";
-      return `<span class="dlx-day ${d === TODAY ? "on" : ""}"><small>${WD[weekdayOf(d)].slice(0, 2)}</small><b>${+d.slice(-2)}</b><i class="${cls}"></i></span>`;
-    }).join("");
-    const rowsOf = list => list.filter(e => EX[e.id]).map(e => {
-      const ok = dailyDone(date, e.id);
-      return `<div class="h3-row dlx-row ${ok ? "ok" : ""}">${thumb(e.id, "exl")}<span class="grow"><b>${esc(EX[e.id].name)}</b><small>${e.sets} × ${esc(e.reps || "")}</small></span>
-        ${ok ? "" : `<button class="dlx-play" data-dclockstart="${e.id}" aria-label="Starta ${esc(EX[e.id].name)}">${icon("play", 16)}</button>`}
-        <button class="dlx-check ${ok ? "on" : ""}" data-dcheck="${e.id}" aria-pressed="${ok}" aria-label="${esc(EX[e.id].name)} klar">${icon("check", 18)}</button></div>`;
-    }).join("");
-    const supp = a.map((x, i) => {
-      const ok = day().dailies["supp:" + x.id] === true;
-      return `<div class="h3-row dlx-row ${ok ? "ok" : ""}"><span class="h3-ic dlx-sicon">${esc(x.icon || "◇")}</span><span class="grow"><b>${esc(x.name)}</b><small>${esc([x.dose, x.note].filter(Boolean).join(" · "))}</small></span>
-        <button class="dlx-edit" data-suppedit="${i}" aria-label="Ändra ${esc(x.name)}">${icon("edit", 16)}</button>
-        <button class="dlx-check ${ok ? "on" : ""}" data-suppcheck="${esc(x.id)}" aria-pressed="${ok}" aria-label="${esc(x.name)} tagen">${icon("check", 18)}</button></div>`;
-    }).join("");
-    const addRow = (attr, text) => `<button class="h3-row dlx-addrow" ${attr}><span class="h3-ic">${icon("plus", 16)}</span><span class="grow"><b>${text}</b></span></button>`;
-    const cnt = list => `${list.filter(e => EX[e.id] && dailyDone(date, e.id)).length}/${list.filter(e => EX[e.id]).length}`;
-    // En lista med rubrik och Ändra; target är "daily" (Varje dag) eller "rut:<id>"
-    const section = (label, list, target, editAttr) => {
-      const ed = target === "daily" ? dailyEditing === true : dailyEditing === target;
-      return `<div class="row between dlx-sec"><span class="klabel">${label} · ${cnt(list)}</span><button class="linkbtn2" ${editAttr}>${ed ? "Klar" : "Ändra"}</button></div>
-      ${ed ? exRows(target, target === "daily" ? S.daily : list, true) : `<section class="h3-list">${rowsOf(list)}${addRow(`data-openpick="${target}"`, "Lägg till övning")}</section>`}`;
-    };
-    const exSecs = rut
-      ? `${section(esc(rut.name), rut.ex, "rut:" + rut.id, `data-rutedit="rut:${esc(rut.id)}"`)}${section("Varje dag", every, "daily", "data-dedit")}`
-      : `${section("Övningar", every, "daily", "data-dedit")}
-        <button class="dlx-rutlink" data-rutpage>${icon("kalender", 16)}<span class="grow">Rutiner · växla övningar mellan dagarna</span>${icon("right", 16)}</button>`;
-    return `<div class="dlx"><h1>Dailys</h1>
-      <div class="muted dlx-sub">Idag · ${count} av ${total} klara${st > 1 ? ` · ${st} dagar i rad` : ""}</div>
-      <section class="dlx-top ${allOk ? "ok" : ""}"><span class="dlx-ring">${ring(total ? count / total : 0, 60, allOk ? "ok" : "")}<b>${total ? Math.round(count / total * 100) : 0}%</b></span>
-        <div class="dlx-week">${week}</div></section>
-      ${routineHead(date)}
-      ${exSecs}
-      <div class="row between dlx-sec"><span class="klabel">Kosttillskott · ${sn}/${a.length}</span></div>
-      <section class="h3-list">${supp}${supplementEditing === null ? addRow("data-suppadd", "Lägg till kosttillskott") : ""}</section>
-      ${supplementForm()}${rutinSheet()}</div>`;
+    return dailysPage();
   },
   stretchguide() { return muscleView(); },
   varden() { return vardenView(); },
