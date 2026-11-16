@@ -1287,6 +1287,7 @@ const VIEWS = {
   historik: () => historikView(),
 
   vanner() { return friendsView(); },
+  minprofil() { return myProfilePage(); },
 
   kommande: () => upcomingFeaturesPage(),
 
@@ -1317,11 +1318,8 @@ const VIEWS = {
       `<button role="radio" data-figure-set="${k}" class="${figK() === (k === "k") ? "on" : ""}" aria-checked="${figK() === (k === "k")}">${n}</button>`).join("")}</div>`;
     const main = `<button class="backbtn" data-tab="${profBack}">${icon("left", 18)}${{ idag: "Hem", pass: "Träna", kost: "Kost", historik: "Historik" }[profBack] || "Tillbaka"}</button>
       <h1 class="ptitle">Inställningar</h1>
-      <section class="card pcard" aria-label="Du"><div class="row">${myAvatar(name, "avatar")}
-          <div class="grow col"><b>${esc(name)}</b><span class="muted small">${account.step === "in" ? esc(account.email) : sbEnabled ? "Inte inloggad · sparas bara i telefonen" : "Sparas i den här telefonen"}</span></div>
-          <button class="linkbtn2" data-psec="konto">${account.step === "in" || !sbEnabled ? "Profil" : "Logga in"}${icon("right", 14)}</button></div>
-        <div class="pstats"><div><b>${S.plan.count}</b><span>pass i veckan</span></div><div><b>${tnum(m.kcal)}</b><span>kcal om dagen</span></div>
-          <div><b>${fmtNum(last ? last.kg : p.weight)}</b><span>kg senast</span></div></div></section>
+      <button class="card pcard pcardbtn" data-tab="minprofil" aria-label="Visa din profil">${myAvatar(name, "avatar")}
+        <span class="grow col"><b>${esc(name)}</b><span class="muted small">Visa profil</span></span>${icon("right", 18)}</button>
       ${group("Träning", `<div class="prow"><div class="prow-line"><button class="prow-head" data-tab="upplagg"><span class="pic">${icon("upplagg", 20)}</span><span class="grow"><b>Träningsschema</b>
           <span class="muted small">${esc(PROGRAMS[S.plan.program || "ppl"].name)} · ${S.plan.count} pass i veckan</span></span><span class="chev">${icon("right", 18)}</span></button></div></div>
         ${profRow("vila", "timer", "Vilotimer", rs.on ? `På · ${rs.compound} / ${rs.iso} sek` : "Av", `
@@ -1348,14 +1346,13 @@ const VIEWS = {
       ${group("Appen", `${profRow("utseende", "utseende", "Utseende", "", null, themeSeg)}
         ${profRow("figur", "profil", "Figur", "I kroppskartan", null, figSeg)}
         ${profRow("guide", "info", "Appguide", "En kort rundtur genom flikarna", null, `<button class="small" data-tourstart>Starta</button>`)}
-        ${(profRow("konto", "profil", sbEnabled ? "Profil och konto" : "Profil och data", sbEnabled ? "Profilbild, namn, inloggning och säkerhetskopia" : "Namn och säkerhetskopia", `${profileCard(name)}
-          ${accountCard()}<section class="card">${data}</section>`), "")}
+
         <div class="prow"><div class="prow-line"><button class="prow-head" data-tab="kommande"><span class="pic">${icon("idea", 20)}</span><span class="grow"><b>Kommande funktioner</b>
           <span class="muted small">Se vad som är på gång i Driv</span></span><span class="chev">${icon("right", 18)}</span></button></div></div>
         ${sbEnabled ? profRow("tyck", "chat", "Tyck till", "Vad saknas, vad är krångligt?", feedbackCard()) : ""}
         ${isDevAccount() ? `<div class="prow"><div class="prow-line"><button class="prow-head" data-opentest><span class="pic">${icon("test", 20)}</span><span class="grow"><b>Testläge</b>
           <span class="muted small">Egen data som inte rör ditt konto</span></span><span class="chev">${icon("right", 18)}</span></button></div></div>` : ""}`)}
-      ${account.step === "in" ? `<button class="wide plogout" data-signout>${icon("logout", 18)}Logga ut</button>` : ""}`;
+`;
     return profOpen && PROF_PAGES[profOpen] ? profPage(profOpen) : main;
   },
 };
@@ -2219,7 +2216,10 @@ document.addEventListener("click", ev => {
   else if (ds.verifycode !== undefined) { verifyLoginCode(); return; }
   else if (ds.welcomelogin !== undefined) { welcomeLogin = ds.welcomelogin || null; account.msg = ""; if (welcomeLogin) welcomeAgain = false; }
   else if (ds.gokonto !== undefined) {
-    openProfRow("konto", "acctemail");
+    // Skapa konto eller logga in: profilsidan med inloggningen, och fokus i e-postfältet
+    meBack = tab; tab = "minprofil"; welcomeLogin = "login"; account.msg = "";
+    render(); window.scrollTo(0, 0);
+    const f = $("acctemail"); if (f) f.focus();
     return;
   }
   else if (ds.goalpick) { S.profile.goal = ds.goalpick; S.profileSet = true; }

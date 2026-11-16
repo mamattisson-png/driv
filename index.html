@@ -2147,6 +2147,36 @@ button.h3-card.h3-head { background: var(--card); padding: 12px 14px; }
 .pfstats { display: flex; align-items: center; justify-content: center; gap: 8px; }
 .avatar.avphoto { padding: 0; overflow: hidden; }
 .avatar.avphoto img { width: 100%; height: 100%; object-fit: cover; display: block; }
+/* Din profil */
+.card.pcard.pcardbtn { display: flex; flex-direction: row; align-items: center; justify-content: flex-start; gap: 14px; width: 100%; padding: 14px 16px; text-align: left; font: inherit; color: var(--text); }
+.pcardbtn .avatar { width: 56px; height: 56px; flex: none; }
+.pcardbtn .grow { flex: 1; }
+.pcardbtn .col { display: flex; flex-direction: column; gap: 2px; }
+.pcardbtn b { font-size: 18px; }
+.mepage { display: flex; flex-direction: column; }
+.mepage > .backbtn { align-self: flex-start; }
+.mehead { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 4px; margin: 6px 0 2px; }
+.mehead h1 { margin: 12px 0 0; font-size: 26px; }
+.mepic { position: relative; width: 116px; height: 116px; min-height: 0; padding: 0; border: 0; border-radius: 50%; background: none; }
+.av.mepicav { width: 116px; height: 116px; font-size: 44px; box-shadow: 0 0 0 3px var(--bg), 0 0 0 5px var(--accent); }
+.mecam { position: absolute; right: 0; bottom: 2px; width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: var(--text); color: var(--bg); border: 3px solid var(--bg); }
+.mestats { display: grid; grid-template-columns: repeat(3, 1fr); margin: 18px 0 12px; padding: 12px 0; border-radius: 18px; background: var(--card); }
+.mestats > div { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.mestats > div + div { border-left: 1px solid var(--line); }
+.mestats b { font: 700 21px "Unbounded", sans-serif; }
+.mestats span { color: var(--muted); font-size: 12px; }
+.mebtns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.mebtns button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 48px; border-radius: 14px; font-weight: 600; font-size: 14.5px; }
+.mebtns button:only-child { grid-column: 1 / -1; }
+.mek { display: block; margin: 20px 4px 8px; }
+.pfrow2 b { font-weight: 500; }
+.pfrow2:disabled { opacity: 1; cursor: default; }
+.mequiet { margin-top: 12px; }
+.menote { margin: 8px 4px 0; }
+.mesheetpic { display: flex; justify-content: center; margin: 6px 0 12px; }
+.mesheetlist { margin: 10px 0 4px; background: var(--card-2); }
+.mename { width: 100%; }
+.mesave { margin-top: 12px; }
 /* Stretch under vilan */
 .vstretch { display: flex; align-items: center; gap: 12px; width: 100%; height: auto; min-height: 68px; flex: none; margin: 10px 0 4px; padding: 10px 12px; border-radius: 16px; text-align: left; font: inherit;
   border: 1px solid color-mix(in srgb, var(--ok) 35%, transparent); background: var(--ok-soft); color: var(--text); }
