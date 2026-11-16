@@ -84,7 +84,8 @@ function openPlanSheet(i) {
 }
 // Delar av bladet som bara finns för schemat eller för en aktivitet i schemat
 function planSheetTop(s) {
-  if (!s.plan || s.i != null) return "";
+  // I ett motionsschema läggs bara motion till: inga gympass
+  if (!s.plan || s.i != null || draft.program === "aktiviteter") return "";
   return `<div class="seg two plankind" role="radiogroup" aria-label="Typ av pass"><button data-plankind="gym" class="${s.gym ? "on" : ""}" role="radio" aria-checked="${s.gym}">Gym</button>
     <button data-plankind="act" class="${s.gym ? "" : "on"}" role="radio" aria-checked="${!s.gym}">Motion</button></div>`;
 }
@@ -130,9 +131,9 @@ function planRemove(i) {
 
 // Veckans pass i upplägget: gympass och aktiviteter i samma lista. Dra i numret för att flytta.
 let planMenu = null, planDelArm = null;
-function planList() {
+function planList(noHead) {
   const fixed = draft.mode === "fixed", sorted = draft.weekdays.slice().sort((a, b) => a - b), ok = !fixed || sorted.length === draft.days.length;
-  return `<div class="row between planhead"><span class="klabel">Veckans pass · ${draft.days.length}</span>${draft.days.length > 1 ? `<span class="muted small">Dra för att flytta</span>` : ""}</div>
+  return `${noHead ? "" : `<div class="row between planhead"><span class="klabel">Veckans pass · ${draft.days.length}</span>${draft.days.length > 1 ? `<span class="muted small">Dra för att flytta</span>` : ""}</div>`}
     <section class="h3-list planlist">${draft.days.map((d, i) => {
       const act = isActDay(d), sub = act ? `Motion · ${actGoal(d)}` : `Gym · ${d.ex.length} ${d.ex.length === 1 ? "övning" : "övningar"}`;
       return `<div class="planrow"><div class="h3-row"><span class="plannum" data-plandrag="${i}" aria-label="Dra för att flytta ${esc(d.name)}">${fixed && ok ? WD[sorted[i]].slice(0, 2) : i + 1}</span>

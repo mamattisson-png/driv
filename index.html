@@ -1355,8 +1355,19 @@
   .loginmsg { margin: 10px 4px 0; }
 
   /* Upplägg */
-  .progcard { border: 1.5px solid var(--accent); display: flex; flex-direction: column; gap: 4px; padding: 16px; }
-  .progname { font: 800 22px/1.15 "Unbounded", sans-serif; text-transform: uppercase; margin: 8px 0 2px; }
+  .progcard { display: flex; align-items: center; gap: 12px; padding: 14px 16px; margin: 0 0 4px; }
+  .progcard .col { gap: 3px; min-width: 0; }
+  .progname { font: 700 16px/1.2 "Unbounded", sans-serif; }
+  .progcard .linkbtn2 { flex: none; }
+  .upstep { align-items: center; gap: 10px; margin: 24px 4px 10px; font-weight: 600; font-size: 15px; }
+  .upnum { width: 24px; height: 24px; flex: none; border-radius: 50%; background: var(--text); color: var(--bg); display: grid; place-items: center; font: 700 12px "Lexend", sans-serif; }
+  .upsave { margin-top: 18px; }
+  .motionplan { margin: 0; }
+  .upgoal { display: flex; align-items: center; gap: 12px; padding: 14px 16px; margin: 0; }
+  .upgoal .col { gap: 3px; min-width: 0; }
+  .upstepper { display: flex; align-items: center; gap: 6px; flex: none; }
+  .upstepper button { width: 42px; height: 42px; border-radius: 50%; border: 0; background: var(--card-2); color: var(--text); display: grid; place-items: center; padding: 0; }
+  .upn.unum { min-width: 30px; text-align: center; font: 800 22px/1 "Unbounded", sans-serif; }
   .passchips { margin-top: 10px; gap: 6px; }
   .passchips .chip { background: var(--card-2); font: 700 11px "Unbounded", sans-serif; letter-spacing: .04em; text-transform: uppercase; padding: 6px 12px; }
   .progpick { margin: -4px 0 14px; }
@@ -2009,6 +2020,7 @@ button.h3-card.h3-head { background: var(--card); padding: 12px 14px; }
 .dlx .supplement-form { margin-top: 10px; }
 /* Starten: Gym, Motion eller Båda */
 .onbkinds { display: flex; flex-direction: column; gap: 10px; margin: 14px 0 6px; }
+.upstep + .onbkinds { margin-top: 0; }
 .onbkind { display: flex; align-items: center; gap: 14px; width: 100%; padding: 14px 16px; border-radius: 20px; border: 1.5px solid var(--line); background: var(--card); color: var(--text); text-align: left; font: inherit; }
 .onbkind.on { border-color: var(--accent); background: var(--accent-soft); }
 .onbkind .grow { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
@@ -2167,7 +2179,7 @@ button.h3-card.h3-head { background: var(--card); padding: 12px 14px; }
 .freebtns button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 52px; border-radius: 16px; font-weight: 600; }
 .freenote { margin: 8px 4px 0; }
 .freeempty { margin: 4px 4px 0; }
-.freegoal { margin-top: 12px; }
+.freegoal:not(.upgoal) { margin-top: 12px; }
 /* Aktiviteter i schemat */
 .tag.act { background: var(--ok-soft); color: var(--ok-text); }
 .actgoal { display: flex; gap: 8px; margin-top: 8px; }

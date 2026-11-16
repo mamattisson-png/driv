@@ -39,15 +39,17 @@ function freeTrainView() {
     }
     actsOn(date).forEach((a, i) => items.push(row("aktivitet", "actic", esc(a.name), esc(`${when} · ${actLine(a)} · ${actKcal(a)} kcal`), `data-actedit="${i}" data-actdate="${date}"`, icon("edit", 18))));
   }
-  const L = tpls();
+  const L = tpls(), mo = !!S.plan.motionOnly;
   return `<div class="muted small toplabel">Vecka ${weekNo(TODAY)} · ${passGoal(passes)}</div><h1>Träna</h1>
     ${bar}
-    <div class="row between freehead"><span class="muted small">Inget schema · du loggar fritt</span><button class="linkbtn2" data-tab="upplagg">Välj schema${icon("right", 14)}</button></div>
+    <div class="row between freehead"><span class="muted small">${mo ? "Motion · tomt schema" : "Inget schema · du loggar fritt"}</span><button class="linkbtn2" data-tab="upplagg">${mo ? "Ändra" : "Välj schema"}${icon("right", 14)}</button></div>
     <div class="klabel h3-sec">Logga träning</div>
-    <div class="row freebtns"><button class="primary grow" data-freegym>${icon("trana", 18)}${going ? "Fortsätt gympass" : "Gympass"}</button>
+    ${mo ? `<div class="row freebtns"><button class="primary grow" data-actnew="" data-actdate="${TODAY}">${icon("plus", 18)}Logga motion</button></div>
+    <div class="muted small freenote">Sök bland promenad, löpning, padel, EMS … Passet läggs in i veckan.</div>`
+    : `<div class="row freebtns"><button class="primary grow" data-freegym>${icon("trana", 18)}${going ? "Fortsätt gympass" : "Gympass"}</button>
       <button class="grow" data-actnew="" data-actdate="${TODAY}">${icon("aktivitet", 18)}Motion</button></div>
-    <div class="muted small freenote">Gympass: välj övningar medan du kör. Motion: sök bland löpning, padel, EMS …</div>
-    ${L.length ? `<div class="klabel h3-sec">Passmallar</div><section class="h3-list">${L.map(p => row("trana", "gymic", esc(p.name), `${p.ex.length} ${p.ex.length === 1 ? "övning" : "övningar"}`, `data-focusstart="${p.id}"`, `<span class="accenttext small">Starta</span>`)).join("")}</section>` : ""}
+    <div class="muted small freenote">Gympass: välj övningar medan du kör. Motion: sök bland löpning, padel, EMS …</div>`}
+    ${L.length && !mo ? `<div class="klabel h3-sec">Passmallar</div><section class="h3-list">${L.map(p => row("trana", "gymic", esc(p.name), `${p.ex.length} ${p.ex.length === 1 ? "övning" : "övningar"}`, `data-focusstart="${p.id}"`, `<span class="accenttext small">Starta</span>`)).join("")}</section>` : ""}
     <div class="klabel h3-sec">Den här veckan</div>
     ${items.length ? `<section class="h3-list">${items.join("")}</section>` : `<div class="muted small freeempty">Inget loggat än den här veckan.</div>`}
     <div class="klabel h3-sec">Mer</div>

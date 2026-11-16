@@ -1225,15 +1225,16 @@ const VIEWS = {
       const list = a => cap(a.length > 1 ? `${a.slice(0, -1).join(", ")} och ${a[a.length - 1]}` : a[0]);
       return !kvar.length ? "Alla dagens mål är klara" : `${list(klar)} ${klar.length > 1 ? "är klara" : "är klar"} · ${list(kvar)} återstår`;
     };
-    const sub = t.rest ? "Vilodag idag" : done ? doneSub() : started ? `${esc(d.name)} är påbörjat` : freeIdle ? "Inget schema · logga det du gör" : `${esc(d.name)} står på schemat`;
+    const sub = t.rest ? "Vilodag idag" : done ? doneSub() : started ? `${esc(d.name)} är påbörjat` : freeIdle ? (S.plan.motionOnly ? "Logga motion när du har tränat" : "Inget schema · logga det du gör") : `${esc(d.name)} står på schemat`;
     const date = cap(new Date().toLocaleDateString("sv-SE", { weekday: "long", day: "numeric", month: "long" }));
     // Siffran blir en grön bock när steget är klart; orange bara för det man trycker på
     const no = (n, ok) => `<span class="h3-no ${ok ? "ok" : ""}" aria-hidden="true">${ok ? icon("check", 14) : n}</span>`;
     const exN = `${d.ex.length} ${d.ex.length === 1 ? "övning" : "övningar"}`;
     const mins = Math.max(5, Math.round(d.ex.reduce((a, x) => a + (+x.sets || 0), 0) * 2.5 / 5) * 5);
-    const passInfo = freeIdle ? "Logga ett gympass eller motion" : d.id === "fritt" ? esc(`Gympass · ${d.ex.map(e => EX[e.id] ? EX[e.id].name : "").filter(Boolean).join(", ") || "inga övningar än"}`) : t.rest ? `Återhämtning · nästa pass ${WD_LONG[weekdayOf(t.next)]}` : isActDay(d) ? esc(`Motion · ${done && w.act ? actLine(w.act) : actGoal(d)}`)
+    const passInfo = freeIdle ? (S.plan.motionOnly ? "Promenad, löpning, yoga …" : "Logga ett gympass eller motion") : d.id === "fritt" ? esc(`Gympass · ${d.ex.map(e => EX[e.id] ? EX[e.id].name : "").filter(Boolean).join(", ") || "inga övningar än"}`) : t.rest ? `Återhämtning · nästa pass ${WD_LONG[weekdayOf(t.next)]}` : isActDay(d) ? esc(`Motion · ${done && w.act ? actLine(w.act) : actGoal(d)}`)
       : [passMuscles(d), exN, d.ex.length ? `~${mins} min` : ""].filter(Boolean).map(esc).join(" · ");
     const passBtn = done ? `<button class="h3-btn ok" data-seepass="${d.id}">${icon("check", 16)}Passet klart · visa</button>`
+      : freeIdle && S.plan.motionOnly ? `<button class="h3-btn primary" data-actnew="" data-actdate="${TODAY}">${icon("plus", 16)}Logga motion</button>`
       : freeIdle ? `<div class="row h3-actbtns"><button class="h3-btn primary" data-freegym>${icon("trana", 16)}Gympass</button><button class="h3-btn" data-actnew="" data-actdate="${TODAY}">${icon("aktivitet", 16)}Motion</button></div>`
       : t.rest ? `<button class="h3-btn ghost" data-tab="pass">Kör ett pass ändå</button>`
       : isActDay(d) ? `<div class="row h3-actbtns">${actButtons(d, "h3-btn")}</div>`
@@ -2046,7 +2047,7 @@ function syncDone(d) {
 function saveSetup() {
   const back = S.setupDone ? setupFrom : null;
   const weekdays = draft.weekdays.slice().sort((a, b) => a - b);
-  S.plan = { program: draft.program, count: draft.free ? draft.count : draft.days.length, mode: draft.mode, weekdays, days: draft.days, ...(draft.free ? { free: true } : {}) };
+  S.plan = { program: draft.program, count: draft.free ? draft.count : draft.days.length, mode: draft.mode, weekdays, days: draft.days, ...(draft.free ? { free: true, ...(draft.motionOnly ? { motionOnly: true } : {}) } : {}) };
   // Har man hoppat över kalorimålet påminner Kost om att ställa in det
   if (!S.setupDone && S.profileSet !== true) S.profileSet = false;
   if (!S.setupDone) S.tourAsked = false;   // nya användare erbjuds rundturen på Hem
