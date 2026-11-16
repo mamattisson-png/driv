@@ -963,7 +963,7 @@ function render() {
     ? `<div class="editbar">Du ändrar <b>${dateLabel(editDate)}</b><button class="small" data-editdone>Klar</button></div>` : "";
   // Samma inställningsknapp på alla huvudvyer. Hem har knappen i sin egen header.
   // Kugghjulet ligger på samma plats överallt; under ett pass har fokusvyn egna knappar där
-  const gear = tab === "idag" || tab === "profil" || tab === "upplagg" || passDone || inFocus ? "" : `<button class="gear" data-tab="profil" aria-label="Inställningar">${GEAR_SVG}</button>`;
+  const gear = tab === "idag" || tab === "profil" || tab === "minprofil" || tab === "upplagg" || passDone || inFocus ? "" : `<button class="gear" data-tab="profil" aria-label="Inställningar">${GEAR_SVG}</button>`;
   document.getElementById("app").innerHTML = passDone ? passDoneView()
     : actSheet ? actPage() + tourView()   // Logga motion är en egen sida (aktivitet.js)
     : gear + banner + focusBar() + (libCtx ? muscleView() : VIEWS[tab]()) + (modal ? renderModal() : "") + (sgAdd && EX[sgAdd] ? stretchAddSheet(sgAdd) : "") + tourView();

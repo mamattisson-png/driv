@@ -2,7 +2,7 @@
 import pytest
 from conftest import finish_setup, go, open_app, start, to_step, pick
 
-KONTO = '.mepage'   # profilsidan visar kontot (inloggad e-post, logga ut)
+KONTO = '.mesheet2'   # bladet bakom kugghjulet på profilsidan visar kontot (e-post, logga ut)
 
 
 def open_ex(page, ex_id):
@@ -42,6 +42,10 @@ def prof(page, sec):
     # Kontot finns på profilsidan; utan inloggning öppnas inloggningen därifrån
     if sec == "konto":
         page.click(".pcardbtn")
+        if page.locator("#acctemail").count():   # inloggningen är redan öppen
+            return
+        # Konto och data ligger bakom kugghjulet; utan inloggning öppnas inloggningen därifrån
+        page.click(".megear")
         if page.locator("[data-melogin]").count():
             page.click("[data-melogin]")
         return
@@ -153,8 +157,8 @@ def test_guide_for_hemskarmen_pa_iphone(page):
     assert page.locator(".nudge").count() == 0
     go(page, "profil")
     page.click(".pcardbtn")
-    page.click("[data-pfsheet='data']")
-    assert "Lägg till på hemskärmen" in page.inner_text(".mesheet")
+    page.click(".megear")
+    assert "Lägg till på hemskärmen" in page.inner_text(".mesheet2")
 
 def test_fasta_dagar_kraver_ratt_antal(page):
     open_app(page)
@@ -1040,6 +1044,7 @@ def test_supabase_inloggning_synk_och_sammanslagning(page):
     page.fill("#acctcode", "123456")
     page.click("[data-verifycode]")
     page.wait_for_function("account.step === 'in' && Object.keys(window.__db).length >= 2")
+    page.click(".megear")   # kontot ligger bakom kugghjulet på profilsidan
     assert "test@exempel.se" in page.inner_text(KONTO)
     # Rensad webbläsare: datan kommer tillbaka från kontot
     page.evaluate("localStorage.clear()")
@@ -2222,7 +2227,7 @@ def test_nollstall_allt_borjar_pa_valkomstsidan(page):
     page.evaluate("account.step = 'in'; account.email = 'a@b.se'; cloud.status = 'cloud'")
     go(page, "profil")
     page.click(".pcardbtn")
-    page.click("[data-pfsheet='data']")
+    page.click(".megear")
     page.click("[data-reset]")
     page.click("[data-reset]")
     assert page.evaluate("[tab, onb, S.setupDone]") == ["upplagg", 0, False]

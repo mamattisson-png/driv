@@ -2153,29 +2153,55 @@ button.h3-card.h3-head { background: var(--card); padding: 12px 14px; }
 .pcardbtn .grow { flex: 1; }
 .pcardbtn .col { display: flex; flex-direction: column; gap: 2px; }
 .pcardbtn b { font-size: 18px; }
-.mepage { display: flex; flex-direction: column; }
-.mepage > .backbtn { align-self: flex-start; }
-.mehead { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 4px; margin: 6px 0 2px; }
-.mehead h1 { margin: 12px 0 0; font-size: 26px; }
-.mepic { position: relative; width: 116px; height: 116px; min-height: 0; padding: 0; border: 0; border-radius: 50%; background: none; }
-.av.mepicav { width: 116px; height: 116px; font-size: 44px; box-shadow: 0 0 0 3px var(--bg), 0 0 0 5px var(--accent); }
-.mecam { position: absolute; right: 0; bottom: 2px; width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: var(--text); color: var(--bg); border: 3px solid var(--bg); }
-.mestats { display: grid; grid-template-columns: repeat(3, 1fr); margin: 18px 0 12px; padding: 12px 0; border-radius: 18px; background: var(--card); }
-.mestats > div { display: flex; flex-direction: column; align-items: center; gap: 2px; }
-.mestats > div + div { border-left: 1px solid var(--line); }
-.mestats b { font: 700 21px "Unbounded", sans-serif; }
-.mestats span { color: var(--muted); font-size: 12px; }
-.mebtns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.mebtns button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 48px; border-radius: 14px; font-weight: 600; font-size: 14.5px; }
-.mebtns button:only-child { grid-column: 1 / -1; }
-.mek { display: block; margin: 20px 4px 8px; }
-.pfrow2 b { font-weight: 500; }
-.pfrow2:disabled { opacity: 1; cursor: default; }
-.mequiet { margin-top: 12px; }
-.menote { margin: 8px 4px 0; }
-.mesheetpic { display: flex; justify-content: center; margin: 6px 0 12px; }
-.mesheetlist { margin: 10px 0 4px; background: var(--card-2); }
-.mename { width: 100%; }
+/* Din profil: minimalistisk, svart, vitt och en accent */
+.mepage2 { display: flex; flex-direction: column; }
+.mebar { display: flex; justify-content: space-between; align-items: center; }
+.megear { width: 40px; height: 40px; min-height: 0; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--text); display: grid; place-items: center; }
+.megear svg { width: 21px; height: 21px; }
+.me2 { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 0; margin: 10px 0 6px; padding: 0; border: 0; background: none; color: var(--text); text-align: left; font: inherit; }
+.me2 .grow { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.me2 b { font-size: 19px; font-weight: 600; letter-spacing: -.01em; }
+.me2 small { color: var(--muted); font-size: 12.5px; }
+.av.me2av { width: 52px; height: 52px; font-size: 21px; flex: none; }
+.mesec { margin-top: 10px; padding: 12px 14px; border-radius: 16px; background: var(--card); border: 1px solid var(--line); }
+.menums { display: grid; grid-template-columns: repeat(3, 1fr); }
+.menums > div { display: flex; flex-direction: column; gap: 2px; }
+.menums > div + div { border-left: 1px solid var(--line-strong); padding-left: 14px; }
+.menums b { font: 600 24px "Lexend", sans-serif; letter-spacing: -.03em; line-height: 1.1; }
+.menums span { color: var(--muted); font-size: 11.5px; }
+.meh { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
+.meh b { font-size: 13.5px; font-weight: 600; }
+.meh span, .meh .linkbtn2 { color: var(--muted); font-size: 12px; }
+.meh .linkbtn2 { min-height: 0; padding: 0; }
+.meweek { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; }
+.mewd { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.mewd small { color: var(--muted); font-size: 11px; }
+.mewd i { width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid var(--line-strong); }
+.mewd i.on { background: var(--text); border-color: var(--text); }
+.mewd i.today:not(.on) { border-color: var(--accent); }
+.mewd i.today.on { box-shadow: 0 0 0 2px var(--bg), 0 0 0 3.5px var(--accent); }
+.mebars { width: 100%; height: 46px; display: block; }
+.mebars rect { fill: var(--line-strong); }
+.mebars rect.now { fill: var(--accent); }
+.merecs > div { display: flex; justify-content: space-between; align-items: baseline; padding: 10px 0; font-size: 14px; }
+.merecs > div + div { border-top: 1px solid var(--line-strong); }
+.merecs b { font-weight: 600; }
+.merecs em { font-style: normal; color: var(--muted); font-size: 12px; margin-left: 10px; }
+.mesheet2 { padding-top: 10px; }
+.megrab { display: block; width: 36px; height: 5px; border-radius: 3px; background: var(--line-strong); margin: 0 auto 14px; }
+.mesheethead { display: flex; align-items: center; gap: 12px; }
+.mesheethead .grow { display: flex; flex-direction: column; min-width: 0; }
+.mesheethead b { font-size: 15.5px; font-weight: 600; }
+.mesheethead small { color: var(--muted); font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; }
+.av.mesheetav { width: 44px; height: 44px; font-size: 18px; flex: none; }
+.melbl { color: var(--muted); font-size: 11.5px; letter-spacing: .04em; margin: 16px 4px 6px; }
+.megrp { border-radius: 14px; background: var(--card-2); padding: 0 14px; }
+.merow { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 46px; padding: 0; border: 0; border-radius: 0; background: none; color: var(--text); text-align: left; font: 400 14.5px "Lexend", sans-serif; }
+.merow + .merow { border-top: 1px solid var(--line-strong); }
+.merow .muted { font-size: 13px; }
+.merow svg { color: var(--muted); flex: none; }
+.merow.red { color: var(--bad-text); }
+.mename2 { width: 100%; margin-top: 12px; font-size: 18px; }
 .mesave { margin-top: 12px; }
 /* Stretch under vilan */
 .vstretch { display: flex; align-items: center; gap: 12px; width: 100%; height: auto; min-height: 68px; flex: none; margin: 10px 0 4px; padding: 10px 12px; border-radius: 16px; text-align: left; font: inherit;
