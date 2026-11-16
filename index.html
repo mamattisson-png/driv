@@ -2547,6 +2547,36 @@ button.acttile { min-height: 64px; cursor: pointer; }
 .wk-g svg { margin-left: auto; color: var(--muted); }
 .rutplan { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 4px 0 16px; }
 
+
+/* Vikt */
+.vk-sub { margin: 2px 0 14px; }
+.vk-hero { padding: 18px; display: flex; flex-direction: column; gap: 6px; }
+.vk-now { display: flex; align-items: baseline; gap: 8px; }
+.vk-now b { font: 800 44px/1 "Unbounded", sans-serif; }
+.vk-now span { color: var(--muted); }
+.vk-bdg { align-self: flex-start; padding: 5px 12px; border-radius: 99px; font-weight: 600; font-size: 13px; }
+.vk-bdg.ok { background: var(--ok-soft); color: var(--ok-text); }
+.vk-bdg.warn { background: var(--accent-soft); color: var(--accent-text); }
+.vk-chart { margin-top: 8px; }
+.vk-chart .readout { font-size: 13px; color: var(--muted); font-weight: 400; }
+.vk-chart .readout b { font-weight: 600; color: var(--text); }
+.vk-save { margin: 10px 0 0; }
+.vk-hist { display: flex; flex-direction: row; gap: 8px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+.vk-hist::-webkit-scrollbar { display: none; }
+.vk-hist div { flex: none; padding: 10px 12px; border-radius: 16px; background: var(--card); border: 1px solid var(--line); display: flex; flex-direction: column; gap: 2px; }
+.vk-hist small { color: var(--muted); font-size: 12px; }
+.vk-hist b { font: 700 14px "Unbounded", sans-serif; white-space: nowrap; }
+.vlink { display: flex; align-items: center; gap: 12px; width: 100%; margin-top: 12px; padding: 14px 16px; border-radius: 18px; background: var(--card); border: 1px solid var(--line); color: var(--text); font: inherit; text-align: left; }
+.vlink .grow { display: flex; flex-direction: column; gap: 2px; } .vlink b { font-size: 16px; font-weight: 600; } .vlink small { color: var(--muted); font-size: 13px; }
+.gtiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.gtile { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 14px 6px; border-radius: 18px; background: var(--card); border: 2px solid var(--line); color: var(--text); font: inherit; text-align: center; }
+.gtile.on { border-color: var(--accent); background: var(--accent-soft); }
+.gtile .gic { width: 44px; height: 44px; border-radius: 22px; background: var(--card-2); display: grid; place-items: center; font-size: 20px; font-weight: 700; }
+.gtile.on .gic { background: var(--accent-strong); color: var(--on-accent); }
+.gtile b { font-size: 14.5px; font-weight: 600; } .gtile small { color: var(--muted); font-size: 12px; }
+.card.goalres { display: flex; flex-direction: row; align-items: center; justify-content: space-between; gap: 12px; text-align: left; }
+.goalres .klabel { display: block; margin-bottom: 6px; }
+.gprot { display: flex; flex-direction: column; align-items: flex-end; } .gprot b { font: 800 22px "Unbounded", sans-serif; } .gprot small { color: var(--muted); }
 </style>
 </head>
 <body>

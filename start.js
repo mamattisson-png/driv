@@ -189,10 +189,20 @@ function onbView() {
     <div class="stepcta"><button class="primary wide bigbtn" data-onb="3" ${draftOk() ? "" : "disabled"}>Nästa</button></div>`;
   const p = S.profile, m = macros();
   return `${stepTop(3, 'data-onb="2"', "Pass och dagar")}
-    <h1>Ditt mål</h1><div class="muted lead">Fyll i dig själv, så räknar vi fram ett kalorimål som passar dig.</div>
-    <div class="seg three goalstep">${Object.entries(GOALS).map(([k, v]) => `<button data-goalpick="${k}" class="${p.goal === k ? "on" : ""}" aria-pressed="${p.goal === k}"><b>${v[0].split(" (")[0]}</b><span>${v[1] > 0 ? `+${v[1]} kcal` : v[1] < 0 ? `−${-v[1]} kcal` : "Som nu"}</span></button>`).join("")}</div>
-    <div class="goalfields">${profileFields(p, true)}</div>
-    <div class="card goalres"><span class="klabel accent">Per dag</span><b class="goalnum">${tnum(kcalGoal())} <small>kcal</small></b><span class="muted">och ${m.protein} g protein</span></div>
+    <h1>Ditt mål</h1><div class="muted lead">Dra i linjalerna. Inget måste vara exakt, och allt går att ändra sen.</div>
+    <div class="klabel sechead">Vad vill du?</div>
+    <div class="gtiles">${Object.entries(GOALS).map(([k, v]) => `<button data-goalpick="${k}" class="gtile ${p.goal === k ? "on" : ""}" aria-pressed="${p.goal === k}">
+      <span class="gic">${{ cut: "↓", keep: "=", bulk: "↑" }[k]}</span><b>${v[0].split(" (")[0]}</b><small>${v[1] > 0 ? `+${v[1]} kcal` : v[1] < 0 ? `−${-v[1]} kcal` : "Som nu"}</small></button>`).join("")}</div>
+    <div class="goalfields">
+    <div class="klabel sechead">Kön</div>
+    <div class="seg two vsex">${[["m", "Man"], ["f", "Kvinna"]].map(([k, l]) => `<button data-vsex="${k}" class="${p.sex === k ? "on" : ""}" aria-pressed="${p.sex === k}">${l}</button>`).join("")}</div>
+    <div class="klabel sechead">Ålder</div>${ruler("age")}
+    <div class="klabel sechead">Längd</div>${ruler("height")}
+    <div class="klabel sechead">Vikt</div>${ruler("weight")}
+    <div class="klabel sechead">Hur aktiv är din vardag?</div>
+    <div class="vact" role="radiogroup" aria-label="Aktivitet">${ACTIVITY.map(([v, l]) => { const [name, sub] = l.split(" ("), on = +p.activity === v;
+      return `<button class="vactrow ${on ? "on" : ""}" data-vact="${v}" role="radio" aria-checked="${on}"><span class="grow"><b>${name}</b>${sub ? `<small>${sub.replace(")", "")}</small>` : ""}</span><span class="okrad" aria-hidden="true"></span></button>`; }).join("")}</div></div>
+    <div class="card goalres"><span class="grow"><span class="klabel accent">Per dag</span><b class="goalnum">${tnum(kcalGoal())} <small>kcal</small></b></span><span class="gprot"><b>${m.protein} g</b><small>protein</small></span></div>
     <div class="stepcta"><span class="muted small">Allt går att ändra sen.</span><button class="primary wide bigbtn" data-savesetup ${draftOk() ? "" : "disabled"}>Klart, till Hem</button></div>`;
 }
 
