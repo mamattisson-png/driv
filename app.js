@@ -963,7 +963,7 @@ function render() {
     ? `<div class="editbar">Du ändrar <b>${dateLabel(editDate)}</b><button class="small" data-editdone>Klar</button></div>` : "";
   // Samma inställningsknapp på alla huvudvyer. Hem har knappen i sin egen header.
   // Kugghjulet ligger på samma plats överallt; under ett pass har fokusvyn egna knappar där
-  const gear = tab === "idag" || tab === "profil" || tab === "upplagg" || passDone || inFocus ? "" : `<button class="gear" data-tab="profil" aria-label="Inställningar">${GEAR_SVG}</button>`;
+  const gear = tab === "idag" || tab === "profil" || tab === "upplagg" || tab === "varden" || passDone || inFocus ? "" : `<button class="gear" data-tab="profil" aria-label="Inställningar">${GEAR_SVG}</button>`;
   document.getElementById("app").innerHTML = passDone ? passDoneView()
     : actSheet ? actPage() + tourView()   // Logga motion är en egen sida (aktivitet.js)
     : gear + banner + focusBar() + (libCtx ? muscleView() : VIEWS[tab]()) + (modal ? renderModal() : "") + (sgAdd && EX[sgAdd] ? stretchAddSheet(sgAdd) : "") + tourView();
@@ -971,6 +971,7 @@ function render() {
   const focusScroll = document.querySelector(".focus-scroll");
   if (focusScroll && focus) focusScroll.scrollTop = focus.scrollTop || 0;
   afterFocusRender();
+  initRulers();
   if (tour != null) requestAnimationFrame(positionTour);
   updateBadge();
   cheerCheck();
@@ -1190,6 +1191,7 @@ const VIEWS = {
       ${supplementForm()}${rutinSheet()}</div>`;
   },
   stretchguide() { return muscleView(); },
+  varden() { return vardenView(); },
   vagning() {
     const back = { pass: "Träna", dailys: "Dailys", kost: "Kost", historik: "Historik", profil: "Inställningar" }[vikBack] || "Hem";
     const days = Object.keys(weights()).sort().reverse().slice(0, 5);
@@ -1334,8 +1336,11 @@ const VIEWS = {
           <label class="card psw"><span class="grow">En aktivitet på minst 45 minuter räknas som ett pass i veckan</span><input type="checkbox" class="switch" data-actcount ${S.actCount !== false ? "checked" : ""}></label>
           <label class="card psw"><span class="grow">Lägg till förbrända kcal i dagens kalorimål</span><input type="checkbox" class="switch" data-actkcal ${S.actKcal ? "checked" : ""}></label>
           <div class="muted small" style="margin-top:6px">Förbrända kcal är en uppskattning efter aktivitet, tid och din vikt. Den blir lätt för hög, därför är det avstängt från början.</div>`)}`)}
-      ${group("Kost och kropp", `${profRow("kalori", "kost", "Kalorimål", `${tnum(m.kcal)} kcal · ${GOALS[p.goal][0].split(" (")[0]}`, `<section class="card pbig"><b>${tnum(m.kcal)}</b><span>kcal om dagen · Protein ${m.protein} g · Fett ${m.fat} g · Kolhydrater ${m.carbs} g</span></section>
-          <section class="card">${profileFields(p)}
+      ${group("Kost och kropp", `<div class="prow" id="p-varden"><div class="prow-line"><button class="prow-head" data-tab="varden"><span class="pic">${icon("profil", 20)}</span><span class="grow"><b>Dina värden</b>
+          <span class="muted small">${S.profileSet === false ? "Standardvärden · ställ in dina" : `${p.age} år · ${p.height} cm · ${fmtNum(p.weight)} kg · BMI ${fmtNum(Math.round(bmiOf(p) * 10) / 10)}`}</span></span><span class="chev">${icon("right", 18)}</span></button></div></div>
+        ${profRow("kalori", "kost", "Kalorimål", `${tnum(m.kcal)} kcal · ${GOALS[p.goal][0].split(" (")[0]}`, `<section class="card pbig"><b>${tnum(m.kcal)}</b><span>kcal om dagen · Protein ${m.protein} g · Fett ${m.fat} g · Kolhydrater ${m.carbs} g</span></section>
+          <section class="card"><label class="field">Mål<select data-prof="goal">${Object.entries(GOALS).map(([k, v]) => `<option value="${k}" ${p.goal === k ? "selected" : ""}>${v[0]}</option>`).join("")}</select></label>
+          <button class="link small" data-tab="varden" style="margin-top:8px">Kön, ålder, längd, vikt och aktivitet ställer du in under Dina värden</button>
           <div class="muted" style="margin-top:10px">Underhåll (TDEE): ${tdee(p)} kcal · Mål: ${m.kcal} kcal</div>
           <div class="muted">Protein ${m.protein} g · Fett ${m.fat} g · Kolhydrater ${m.carbs} g</div>
           <label class="field" style="margin-top:10px">Eget kalorimål (lämna tomt för beräknat)

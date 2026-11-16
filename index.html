@@ -2339,6 +2339,45 @@ button.acttile { min-height: 64px; cursor: pointer; }
 .tour-card p { margin: 0 0 12px; color: var(--muted); font-size: 14px; line-height: 1.45; }
 .tour-btns { gap: 8px; }
 @media (prefers-reduced-motion: reduce) { .tour-ring { animation: none; transition: none; } }
+
+/* Dina värden */
+.varden .lead { margin-bottom: 4px; }
+.vnote { display: flex; align-items: center; gap: 8px; margin: 12px 0 0; padding: 10px 14px; border-radius: 14px; background: var(--accent-soft); color: var(--accent-text); font-size: 14px; }
+.vsex { margin: 0; }
+.rulbox { position: relative; background: var(--card); border: 1px solid var(--line); border-radius: 20px; padding: 14px 0 10px; overflow: hidden; }
+.rulval { display: flex; align-items: baseline; justify-content: center; gap: 6px; margin-bottom: 8px; }
+.rulval b { font: 800 36px/1 "Unbounded", sans-serif; font-variant-numeric: tabular-nums; }
+.rulval span { color: var(--muted); font-size: 15px; }
+.rul { display: flex; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; cursor: grab; outline: none; }
+.rul::-webkit-scrollbar { display: none; }
+.rul:focus-visible { box-shadow: inset 0 0 0 2px var(--accent); border-radius: 12px; }
+.rulpad { flex: 0 0 50%; }
+.rultrack { flex: none; position: relative; height: 62px; margin-left: -1px;
+  background-image: linear-gradient(to right, var(--line-strong) 0 2px, transparent 2px), linear-gradient(to right, var(--muted) 0 2px, transparent 2px);
+  background-size: var(--t) 16px, var(--l) 30px; background-repeat: repeat-x; background-position: 0 6px, 0 0; }
+.rultrack span { position: absolute; top: 38px; transform: translateX(-50%); margin-left: 1px; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.rulneedle { position: absolute; left: 50%; bottom: 30px; width: 4px; height: 42px; margin-left: -2px; border-radius: 2px; background: var(--accent-strong); pointer-events: none; }
+.rulbox::before, .rulbox::after { content: ""; position: absolute; bottom: 0; width: 56px; height: 72px; z-index: 1; pointer-events: none; }
+.rulbox::before { left: 0; background: linear-gradient(to right, var(--card), transparent); }
+.rulbox::after { right: 0; background: linear-gradient(to left, var(--card), transparent); }
+.bmicard { margin-top: 12px; padding: 16px; }
+.bminum { display: block; font: 800 34px/1 "Unbounded", sans-serif; margin: 8px 0 14px; }
+.bmitag { font-size: 13px; font-weight: 600; padding: 4px 10px; border-radius: 99px; }
+.bmitag.u { background: #1d2c3d; color: #8cc4ff; } .bmitag.n { background: var(--ok-soft); color: var(--ok-text); }
+.bmitag.o { background: #3a2e14; color: #ffc861; } .bmitag.f { background: var(--bad-soft); color: var(--bad); }
+.bmiscale { position: relative; display: grid; grid-template-columns: 17.5fr 32.5fr 25fr 25fr; gap: 3px; height: 10px; }
+.bmiscale i { border-radius: 5px; } .bmiscale .u { background: #5aa7f0; } .bmiscale .n { background: #4cc583; } .bmiscale .o { background: #f0b03c; } .bmiscale .f { background: #ec6a5e; }
+.bmimark { position: absolute; top: -5px; width: 6px; height: 20px; margin-left: -3px; border-radius: 3px; background: var(--text); box-shadow: 0 0 0 2px var(--card); }
+.bmilbl { position: relative; height: 16px; font-size: 11.5px; color: var(--muted); margin: 6px 0 12px; }
+.bmilbl span { position: absolute; transform: translateX(-50%); }
+.vact { display: flex; flex-direction: column; gap: 8px; }
+.vactrow { display: flex; align-items: center; gap: 12px; width: 100%; padding: 13px 16px; border-radius: 18px; border: 1.5px solid var(--line); background: var(--card); color: var(--text); text-align: left; font: inherit; }
+.vactrow .grow { display: flex; flex-direction: column; gap: 2px; } .vactrow b { font-size: 16px; font-weight: 600; } .vactrow small { color: var(--muted); font-size: 13px; }
+.vactrow.on { border-color: var(--accent); background: var(--accent-soft); } .vactrow.on .okrad { border: 7px solid var(--accent-strong); }
+.vsum { padding: 4px 16px; }
+.vsrow { display: flex; justify-content: space-between; align-items: baseline; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.vsrow:last-child { border-bottom: 0; } .vsrow span { color: var(--muted); } .vsrow b { font: 700 17px "Unbounded", sans-serif; } .vsrow small { font: 400 12px "Lexend", sans-serif; color: var(--muted); }
+.vreset { display: block; width: 100%; text-align: center; margin: 18px 0 0; }
 </style>
 </head>
 <body>
@@ -2375,6 +2414,7 @@ button.acttile { min-height: 64px; cursor: pointer; }
 <script src="kommande.js"></script>
 <script src="guide.js"></script>
 <script src="rutiner.js"></script>
+<script src="varden.js"></script>
 <script src="app.js"></script>
 <script src="livsmedel.js" async></script>
 <script>

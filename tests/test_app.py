@@ -118,9 +118,9 @@ def test_kort_start_och_paminnelse_om_kalorimal(page):
     page.click("[data-savesetup]")
     go(page, "kost")
     assert "standardvärden" in page.inner_text(".dayring")
-    page.click(".dayring [data-tab=profil]")
-    page.fill("[data-prof=weight]", "72")
-    page.press("[data-prof=weight]", "Tab")
+    page.click(".dayring [data-tab=varden]")
+    page.evaluate("""() => { const el = document.querySelector('[data-rul=weight]'); el.scrollLeft -= 8 * RULERS.weight.px; el.dispatchEvent(new Event('scroll')); }""")
+    page.wait_for_function("S.profile.weight === 72")
     go(page, "kost")
     assert "standardvärden" not in page.inner_text(".dayring")
 
