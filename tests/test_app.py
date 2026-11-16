@@ -1,8 +1,8 @@
 """Webbläsartester för Driv. Kör med: python -m pytest tests"""
 import pytest
-from conftest import finish_setup, go, open_app, start, to_step, pick
+from conftest import finish_setup, go, open_app, start, to_step, pick, open_daily_add, back_to_day
 
-KONTO = '.card:has(h2:text-is("Konto"))'
+KONTO = '.mepage2'   # profilsidan visar kontot längst ned (e-post, logga ut)
 
 
 def open_ex(page, ex_id):
@@ -38,6 +38,15 @@ def prof(page, sec):
         return
     if sec == "vikt":
         page.click('#p-vikt [data-tab="vagning"]')
+        return
+    # Kontot finns på profilsidan; utan inloggning öppnas inloggningen därifrån
+    if sec == "konto":
+        page.click(".pcardbtn")
+        if page.locator("#acctemail").count():   # inloggningen är redan öppen
+            return
+        # Konto och data ligger längst ned på profilsidan; utan inloggning öppnas inloggningen därifrån
+        if page.locator("[data-melogin]").count():
+            page.click("[data-melogin]")
         return
     # Varje rad öppnar en egen sida; Utseende och Figur ändras direkt i listan
     if page.evaluate("profOpen") != sec and page.locator(f'[data-psec="{sec}"]').count():
@@ -118,9 +127,9 @@ def test_kort_start_och_paminnelse_om_kalorimal(page):
     page.click("[data-savesetup]")
     go(page, "kost")
     assert "standardvärden" in page.inner_text(".dayring")
-    page.click(".dayring [data-tab=profil]")
-    page.fill("[data-prof=weight]", "72")
-    page.press("[data-prof=weight]", "Tab")
+    page.click(".dayring [data-tab=varden]")
+    page.evaluate("""() => { const el = document.querySelector('[data-rul=weight]'); el.scrollLeft -= 8 * RULERS.weight.px; el.dispatchEvent(new Event('scroll')); }""")
+    page.wait_for_function("S.profile.weight === 72")
     go(page, "kost")
     assert "standardvärden" not in page.inner_text(".dayring")
 
@@ -146,8 +155,8 @@ def test_guide_for_hemskarmen_pa_iphone(page):
     page.click("[data-installlater]")
     assert page.locator(".nudge").count() == 0
     go(page, "profil")
-    page.click("[data-psec=konto] >> nth=0")
-    assert "Lägg till på hemskärmen" in page.inner_text(".ppage")
+    page.click(".pcardbtn")
+    assert "Lägg till på hemskärmen" in page.inner_text(".mepage2")
 
 def test_fasta_dagar_kraver_ratt_antal(page):
     open_app(page)
@@ -1216,7 +1225,7 @@ def test_paminnelse_om_konto_efter_tre_dagar(page):
     assert page.locator(".nudge").count() == 0
     page.evaluate("S.nudgeUntil = null; render()")
     page.click("[data-gokonto]")
-    assert page.evaluate("tab") == "profil"
+    assert page.evaluate("tab") == "minprofil"
     assert page.evaluate("document.activeElement.id") == "acctemail"
     login(page)
     go(page, "idag")
@@ -1522,14 +1531,16 @@ def test_testlage_har_egen_data(page):
 def test_stretch_som_daily(page):
     start(page)
     go(page, "dailys")
-    page.click('[data-openpick="daily"]')
+    open_daily_add(page)
     page.click('[data-mskmode="st"]')
     count = page.evaluate("Object.values(EX).filter(e => e.cat === 'stretch').length")
     assert f"{count} stretchövningar" in page.inner_text(".sg-head")
     page.fill("#mskq", "duvan")
     page.click('[data-libpick="duvan"]')
     assert page.evaluate("tab") == "dailys" and page.evaluate("libCtx") is None
-    assert "Duvan" in page.inner_text("#app") and "2 × 45 s/sida" in page.inner_text("#app")
+    assert "Duvan" in page.inner_text("#app")
+    back_to_day(page)
+    assert "2 × 45 s/sida" in page.inner_text("#app")
     page.click('[data-dcheck="duvan"]')
     assert page.evaluate("dailyDone(TODAY, 'duvan')") is True
     # Stretch hålls en tid: i ett pass syns bara sekunder, ingen vikt
@@ -1644,7 +1655,7 @@ def test_lagg_till_fran_pass_och_dailys(page):
     # Från Dailys: samma bibliotek, tillbaka till Dailys, befintliga dailys orörda
     go(page, "dailys")
     before = page.evaluate("JSON.stringify(S.daily)")
-    page.click('[data-openpick="daily"]')
+    open_daily_add(page)
     assert "Lägg till daily" in page.inner_text(".msk h1")
     page.fill("#mskq", "bänkpress")
     page.click('[data-libpick="bankpress"]')
@@ -1659,7 +1670,7 @@ def test_lagg_till_fran_pass_och_dailys(page):
     page.click('#nav [data-tab="kost"]')
     assert page.locator(".msk").count() == 0 and page.evaluate("tab") == "kost"
     go(page, "dailys")
-    page.click('[data-openpick="daily"]')
+    open_daily_add(page)
     page.click('#nav [data-tab="dailys"]')
     assert page.locator(".msk").count() == 0 and page.evaluate("libCtx") is None
 
@@ -2214,7 +2225,7 @@ def test_nollstall_allt_borjar_pa_valkomstsidan(page):
     # Även inloggad hamnar man på välkomstsidan, precis som en ny användare
     page.evaluate("account.step = 'in'; account.email = 'a@b.se'; cloud.status = 'cloud'")
     go(page, "profil")
-    page.click('[data-psec="konto"] >> nth=0')
+    page.click(".pcardbtn")
     page.click("[data-reset]")
     page.click("[data-reset]")
     assert page.evaluate("[tab, onb, S.setupDone]") == ["upplagg", 0, False]
@@ -2338,7 +2349,7 @@ def test_firande_nar_alla_dailys_ar_klara(page):
         page.click(f'[data-dcheck="{i}"]')
         assert page.locator(".burst").count() == 0
     page.click(f'[data-dcheck="{ids[-1]}"]')
-    assert page.locator(".burst").count() == 1 and page.locator(".dlx-ring.pulse").count() == 1
+    assert page.locator(".burst").count() == 1 and page.locator(".dlx-prog.pulse").count() == 1
     # Öppnas appen igen med allt klart blir det inget nytt firande
     page.reload()
     go(page, "dailys")

@@ -657,7 +657,7 @@ function kostRing(e, m) {
       <div class="kside"><span class="muted small">Bränt</span><b>${tnum(burned)}</b></div></div>
     <div class="kmacros">${tile("prot", "Protein", e.protein, m.protein, true)}${tile("fat", "Fett", e.fat, m.fat, false)}${tile("fib", "Fibrer", e.fiber, m.fiber, true)}</div>
     ${e.n > e.known ? `<div class="muted small kmiss">Fett eller fibrer saknas för ${e.n - e.known} av ${e.n} saker.</div>` : ""}
-    ${S.profileSet === false ? `<button class="link small" data-tab="profil" data-popen="kalori">Målet bygger på standardvärden – ställ in ditt</button>` : ""}</section>`;
+    ${S.profileSet === false ? `<button class="link small" data-tab="varden">Målet bygger på standardvärden – ställ in ditt</button>` : ""}</section>`;
 }
 // Kvar idag: kcal som en stapel och protein under
 function kostSummary(e, m) {
@@ -672,7 +672,7 @@ function kostSummary(e, m) {
       <div class="kfat"><span class="muted small">Fett</span><span class="small"><b>${tnum(e.fat)}</b> / ${tnum(m.fat)} g</span>${bar(e.fat, m.fat, false, "fat")}</div>
       <div class="kfib"><span class="muted small">Fibrer</span><span class="small"><b>${tnum(e.fiber)}</b> / ${m.fiber} g</span>${bar(e.fiber, m.fiber, true, "fib")}</div></div>
     ${e.n > e.known ? `<div class="muted small kmiss">Fett eller fibrer saknas för ${e.n - e.known} av ${e.n} saker idag.</div>` : ""}
-    ${S.profileSet === false ? `<button class="link small" data-tab="profil" data-popen="kalori">Målet bygger på standardvärden – ställ in ditt</button>` : ""}</section>`;
+    ${S.profileSet === false ? `<button class="link small" data-tab="varden">Målet bygger på standardvärden – ställ in ditt</button>` : ""}</section>`;
 }
 
 // Sparade måltider för en viss måltid (äldre sparningar känns igen på namnet, t.ex. "Frukost: …")

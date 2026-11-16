@@ -203,5 +203,6 @@ document.addEventListener("click", ev => {
   else if (ds.mskmore !== undefined) msk.limit += 30;
   else if (ds.mskdetail !== undefined) mskDetail = ds.mskdetail || null;
   render();
-  window.scrollTo(0, 0);
+  // Visa fler och Fram/Bak ska stanna där man är; annat börjar överst
+  if (ds.mskmore === undefined && !ds.mskview) window.scrollTo(0, 0);
 });

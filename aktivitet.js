@@ -11,10 +11,12 @@ const actInfo = name => ACTIVITIES.find(a => a.name.toLowerCase() === String(nam
 const actIcon = () => icon("aktivitet", 20);
 const actsOn = date => (S.log[date] && S.log[date].acts) || [];
 const actCounts = a => S.plan.free ? +a.min > 0 : S.actCount !== false && +a.min >= 45;
-// Ungefär förbrända kcal: MET × kroppsvikt × timmar (okänd aktivitet räknas som medelhård, MET 5)
+// Ungefär förbrända kcal: MET × din förbrukning i vila per minut × minuter. Vilan räknas ur kön, ålder, längd
+// och vikt (Mifflin–St Jeor), så att samma pass ger olika siffror för olika personer (korrigerad MET).
+// Utan egna värden används standardvärdena. Okänd aktivitet räknas som medelhård, MET 5.
 function actKcal(a) {
   const info = actInfo(a.name), met = info ? info.met[(a.int || 2) - 1] : [3.5, 5, 7][(a.int || 2) - 1];
-  return Math.round(met * (S.profile.weight || 75) * (+a.min || 0) / 60);
+  return Math.round(met * bmr(S.profile) / 1440 * (+a.min || 0));
 }
 // Dagens kalorimål, med aktiviteternas kcal om man valt det
 const burnedOn = date => S.actKcal ? [...actsOn(date), ...schedActs(date)].reduce((s, a) => s + actKcal(a), 0) : 0;

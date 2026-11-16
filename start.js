@@ -14,6 +14,7 @@ function ensureDraft() {
     count: S.plan.free ? S.plan.count : S.plan.days.filter(d => !d.extra).length,
     mode: S.plan.mode || "flex",
     free: !!S.plan.free,
+    motionOnly: !!(S.plan.free && S.plan.motionOnly),
     weekdays: S.plan.weekdays.slice(),
     days: JSON.parse(JSON.stringify(S.plan.days)),
   };
@@ -109,7 +110,7 @@ function daysPicker() {
 }
 
 // Gym, Motion eller Båda: Motion är programmet Bara motion, Båda är ett gymprogram med motionspass tillagda
-const draftKind = () => draft.free ? "free" : draft.program === "aktiviteter" ? "motion" : draft.days.some(d => d.extra && d.type === "act") ? "both" : "gym";
+const draftKind = () => draft.free ? (draft.motionOnly ? "motion" : "free") : draft.program === "aktiviteter" ? "motion" : draft.days.some(d => d.extra && d.type === "act") ? "both" : "gym";
 function onbKinds() {
   const k = draftKind();
   const opt = (id, ic, cls, title, sub) => `<button class="onbkind ${k === id ? "on" : ""}" data-onbkind="${id}" role="radio" aria-checked="${k === id}">
@@ -121,8 +122,9 @@ function onbKinds() {
 }
 function setDraftKind(kind) {
   // Inget schema: passen i schemat ligger kvar (om man vill tillbaka) men används inte; bara veckomålet gäller
-  if (kind === "free") { draft.free = true; draft.count = Math.min(7, Math.max(1, draft.count || 3)); return; }
-  if (draft.free) { draft.free = false; draft.count = draft.days.filter(d => !d.extra).length || 3; if (!draft.days.length) draft.days = planDays(draft.program, draft.count, []); if (kind === draftKind()) return; }
+  if (kind === "free") { draft.free = true; draft.motionOnly = false; draft.count = Math.min(7, Math.max(1, draft.count || 3)); return; }
+  if (kind === "motion" && draft.free && draft.motionOnly) return;
+  if (draft.free) { draft.free = false; draft.motionOnly = false; draft.count = draft.days.filter(d => !d.extra).length || 3; if (!draft.days.length) draft.days = planDays(draft.program, draft.count, []); if (kind === draftKind()) return; }
   const keep = draft.days.filter(d => d.extra && d.type !== "act");
   if (kind === "motion") {
     draft.program = "aktiviteter"; draft.count = 3;
@@ -134,6 +136,25 @@ function setDraftKind(kind) {
   }
   if (draft.weekdays.length !== draft.days.length) draft.weekdays = DEFAULT_WEEKDAYS[Math.min(7, draft.days.length)].slice();
 }
+// Motion kan vara planerade pass eller ett tomt schema, där passen läggs in när man har tränat
+const motionPlan = () => `<div class="seg two motionplan">
+    <button data-motionplan="plan" class="${draft.free ? "" : "on"}" aria-pressed="${!draft.free}"><b>Planerade pass</b><span>Välj vad du gör och hur länge</span></button>
+    <button data-motionplan="tomt" class="${draft.free ? "on" : ""}" aria-pressed="${draft.free}"><b>Tomt schema</b><span>Lägg in passen när du har tränat</span></button></div>`;
+function setMotionPlan(v) {
+  if (v === "tomt") { if (!draft.free) draft.count = draft.days.filter(d => !d.extra).length || 3; draft.free = true; draft.motionOnly = true; return; }
+  if (!draft.free) return;
+  draft.free = false; draft.motionOnly = false;
+  const old = draft.program === "aktiviteter" ? draft.days : [];
+  draft.program = "aktiviteter"; draft.days = planDays("aktiviteter", Math.max(1, Math.min(7, draft.count || 3)), old);
+  draft.count = draft.days.length;
+  if (draft.weekdays.length !== draft.days.length) draft.weekdays = DEFAULT_WEEKDAYS[draft.days.length].slice();
+}
+document.addEventListener("click", ev => {
+  const t = ev.target.closest && ev.target.closest("[data-motionplan]");
+  if (!t || !draft) return;
+  ev.stopImmediatePropagation();
+  setMotionPlan(t.dataset.motionplan); render();
+}, true);
 document.addEventListener("click", ev => {
   const t = ev.target.closest && ev.target.closest("[data-onbkind]");
   if (!t || !draft) return;
@@ -150,7 +171,8 @@ function onbView() {
     ${draftKind() === "motion" || draft.free ? "" : `<div class="klabel sechead">Välj gymprogram</div><div class="muted small" style="margin:-4px 4px 8px">Övningarna är redan ifyllda.</div>${progTiles(draft.program, true)}`}
     <div class="stepcta"><button class="primary wide bigbtn" data-onb="2">Nästa</button></div>`;
   if (onb === 2 && draft.free) return `${stepTop(2, 'data-onb="1"', "Program")}
-    <h1>Hur ofta?</h1><div class="muted lead">Hur många gånger i veckan vill du träna? Allt du loggar räknas: gympass, löpning, padel …</div>
+    <h1>Hur ofta?</h1><div class="muted lead">Hur många gånger i veckan vill du träna? Allt du loggar räknas: ${draft.motionOnly ? "promenad, löpning, padel …" : "gympass, löpning, padel …"}</div>
+    ${draft.motionOnly ? `<div class="klabel sechead">Upplägg</div>${motionPlan()}` : ""}
     <div class="klabel sechead">Träna i veckan</div>
     <div class="seg count">${[1, 2, 3, 4, 5, 6, 7].map(c => `<button data-count="${c}" class="${n === c ? "on" : ""}" aria-pressed="${n === c}">${c}</button>`).join("")}</div>
     <div class="muted small daysnote">Du kan välja ett schema när som helst under Träningsschema.</div>
@@ -158,6 +180,7 @@ function onbView() {
   if (onb === 2) return `${stepTop(2, 'data-onb="1"', "Program")}
     <h1>Hur ofta?</h1><div class="muted lead">${draftKind() === "motion" ? "Hur många gånger i veckan vill du röra på dig? Vad och hur länge ändrar du sen under Träningsschema."
       : draft.program === "eget" ? "Hur många pass vill du ha i veckan?" : `${pr.name} är gjort för ${pr.best} pass i veckan.${draftKind() === "both" ? " Motionspassen kommer utöver dem." : ""}`}</div>
+    ${draftKind() === "motion" ? `<div class="klabel sechead">Upplägg</div>${motionPlan()}` : ""}
     <div class="klabel sechead">${draftKind() === "motion" ? "Motionspass i veckan" : draftKind() === "both" ? "Gympass i veckan" : "Pass i veckan"}</div>
     <div class="seg count">${counts(draft.program).map(c => `<button data-count="${c}" class="${n === c ? "on" : ""}" aria-pressed="${n === c}">${c}</button>`).join("")}</div>
     <div class="muted small daysnote">Passen blir: <b class="strong">${draft.days.map(d => esc(d.name)).join(", ")}</b>${pr.fit.includes(n) ? "" : `. ${pr.name} är gjort för ${pr.best} pass, så passen har anpassats`}${n === 7 ? ". Sju pass i veckan kräver bra återhämtning" : ""}</div>
@@ -173,36 +196,42 @@ function onbView() {
     <div class="stepcta"><span class="muted small">Allt går att ändra sen.</span><button class="primary wide bigbtn" data-savesetup ${draftOk() ? "" : "disabled"}>Klart, till Hem</button></div>`;
 }
 
-// Upplägg efter starten: programmet, antal pass och dagarna, som rutor
+// Upplägg efter starten: uppifrån och ner, ett steg i taget. Hur man tränar, sedan programmet (bara gym),
+// eller för motion planerade pass eller ett tomt schema, sedan veckan och passen, och sist Spara.
 function upplaggView() {
   ensureDraft();
-  const pr = PROGRAMS[draft.program], n = draft.count, c = counts(draft.program), fixed = draft.mode === "fixed";
+  const pr = PROGRAMS[draft.program], n = draft.count, c = counts(draft.program), fixed = draft.mode === "fixed", k = draftKind();
   const back = { idag: "Hem", pass: "Träna" }[setupFrom] || "Inställningar";
+  let step = 0;
+  const head = (t, end = "") => `<div class="row between upstep"><span class="upnum">${++step}</span><span class="grow">${t}</span>${end}</div>`;
+  const goal = note => `<section class="card upgoal freegoal"><span class="grow col"><b>Träna i veckan</b><span class="muted small">${note}</span></span>
+      <span class="upstepper"><button data-count="${n - 1}" ${n > 1 ? "" : "disabled"} aria-label="Färre">${icon("minus", 18)}</button>
+        <b class="upn unum">${n}</b><button data-count="${n + 1}" ${n < 7 ? "" : "disabled"} aria-label="Fler">${icon("plus", 18)}</button></span></section>`;
+  const prog = k === "gym" || k === "both";
   return `<button class="backbtn backlink" data-cancelsetup>${icon("left", 18)}${back}</button>
     <h1>Träningsschema</h1>
+    ${head("Hur vill du träna?")}
     ${onbKinds()}
-    ${draft.free ? `<section class="card utile freegoal"><span class="klabel">Träna i veckan</span><b class="unum">${n}</b>
-        <span class="row"><button class="grow" data-count="${n - 1}" ${n > 1 ? "" : "disabled"} aria-label="Färre">${icon("minus", 18)}</button>
-          <button class="grow" data-count="${n + 1}" ${n < 7 ? "" : "disabled"} aria-label="Fler">${icon("plus", 18)}</button></span></section>
-      <div class="muted small finish-note">Inget schema: du loggar gympass och motion fritt, och allt räknas mot veckans mål.</div>
-      <button class="primary wide bigbtn" data-savesetup>Spara</button>` : `
-    <section class="card progcard" aria-label="Ditt program">
-      <div class="row between"><span class="klabel accent">Ditt program</span><button class="linkbtn2" data-progtoggle aria-expanded="${progOpen}">${progOpen ? "Stäng" : "Byt program"}${icon(progOpen ? "up" : "right", 14)}</button></div>
-      <div class="progname">${esc(pr.name)}</div>
-      <div class="muted small">${esc(pr.info)}</div>
-      </section>
-    ${progOpen ? `<div class="progpick">${progTiles(draft.program)}</div>` : ""}
+    ${prog ? `${head(k === "both" ? "Gymprogram" : "Program")}
+      <section class="card progcard" aria-label="Ditt program">
+        <span class="grow col"><b class="progname">${esc(pr.name)}</b><span class="muted small">${esc(pr.info)}</span></span>
+        <button class="linkbtn2" data-progtoggle aria-expanded="${progOpen}">${progOpen ? "Stäng" : "Byt"}${icon(progOpen ? "up" : "down", 14)}</button></section>
+      ${progOpen ? `<div class="progpick">${progTiles(draft.program, true)}</div>` : ""}` : ""}
+    ${k === "motion" ? `${head("Upplägg")}${motionPlan()}` : ""}
+    ${draft.free ? `${head("Mål")}${goal(k === "motion" ? "Logga motion när du har tränat. Allt räknas mot målet." : "Logga gympass och motion fritt. Allt räknas mot målet.")}`
+    : `${head("Veckan")}
     <div class="utiles">
-      <div class="card utile"><span class="klabel">Pass i veckan</span><b class="unum">${draft.days.length}</b>
+      <div class="card utile"><span class="klabel">${k === "both" ? "Gympass" : "Pass"} i veckan</span><b class="unum">${n}</b>
         <span class="row"><button class="grow" data-count="${n - 1}" ${n > c[0] ? "" : "disabled"} aria-label="Färre pass">${icon("minus", 18)}</button>
           <button class="grow" data-count="${n + 1}" ${n < c[c.length - 1] && draft.days.length < 7 ? "" : "disabled"} aria-label="Fler pass">${icon("plus", 18)}</button></span></div>
       <button class="card utile" data-daysopen aria-expanded="${daysOpen}"><span class="row between"><span class="klabel">Dagar</span><span class="accenttext small">${daysOpen ? "Stäng" : "Ändra"}</span></span>
         <b class="uday">${fixed ? "Fasta dagar" : "Olika dagar"}</b>
         <span class="udots" aria-label="${fixed ? draft.weekdays.slice().sort((a, b) => a - b).map(i => WD_LONG[i]).join(", ") : "Nästa pass i tur"}">${WD.map((w, i) => `<i class="${fixed && draft.weekdays.includes(i) ? "on" : ""}">${w[0]}</i>`).join("")}</span></button></div>
     ${daysOpen || (fixed && !draftOk()) ? `<div class="dayspick">${daysPicker()}</div>` : ""}
-    ${planList()}
-    <div class="muted small finish-note">Övningarna i gympassen ändrar du under Träna. Aktiviteter har bara tid och mål.</div>
-    <button class="primary wide bigbtn" data-savesetup ${draftOk() ? "" : "disabled"}>Spara schema</button>`}`;
+    ${head("Passen", draft.days.length > 1 ? `<span class="muted small">Dra för att flytta</span>` : "")}
+    ${planList(true)}
+    <div class="muted small finish-note">${k === "motion" ? "Varje pass har en aktivitet, tid och nivå." : "Övningarna i gympassen ändrar du under Träna."}</div>`}
+    <button class="primary wide bigbtn upsave" data-savesetup ${draftOk() ? "" : "disabled"}>Spara schema</button>`;
 }
 
 document.addEventListener("click", ev => {

@@ -931,7 +931,7 @@ function cheerCheck() {
 // Litet och på plats: konfetti ur bocken man tryckte på, och ringen överst pulserar en gång
 function celebrate() {
   const btn = lastCheck && [...document.querySelectorAll(lastCheck)].find(e => e.getClientRects().length);
-  const ring = document.querySelector(".dlx-ring");
+  const ring = document.querySelector(".dlx-prog");
   if (ring) ring.classList.add("pulse");
   const at = (btn || ring);
   if (at) {
@@ -963,7 +963,7 @@ function render() {
     ? `<div class="editbar">Du ändrar <b>${dateLabel(editDate)}</b><button class="small" data-editdone>Klar</button></div>` : "";
   // Samma inställningsknapp på alla huvudvyer. Hem har knappen i sin egen header.
   // Kugghjulet ligger på samma plats överallt; under ett pass har fokusvyn egna knappar där
-  const gear = tab === "idag" || tab === "profil" || tab === "upplagg" || passDone || inFocus ? "" : `<button class="gear" data-tab="profil" aria-label="Inställningar">${GEAR_SVG}</button>`;
+  const gear = tab === "idag" || tab === "profil" || tab === "minprofil" || tab === "upplagg" || tab === "varden" || passDone || inFocus ? "" : `<button class="gear" data-tab="profil" aria-label="Inställningar">${GEAR_SVG}</button>`;
   document.getElementById("app").innerHTML = passDone ? passDoneView()
     : actSheet ? actPage() + tourView()   // Logga motion är en egen sida (aktivitet.js)
     : gear + banner + focusBar() + (libCtx ? muscleView() : VIEWS[tab]()) + (modal ? renderModal() : "") + (sgAdd && EX[sgAdd] ? stretchAddSheet(sgAdd) : "") + tourView();
@@ -971,6 +971,7 @@ function render() {
   const focusScroll = document.querySelector(".focus-scroll");
   if (focusScroll && focus) focusScroll.scrollTop = focus.scrollTop || 0;
   afterFocusRender();
+  initRulers();
   if (tour != null) requestAnimationFrame(positionTour);
   updateBadge();
   cheerCheck();
@@ -1145,51 +1146,10 @@ const VIEWS = {
   dailys() {
     if (dailyClock) return `<div class="dlx">${dailyClockView()}</div>`;
     if (rutPage) return rutinerView();
-    const a = S.supplements || [], date = logDate(), ex = dailyList(date), rut = routineOn(date), every = (S.daily || []).filter(e => EX[e.id]);
-    const n = ex.filter(e => dailyDone(date, e.id)).length, sn = a.filter(x => day().dailies["supp:" + x.id]).length;
-    const total = ex.length + a.length, count = n + sn, allOk = total > 0 && count === total, st = streakOf(allDailiesDone);
-    // Veckan bakåt till idag: grön prick när allt var klart, orange när något var gjort
-    const week = Array.from({ length: 7 }, (_, i) => shift(TODAY, i - 6)).map(d => {
-      const L = S.log[d], dl = dailyList(d), all = dl.length + a.length;
-      const done = dl.filter(e => L && dailyDone(d, e.id)).length + a.filter(x => L && L.dailies && L.dailies["supp:" + x.id]).length;
-      const cls = all && done === all ? "ok" : done ? "part" : "";
-      return `<span class="dlx-day ${d === TODAY ? "on" : ""}"><small>${WD[weekdayOf(d)].slice(0, 2)}</small><b>${+d.slice(-2)}</b><i class="${cls}"></i></span>`;
-    }).join("");
-    const rowsOf = list => list.filter(e => EX[e.id]).map(e => {
-      const ok = dailyDone(date, e.id);
-      return `<div class="h3-row dlx-row ${ok ? "ok" : ""}">${thumb(e.id, "exl")}<span class="grow"><b>${esc(EX[e.id].name)}</b><small>${e.sets} × ${esc(e.reps || "")}</small></span>
-        ${ok ? "" : `<button class="dlx-play" data-dclockstart="${e.id}" aria-label="Starta ${esc(EX[e.id].name)}">${icon("play", 16)}</button>`}
-        <button class="dlx-check ${ok ? "on" : ""}" data-dcheck="${e.id}" aria-pressed="${ok}" aria-label="${esc(EX[e.id].name)} klar">${icon("check", 18)}</button></div>`;
-    }).join("");
-    const supp = a.map((x, i) => {
-      const ok = day().dailies["supp:" + x.id] === true;
-      return `<div class="h3-row dlx-row ${ok ? "ok" : ""}"><span class="h3-ic dlx-sicon">${esc(x.icon || "◇")}</span><span class="grow"><b>${esc(x.name)}</b><small>${esc([x.dose, x.note].filter(Boolean).join(" · "))}</small></span>
-        <button class="dlx-edit" data-suppedit="${i}" aria-label="Ändra ${esc(x.name)}">${icon("edit", 16)}</button>
-        <button class="dlx-check ${ok ? "on" : ""}" data-suppcheck="${esc(x.id)}" aria-pressed="${ok}" aria-label="${esc(x.name)} tagen">${icon("check", 18)}</button></div>`;
-    }).join("");
-    const addRow = (attr, text) => `<button class="h3-row dlx-addrow" ${attr}><span class="h3-ic">${icon("plus", 16)}</span><span class="grow"><b>${text}</b></span></button>`;
-    const cnt = list => `${list.filter(e => EX[e.id] && dailyDone(date, e.id)).length}/${list.filter(e => EX[e.id]).length}`;
-    // En lista med rubrik och Ändra; target är "daily" (Varje dag) eller "rut:<id>"
-    const section = (label, list, target, editAttr) => {
-      const ed = target === "daily" ? dailyEditing === true : dailyEditing === target;
-      return `<div class="row between dlx-sec"><span class="klabel">${label} · ${cnt(list)}</span><button class="linkbtn2" ${editAttr}>${ed ? "Klar" : "Ändra"}</button></div>
-      ${ed ? exRows(target, target === "daily" ? S.daily : list, true) : `<section class="h3-list">${rowsOf(list)}${addRow(`data-openpick="${target}"`, "Lägg till övning")}</section>`}`;
-    };
-    const exSecs = rut
-      ? `${section(esc(rut.name), rut.ex, "rut:" + rut.id, `data-rutedit="rut:${esc(rut.id)}"`)}${section("Varje dag", every, "daily", "data-dedit")}`
-      : `${section("Övningar", every, "daily", "data-dedit")}
-        <button class="dlx-rutlink" data-rutpage>${icon("kalender", 16)}<span class="grow">Rutiner · växla övningar mellan dagarna</span>${icon("right", 16)}</button>`;
-    return `<div class="dlx"><h1>Dailys</h1>
-      <div class="muted dlx-sub">Idag · ${count} av ${total} klara${st > 1 ? ` · ${st} dagar i rad` : ""}</div>
-      <section class="dlx-top ${allOk ? "ok" : ""}"><span class="dlx-ring">${ring(total ? count / total : 0, 60, allOk ? "ok" : "")}<b>${total ? Math.round(count / total * 100) : 0}%</b></span>
-        <div class="dlx-week">${week}</div></section>
-      ${routineHead(date)}
-      ${exSecs}
-      <div class="row between dlx-sec"><span class="klabel">Kosttillskott · ${sn}/${a.length}</span></div>
-      <section class="h3-list">${supp}${supplementEditing === null ? addRow("data-suppadd", "Lägg till kosttillskott") : ""}</section>
-      ${supplementForm()}${rutinSheet()}</div>`;
+    return dailysPage();
   },
   stretchguide() { return muscleView(); },
+  varden() { return vardenView(); },
   vagning() {
     const back = { pass: "Träna", dailys: "Dailys", kost: "Kost", historik: "Historik", profil: "Inställningar" }[vikBack] || "Hem";
     const days = Object.keys(weights()).sort().reverse().slice(0, 5);
@@ -1225,15 +1185,16 @@ const VIEWS = {
       const list = a => cap(a.length > 1 ? `${a.slice(0, -1).join(", ")} och ${a[a.length - 1]}` : a[0]);
       return !kvar.length ? "Alla dagens mål är klara" : `${list(klar)} ${klar.length > 1 ? "är klara" : "är klar"} · ${list(kvar)} återstår`;
     };
-    const sub = t.rest ? "Vilodag idag" : done ? doneSub() : started ? `${esc(d.name)} är påbörjat` : freeIdle ? "Inget schema · logga det du gör" : `${esc(d.name)} står på schemat`;
+    const sub = t.rest ? "Vilodag idag" : done ? doneSub() : started ? `${esc(d.name)} är påbörjat` : freeIdle ? (S.plan.motionOnly ? "Logga motion när du har tränat" : "Inget schema · logga det du gör") : `${esc(d.name)} står på schemat`;
     const date = cap(new Date().toLocaleDateString("sv-SE", { weekday: "long", day: "numeric", month: "long" }));
     // Siffran blir en grön bock när steget är klart; orange bara för det man trycker på
     const no = (n, ok) => `<span class="h3-no ${ok ? "ok" : ""}" aria-hidden="true">${ok ? icon("check", 14) : n}</span>`;
     const exN = `${d.ex.length} ${d.ex.length === 1 ? "övning" : "övningar"}`;
     const mins = Math.max(5, Math.round(d.ex.reduce((a, x) => a + (+x.sets || 0), 0) * 2.5 / 5) * 5);
-    const passInfo = freeIdle ? "Logga ett gympass eller motion" : d.id === "fritt" ? esc(`Gympass · ${d.ex.map(e => EX[e.id] ? EX[e.id].name : "").filter(Boolean).join(", ") || "inga övningar än"}`) : t.rest ? `Återhämtning · nästa pass ${WD_LONG[weekdayOf(t.next)]}` : isActDay(d) ? esc(`Motion · ${done && w.act ? actLine(w.act) : actGoal(d)}`)
+    const passInfo = freeIdle ? (S.plan.motionOnly ? "Promenad, löpning, yoga …" : "Logga ett gympass eller motion") : d.id === "fritt" ? esc(`Gympass · ${d.ex.map(e => EX[e.id] ? EX[e.id].name : "").filter(Boolean).join(", ") || "inga övningar än"}`) : t.rest ? `Återhämtning · nästa pass ${WD_LONG[weekdayOf(t.next)]}` : isActDay(d) ? esc(`Motion · ${done && w.act ? actLine(w.act) : actGoal(d)}`)
       : [passMuscles(d), exN, d.ex.length ? `~${mins} min` : ""].filter(Boolean).map(esc).join(" · ");
     const passBtn = done ? `<button class="h3-btn ok" data-seepass="${d.id}">${icon("check", 16)}Passet klart · visa</button>`
+      : freeIdle && S.plan.motionOnly ? `<button class="h3-btn primary" data-actnew="" data-actdate="${TODAY}">${icon("plus", 16)}Logga motion</button>`
       : freeIdle ? `<div class="row h3-actbtns"><button class="h3-btn primary" data-freegym>${icon("trana", 16)}Gympass</button><button class="h3-btn" data-actnew="" data-actdate="${TODAY}">${icon("aktivitet", 16)}Motion</button></div>`
       : t.rest ? `<button class="h3-btn ghost" data-tab="pass">Kör ett pass ändå</button>`
       : isActDay(d) ? `<div class="row h3-actbtns">${actButtons(d, "h3-btn")}</div>`
@@ -1287,6 +1248,7 @@ const VIEWS = {
   historik: () => historikView(),
 
   vanner() { return friendsView(); },
+  minprofil() { return myProfilePage(); },
 
   kommande: () => upcomingFeaturesPage(),
 
@@ -1317,11 +1279,8 @@ const VIEWS = {
       `<button role="radio" data-figure-set="${k}" class="${figK() === (k === "k") ? "on" : ""}" aria-checked="${figK() === (k === "k")}">${n}</button>`).join("")}</div>`;
     const main = `<button class="backbtn" data-tab="${profBack}">${icon("left", 18)}${{ idag: "Hem", pass: "Träna", kost: "Kost", historik: "Historik" }[profBack] || "Tillbaka"}</button>
       <h1 class="ptitle">Inställningar</h1>
-      <section class="card pcard" aria-label="Du"><div class="row"><span class="avatar" aria-hidden="true">${esc(name.slice(0, 1).toUpperCase())}</span>
-          <div class="grow col"><b>${esc(name)}</b><span class="muted small">${account.step === "in" ? esc(account.email) : sbEnabled ? "Inte inloggad · sparas bara i telefonen" : "Sparas i den här telefonen"}</span></div>
-          <button class="linkbtn2" data-psec="konto">${account.step === "in" || !sbEnabled ? "Konto" : "Logga in"}${icon("right", 14)}</button></div>
-        <div class="pstats"><div><b>${S.plan.count}</b><span>pass i veckan</span></div><div><b>${tnum(m.kcal)}</b><span>kcal om dagen</span></div>
-          <div><b>${fmtNum(last ? last.kg : p.weight)}</b><span>kg senast</span></div></div></section>
+      <button class="card pcard pcardbtn" data-tab="minprofil" aria-label="Visa din profil">${myAvatar(name, "avatar")}
+        <span class="grow col"><b>${esc(name)}</b><span class="muted small">Visa profil</span></span>${icon("right", 18)}</button>
       ${group("Träning", `<div class="prow"><div class="prow-line"><button class="prow-head" data-tab="upplagg"><span class="pic">${icon("upplagg", 20)}</span><span class="grow"><b>Träningsschema</b>
           <span class="muted small">${esc(PROGRAMS[S.plan.program || "ppl"].name)} · ${S.plan.count} pass i veckan</span></span><span class="chev">${icon("right", 18)}</span></button></div></div>
         ${profRow("vila", "timer", "Vilotimer", rs.on ? `På · ${rs.compound} / ${rs.iso} sek` : "Av", `
@@ -1333,8 +1292,11 @@ const VIEWS = {
           <label class="card psw"><span class="grow">En aktivitet på minst 45 minuter räknas som ett pass i veckan</span><input type="checkbox" class="switch" data-actcount ${S.actCount !== false ? "checked" : ""}></label>
           <label class="card psw"><span class="grow">Lägg till förbrända kcal i dagens kalorimål</span><input type="checkbox" class="switch" data-actkcal ${S.actKcal ? "checked" : ""}></label>
           <div class="muted small" style="margin-top:6px">Förbrända kcal är en uppskattning efter aktivitet, tid och din vikt. Den blir lätt för hög, därför är det avstängt från början.</div>`)}`)}
-      ${group("Kost och kropp", `${profRow("kalori", "kost", "Kalorimål", `${tnum(m.kcal)} kcal · ${GOALS[p.goal][0].split(" (")[0]}`, `<section class="card pbig"><b>${tnum(m.kcal)}</b><span>kcal om dagen · Protein ${m.protein} g · Fett ${m.fat} g · Kolhydrater ${m.carbs} g</span></section>
-          <section class="card">${profileFields(p)}
+      ${group("Kost och kropp", `<div class="prow" id="p-varden"><div class="prow-line"><button class="prow-head" data-tab="varden"><span class="pic">${icon("profil", 20)}</span><span class="grow"><b>Dina värden</b>
+          <span class="muted small">${S.profileSet === false ? "Standardvärden · ställ in dina" : `${p.age} år · ${p.height} cm · ${fmtNum(p.weight)} kg · BMI ${fmtNum(Math.round(bmiOf(p) * 10) / 10)}`}</span></span><span class="chev">${icon("right", 18)}</span></button></div></div>
+        ${profRow("kalori", "kost", "Kalorimål", `${tnum(m.kcal)} kcal · ${GOALS[p.goal][0].split(" (")[0]}`, `<section class="card pbig"><b>${tnum(m.kcal)}</b><span>kcal om dagen · Protein ${m.protein} g · Fett ${m.fat} g · Kolhydrater ${m.carbs} g</span></section>
+          <section class="card"><label class="field">Mål<select data-prof="goal">${Object.entries(GOALS).map(([k, v]) => `<option value="${k}" ${p.goal === k ? "selected" : ""}>${v[0]}</option>`).join("")}</select></label>
+          <button class="link small" data-tab="varden" style="margin-top:8px">Kön, ålder, längd, vikt och aktivitet ställer du in under Dina värden</button>
           <div class="muted" style="margin-top:10px">Underhåll (TDEE): ${tdee(p)} kcal · Mål: ${m.kcal} kcal</div>
           <div class="muted">Protein ${m.protein} g · Fett ${m.fat} g · Kolhydrater ${m.carbs} g</div>
           <label class="field" style="margin-top:10px">Eget kalorimål (lämna tomt för beräknat)
@@ -1348,17 +1310,13 @@ const VIEWS = {
       ${group("Appen", `${profRow("utseende", "utseende", "Utseende", "", null, themeSeg)}
         ${profRow("figur", "profil", "Figur", "I kroppskartan", null, figSeg)}
         ${profRow("guide", "info", "Appguide", "En kort rundtur genom flikarna", null, `<button class="small" data-tourstart>Starta</button>`)}
-        ${(profRow("konto", "data", sbEnabled ? "Konto och data" : "Data", "", `<section class="card"><div class="row"><span class="avatar" aria-hidden="true">${esc(name.slice(0, 1).toUpperCase())}</span>
-          <label class="field grow">Namn<input id="pname" maxlength="40" autocomplete="given-name" value="${esc(name === "Du" ? "" : name)}" placeholder="Ditt namn"></label></div>
-          ${sbEnabled ? `<div class="muted small" style="margin-top:6px">Namnet syns för dina vänner.</div>` : ""}
-          <button class="wide" style="margin-top:12px" data-pnamesave ${social.busy ? "disabled" : ""}>Spara namnet</button></section>
-          ${accountCard()}<section class="card">${data}</section>`), "")}
+
         <div class="prow"><div class="prow-line"><button class="prow-head" data-tab="kommande"><span class="pic">${icon("idea", 20)}</span><span class="grow"><b>Kommande funktioner</b>
           <span class="muted small">Se vad som är på gång i Driv</span></span><span class="chev">${icon("right", 18)}</span></button></div></div>
         ${sbEnabled ? profRow("tyck", "chat", "Tyck till", "Vad saknas, vad är krångligt?", feedbackCard()) : ""}
         ${isDevAccount() ? `<div class="prow"><div class="prow-line"><button class="prow-head" data-opentest><span class="pic">${icon("test", 20)}</span><span class="grow"><b>Testläge</b>
           <span class="muted small">Egen data som inte rör ditt konto</span></span><span class="chev">${icon("right", 18)}</span></button></div></div>` : ""}`)}
-      ${account.step === "in" ? `<button class="wide plogout" data-signout>${icon("logout", 18)}Logga ut</button>` : ""}`;
+`;
     return profOpen && PROF_PAGES[profOpen] ? profPage(profOpen) : main;
   },
 };
@@ -1423,7 +1381,7 @@ const PROF_INTRO = {
   kalori: "Räknas fram från dig och ditt mål. Ändra det som inte stämmer.",
   notiser: "Driv kan påminna dig även när appen är stängd.",
   paminnelse: "En daglig påminnelse i telefonens kalender om dina dailys.",
-  konto: "Ditt namn, inloggning och säkerhetskopia av allt du loggat.",
+  konto: "Din profilbild och ditt namn, inloggning och säkerhetskopia av allt du loggat.",
 };
 function profRow(id, ic, title, summary, body, extra = "") {
   const inner = `<span class="pic">${icon(ic, 20)}</span><span class="grow"><b>${title}</b>${summary ? `<span class="muted small">${summary}</span>` : ""}</span>`;
@@ -2046,7 +2004,7 @@ function syncDone(d) {
 function saveSetup() {
   const back = S.setupDone ? setupFrom : null;
   const weekdays = draft.weekdays.slice().sort((a, b) => a - b);
-  S.plan = { program: draft.program, count: draft.free ? draft.count : draft.days.length, mode: draft.mode, weekdays, days: draft.days, ...(draft.free ? { free: true } : {}) };
+  S.plan = { program: draft.program, count: draft.free ? draft.count : draft.days.length, mode: draft.mode, weekdays, days: draft.days, ...(draft.free ? { free: true, ...(draft.motionOnly ? { motionOnly: true } : {}) } : {}) };
   // Har man hoppat över kalorimålet påminner Kost om att ställa in det
   if (!S.setupDone && S.profileSet !== true) S.profileSet = false;
   if (!S.setupDone) S.tourAsked = false;   // nya användare erbjuds rundturen på Hem
@@ -2222,7 +2180,10 @@ document.addEventListener("click", ev => {
   else if (ds.verifycode !== undefined) { verifyLoginCode(); return; }
   else if (ds.welcomelogin !== undefined) { welcomeLogin = ds.welcomelogin || null; account.msg = ""; if (welcomeLogin) welcomeAgain = false; }
   else if (ds.gokonto !== undefined) {
-    openProfRow("konto", "acctemail");
+    // Skapa konto eller logga in: profilsidan med inloggningen, och fokus i e-postfältet
+    meBack = tab; tab = "minprofil"; welcomeLogin = "login"; account.msg = "";
+    render(); window.scrollTo(0, 0);
+    const f = $("acctemail"); if (f) f.focus();
     return;
   }
   else if (ds.goalpick) { S.profile.goal = ds.goalpick; S.profileSet = true; }

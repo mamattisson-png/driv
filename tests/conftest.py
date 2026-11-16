@@ -103,3 +103,16 @@ def pick(page, day_id=None):
     if page.locator(f'[data-trsel="{day_id}"]').count():
         page.click(f'[data-trsel="{day_id}"]')
     page.click(f'[data-pick="{day_id}"]')
+
+
+def open_daily_add(page):
+    """Dailys: övningar läggs till via Vecka → Varje dag → Lägg till."""
+    page.click("[data-dlview=vecka]")
+    page.click("[data-dledit=daily]")
+    page.click('[data-openpick="daily"]')
+
+
+def back_to_day(page):
+    """Från sidan där övningarna ändras tillbaka till Dag."""
+    page.click('[data-dledit=""]')
+    page.click("[data-dlview=dag]")

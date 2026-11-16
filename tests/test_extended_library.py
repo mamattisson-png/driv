@@ -1,6 +1,6 @@
 """Utökat innehåll ska fungera i befintlig väljare, dailys och träningslogg."""
 import pytest
-from conftest import start,go, pick
+from conftest import start,go, pick, open_daily_add, back_to_day
 
 
 def test_biblioteket_laddas_med_flera_hundra_nya_ovningar(page):
@@ -17,9 +17,10 @@ def test_ny_stretch_kan_laggas_till_som_daily_och_bevaras(page):
     start(page)
     exercise=page.evaluate("EXTRA_STRETCH_IDS.find(id=>isTimed(id))")
     go(page,'dailys')
-    page.click('[data-openpick="daily"]');page.click('[data-mskmode="st"]')
+    open_daily_add(page);page.click('[data-mskmode="st"]')
     page.fill('#mskq',page.evaluate('id=>EX[id].name',exercise))
     page.click(f'[data-libpick="{exercise}"]')
+    back_to_day(page)
     page.click(f'[data-dcheck="{exercise}"]')
     assert page.evaluate('id=>dailyDone(TODAY,id)',exercise)
     page.reload()
@@ -54,7 +55,7 @@ def test_utokade_kataloger_fungerar_offline(page):
     page.context.set_offline(True)
     assert page.evaluate('EXTRA_STRENGTH_IDS.every(id=>EX[id])&&EXTRA_STRETCH_IDS.every(id=>EX[id])')
     go(page,'dailys')
-    page.click('[data-openpick="daily"]');page.click('[data-mskmode="st"]')
+    open_daily_add(page);page.click('[data-mskmode="st"]')
     n=page.evaluate("Object.values(EX).filter(e=>e.cat==='stretch').length")
     assert n>=100 and f'{n} stretchövningar' in page.inner_text('.sg-head')
 

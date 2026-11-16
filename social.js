@@ -128,7 +128,7 @@ function friendsHead(back, title, extra = "") {
 function friendsView() {
   if (profView && social.profile) return profileView();
   if (friendsPage === "lista" && social.profile) return friendsListPage();
-  const head = friendsHead(`data-tab="${vannerBack}"`, "Vänner", social.profile ? `<button class="pfme" data-profile="me" aria-label="Din profil">${avatar(social.profile.name, "sm")}</button>` : "");
+  const head = friendsHead(`data-tab="${vannerBack}"`, "Vänner", social.profile ? `<button class="pfme" data-tab="minprofil" aria-label="Din profil">${avatar(social.profile.name, "sm")}</button>` : "");
   if (!sbEnabled || account.step !== "in" || !social.profile || social.error) return head + friendsCard();
   const others = social.feed.filter(a => !a.mine), today = others.filter(a => a.day === TODAY);
   const days = [];

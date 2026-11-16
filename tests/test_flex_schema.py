@@ -76,13 +76,35 @@ def test_timer_sets_minutes(page):
 
 def test_only_activities_program(page):
     open_schema(page)
-    page.click("[data-progtoggle]")
-    page.click("[data-prog=aktiviteter]")
+    page.click("[data-onbkind=motion]")
+    # Motion visar inga gymprogram, och Lägg till pass erbjuder inte gym
+    assert page.locator("[data-progtoggle], [data-prog]").count() == 0
+    page.click("[data-planadd]")
+    assert page.locator("[data-plankind]").count() == 0
+    page.evaluate("actSheet = null; render()")
     page.click("[data-savesetup]")
     assert all(page.evaluate("S.plan.days.map(d => d.type === 'act')"))
     go(page, "pass")
     assert page.locator(".actpass").count() == 1
     assert page.locator("[data-focusstart]").count() == 0
+
+
+def test_motion_empty_schedule(page):
+    open_schema(page)
+    page.click("[data-onbkind=motion]")
+    page.click("[data-motionplan=tomt]")
+    assert page.locator(".planlist").count() == 0
+    page.click(".freegoal [aria-label=Fler]")
+    page.click("[data-savesetup]")
+    assert page.evaluate("[S.plan.free, S.plan.motionOnly, S.plan.count]") == [True, True, 4]
+    go(page, "pass")
+    assert page.locator("[data-freegym]").count() == 0
+    assert page.locator("[data-actnew]").count() == 1
+    # Tillbaka i schemat är Motion och Tomt schema valda, och Planerade pass ger motionspass igen
+    page.evaluate("draft = null; tab = 'upplagg'; render()")
+    assert page.locator("[data-onbkind=motion].on").count() == 1
+    page.click("[data-motionplan=plan]")
+    assert page.evaluate("draft.free") is False and all(page.evaluate("draft.days.map(d => d.type === 'act')"))
 
 
 def test_onboarding_gym_motion_both(page):
