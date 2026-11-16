@@ -1,5 +1,5 @@
 """Dina värden: linjaler för ålder, längd och vikt, BMI, standardvärden, och förbränning efter profilen."""
-from conftest import start
+from conftest import start  # noqa
 
 
 def drag(page, f, units):
@@ -36,3 +36,15 @@ def test_burn_follows_profile(page):
     assert page.evaluate("actKcal({name: 'Promenad', min: 30, int: 2})") < walk
     page.click("[data-vact='1.2']")
     assert page.evaluate("S.profile.activity") == 1.2
+
+
+def test_show_more_keeps_scroll(page):
+    """Visa fler i Övningar ska visa fler under, inte hoppa upp till toppen."""
+    start(page)
+    page.evaluate("S.tourAsked = true; save(); tab = 'pass'; render()")
+    page.click("[data-exlib]")
+    page.locator("[data-mskmore]").scroll_into_view_if_needed()
+    y = page.evaluate("scrollY")
+    assert y > 500
+    page.click("[data-mskmore]")
+    assert abs(page.evaluate("scrollY") - y) < 5
