@@ -2511,11 +2511,42 @@ button.acttile { min-height: 64px; cursor: pointer; }
 .wk-d.p { border: 2px solid var(--pc); opacity: .55; }
 .wk-d.x { border: 2px solid var(--line-strong); }
 .wk-none { grid-column: 1 / -1; padding: 14px 4px; }
-.wk-btns { gap: 8px; margin: 10px 0 14px; }
+.wk-btns { gap: 8px; margin: 8px 0 14px; }
 .wk-sh { min-height: 40px; padding: 0 2px; }
 .wk-key { display: flex; gap: 16px; margin: 12px 6px 0; font-size: 12.5px; color: var(--muted); }
 .wk-key span { display: flex; align-items: center; gap: 6px; }
 .dl-editmore { display: block; margin: 16px auto 0; }
+.pl-sub { margin-top: 4px; }
+.pl-lbl { margin: 22px 4px 10px; }
+.pl-rts { display: flex; gap: 10px; overflow-x: auto; scrollbar-width: none; padding: 3px 3px 4px; margin: 0 -3px; }
+.pl-rts::-webkit-scrollbar { display: none; }
+.pl-rt { flex: none; width: 118px; min-height: 120px; padding: 12px; border-radius: 20px; background: var(--card); border: 2px solid var(--line); display: flex; flex-direction: column; align-items: flex-start; gap: 8px; color: var(--text); font: inherit; text-align: left; }
+.pl-rt.on { border-color: var(--rc); }
+.pl-rt b { font-size: 14.5px; font-weight: 600; }
+.pl-rt small { color: var(--muted); font-size: 12px; }
+.pl-tg { width: 30px; height: 30px; border-radius: 10px; background: var(--rc); color: #0d0e10; display: grid; place-items: center; font: 700 13px "Lexend", sans-serif; }
+.pl-tg.v { background: var(--card-2); color: var(--muted); }
+.pl-fg { display: flex; }
+.pl-fg span { width: 28px; height: 28px; border-radius: 14px; background: #0b0c0e; border: 2px solid var(--card); margin-right: -7px; overflow: hidden; display: grid; place-items: center; }
+.pl-fg span svg { height: 24px; width: auto; }
+.pl-new { border-style: dashed; align-items: center; justify-content: center; color: var(--accent-text); font-weight: 600; font-size: 14px; }
+.pl-days { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+.pl-dy { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 0; border: 0; background: none; color: var(--text); font: inherit; min-height: 0; }
+.pl-dy small { font: 600 12px "Lexend", sans-serif; color: var(--muted); }
+.pl-dy.t small { color: var(--accent-text); }
+.pl-s { width: 100%; height: 76px; border-radius: 14px; display: grid; place-items: center; font: 700 17px "Unbounded", sans-serif; color: #0d0e10; background: var(--rc); }
+.pl-s.v { background: transparent; border: 1.5px dashed var(--line-strong); color: var(--muted); font: 500 11px "Lexend", sans-serif; }
+.pl-hint { display: flex; align-items: center; gap: 8px; margin: 12px 4px 0; }
+.pl-hint i { width: 14px; height: 14px; border-radius: 5px; flex: none; }
+.pl-fills { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.pl-fill { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 12px 8px; border-radius: 16px; background: var(--card); border: 1px solid var(--line); color: var(--text); font: inherit; font-size: 13px; font-weight: 600; text-align: center; }
+.pl-mn { display: flex; gap: 2px; }
+.pl-mn i { width: 9px; height: 16px; border-radius: 3px; }
+.pl-save { margin-top: 22px; }
+.wk-plan { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 12px 0 0; }
+.wk-g svg { margin-left: auto; color: var(--muted); }
+.rutplan { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 4px 0 16px; }
+
 </style>
 </head>
 <body>
