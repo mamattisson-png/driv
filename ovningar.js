@@ -1231,6 +1231,8 @@ const MW = {
 };
 // Bara kontrollerade länkar direkt till övningen (mw-lankar.js); listor med liknande övningar visas inte
 const mwUrl = id => typeof MW_LANK !== "undefined" && MW_LANK[id] ? `https://musclewiki.com/exercise/${MW_LANK[id]}` : null;
+// Varianter som MuscleWiki inte har: länken visar grundövningen, och det sägs vid länken
+const mwBase = id => typeof MW_GRUND !== "undefined" && MW_GRUND.has(id);
 // MuscleWikis egna adresser ändras och kan inte kontrolleras härifrån, så länken söker efter övningen
 // på MuscleWiki i stället. Det engelska namnet tas från adressen när det finns, annars det svenska.
 const mwSearch = id => {
