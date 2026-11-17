@@ -106,13 +106,14 @@ def pick(page, day_id=None):
 
 
 def open_daily_add(page):
-    """Dailys: övningar läggs till via Vecka → Varje dag → Lägg till."""
-    page.click("[data-dlview=vecka]")
-    page.click("[data-dledit=daily]")
+    """Dailys: övningar läggs till under Upplägg → Varje dag → Lägg till övning."""
+    page.click(".dl-upp")
+    page.click('[data-rutopen="daily"]')
     page.click('[data-openpick="daily"]')
 
 
 def back_to_day(page):
-    """Från sidan där övningarna ändras tillbaka till Dag."""
-    page.click('[data-dledit=""]')
+    """Från en sida i Upplägg tillbaka till Dag."""
+    while page.locator("[data-rutback]").count():
+        page.click("[data-rutback]")
     page.click("[data-dlview=dag]")

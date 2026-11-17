@@ -16,15 +16,25 @@ def open_varden(page):
 def test_standard_values_and_ruler(page):
     open_varden(page)
     assert page.locator(".vnote").count() == 1
-    assert page.inner_text("#rv-weight") == "80"
-    # Dra vikten 2 kg åt höger: värdet och BMI följer med och sparas
-    drag(page, "weight", 2)
-    page.wait_for_function("S.profile.weight === 82")
-    assert page.evaluate("S.profileSet") is True
-    assert page.inner_text("#bmi-num") == "25,3" and page.inner_text("#bmi-tag") == "Övervikt"
-    assert page.locator(".vnote").count() == 0
+    assert page.inner_text("#rv-height") == "180"
+    # Vikt och BMI finns på sidan Vikt; här bara en länk dit
+    assert page.locator("[data-rul=weight], .bmicard").count() == 0 and page.locator('.vlink[data-tab="vagning"]').count() == 1
+    drag(page, "height", 2)
+    page.wait_for_function("S.profile.height === 182")
+    assert page.evaluate("S.profileSet") is True and page.locator(".vnote").count() == 0
     page.click("[data-vreset]")
-    assert page.evaluate("[S.profile.weight, S.profileSet]") == [80, False]
+    assert page.evaluate("[S.profile.height, S.profileSet]") == [180, False]
+
+
+def test_weight_page_ruler_saves_only_on_button(page):
+    open_varden(page)
+    page.click('.vlink[data-tab="vagning"]')
+    drag(page, "wlog", -1.5)
+    page.wait_for_function("wDraft === 78.5")
+    assert page.inner_text("#bmi-num") == "24,2" and page.evaluate("S.weights[TODAY]") is None
+    page.click("[data-wsave]")
+    assert page.evaluate("[S.weights[TODAY], S.profile.weight]") == [78.5, 78.5]
+    assert page.inner_text(".backbtn").strip() == "Dina värden"
 
 
 def test_burn_follows_profile(page):

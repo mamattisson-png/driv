@@ -234,9 +234,8 @@ function actSummary() {
     ${rows.map(([n, e]) => `<div class="krow"><span class="hricon">${actIcon(n)}</span><span class="grow"><b>${esc(n)}</b>
       <span class="muted small">${e.n} ${e.n === 1 ? "gång" : "gånger"} · ${fmtNum(e.min / 60)} timmar</span></span></div>`).join("")}</section>`;
 }
-// Vikten visas i Utveckling även innan man sparat pass, och leder till sidan Vikt
-const weightSection = (w, wFirst, wLast) => !S.hideWeight && w.length ? `<section class="card kmeal"><button class="khead wlink" data-tab="vagning"><span class="grow">Vikt</span><span class="wl-kg">${fmtNum(wLast)} kg${icon("right", 16)}</span></button>
-      <div class="kbody">${w.length > 1 ? `<div style="margin-bottom:8px">${weightBadge(wLast - wFirst)} <span class="muted small">sedan ${shortDate(w[0])}</span></div>` : ""}${weightChart()}</div></section>` : "";
+// Vikten finns på sidan Vikt; Utveckling har bara en länk dit
+const weightSection = w => !S.hideWeight && w.length ? `<section class="card kmeal"><button class="khead wlink" data-tab="vagning"><span class="grow">Vikt</span><span class="wl-kg">Kurva och BMI${icon("right", 16)}</span></button></section>` : "";
 function progressView() {
   const from = perFrom(), p = progressData(from), all = progressData();
   const w = Object.keys(weights()).sort(), wFirst = w.length ? weights()[w[0]] : null, wLast = w.length ? weights()[w[w.length - 1]] : null;

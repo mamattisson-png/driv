@@ -8,29 +8,35 @@
 const DEFAULT_PROFILE = { sex: "m", age: 30, height: 180, weight: 80, activity: 1.55 };
 let vardenBack = "profil";
 // Linjalerna: min, max, steg, punkter per enhet, ett streck per, en siffra per
+// Vägningen (wlog) har en egen linjal som inte sparar förrän man trycker Spara vägning
+let wDraft = null;
+const wlogStart = () => weights()[TODAY] ?? (latestWeight() || {}).kg ?? S.profile.weight;
+const rulGet = f => f === "wlog" ? (wDraft ?? wlogStart()) : S.profile[f];
+function rulSet(f, v) { if (f === "wlog") wDraft = v; else setProfileValue(f, v); }
 const RULERS = {
   age: { min: 15, max: 90, step: 1, px: 14, tick: 1, label: 5, unit: "år" },
   height: { min: 120, max: 220, step: 1, px: 10, tick: 1, label: 10, unit: "cm" },
   weight: { min: 30, max: 200, step: 0.1, px: 22, tick: 1, label: 5, unit: "kg" },
+  wlog: { min: 30, max: 200, step: 0.1, px: 22, tick: 1, label: 5, unit: "kg" },
 };
 const BMI_CLASSES = [[18.5, "Undervikt", "u"], [25, "Normalvikt", "n"], [30, "Övervikt", "o"], [Infinity, "Fetma", "f"]];
 const bmiOf = p => p.weight / Math.pow(p.height / 100, 2);
 const bmiClass = b => BMI_CLASSES.find(c => b < c[0]);
-const rulFmt = (f, v) => f === "weight" ? fmtNum(Math.round(v * 10) / 10) : String(Math.round(v));
+const rulFmt = (f, v) => f === "weight" || f === "wlog" ? fmtNum(Math.round(v * 10) / 10) : String(Math.round(v));
 // Linjalens läge räknas ut från värdet: 15–35 på BMI-skalan
 const bmiPos = b => Math.max(0, Math.min(100, (b - 15) / 20 * 100));
 
 function ruler(f) {
-  const r = RULERS[f], v = S.profile[f], n = Math.round((r.max - r.min) / r.label);
+  const r = RULERS[f], v = rulGet(f), n = Math.round((r.max - r.min) / r.label);
   const labels = Array.from({ length: n + 1 }, (_, i) => `<span style="left:${i * r.label * r.px}px">${r.min + i * r.label}</span>`).join("");
   return `<div class="rulbox"><div class="rulval"><b id="rv-${f}">${rulFmt(f, v)}</b><span>${r.unit}</span></div>
-    <div class="rul" data-rul="${f}" tabindex="0" role="slider" aria-label="${{ age: "Ålder", height: "Längd", weight: "Vikt" }[f]}" aria-valuemin="${r.min}" aria-valuemax="${r.max}" aria-valuenow="${v}">
+    <div class="rul" data-rul="${f}" tabindex="0" role="slider" aria-label="${{ age: "Ålder", height: "Längd", weight: "Vikt", wlog: "Vikt" }[f]}" aria-valuemin="${r.min}" aria-valuemax="${r.max}" aria-valuenow="${v}">
       <i class="rulpad"></i><div class="rultrack" style="width:${(r.max - r.min) * r.px + 2}px;--t:${r.tick * r.px}px;--l:${r.label * r.px}px">${labels}</div><i class="rulpad"></i></div>
     <span class="rulneedle" aria-hidden="true"></span></div>`;
 }
 
-function bmiCard() {
-  const b = bmiOf(S.profile), c = bmiClass(b);
+function bmiCard(p = S.profile) {
+  const b = bmiOf(p), c = bmiClass(b);
   return `<section class="card bmicard" aria-label="BMI">
     <div class="row between"><span class="klabel">BMI</span><span class="bmitag ${c[2]}" id="bmi-tag">${c[1]}</span></div>
     <b class="bminum" id="bmi-num">${fmtNum(Math.round(b * 10) / 10)}</b>
@@ -59,8 +65,7 @@ function vardenView() {
     <div class="seg two vsex">${[["m", "Man"], ["f", "Kvinna"]].map(([k, l]) => `<button data-vsex="${k}" class="${p.sex === k ? "on" : ""}" aria-pressed="${p.sex === k}">${l}</button>`).join("")}</div>
     <div class="klabel sechead">Ålder</div>${ruler("age")}
     <div class="klabel sechead">Längd</div>${ruler("height")}
-    <div class="klabel sechead">Vikt</div>${ruler("weight")}
-    ${bmiCard()}
+    <button class="vlink" data-tab="vagning"><span class="grow"><b>Vikt och BMI</b><small>Vägs och följs på sidan Vikt</small></span>${icon("right", 18)}</button>
     <div class="klabel sechead">Hur aktiv är din vardag?</div>
     <div class="vact" role="radiogroup" aria-label="Aktivitet">${ACTIVITY.map(([v, l]) => {
       const [name, sub] = l.split(" ("), on = +p.activity === v;
@@ -83,9 +88,9 @@ function setProfileValue(f, v) {
 const rulTimer = {}, rulLive = {};
 function initRulers() {
   for (const el of document.querySelectorAll(".rul[data-rul]")) {
-    const f = el.dataset.rul, r = RULERS[f], v0 = rulLive[f] ?? S.profile[f];
+    const f = el.dataset.rul, r = RULERS[f], v0 = rulLive[f] ?? rulGet(f);
     el.scrollLeft = (Math.min(r.max, Math.max(r.min, v0)) - r.min) * r.px;
-    if (v0 !== S.profile[f]) { const out = document.getElementById(`rv-${f}`); if (out) out.textContent = rulFmt(f, v0); liveBmi(f, v0); }
+    if (v0 !== rulGet(f)) { const out = document.getElementById(`rv-${f}`); if (out) out.textContent = rulFmt(f, v0); liveBmi(f, v0); }
     if (el.dataset.on) continue;
     el.dataset.on = "1";
     el.addEventListener("scroll", () => {
@@ -101,8 +106,8 @@ function initRulers() {
       const d = { ArrowLeft: -1, ArrowRight: 1 }[ev.key];
       if (!d) return;
       ev.preventDefault();
-      const v = Math.min(r.max, Math.max(r.min, Math.round((S.profile[f] + d * r.step) * 10) / 10));
-      setProfileValue(f, v); render();
+      const v = Math.min(r.max, Math.max(r.min, Math.round((rulGet(f) + d * r.step) * 10) / 10));
+      rulSet(f, v); render();
     });
   }
 }
@@ -116,14 +121,14 @@ function settleRuler(el) {
   delete rulLive[f];
   if (!el) return;
   const v = rulValue(el);
-  if (v !== S.profile[f]) { setProfileValue(f, v); render(); return; }
+  if (v !== rulGet(f)) { rulSet(f, v); render(); return; }
   const x = (v - r.min) * r.px;
   if (Math.abs(el.scrollLeft - x) > 0.5) el.scrollLeft = x;
 }
 // BMI följer med medan man drar
 function liveBmi(f, v) {
-  if (f !== "weight" && f !== "height") return;
-  const b = bmiOf(Object.assign({}, S.profile, { [f]: v })), c = bmiClass(b);
+  if (f !== "weight" && f !== "height" && f !== "wlog") return;
+  const b = bmiOf(Object.assign({}, S.profile, { [f === "wlog" ? "weight" : f]: v })), c = bmiClass(b);
   const num = document.getElementById("bmi-num"), tag = document.getElementById("bmi-tag"), mark = document.getElementById("bmi-mark");
   if (num) num.textContent = fmtNum(Math.round(b * 10) / 10);
   if (tag) { tag.textContent = c[1]; tag.className = `bmitag ${c[2]}`; }

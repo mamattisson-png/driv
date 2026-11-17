@@ -80,38 +80,18 @@ function routineHead(date) {
     <div class="muted small dlx-rutnext">${dailyRoutines().length > 1 ? routineHint(date) : "Lägg till fler rutiner för att växla mellan dagarna"}</div>`;
 }
 
-function rutinerView() {
-  const L = dailyRoutines(), m = rutMode();
-  const explain = { manual: "Samma rutin tills du byter den själv på Dailys.", alternate: "Växlar mellan de två första rutinerna. Med Rotation går du igenom alla i ordning.", rotate: "Går igenom alla rutiner i ordning, en per dag.", week: "Varje veckodag har sin rutin. Välj den under Dailys → Vecka." }[m];
-  const nameForm = (id, val) => `<form class="rutname" data-rutform="${esc(id)}"><input name="n" maxlength="40" required value="${esc(val)}" placeholder="T.ex. Mage A" aria-label="Rutinens namn"><button class="small primary" type="submit">Spara</button><button class="small ghost" type="button" data-rutcancel>Avbryt</button></form>`;
-  const rows = L.map((r, i) => {
-    const inCycle = m !== "alternate" || i < 2, open = rutOpen === r.id;
-    const sub = `${r.ex.length} ${r.ex.length === 1 ? "övning" : "övningar"}${m === "manual" || inCycle ? "" : " · ingår inte i växlingen"}`;
-    return `<div class="rutrow ${open ? "open" : ""}" data-rutidx="${i}">
-      <div class="h3-row"><span class="rutnum ${m !== "manual" && inCycle ? "on" : ""}" data-rutdrag="${i}" aria-label="Dra för att flytta ${esc(r.name)}">${i + 1}</span>
-        ${rutRename === r.id ? nameForm(r.id, r.name) : `<button class="grow rutopen" data-rutopen="${esc(r.id)}" aria-expanded="${open}"><b>${esc(r.name)}</b><small>${sub}</small></button>
-        <button class="rutdots" data-rutmenu="${esc(r.id)}" aria-label="Fler val för ${esc(r.name)}">⋯</button>`}</div>
-      ${rutMenu === r.id ? `<div class="rutmenu"><button class="small" data-rutren="${esc(r.id)}">Byt namn</button><button class="small" data-rutcopy="${esc(r.id)}">Kopiera</button>
-        <button class="small ${rutDelArm === r.id ? "dangerbtn" : ""}" data-rutdel="${esc(r.id)}">${rutDelArm === r.id ? "Tryck igen för att ta bort" : "Ta bort"}</button></div>` : ""}
-      ${open ? `<div class="rutex">${exRows("rut:" + r.id, r.ex, true)}</div>` : ""}</div>`;
-  }).join("");
-  return `<div class="dlx rutpage"><button class="backbtn" data-rutback>${icon("left", 18)}Dailys</button><h1>Rutiner</h1>
-    <p class="muted">Dina rutiner. Vilka dagar de körs bestämmer du under Planera veckan. "Varje dag" och kosttillskott visas alltid.</p>
-    ${L.length ? `<button class="primary wide rutplan" data-plopen>${icon("kalender", 16)}Planera veckan</button>
-    <span class="klabel">${L.length > 1 ? "Rutiner · dra för att flytta" : "Rutiner"}</span>
-    <section class="h3-list rutlist">${rows}</section>` : ""}
-    ${rutRename === "new" ? `<section class="card">${nameForm("new", "")}</section>` : `<button class="rutnew" data-rutnew>+ Ny rutin</button>`}</div>`;
-}
+// Sidan Rutiner är nu Upplägg (dailyvy.js)
+const rutinerView = () => uppView();
 
 // Bocken sparar vilken rutin dagen hade, så att historiken visar rätt även om växlingen ändras
 document.addEventListener("click", ev => {
   const c = ev.target.closest && ev.target.closest("[data-dcheck],[data-suppcheck],[data-runcheck]");
   if (c && dailyRoutines().length) { const L = day(), r = routineOn(logDate()); if (r && !L.dailyRoutine) L.dailyRoutine = r.id; }
-  if (ev.target.closest && ev.target.closest("[data-tab]")) { rutPage = false; rutSheet = false; rutOpen = null; rutMenu = null; rutRename = null; plPage = false; plDraft = null; dlEdit = null; }
+  if (ev.target.closest && ev.target.closest("[data-tab]")) { rutPage = false; rutSheet = false; rutOpen = null; rutMenu = null; rutRename = null; uxOpen = null; }
 }, true);
 
 document.addEventListener("click", ev => {
-  const t = ev.target.closest && ev.target.closest("[data-rutsheet],[data-rutpick],[data-rutpage],[data-rutback],[data-rutmode],[data-rutopen],[data-rutmenu],[data-rutren],[data-rutcopy],[data-rutdel],[data-rutnew],[data-rutcancel],[data-rutedit]");
+  const t = ev.target.closest && ev.target.closest("[data-rutsheet],[data-rutpick],[data-rutpage],[data-rutback],[data-rutmode],[data-rutopen],[data-rutmenu],[data-rutren],[data-rutcopy],[data-rutdel],[data-rutnew],[data-rutcancel],[data-rutedit],[data-rutmv]");
   if (!t) return;
   const ds = t.dataset;
   // Bakgrunden stänger bladet, men inte tryck inne i bladet
@@ -120,15 +100,19 @@ document.addEventListener("click", ev => {
   if (ds.rutdel === undefined) rutDelArm = null;
   if (ds.rutsheet !== undefined) rutSheet = ds.rutsheet === "1";
   else if (ds.rutpick) { chooseRoutine(ds.rutpick); rutSheet = false; save(); toast(`Dagens rutin: ${routineById(ds.rutpick).name}`); }
-  else if (ds.rutpage !== undefined) { rutSheet = false; rutPage = true; dlEdit = null; dailyEditing = false; window.scrollTo(0, 0); }
-  else if (ds.rutback !== undefined) { rutPage = false; rutOpen = rutMenu = rutRename = null; window.scrollTo(0, 0); }
+  else if (ds.rutpage !== undefined) { rutSheet = false; rutPage = true; rutOpen = null; uxOpen = null; dailyEditing = false; uppMigrate(); save(); window.scrollTo(0, 0); }
+  else if (ds.rutback !== undefined) {
+    // Från en rutin tillbaka till Upplägg, från Upplägg tillbaka till Dailys
+    if (rutOpen) rutOpen = null; else rutPage = false;
+    rutMenu = rutRename = null; uxOpen = null; supplementEditing = null; window.scrollTo(0, 0);
+  }
   else if (ds.rutmode) {
     // Byter man sätt räknas växlingen från dagens rutin
     const cur = routineOn(TODAY); S.dailyMode = ds.rutmode;
     if (cur) S.dailyAnchor = { date: TODAY, id: cur.id };
     save();
   }
-  else if (ds.rutopen) { rutOpen = rutOpen === ds.rutopen ? null : ds.rutopen; rutMenu = null; }
+  else if (ds.rutopen) { rutOpen = ds.rutopen; rutMenu = null; uxOpen = null; supplementEditing = null; window.scrollTo(0, 0); }
   else if (ds.rutmenu) { rutMenu = rutMenu === ds.rutmenu ? null : ds.rutmenu; rutRename = null; }
   else if (ds.rutren) { rutRename = ds.rutren; rutMenu = null; render(); const f = document.querySelector(".rutname input"); if (f) { f.focus(); f.select(); } return; }
   else if (ds.rutcopy) {
@@ -142,12 +126,15 @@ document.addEventListener("click", ev => {
     else {
       const L = dailyRoutines(), r = routineById(ds.rutdel);
       L.splice(L.indexOf(r), 1); rutDelArm = rutMenu = null; if (rutOpen === r.id) rutOpen = null;
+      // Dagar med rutinen blir vila
+      if (S.dailyWeek) S.dailyWeek = S.dailyWeek.map(x => x === r.id ? "" : x);
       if (S.dailyAnchor && S.dailyAnchor.id === r.id) S.dailyAnchor = L.length ? { date: TODAY, id: (routineOn(TODAY) || L[0]).id } : null;
       save(); toast(`${r.name} är borttagen`);
     }
   }
   else if (ds.rutnew !== undefined) { rutRename = "new"; rutMenu = null; render(); const f = document.querySelector(".rutname input"); if (f) f.focus(); return; }
   else if (ds.rutcancel !== undefined) rutRename = null;
+  else if (ds.rutmv) { const L = dailyRoutines(), i = L.findIndex(r => r.id === ds.rutmvid), j = i + +ds.rutmv; if (i >= 0 && j >= 0 && j < L.length) { L.splice(j, 0, L.splice(i, 1)[0]); save(); } }
   else if (ds.rutedit) dailyEditing = dailyEditing === ds.rutedit ? false : ds.rutedit;
   render();
 }, true);

@@ -331,6 +331,7 @@ function focusView() {
     <div class="klabel">${esc(EX[ex.id].name)}</div>
     <section class="h3-list">
       ${nW < 5 && !stretch && !timed ? moreRow("plus", "Uppvärmningsset", nW ? `${nW} lagt till` : "Ett lättare set före arbetsseten", `data-warmadd="${ex.id}"`) : ""}
+      ${nW ? moreRow("minus", "Ta bort ett uppvärmningsset", nW === 1 ? "Det som lagts till" : `${nW} lagt till · tar bort det sista`, `data-warmdel="${ex.id}"`) : ""}
       ${moreRow("swap", "Byt övning", "Bara i dag eller även framåt", `data-fswap="${focus.idx}"`)}
       ${!g && d.ex.length > 1 ? moreRow("swap", "Kör som superset", "Välj övningen den körs ihop med", "data-sspick") : ""}
       ${d.ex.length > 1 ? moreRow("minus", "Ta bort övning", "Bara från dagens pass", "data-fremove") : ""}

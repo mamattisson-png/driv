@@ -1,7 +1,7 @@
 """Dailys med sparade rutiner: växling mellan dagar, byte för dagen och att inget går förlorat."""
 import datetime
 
-from conftest import start, go
+from conftest import start, go, back_to_day
 
 
 def prepare(page, mode="alternate"):
@@ -62,77 +62,110 @@ def test_all_done_counts_routine(page):
 
 def test_manage_routines_create_rename_delete(page):
     prepare(page, "manual")
-    page.click('.dl-byt')
-    page.click('[data-rutpage]')
+    page.click('.dl-upp')
+    # Äldre "välj själv" blir ett veckoschema när Upplägg öppnas
+    assert page.evaluate("S.dailyMode") == 'week'
     page.click('[data-rutnew]')
     page.fill('.rutname input', 'Kvällsrutin')
     page.click('.rutname button[type=submit]')
     assert page.evaluate("S.dailyRoutines.map(r => r.name)")[-1] == 'Kvällsrutin'
+    assert page.locator('.up-dh h1').text_content() == 'Kvällsrutin'   # den nya rutinen öppnas
+    page.click('[data-rutback]')
+    page.click('[data-rutopen=ra]')
     page.click('[data-rutmenu=ra]')
     page.click('[data-rutren=ra]')
     page.fill('.rutname input', 'Morgonmage')
     page.click('.rutname button[type=submit]')
     assert page.evaluate("routineById('ra').name") == 'Morgonmage'
-    page.click('[data-rutmenu=rc]')
-    page.click('[data-rutdel=rc]')
-    page.click('[data-rutdel=rc]')
-    assert page.evaluate("S.dailyRoutines.some(r => r.id === 'rc')") is False
-    # Övningar läggs till i rutinen via biblioteket
-    page.click('[data-rutopen=rb]')
-    page.click('[data-openpick="rut:rb"]')
-    assert page.text_content('h1') == 'Lägg till daily'
+    page.click('[data-rutmenu=ra]')
+    page.click('[data-rutdel=ra]')
+    assert 'blir vila' in page.inner_text('[data-rutdel=ra]')   # säger vilka dagar som påverkas
+    page.click('[data-rutdel=ra]')
+    assert page.evaluate("S.dailyRoutines.some(r => r.id === 'ra')") is False
+    assert 'ra' not in page.evaluate("S.dailyWeek")
 
 
 def test_week_planner(page):
-    """Planera veckan: välj rutin och tryck på dagarna; snabbval; gäller varje vecka."""
+    """Upplägg → Veckan: välj rutin och tryck på dagar; sparas direkt och gäller varje vecka."""
     prepare(page, "alternate")   # 9 november 2026 är en måndag
-    page.click('[data-dlview=vecka]')
-    assert page.locator('.wk-day').count() == 7
-    page.click('.wk-plan')
-    # Utkastet börjar med det som gällde (varannan dag: A, B, A, B …)
-    assert page.evaluate("plDraft") == ['ra', 'rb', 'ra', 'rb', 'ra', 'rb', 'ra']
+    page.click('.dl-upp')
+    assert page.evaluate("S.dailyWeek") == ['ra', 'rb', 'ra', 'rb', 'ra', 'rb', 'ra']
     page.click('[data-plsel=rc]')
     page.click('[data-plday="4"]')
     page.click('[data-plsel=""]')
     page.click('[data-plday="6"]')
-    page.click('[data-plsave]')
-    assert page.evaluate("S.dailyMode") == 'week'
     assert page.evaluate("S.dailyWeek") == ['ra', 'rb', 'ra', 'rb', 'rc', 'rb', '']
     assert page.evaluate("[4, 11].map(i => routinePlanned(shift(TODAY, i)).name)") == ['Rörlighet', 'Rörlighet']
     assert page.evaluate("routinePlanned(shift(TODAY, 6))") is None
+    # Vila tar bara bort rutinen: Varje dag är kvar
     assert page.evaluate("dailyList(shift(TODAY, 6)).map(e => e.id)") == ['promenad']
-    # Rörlighets rad har en markering på fredagen och inga andra dagar
-    assert page.locator('.wk-r', has_text='Cykelcrunch').locator('.wk-d').count() == 1
-    # Snabbval: turordning och samma alla dagar; Tillbaka utan att spara ändrar inget
-    page.click('.wk-plan')
     page.click('[data-plfill=turn]')
-    assert page.evaluate("plDraft") == ['ra', 'rb', 'rc', 'ra', 'rb', 'rc', 'ra']
-    page.click('[data-plsel=rb]')
-    page.click('[data-plfill=same]')
-    assert page.evaluate("plDraft") == ['rb'] * 7
-    page.click('[data-plclose]')
-    assert page.evaluate("S.dailyWeek") == ['ra', 'rb', 'ra', 'rb', 'rc', 'rb', '']
+    assert page.evaluate("S.dailyWeek") == ['ra', 'rb', 'rc', 'ra', 'rb', 'rc', 'ra']
+    # Turordning fortsätter in i nästa vecka
+    page.click('[data-uppmode=rotate]')
+    assert page.evaluate("S.dailyMode") == 'rotate'
+    assert page.evaluate("[0, 1, 2, 3, 7].map(i => routinePlanned(shift(TODAY, i)).id)") == ['ra', 'rb', 'rc', 'ra', 'rb']
+    # Veckotabellen visar Rörlighet bara på sina dagar
+    page.click('[data-rutback]')
+    page.click('[data-dlview=vecka]')
+    assert page.locator('.wk-r', has_text='Cykelcrunch').locator('.wk-d').count() == 2
 
 
 def test_week_edit_routine_and_today_switch_only_today(page):
     prepare(page, "alternate")
-    page.click('[data-dlview=vecka]')
-    page.click('.wk-plan')
-    page.click('[data-plsel=ra]')
-    page.click('[data-plday="0"]')
-    page.click('[data-plsave]')
-    # Rutinens övningar ändras från veckan
-    page.click('[data-dledit="rut:ra"]')
-    assert page.locator('.dl-edit h1').text_content() == 'Mage A'
+    page.click('.dl-upp')
+    page.click('[data-rutopen=ra]')
+    assert page.locator('.up-dh h1').text_content() == 'Mage A'
+    # Övningen fälls ut: set med − och +, och Ta bort
+    page.click('[data-uxopen="0"]')
+    page.click('[data-uxsets="1"]')
+    assert page.evaluate("routineById('ra').ex[0].sets") == 4
     page.click('[data-xdel="rut:ra"][data-idx="0"]')
     assert page.evaluate("routineById('ra').ex.map(e => e.id)") == ['russian_twist']
-    page.click('[data-dledit=""]')
+    back_to_day(page)
     # Byt rutin i Dag gäller bara idag
-    page.click('[data-dlview=dag]')
     page.click('.dl-byt')
     page.click('[data-rutpick=rb]')
     assert page.text_content('.dl-h b') == 'Mage B'
     assert page.evaluate("S.dailyWeek[0]") == 'ra' and page.evaluate("routinePlanned(shift(TODAY, 7)).name") == 'Mage A'
-    # Ingen "Ändra"-text i veckovyn
+    # Dag och Vecka har inga knappar för att ändra; allt ändras under Upplägg
+    assert page.locator('.dlx [data-openpick], .dlx [data-suppadd], .dlx [data-suppedit]').count() == 0
     page.click('[data-dlview=vecka]')
-    assert 'Ändra' not in page.inner_text('.dlx')
+    assert page.locator('.dlx [data-openpick], .dlx [data-suppadd], .dlx [data-suppedit], .dlx [data-rutopen]').count() == 0
+
+
+def test_upplagg_every_day_supplements_and_colors(page):
+    prepare(page, "manual")
+    page.click('.dl-upp')
+    colors = page.evaluate("dailyRoutines().map(r => rutColor(r))")
+    # Kosttillskott läggs till och tas bort under Varje dag
+    page.click('[data-rutopen=supp]')
+    page.click('[data-suppadd]')
+    page.fill('#supplement-form [name=name]', 'Kreatin')
+    page.click('#supplement-form [type=submit]')
+    assert page.evaluate("S.supplements.map(x => x.name)") == ['Kreatin']
+    page.click('[data-suppedit="0"]')
+    page.click('[data-suppdel="0"]')
+    assert page.evaluate("S.supplements.length") == 0
+    page.click('[data-rutback]')
+    # Turordning: rutinerna kan dras i ordning, och färgen följer rutinen
+    page.click('[data-uppmode=rotate]')
+    assert page.evaluate("getComputedStyle(document.querySelector('.rutgrip')).touchAction") == 'none'
+    page.evaluate("S.dailyRoutines.reverse(); render()")
+    assert page.evaluate("rutColor(routineById('ra'))") == colors[0]
+
+
+def test_week_check_missed_day_afterwards(page):
+    """Vecka: en missad övning eller ett kosttillskott bockas av i efterhand; kommande dagar går inte att trycka på."""
+    page.clock.install(time=datetime.datetime(2026, 11, 11, 12, 0))   # onsdag
+    start(page)
+    page.evaluate("""S.daily = [exEntry('plankan')]; S.supplements = [{id: 's1', name: 'Kreatin'}]; save()""")
+    go(page, 'dailys')
+    page.click('[data-dlview=vecka]')
+    page.click('[data-wkck="2026-11-09"][data-wkid="plankan"]')
+    page.click('[data-wkck="2026-11-10"][data-wkid="supp:s1"]')
+    assert page.evaluate("dailyDone('2026-11-09', 'plankan')") is True
+    assert page.evaluate("S.log['2026-11-10'].dailies['supp:s1']") is True
+    page.click('[data-wkck="2026-11-09"][data-wkid="plankan"]')
+    assert page.evaluate("dailyDone('2026-11-09', 'plankan')") is False
+    assert page.locator('[data-wkck="2026-11-12"]').count() == 0
