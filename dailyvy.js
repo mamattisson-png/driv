@@ -8,6 +8,7 @@
 let dlView = "dag";   // "dag" eller "vecka"
 let plSel = null;     // rutinen man lägger ut på veckans dagar ("" är vila)
 let uxOpen = null;    // övningen som är utfälld på en rutins sida (index)
+let upInfo = null;    // steget vars förklaring (i) är utfälld
 
 const RUT_COLORS = ["#ff8a47", "#5aa7f0", "#4cc583", "#b49cff", "#f0c04c", "#ec6a8e"];
 // Varje rutin behåller sin färg även när ordningen ändras: den får första lediga färgen och sparar den
@@ -91,7 +92,14 @@ function dlWeekView() {
 }
 
 // ---------- Upplägg ----------
-const upStep = (n, title, sub, dim) => `<div class="up-st ${dim ? "dim" : ""}"><span class="up-n">${n}</span>${title}${sub ? `<small>${sub}</small>` : ""}</div>`;
+const UP_INFO = {
+  1: "Övningar och kosttillskott som du gör varje dag, oavsett vilken rutin dagen har. De behöver inte planeras.",
+  2: "En rutin är en grupp övningar som hör ihop, till exempel Mage A eller Rörlighet. Har du flera rutiner kan olika dagar få olika övningar. Vilken dag som får vilken rutin väljer du i steg 3.",
+  3: "Fasta dagar: varje veckodag har sin rutin, likadant varje vecka. Turordning: rutinerna kommer en per dag i ordning och fortsätter in i nästa vecka. Vila betyder ingen rutin den dagen, men Varje dag är fortfarande med.",
+};
+const upStep = (n, title, sub, dim) => `<div class="up-st ${dim ? "dim" : ""}"><span class="up-n">${n}</span>${title}
+  <button class="up-i ${upInfo === n ? "on" : ""}" data-upinfo="${n}" aria-expanded="${upInfo === n}" aria-label="Mer om ${title}">i</button>${sub ? `<small>${sub}</small>` : ""}</div>
+  ${upInfo === n ? `<div class="up-info">${UP_INFO[n]}</div>` : ""}`;
 const figs = list => `<span class="up-fg">${list.filter(e => EX[e.id]).slice(0, 3).map(e => `<span>${figure(e.id)}</span>`).join("")}</span>`;
 
 function uppView() {
@@ -117,9 +125,9 @@ function uppView() {
     <section class="up-ev">
       <button class="up-evr" data-rutopen="daily"><span class="up-k">Övningar</span><span class="grow">${every.length ? `<b>${esc(listNames(every, e => EX[e.id].name))}</b>` : `<b class="up-add">+ Lägg till</b>`}</span>${every.length ? figs(every) : ""}${icon("right", 18)}</button>
       <button class="up-evr" data-rutopen="supp"><span class="up-k">Kosttillskott</span><span class="grow">${a.length ? `<b>${esc(listNames(a, x => x.dose ? `${x.name} ${x.dose}` : x.name))}</b>` : `<b class="up-add">+ Lägg till</b>`}</span>${icon("right", 18)}</button></section>
-    ${upStep(2, "Rutiner", L.length ? "" : "valfritt")}
+    ${upStep(2, "Rutiner", L.length ? "olika övningar olika dagar" : "valfritt")}
     <section class="up-list rutlist">${rows}${rutRename === "new" ? `<div class="up-li">${nameForm}</div>` : `<button class="up-li up-new" data-rutnew>+ Ny rutin</button>`}</section>
-    ${upStep(3, "Veckan", L.length ? "" : "", !L.length)}
+    ${upStep(3, "Veckan", L.length ? "vilken rutin när" : "", !L.length)}
     ${L.length ? `<div class="seg two up-mode" role="radiogroup" aria-label="Hur rutinerna läggs ut">
         <button role="radio" data-uppmode="week" class="${m !== "rotate" ? "on" : ""}" aria-checked="${m !== "rotate"}">Fasta dagar</button>
         <button role="radio" data-uppmode="rotate" class="${m === "rotate" ? "on" : ""}" aria-checked="${m === "rotate"}">Turordning</button></div>
@@ -171,11 +179,12 @@ function dailysPage() {
 }
 
 document.addEventListener("click", ev => {
-  const t = ev.target.closest && ev.target.closest("[data-dlview],[data-plsel],[data-plday],[data-plfill],[data-uppmode],[data-uxopen],[data-uxsets]");
+  const t = ev.target.closest && ev.target.closest("[data-upinfo],[data-dlview],[data-plsel],[data-plday],[data-plfill],[data-uppmode],[data-uxopen],[data-uxsets]");
   if (!t) return;
   const ds = t.dataset;
   ev.stopImmediatePropagation();
-  if (ds.dlview) { dlView = ds.dlview; rutPage = false; rutOpen = null; }
+  if (ds.upinfo) upInfo = upInfo === +ds.upinfo ? null : +ds.upinfo;
+  else if (ds.dlview) { dlView = ds.dlview; rutPage = false; rutOpen = null; }
   else if (ds.plsel !== undefined) plSel = ds.plsel;
   else if (ds.plday !== undefined) { const w = weekNow(); w[+ds.plday] = plSel; saveWeek(w); save(); }
   else if (ds.plfill) {
