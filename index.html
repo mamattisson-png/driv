@@ -2480,7 +2480,7 @@ button.acttile { min-height: 64px; cursor: pointer; }
 .dl-p i { flex: 1; height: 6px; border-radius: 3px; background: var(--card-2); }
 .dl-p i.on { background: var(--pc); }
 .dl-p small { color: var(--muted); font-size: 13px; }
-.dl-p.pulse { animation: dlpulse .8s ease; }
+.dl-p.pulse, .dl-done.pulse { animation: dlpulse .8s ease; }
 @keyframes dlpulse { 50% { transform: scale(1.03); } }
 .dl-rows { display: flex; flex-direction: column; gap: 6px; }
 .dl-row { display: flex; align-items: center; gap: 12px; padding: 5px 8px 5px 6px; min-height: 0; border-radius: 16px; background: var(--card); border: 1px solid var(--line); }

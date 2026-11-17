@@ -2344,7 +2344,7 @@ def test_firande_nar_alla_dailys_ar_klara(page):
         page.click(f'[data-dcheck="{i}"]')
         assert page.locator(".burst").count() == 0
     page.click(f'[data-dcheck="{ids[-1]}"]')
-    assert page.locator(".burst").count() == 1 and page.locator(".dlx-prog.pulse").count() == 1
+    assert page.locator(".burst").count() == 1 and page.locator(".dl-done.pulse").count() == 1
     # Öppnas appen igen med allt klart blir det inget nytt firande
     page.reload()
     go(page, "dailys")
