@@ -182,6 +182,7 @@ console.log(`${rows.length} new stretches: ${timed} timed, ${dynamic} dynamic; o
     figure: () => '',
     esc: value => value,
     mwUrl: id => /^exercise\/[a-z0-9-]+$/.test(mw[id] || '') ? 'https://musclewiki.com/' + mw[id] : null,
+    mwBase: () => false, // Standalone renderer sandbox: no basic-variation link in these cases.
   });
   // The real URL guard is exercised above; this sandbox mirrors its URL shape.
   vm.runInContext(source.slice(start, end), sandbox);
