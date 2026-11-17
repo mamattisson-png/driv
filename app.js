@@ -840,28 +840,6 @@ function weighHint() {
   const wd = weekdayOf(TODAY), d = weighDay();
   return wd < d ? `Väg dig ${WD_LONG[d]}` : wd === d ? "Väg dig idag" : "Inte vägd den här veckan · väg dig idag";
 }
-// På Hem visas vägningen bara när den är dags; vikten över tid finns under Historik
-function weighCardDue() {
-  const ws = weekStart(TODAY), weighed = weekDates(ws).some(d => d <= TODAY && weights()[d] > 0);
-  return weighed && !weightEditing ? "" : weightCard();
-}
-function weightCard() {
-  const ws = weekStart(TODAY), last = latestWeight();
-  const weighed = weekDates(ws).filter(d => d <= TODAY && weights()[d] > 0).pop();
-  const prev = weekAvgWeight(shift(ws, -7)), now = weekAvgWeight(ws);
-  if (weighed && !weightEditing) {
-    return `<section class="card wrow" aria-label="Veckans vikt"><div class="grow"><b>Veckans vikt · ${fmtNum(now)} kg</b>
-      <span class="muted small">${prev != null ? `${weightBadge(now - prev)} mot förra veckan` : "Första vägningen"}</span></div>
-      <button class="small" data-wedit>Ändra</button></section>`;
-  }
-  if (!weighed && weekdayOf(TODAY) < weighDay()) return "";
-  const date = weighed || TODAY;
-  // Kompakt rad: dölja vikten görs under Profil → Vikt
-  return `<section class="card wrow" aria-label="Veckans vägning"><div class="grow"><b>Veckans vägning</b>
-      ${last ? `<span class="muted small">Senast ${fmtNum(last.kg)} kg · ${dateLabel(last.date)}</span>` : ""}</div>
-    <input id="wkg" type="number" inputmode="decimal" step="0.1" placeholder="kg" aria-label="Vikt i kg" value="${weights()[date] ?? ""}">
-    <button class="small" data-wsave data-wdate="${date}">Spara</button></section>`;
-}
 // Vägningar som punkter och veckosnitt som linje, de senaste åtta veckorna
 function weightChart() {
   const start = shift(weekStart(TODAY), -49), days = [];
@@ -1151,17 +1129,27 @@ const VIEWS = {
   stretchguide() { return muscleView(); },
   varden() { return vardenView(); },
   vagning() {
-    const back = { pass: "Träna", dailys: "Dailys", kost: "Kost", historik: "Historik", profil: "Inställningar" }[vikBack] || "Hem";
-    const days = Object.keys(weights()).sort().reverse().slice(0, 5);
+    const back = { pass: "Träna", dailys: "Dailys", kost: "Kost", historik: "Historik", profil: "Inställningar", varden: "Dina värden" }[vikBack] || "Hem";
+    const days = Object.keys(weights()).sort().reverse(), last = latestWeight();
+    // Förändringen de senaste åtta veckorna; grön när den går åt det håll målet säger
+    const old = days.filter(d => d >= shift(TODAY, -56)).pop(), diff = last && old && old !== last.date ? Math.round((last.kg - weights()[old]) * 10) / 10 : null;
+    const goal = S.profile.goal, good = diff != null && (goal === "cut" ? diff < 0 : goal === "bulk" ? diff > 0 : Math.abs(diff) <= 0.5);
+    const weeks = old ? Math.max(1, Math.round(rutDays(old, last.date) / 7)) : 0;
     return `<div class="weigh-page"><button class="backbtn" data-tab="${vikBack}">${icon("left", 18)}${back}</button><h1>Vikt</h1>
-      <p class="muted">Väg dig ${WD_LONG[weighDay()]} och följ utvecklingen. Allt om vikten finns här.</p>
-      <section class="card wrow"><div class="grow"><b>Registrera vikt</b><span class="muted small">${dateLabel(TODAY)}</span></div><input id="wkg" type="number" inputmode="decimal" step="0.1" placeholder="kg" aria-label="Vikt i kg" value="${weights()[TODAY] ?? ""}"><button class="small" data-wsave data-wdate="${TODAY}">Spara</button></section>
-      ${weightChart()}
-      ${days.length ? `<h3 class="klabel" style="margin-top:18px">Senaste vägningarna</h3><section class="card wlist">${days.map(d => `<div class="row between"><span>${dateLabel(d)}</span><b>${fmtNum(weights()[d])} kg</b></div>`).join("")}</section>` : ""}
-      <h3 class="klabel" style="margin-top:18px">Vägning</h3>
+      <p class="muted vk-sub">Väg dig ${WD_LONG[weighDay()]}ar</p>
+      <section class="card vk-hero">${last ? `<span class="klabel">Senast · ${dateLabel(last.date)}</span>
+        <div class="vk-now"><b>${fmtNum(last.kg)}</b><span>kg</span></div>
+        ${diff ? `<span class="vk-bdg ${good ? "ok" : "warn"}">${diff < 0 ? "↓" : "↑"} ${fmtNum(Math.abs(diff))} kg på ${weeks} ${weeks === 1 ? "vecka" : "veckor"}</span>` : ""}
+        <div class="vk-chart">${weightChart()}</div>` : `<span class="klabel">Ingen vägning än</span><div class="muted small">Väg dig nedan, så syns utvecklingen här.</div>`}</section>
+      <div class="klabel sechead">Väg dig idag</div>
+      ${ruler("wlog")}
+      <button class="primary wide bigbtn vk-save" data-wsave data-wdate="${TODAY}">Spara vägning</button>
+      ${bmiCard(Object.assign({}, S.profile, { weight: rulGet("wlog") }))}
+      ${days.length ? `<div class="klabel sechead">Senaste vägningarna</div><div class="vk-hist">${days.slice(0, 8).map(d => `<div><small>${shortDate(d)}</small><b>${fmtNum(weights()[d])} kg</b></div>`).join("")}</div>` : ""}
+      <div class="klabel sechead">Vägning</div>
       <section class="card">
         <label class="field">Vägningsdag<select data-weighday>${WD.map((w, i) => `<option value="${i}" ${weighDay() === i ? "selected" : ""}>${WD_LONG[i].replace(/^./, c => c.toUpperCase())}</option>`).join("")}</select></label>
-        <label class="psw" style="margin-top:12px"><span class="grow">Visa vikt på Hem och i Historik</span><input type="checkbox" class="switch" data-showweight ${S.hideWeight ? "" : "checked"}></label>
+        <label class="psw" style="margin-top:12px"><span class="grow">Visa vikt i Historik</span><input type="checkbox" class="switch" data-showweight ${S.hideWeight ? "" : "checked"}></label>
         <div class="muted small" style="margin-top:4px">Döljer du vikten används den ändå i kalorimålet, och sparade vägningar finns kvar.</div></section></div>`;
   },
   idag() {
@@ -1226,7 +1214,6 @@ const VIEWS = {
       <section class="h3-list">
         ${row(stretchId ? figure(stretchId) : icon("utseende", 18), "Stretch", "Övningar som töjer · välj kroppsdel", 'data-tab="stretchguide"')}
         ${S.plan.free ? "" : row(icon("aktivitet", 18), "Annan träning", "Löpning, padel, promenad …", "data-homeactivity", "plus")}
-        ${S.hideWeight ? "" : row(icon("vikt", 18), "Vikt", weighed && avg ? `${fmtNum(avg)} kg den här veckan` : weighHint(), 'data-tab="vagning"')}
         ${row(icon("vanner", 18), "Vänner", friendSub, 'data-tab="vanner"')}
       </section></div>`;
   },
@@ -2059,7 +2046,7 @@ document.addEventListener("click", ev => {
   if (ds.passdoneclose !== undefined) { passDone = null; tab = "idag"; render(); window.scrollTo(0, 0); return; }
   if (ds.tab) {
     if (ds.tab === "vanner" && tab !== "vanner") vannerBack = tab;
-    if (ds.tab === "vagning" && tab !== "vagning") vikBack = tab;
+    if (ds.tab === "vagning" && tab !== "vagning") { vikBack = tab; wDraft = null; }
     passDone = null;
     // Under passet: Träna visar översikten (passet fortsätter i bakgrunden); från en annan flik tar Träna dig tillbaka till passet
     if (ds.tab === "pass" && focus) focus.suspended = prevTab === "pass" && !focus.suspended && !editing && !libCtx && !editDate;
@@ -2160,9 +2147,10 @@ document.addEventListener("click", ev => {
   else if (ds.letterclose) S.letterSeen = ds.letterclose;
   else if (ds.showweight !== undefined) S.hideWeight = !t.checked;
   else if (ds.wsave !== undefined) {
-    const date = ds.wdate || logDate();
-    if (!logWeight(+String($("wkg").value).replace(",", "."), date)) { fieldError($("wkg"), "Skriv vikten i kg, till exempel 80,5"); return; }
-    weightEditing = false;
+    const date = ds.wdate || logDate(), inp = $("wkg");
+    // Sidan Vikt har en linjal (wDraft); vägning i efterhand i Historik har ett fält
+    if (!logWeight(inp ? +String(inp.value).replace(",", ".") : rulGet("wlog"), date)) { if (inp) fieldError(inp, "Skriv vikten i kg, till exempel 80,5"); return; }
+    weightEditing = false; wDraft = null;
     toast(`Vikt sparad: ${fmtNum(weights()[date])} kg`);
   }
   else if (ds.wedit !== undefined) weightEditing = true;

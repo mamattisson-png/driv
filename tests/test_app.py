@@ -123,13 +123,14 @@ def test_kort_start_och_paminnelse_om_kalorimal(page):
     open_app(page)
     # Första gången: program, antal och dagar, och mål; övningar och dailys ändras sen
     to_step(page, 3)
-    assert page.locator(".goalfields [data-prof]").count() == 5 and page.locator("[data-openpick^=draft]").count() == 0
+    assert page.locator(".goalfields [data-rul]").count() == 3 and page.locator(".goalfields .vactrow").count() == 4
+    assert page.locator("[data-openpick^=draft]").count() == 0
     page.click("[data-savesetup]")
     go(page, "kost")
     assert "standardvärden" in page.inner_text(".dayring")
     page.click(".dayring [data-tab=varden]")
-    page.evaluate("""() => { const el = document.querySelector('[data-rul=weight]'); el.scrollLeft -= 8 * RULERS.weight.px; el.dispatchEvent(new Event('scroll')); }""")
-    page.wait_for_function("S.profile.weight === 72")
+    page.evaluate("""() => { const el = document.querySelector('[data-rul=height]'); el.scrollLeft -= 8 * RULERS.height.px; el.dispatchEvent(new Event('scroll')); }""")
+    page.wait_for_function("S.profile.height === 172")
     go(page, "kost")
     assert "standardvärden" not in page.inner_text(".dayring")
 
@@ -138,10 +139,10 @@ def test_mal_i_starten_ger_eget_kalorimal(page):
     standard = page.evaluate("kcalGoal()")
     to_step(page, 3)
     page.click('[data-goalpick="cut"]')
-    page.fill(".goalfields [data-prof=weight]", "70")
-    page.press(".goalfields [data-prof=weight]", "Tab")
+    page.evaluate("""() => { const el = document.querySelector('[data-rul=weight]'); el.scrollLeft = (70 - RULERS.weight.min) * RULERS.weight.px; el.dispatchEvent(new Event('scroll')); }""")
+    page.wait_for_function("S.profile.weight === 70")
     assert page.evaluate("S.profile.goal") == "cut" and page.evaluate("kcalGoal()") < standard
-    assert "140 g protein" in page.inner_text(".goalres")
+    assert "140 g" in page.inner_text(".goalres .gprot")
     page.click("[data-savesetup]")
     go(page, "kost")
     assert "standardvärden" not in page.inner_text(".dayring")
@@ -646,28 +647,21 @@ def test_kroppsvikt_en_gang_i_veckan_och_kalorimal(page):
     page.click('[data-goalpick="cut"]')
     page.click("[data-savesetup]")
     seed(page, "S.weights['2026-10-15'] = 82; S.weights['2026-10-16'] = 81.8")
-    # Ingen vägning den här veckan: raden Vikt på Hem påminner, och leder till vägningen
-    vikt = '.h3-row[data-tab="vagning"]'
-    # Vägningsdagen (måndag) har passerat: raden säger att vägningen saknas
-    assert "Inte vägd den här veckan" in page.inner_text(vikt)
-    page.click(vikt)
-    page.fill("#wkg", "70")
+    # Vägningen görs på sidan Vikt (inte från Hem)
+    prof(page, "vikt")
+    page.evaluate("wDraft = 70")
     page.click("[data-wsave]")
     assert page.evaluate("S.weights['2026-10-22']") == 70 and page.evaluate("S.profile.weight") == 70
     assert page.evaluate("kcalGoal()") < 2360
     go(page, "idag")
-    assert "70 kg den här veckan" in page.inner_text(vikt)
+    assert page.locator('[data-tab="vagning"]').count() == 0
     # Vikten kan döljas och visas igen
     prof(page, "vikt")
     page.click("[data-showweight]")
-    go(page, "idag")
-    assert page.locator(vikt).count() == 0
     go(page, "historik")
     assert page.locator('.card:has(h2:text-is("Vikt"))').count() == 0
     prof(page, "vikt")
     page.click("[data-showweight]")
-    go(page, "idag")
-    assert page.locator(vikt).count() == 1
 
 
 def test_paminnelse_i_kalendern(page):
@@ -2085,7 +2079,7 @@ def test_hem_steg_och_ovrigt_idag(page):
     assert page.locator(".h3-no").count() == 3 and page.locator(".h3-no.ok").count() == 1
     assert "Dailys klara" in page.inner_text("#app")
     rows = page.locator(".h3-list .h3-row")
-    assert rows.count() == 4 and "Vänner" in rows.nth(3).inner_text()
+    assert rows.count() == 3 and "Vänner" in rows.nth(2).inner_text() and "Vikt" not in rows.all_inner_texts()[1]
     # Passkortet startar passet direkt
     page.click(".h3-btn[data-focusstart]")
     assert page.locator(".focus").count() == 1
@@ -2290,12 +2284,8 @@ def test_ett_namn_och_en_tillbakaknapp(page):
     page.click("[data-exlib]")
     assert page.inner_text(".msk h1") == "Övningar"
     go(page, "idag")
-    assert "Vikt" in page.inner_text("#app") and "Annan träning" in page.inner_text("#app")
-    page.click('[data-tab="vagning"]')
-    assert page.inner_text("#app h1") == "Vikt"
+    assert "Annan träning" in page.inner_text("#app") and page.locator('[data-tab="vagning"]').count() == 0
     # Tillbaka säger vart: ‹ Hem
-    assert page.inner_text(".backbtn").strip() == "Hem"
-    page.click(".backbtn")
     page.click('.h3-row[data-tab="vanner"]')
     assert page.inner_text(".backbtn").strip() == "Hem"
 
@@ -2307,11 +2297,11 @@ def test_allt_om_vikten_pa_ett_stalle(page):
     # Från Inställningar: raden leder till Vikt, och tillbaka går till Inställningar
     prof(page, "vikt")
     assert page.inner_text("#app h1") == "Vikt" and page.inner_text(".backbtn").strip() == "Inställningar"
-    assert "81,4 kg" in page.inner_text(".wlist")
+    assert "81,4 kg" in page.inner_text(".vk-hist")
     # Vägningsdagen och visningen ställs in här
     page.select_option("[data-weighday]", "3")
     assert page.evaluate("weighDay()") == 3
-    page.fill("#wkg", "80.5")
+    page.evaluate("wDraft = 80.5")
     page.click("[data-wsave]")
     assert page.evaluate("S.weights[TODAY]") == 80.5
     page.click(".backbtn")
