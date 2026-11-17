@@ -153,3 +153,19 @@ def test_upplagg_every_day_supplements_and_colors(page):
     assert page.evaluate("getComputedStyle(document.querySelector('.rutgrip')).touchAction") == 'none'
     page.evaluate("S.dailyRoutines.reverse(); render()")
     assert page.evaluate("rutColor(routineById('ra'))") == colors[0]
+
+
+def test_week_check_missed_day_afterwards(page):
+    """Vecka: en missad övning eller ett kosttillskott bockas av i efterhand; kommande dagar går inte att trycka på."""
+    page.clock.install(time=datetime.datetime(2026, 11, 11, 12, 0))   # onsdag
+    start(page)
+    page.evaluate("""S.daily = [exEntry('plankan')]; S.supplements = [{id: 's1', name: 'Kreatin'}]; save()""")
+    go(page, 'dailys')
+    page.click('[data-dlview=vecka]')
+    page.click('[data-wkck="2026-11-09"][data-wkid="plankan"]')
+    page.click('[data-wkck="2026-11-10"][data-wkid="supp:s1"]')
+    assert page.evaluate("dailyDone('2026-11-09', 'plankan')") is True
+    assert page.evaluate("S.log['2026-11-10'].dailies['supp:s1']") is True
+    page.click('[data-wkck="2026-11-09"][data-wkid="plankan"]')
+    assert page.evaluate("dailyDone('2026-11-09', 'plankan')") is False
+    assert page.locator('[data-wkck="2026-11-12"]').count() == 0

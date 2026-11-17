@@ -74,20 +74,24 @@ function dlWeekView() {
   const dates = weekDates(weekStart(TODAY)), a = S.supplements || [], every = (S.daily || []).filter(e => EX[e.id]);
   const rs = dates.map(d => routineOn(d)), used = dailyRoutines().filter(r => rs.includes(r));
   const cell = (d, inner) => `<span class="wk-c ${d === TODAY ? "t" : ""}">${inner}</span>`;
-  const mark = (d, ok, col) => ok ? `<i class="wk-d ok" style="--pc:${col}"></i>` : d < TODAY ? `<i class="wk-d x"></i>` : `<i class="wk-d p" style="--pc:${col}"></i>`;
+  const dot = (d, ok, col) => ok ? `<i class="wk-d ok" style="--pc:${col}"></i>` : d < TODAY ? `<i class="wk-d x"></i>` : `<i class="wk-d p" style="--pc:${col}"></i>`;
+  // Dagar som varit (och idag) går att bocka av i efterhand; kommande dagar visas bara
+  const mark = (d, ok, col, key, name) => d > TODAY ? dot(d, ok, col)
+    : `<button class="wk-hit" data-wkck="${d}" data-wkid="${esc(key)}" aria-pressed="${ok}" aria-label="${esc(name)} ${dateLabel(d)}: ${ok ? "gjort" : "inte gjort"}">${dot(d, ok, col)}</button>`;
   const head = `<div class="wk-r wk-hd"><span></span>${dates.map((d, i) => { const r = rs[i];
     return `<span class="wk-c wk-day ${d === TODAY ? "t" : ""}" aria-label="${cap(WD_LONG[i])}: ${r ? esc(r.name) : "ingen rutin"}">
       <small>${WD[i].slice(0, 3)}</small><b>${+d.slice(-2)}</b><span class="wk-tag ${r ? "" : "v"}" style="${r ? `background:${rutColor(r)}` : ""}">${r ? esc(rutLetter(r)) : "–"}</span></span>`; }).join("")}</div>`;
   const group = (name, col, list, on) => `<div class="wk-r"><span class="wk-g"><i style="background:${col}"></i>${esc(name)}</span></div>
     ${list.filter(e => EX[e.id]).map(e => `<div class="wk-r"><span class="wk-n"><span class="wk-f" aria-hidden="true">${figure(e.id)}</span><span>${esc(EX[e.id].name)}</span></span>${dates.map((d, i) =>
-      cell(d, on(i) ? mark(d, dailyDone(d, e.id), col) : "")).join("")}</div>`).join("")}`;
+      cell(d, on(i) ? mark(d, dailyDone(d, e.id), col, e.id, EX[e.id].name) : "")).join("")}</div>`).join("")}`;
   const groups = (every.length ? group("Varje dag", "var(--text)", every, () => true) : "")
     + used.map(r => group(r.name, rutColor(r), r.ex, i => rs[i] === r)).join("");
   const supp = a.map(x => `<div class="wk-r"><span class="wk-n wk-sn">${esc(x.name)}</span>${dates.map(d =>
-    cell(d, mark(d, !!(S.log[d] && S.log[d].dailies && S.log[d].dailies["supp:" + x.id]), "var(--ok)"))).join("")}</div>`).join("");
+    cell(d, mark(d, !!(S.log[d] && S.log[d].dailies && S.log[d].dailies["supp:" + x.id]), "var(--ok)", "supp:" + x.id, x.name))).join("")}</div>`).join("");
   return `<div class="muted small dl-wsub">Vecka ${weekNo(TODAY)}</div>
     <section class="wk-tbl">${head}${groups || `<div class="wk-none muted small">Inga dailys än. Ställ in dem under Upplägg.</div>`}</section>
     ${a.length ? `<section class="wk-tbl wk-supp"><div class="wk-sh"><span class="klabel">Kosttillskott</span></div>${supp}</section>` : ""}
+    <div class="muted small wk-hint">Missat något? Tryck på pricken för att bocka av i efterhand.</div>
     <div class="wk-key"><span><i class="wk-d ok" style="--pc:var(--ok)"></i>Gjort</span><span><i class="wk-d p" style="--pc:var(--text)"></i>Planerat</span><span><i class="wk-d x"></i>Missat</span></div>`;
 }
 
@@ -179,11 +183,18 @@ function dailysPage() {
 }
 
 document.addEventListener("click", ev => {
-  const t = ev.target.closest && ev.target.closest("[data-upinfo],[data-dlview],[data-plsel],[data-plday],[data-plfill],[data-uppmode],[data-uxopen],[data-uxsets]");
+  const t = ev.target.closest && ev.target.closest("[data-wkck],[data-upinfo],[data-dlview],[data-plsel],[data-plday],[data-plfill],[data-uppmode],[data-uxopen],[data-uxsets]");
   if (!t) return;
   const ds = t.dataset;
   ev.stopImmediatePropagation();
-  if (ds.upinfo) upInfo = upInfo === +ds.upinfo ? null : +ds.upinfo;
+  if (ds.wkck) {
+    // Bocka av eller ångra en dag i efterhand; dagen minns vilken rutin den hade
+    const L = day(ds.wkck), id = ds.wkid, r = routineOn(ds.wkck);
+    if (r && !L.dailyRoutine && dailyRoutines().length) L.dailyRoutine = r.id;
+    L.dailies[id] = id.startsWith("supp:") ? !L.dailies[id] : !dailyDone(ds.wkck, id);
+    save();
+  }
+  else if (ds.upinfo) upInfo = upInfo === +ds.upinfo ? null : +ds.upinfo;
   else if (ds.dlview) { dlView = ds.dlview; rutPage = false; rutOpen = null; }
   else if (ds.plsel !== undefined) plSel = ds.plsel;
   else if (ds.plday !== undefined) { const w = weekNow(); w[+ds.plday] = plSel; saveWeek(w); save(); }
