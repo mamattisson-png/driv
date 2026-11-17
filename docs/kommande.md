@@ -98,6 +98,8 @@ Senast uppdaterad: 2026-11-06. Status bygger på dokumenterade publiceringar och
 | 94 | Dailys: Upplägg samlar allt som ändras (Varje dag med kosttillskott, rutiner, veckan med fasta dagar eller turordning), rutiner dras med fingret, missade dagar bockas av i Vecka | Dailys | Hög | Klar |
 | 95 | Vikt: egen sida med linjal, kurva och BMI; Ditt mål i starten med linjaler; vikt och BMI bara på sidan Vikt; regel om att varje uppgift finns på ett ställe | Kropp | Hög | Klar |
 | 96 | Passet: uppvärmningsset går att ta bort, med × i rutan eller under Mer | Träning | Medel | Klar |
+| 97 | Historik visar dailys och vikt och länkar till där de ändras; Vecka bläddrar bakåt; Vikt kan väga in en tidigare dag | Historik | Medel | Klar |
+| 98 | Grafer i en gemensam stil (stor siffra, tolkning, mjuk kurva eller staplar, mållinje, tryck och dra) och målvikt på sidan Vikt | Design | Hög | Klar |
 
 ## Detaljer och acceptanskriterier
 
