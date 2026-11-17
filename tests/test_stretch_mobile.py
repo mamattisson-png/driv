@@ -98,15 +98,29 @@ class MobileStretchSmoke(unittest.TestCase):
 
         for exercise_id, expected_url, status in rows:
             with self.subTest(exercise=exercise_id):
-                self.render_stretch(exercise_id)
-                self.assert_mobile_width(exercise_id)
-                links = self.page.locator('main a[href*="musclewiki.com"]')
-                hrefs = links.evaluate_all("(nodes) => nodes.map(a => a.href)")
+                # Render and inspect in one browser task. The app may finish an
+                # asynchronous initial render between separate Playwright calls,
+                # which can replace the injected detail with the home screen.
+                snapshot = self.page.evaluate("""id => {
+                    const main = document.querySelector('main');
+                    if (!main) throw new Error('main container not found');
+                    main.innerHTML = stretchPage(id);
+                    return {
+                        hrefs: [...main.querySelectorAll('a[href*="musclewiki.com"]')].map(a => a.href),
+                        width: innerWidth,
+                        height: innerHeight,
+                        documentWidth: document.documentElement.scrollWidth,
+                        bodyWidth: document.body.scrollWidth,
+                    };
+                }""", exercise_id)
+                self.assertEqual((snapshot["width"], snapshot["height"]), (390, 844), exercise_id)
+                self.assertLessEqual(snapshot["documentWidth"], 391, exercise_id)
+                self.assertLessEqual(snapshot["bodyWidth"], 391, exercise_id)
                 if status == "verified":
-                    self.assertEqual(hrefs, [expected_url], exercise_id)
+                    self.assertEqual(snapshot["hrefs"], [expected_url], exercise_id)
                 else:
                     self.assertEqual(expected_url, "—", exercise_id)
-                    self.assertEqual(hrefs, [], exercise_id)
+                    self.assertEqual(snapshot["hrefs"], [], exercise_id)
 
 
     def test_real_library_navigation_and_link_visibility(self):
