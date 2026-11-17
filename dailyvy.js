@@ -62,12 +62,18 @@ function dlDayView() {
     const ok = !!(S.log[date] && S.log[date].dailies["supp:" + x.id]);
     return `<button class="dl-pill ${ok ? "on" : ""}" data-suppcheck="${esc(x.id)}" aria-pressed="${ok}"><span class="dl-pc">${ok ? icon("check", 14) : ""}</span>${esc(x.name)}${x.dose ? ` <small>${esc(x.dose)}</small>` : ""}</button>`;
   }).join("");
-  return `<div class="dl-h"><div class="grow"><span class="dl-k"><i style="background:${col}"></i>${when}</span><b>${rut ? esc(rut.name) : "Dagens dailys"}</b></div>
+  // Allt gjort (övningar och kosttillskott): ett tydligt kvitto överst, och raderna blir lugna
+  const aDone = a.filter(x => S.log[date] && S.log[date].dailies["supp:" + x.id]).length;
+  const allOk = ex.length + a.length > 0 && n === ex.length && aDone === a.length;
+  const st = allOk ? streakOf(allDailiesDone) : 0;
+  const done = allOk ? `<div class="dl-done" role="status"><span class="dl-dic">${icon("check", 26)}</span><span><b>Dagen är klar</b>
+    <small>${ex.length ? `${ex.length} ${ex.length === 1 ? "övning" : "övningar"}` : ""}${ex.length && a.length ? " och " : ""}${a.length ? `${a.length} kosttillskott` : ""}${st > 1 ? ` · ${st} dagar i rad` : ""}</small></span></div>` : "";
+  return `<div class="${allOk ? "dl-allok" : ""}"><div class="dl-h"><div class="grow"><span class="dl-k"><i style="background:${col}"></i>${when}</span><b>${rut ? esc(rut.name) : "Dagens dailys"}</b></div>
       ${dailyRoutines().length ? `<button class="linkbtn2 dl-byt" data-rutsheet="1">Byt rutin</button>` : ""}</div>
-    ${ex.length ? `<div class="dl-p dlx-prog" style="--pc:${col}"><span>${ex.map(e => `<i class="${dailyDone(date, e.id) ? "on" : ""}"></i>`).join("")}</span><small>${n} av ${ex.length} klara</small></div>
+    ${done}${ex.length && !allOk ? `<div class="dl-p dlx-prog" style="--pc:${col}"><span>${ex.map(e => `<i class="${dailyDone(date, e.id) ? "on" : ""}"></i>`).join("")}</span><small>${n} av ${ex.length} klara</small></div>` : ""}${ex.length ? `
     <div class="dl-rows">${ex.map(row).join("")}</div>`
       : `<div class="dl-empty"><b>${hasDailies() ? "Ingen rutin idag" : "Inga dailys än"}</b><button class="linkbtn2" data-rutpage>Ställ in under Upplägg${icon("right", 14)}</button></div>`}
-    ${a.length ? `<div class="klabel dl-sec">Kosttillskott</div><div class="dl-pills">${pills}</div>` : ""}`;
+    ${a.length ? `<div class="klabel dl-sec">Kosttillskott</div><div class="dl-pills">${pills}</div>` : ""}</div>`;
 }
 
 // ---------- Vecka ----------

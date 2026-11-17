@@ -184,3 +184,14 @@ def test_week_navigation_back_and_forth(page):
     assert page.evaluate("dailyDone('2026-11-04', 'plankan')") is True
     page.click('[data-dlweek="7"]')
     assert page.evaluate("dlWeek") is None
+
+
+def test_day_done_banner(page):
+    start(page)
+    page.evaluate("S.daily = [exEntry('plankan')]; S.supplements = [{id: 's1', name: 'Kreatin'}]; save()")
+    go(page, 'dailys')
+    assert page.locator('.dl-done').count() == 0
+    page.click('[data-dcheck=plankan]')
+    assert page.locator('.dl-done').count() == 0   # kosttillskottet återstår
+    page.click('[data-suppcheck=s1]')
+    assert "Dagen är klar" in page.inner_text('.dl-done')
