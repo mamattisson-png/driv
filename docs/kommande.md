@@ -100,7 +100,7 @@ Senast uppdaterad: 2026-11-06. Status bygger på dokumenterade publiceringar och
 | 96 | Passet: uppvärmningsset går att ta bort, med × i rutan eller under Mer | Träning | Medel | Klar |
 | 97 | Historik visar dailys och vikt och länkar till där de ändras; Vecka bläddrar bakåt; Vikt kan väga in en tidigare dag | Historik | Medel | Klar |
 | 98 | Grafer i en gemensam stil (stor siffra, tolkning, mjuk kurva eller staplar, mållinje, tryck och dra) och målvikt på sidan Vikt | Design | Hög | Klar |
-| 99 | MuscleWiki: 22 nya kontrollerade länkar (6 säkra, 9 varianter till grundövningen, 7 stretchövningar) | Träning | Låg | Klar |
+| 99 | MuscleWiki: 15 nya icke-stretchlänkar (6 direkta, 9 märkta grundövningar). Sju föreslagna stretchlänkar återhålls i väntan på exakt rörelseverifiering. | Träning | Låg | Pågår |
 
 ## Detaljer och acceptanskriterier
 
