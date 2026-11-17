@@ -2883,3 +2883,7 @@ def test_musclewiki_lankar_ar_kontrollerade_och_direkt_till_ovningen(page):
     urls = page.evaluate("Object.keys(EX).map(mwUrl).filter(Boolean)")
     assert urls and all("/exercise/" in u and "/exercises/" not in u for u in urls)
     assert page.evaluate("Object.keys(EX).filter(id => !MW_LANK[id]).every(id => mwUrl(id) === null)") is True
+    # Alla länkade övningar finns i appen, och varianter säger att länken visar grundövningen
+    assert page.evaluate("Object.keys(MW_LANK).filter(id => !EX[id])") == []
+    assert page.evaluate("[...MW_GRUND].every(id => EX[id] && mwUrl(id) && mwBase(id))") is True
+    assert page.evaluate("mwBase('stx_split_db')") is False and page.evaluate("mwUrl('stx_split_db')").endswith("dumbbell-split-squat")

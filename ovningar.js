@@ -1247,6 +1247,8 @@ const mwUrl = id => {
   return typeof slug === "string" && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)
     ? `https://musclewiki.com/exercise/${slug}` : null;
 };
+// Visar tydligt när en länk gäller grundövningen och inte den exakta varianten.
+const mwBase = id => typeof MW_GRUND !== "undefined" && MW_GRUND.has(id);
 // MuscleWikis egna adresser ändras och kan inte kontrolleras härifrån, så länken söker efter övningen
 // på MuscleWiki i stället. Det engelska namnet tas från adressen när det finns, annars det svenska.
 const mwSearch = id => {
