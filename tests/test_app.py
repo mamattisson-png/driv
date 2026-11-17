@@ -394,7 +394,7 @@ def test_utveckling_visar_personbasta_och_okning(page):
     assert "Bänkpress +12,5 kg" in win and "60 kg × 8" in win
     assert "2" in page.inner_text(".hstat >> nth=0")
     row.click()
-    assert page.locator(".sheet .chart").count() == 1
+    assert page.locator(".sheet .ch-bars").count() == 1
 
 
 def test_recept_byggs_och_loggas_per_portion(page):
@@ -1263,20 +1263,25 @@ def test_historik_andra_en_tidigare_dag(page):
     go(page, "historik")
     assert page.locator('[data-histday="2026-10-20"].pass').count() == 1 and page.locator(".cday.pass").count() == 1
     assert page.locator('[data-histday="2026-10-23"]').is_disabled()
-    # Igår: dailys och vikt ändras i samma fönster, via raderna
+    # Igår: dagen visar dailys och vikt; de ändras på sina egna ställen (Dailys → Vecka och sidan Vikt)
     page.click('[data-histday="2026-10-21"]')
     assert "Igår" in page.inner_text(".sheet h2")
-    page.click('.sheet [data-hsub="dailys"]')
-    page.click(".sheet [data-dcheck=plankan]")
-    page.click('.sheet [data-hsub=""]')
-    assert "1 av" in page.inner_text('.sheet [data-hsub="dailys"]')
-    page.click('.sheet [data-hsub="vikt"]')
-    page.fill(".sheet #wkg", "80.5")
-    page.click(".sheet [data-wsave]")
-    assert "80,5 kg" in page.inner_text('.sheet [data-hsub="vikt"]')
+    page.click('.sheet [data-hdailys="2026-10-21"]')
+    assert page.evaluate("[tab, dlView, dlWeek]") == ["dailys", "vecka", "2026-10-19"]
+    page.click('[data-wkck="2026-10-21"][data-wkid="plankan"]')
+    go(page, "historik")
+    page.click('[data-histday="2026-10-21"]')
+    assert "1 av" in page.inner_text('.sheet [data-hdailys]')
+    page.click('.sheet [data-hvikt="2026-10-21"]')
+    assert page.evaluate("[tab, wDay()]") == ["vagning", "2026-10-21"]
+    page.evaluate("wDraft = 80.5")
+    page.click("[data-wsave]")
     assert page.evaluate("S.log['2026-10-21'].dailies.plankan") is True
     assert page.evaluate("dailyDone('2026-10-22', 'plankan')") is False
     assert page.evaluate("S.weights['2026-10-21']") == 80.5
+    go(page, "historik")
+    page.click('[data-histday="2026-10-21"]')
+    assert "80,5 kg" in page.inner_text('.sheet [data-hvikt]')
     # Mat i efterhand: Kost öppnas för den dagen och Klar leder tillbaka
     page.click("[data-hfood]")
     assert "igår" in page.inner_text(".editbar")

@@ -87,10 +87,6 @@ function daySheet() {
   const d = histDay, e = eaten(d), title = dateLabel(d).replace(/^./, c => c.toUpperCase());
   const head = back => `<div class="row between hsheet-top">${back ? `<button class="backbtn" data-hsub="">${icon("left", 18)}${title}</button>` : `<h2>${title}</h2>`}
     <button class="small ghost iconbtn" data-hclose aria-label="Stäng">${icon("close", 18)}</button></div>`;
-  // Underlägen: dailys och vikt ändras i samma fönster
-  if (histSub === "dailys") return `<div class="overlay" data-hclose><div class="sheet hsheet">${head(true)}${dailiesCard()}</div></div>`;
-  if (histSub === "vikt") return `<div class="overlay" data-hclose><div class="sheet hsheet">${head(true)}<h3 class="sheet-sub">Vikt</h3>
-    <div class="row"><input id="wkg" type="number" inputmode="decimal" step="0.1" placeholder="kg" aria-label="Vikt i kg" value="${weights()[d] ?? ""}"><button class="primary" data-wsave data-wdate="${d}">Spara</button></div></div></div>`;
   const ws = workoutsOn(d);   // även påbörjade pass utan set, så att de går att fortsätta i efterhand
   const dl = dailyList(d), n = dl.length, done = dl.filter(x => dailyDone(d, x.id)).length;
   const line = (ic, name, val, attrs) => `<button class="hline" ${attrs}><span class="hl-ic">${ic}</span><span class="grow">${name}</span><span class="muted">${val}</span>${icon("right", 16)}</button>`;
@@ -101,9 +97,9 @@ function daySheet() {
     ${actsOn(d).map((a, i) => `<button class="hline" data-actedit="${i}" data-actdate="${d}"><span class="hl-ic">${icon("aktivitet", 18)}</span><span class="grow">${esc(a.name)}</span><span class="muted">${actLine(a)}</span>${icon("right", 16)}</button>`).join("")}
     ${!ws.length && !actsOn(d).length ? `<div class="muted hnone">Ingen träning loggad.</div>` : ""}
     <div class="hlines">
-      ${n ? line(ring, "Dailys", `${done} av ${n}`, 'data-hsub="dailys"') : ""}
+      ${n ? line(ring, "Dailys", `${done} av ${n}`, `data-hdailys="${d}"`) : ""}
       ${line(icon("kost", 18), "Mat", e.kcal ? `${tnum(e.kcal)} kcal · ${e.protein} g protein` : "Inget loggat", "data-hfood")}
-      ${S.hideWeight ? "" : line(icon("vikt", 18), "Vikt", weights()[d] ? `${fmtNum(weights()[d])} kg` : "Ingen vägning", 'data-hsub="vikt"')}
+      ${S.hideWeight ? "" : line(icon("vikt", 18), "Vikt", weights()[d] ? `${fmtNum(weights()[d])} kg` : "Ingen vägning", `data-hvikt="${d}"`)}
     </div>
     <div class="hadd"><button class="linkbtn2" data-hpass="">${icon("plus", 16)}Logga pass${d === TODAY ? "" : " i efterhand"}</button>
       <button class="linkbtn2" data-actnew="" data-actdate="${d}">${icon("plus", 16)}Aktivitet</button></div>
@@ -212,15 +208,15 @@ function wins(p) {
   return out;
 }
 function weekBars(count = 12) {
-  const weeks = [];
-  for (let k = count - 1; k >= 0; k--) { const ws = shift(weekStart(TODAY), -7 * k); weeks.push({ ws, n: weekSummary(ws).passes }); }
-  const max = Math.max(S.plan.count, ...weeks.map(w => w.n)), W = 320, H = 120, bw = W / count, every = Math.ceil(count / 6);
-  return `<svg class="chart wbars" viewBox="0 0 ${W} ${H + 18}" role="img" aria-label="Pass per vecka de senaste tolv veckorna">
-    <line class="grid" x1="0" x2="${W}" y1="${(H - S.plan.count / max * (H - 8)).toFixed(1)}" y2="${(H - S.plan.count / max * (H - 8)).toFixed(1)}"/>
-    ${weeks.map((w, i) => { const h = w.n / max * (H - 8);
-      return `<rect class="wbar ${w.n >= S.plan.count ? "full" : ""}" x="${(i * bw + bw * .12).toFixed(1)}" y="${(H - h).toFixed(1)}" width="${(bw * .76).toFixed(1)}" height="${h.toFixed(1)}" rx="3"/>
-        ${(count - 1 - i) % every === 0 ? `<text class="axis" x="${(i * bw + bw / 2).toFixed(1)}" y="${H + 14}" text-anchor="middle">v.${weekNo(w.ws)}</text>` : ""}`; }).join("")}
-  </svg>`;
+  const weeks = [], goal = S.plan.count, cur = weekStart(TODAY);
+  for (let k = count - 1; k >= 0; k--) { const ws = shift(cur, -7 * k); weeks.push({ ws, n: weekSummary(ws).passes }); }
+  const every = Math.ceil(count / 4), done = weeks.filter(w => w.ws !== cur && w.n >= goal).length;
+  const vals = weeks.map((w, i) => ({ v: w.n, cls: w.ws === cur ? "now" : w.n >= goal ? "ok" : "under",
+    tip: `v.${weekNo(w.ws)} · ${w.n} ${w.n === 1 ? "pass" : "pass"}${w.ws === cur ? " hittills" : w.n >= goal ? " · målet nått" : ""}`,
+    top: w.ws === cur ? String(w.n) : "", label: (count - 1 - i) % every === 0 ? (w.ws === cur ? "nu" : `v.${weekNo(w.ws)}`) : "" }));
+  return `<span class="ch-chip ok">${done} av ${count - 1} veckor nådde målet</span>
+    ${barChart({ vals, goal, max: goal, fmt: v => String(Math.round(v)), aria: `Pass per vecka, ${count} veckor` })}
+    <div class="ch-note muted small">Grön: målet nått. Grå: veckan pågår.</div>`;
 }
 function actSummary() {
   const from = shift(weekStart(TODAY), -77), by = {};
@@ -274,7 +270,7 @@ function historikView() {
 }
 
 document.addEventListener("click", ev => {
-  const t = ev.target.closest("[data-histday],[data-hclose],[data-hmonth],[data-hpass],[data-hfood],[data-hview],[data-weekex],[data-hsub],[data-hper],[data-hstrall],[data-wsave]");
+  const t = ev.target.closest("[data-histday],[data-hclose],[data-hmonth],[data-hpass],[data-hfood],[data-hview],[data-weekex],[data-hsub],[data-hper],[data-hstrall],[data-wsave],[data-hdailys],[data-hvikt]");
   if (!t || t.disabled) return;
   if (t.classList.contains("overlay") && ev.target !== t) return;   // klick inne i fönstret
   const ds = t.dataset;
@@ -282,6 +278,9 @@ document.addEventListener("click", ev => {
   if (ds.wsave !== undefined) { const v = +String(($("wkg") || {}).value || "").replace(",", "."); if (histSub === "vikt" && v > 0) histSub = null; return; }
   if (ds.weekex !== undefined) weekExOpen = !weekExOpen;
   else if (ds.hsub !== undefined) histSub = ds.hsub || null;
+  // Dailys och vikt ändras på sina egna ställen: Dailys → Vecka för den veckan, och sidan Vikt för den dagen
+  else if (ds.hdailys) { histDay = null; histSub = null; tab = "dailys"; dlView = "vecka"; dlWeek = weekStart(ds.hdailys); rutPage = false; rutOpen = null; window.scrollTo(0, 0); }
+  else if (ds.hvikt) { histDay = null; histSub = null; vikBack = "historik"; tab = "vagning"; wDate = ds.hvikt; wDraft = null; window.scrollTo(0, 0); }
   else if (ds.hper) histPer = ds.hper;
   else if (ds.hstrall !== undefined) strAll = !strAll;
   else if (ds.hview) histView = ds.hview;
