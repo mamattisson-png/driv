@@ -169,3 +169,18 @@ def test_week_check_missed_day_afterwards(page):
     page.click('[data-wkck="2026-11-09"][data-wkid="plankan"]')
     assert page.evaluate("dailyDone('2026-11-09', 'plankan')") is False
     assert page.locator('[data-wkck="2026-11-12"]').count() == 0
+
+
+def test_week_navigation_back_and_forth(page):
+    page.clock.install(time=datetime.datetime(2026, 11, 11, 12, 0))
+    start(page)
+    page.evaluate("S.daily = [exEntry('plankan')]; save()")
+    go(page, 'dailys')
+    page.click('[data-dlview=vecka]')
+    assert page.locator('[data-dlweek="7"]').is_disabled()
+    page.click('[data-dlweek="-7"]')
+    assert page.evaluate("dlWeek") == '2026-11-02'
+    page.click('[data-wkck="2026-11-04"][data-wkid="plankan"]')
+    assert page.evaluate("dailyDone('2026-11-04', 'plankan')") is True
+    page.click('[data-dlweek="7"]')
+    assert page.evaluate("dlWeek") is None

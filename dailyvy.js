@@ -6,6 +6,7 @@
 // Laddas efter rutiner.js och före app.js.
 
 let dlView = "dag";   // "dag" eller "vecka"
+let dlWeek = null;    // måndagen i veckan som visas under Vecka (null = den här veckan)
 let plSel = null;     // rutinen man lägger ut på veckans dagar ("" är vila)
 let uxOpen = null;    // övningen som är utfälld på en rutins sida (index)
 let upInfo = null;    // steget vars förklaring (i) är utfälld
@@ -71,7 +72,7 @@ function dlDayView() {
 
 // ---------- Vecka ----------
 function dlWeekView() {
-  const dates = weekDates(weekStart(TODAY)), a = S.supplements || [], every = (S.daily || []).filter(e => EX[e.id]);
+  const cur = weekStart(TODAY), ws = dlWeek && dlWeek < cur ? dlWeek : cur, dates = weekDates(ws), a = S.supplements || [], every = (S.daily || []).filter(e => EX[e.id]);
   const rs = dates.map(d => routineOn(d)), used = dailyRoutines().filter(r => rs.includes(r));
   const cell = (d, inner) => `<span class="wk-c ${d === TODAY ? "t" : ""}">${inner}</span>`;
   const dot = (d, ok, col) => ok ? `<i class="wk-d ok" style="--pc:${col}"></i>` : d < TODAY ? `<i class="wk-d x"></i>` : `<i class="wk-d p" style="--pc:${col}"></i>`;
@@ -88,7 +89,9 @@ function dlWeekView() {
     + used.map(r => group(r.name, rutColor(r), r.ex, i => rs[i] === r)).join("");
   const supp = a.map(x => `<div class="wk-r"><span class="wk-n wk-sn">${esc(x.name)}</span>${dates.map(d =>
     cell(d, mark(d, !!(S.log[d] && S.log[d].dailies && S.log[d].dailies["supp:" + x.id]), "var(--ok)", "supp:" + x.id, x.name))).join("")}</div>`).join("");
-  return `<div class="muted small dl-wsub">Vecka ${weekNo(TODAY)}</div>
+  return `<div class="row between dl-wnav"><button class="iconbtn small ghost" data-dlweek="-7" aria-label="Veckan före">${icon("left", 18)}</button>
+      <span class="dl-wsub"><b>Vecka ${weekNo(ws)}</b>${ws === cur ? " · den här veckan" : ` · ${shortDate(ws)}–${shortDate(dates[6])}`}</span>
+      <button class="iconbtn small ghost" data-dlweek="7" ${ws === cur ? "disabled" : ""} aria-label="Veckan efter">${icon("right", 18)}</button></div>
     <section class="wk-tbl">${head}${groups || `<div class="wk-none muted small">Inga dailys än. Ställ in dem under Upplägg.</div>`}</section>
     ${a.length ? `<section class="wk-tbl wk-supp"><div class="wk-sh"><span class="klabel">Kosttillskott</span></div>${supp}</section>` : ""}
     <div class="muted small wk-hint">Missat något? Tryck på pricken för att bocka av i efterhand.</div>
@@ -163,7 +166,7 @@ function uppDetail() {
     return `<div class="ux ${open ? "open" : ""}" data-uxidx="${i}"><div class="ux-r">${list.length > 1 ? `<span class="ux-grip" data-uxdrag="${i}" data-t="${target}" aria-label="Dra för att flytta ${esc(EX[e.id].name)}">${icon("list", 18)}</span>` : ""}
         <button class="ux-main" data-uxopen="${i}" aria-expanded="${open}"><span class="ux-f">${figure(e.id)}</span><span class="grow"><b>${esc(EX[e.id].name)}</b><small>${e.sets} × ${esc(e.reps || "")}</small></span></button></div>
       ${open ? `<div class="ux-ed"><div class="ux-st"><span>Set</span><span class="ux-stp"><button data-uxsets="-1" data-t="${target}" data-idx="${i}" aria-label="Färre set">${icon("minus", 16)}</button><b>${e.sets}</b><button data-uxsets="1" data-t="${target}" data-idx="${i}" aria-label="Fler set">${icon("plus", 16)}</button></span></div>
-        <div class="ux-st"><span>Reps eller tid</span><input type="text" value="${esc(e.reps || "")}" data-ed="${i}" data-t="${target}" data-f="reps" aria-label="Reps"></div>
+        <div class="ux-st"><span>Reps eller tid</span><input type="text" inputmode="numeric" value="${esc(e.reps || "")}" data-ed="${i}" data-t="${target}" data-f="reps" aria-label="Reps"></div>
         <div class="ux-acts"><button data-swap="${target}" data-idx="${i}">Byt övning</button><button class="ux-del" data-xdel="${target}" data-idx="${i}">Ta bort</button></div></div>` : ""}</div>`;
   }).join("");
   return `<div class="dlx up"><button class="backbtn" data-rutback>${icon("left", 18)}Upplägg</button>
@@ -183,11 +186,12 @@ function dailysPage() {
 }
 
 document.addEventListener("click", ev => {
-  const t = ev.target.closest && ev.target.closest("[data-wkck],[data-upinfo],[data-dlview],[data-plsel],[data-plday],[data-plfill],[data-uppmode],[data-uxopen],[data-uxsets]");
+  const t = ev.target.closest && ev.target.closest("[data-dlweek],[data-wkck],[data-upinfo],[data-dlview],[data-plsel],[data-plday],[data-plfill],[data-uppmode],[data-uxopen],[data-uxsets]");
   if (!t) return;
   const ds = t.dataset;
   ev.stopImmediatePropagation();
-  if (ds.wkck) {
+  if (ds.dlweek) { const cur = weekStart(TODAY), n = shift(dlWeek || cur, +ds.dlweek); dlWeek = n >= cur ? null : n; }
+  else if (ds.wkck) {
     // Bocka av eller ångra en dag i efterhand; dagen minns vilken rutin den hade
     const L = day(ds.wkck), id = ds.wkid, r = routineOn(ds.wkck);
     if (r && !L.dailyRoutine && dailyRoutines().length) L.dailyRoutine = r.id;
@@ -195,7 +199,7 @@ document.addEventListener("click", ev => {
     save();
   }
   else if (ds.upinfo) upInfo = upInfo === +ds.upinfo ? null : +ds.upinfo;
-  else if (ds.dlview) { dlView = ds.dlview; rutPage = false; rutOpen = null; }
+  else if (ds.dlview) { dlView = ds.dlview; dlWeek = null; rutPage = false; rutOpen = null; }
   else if (ds.plsel !== undefined) plSel = ds.plsel;
   else if (ds.plday !== undefined) { const w = weekNow(); w[+ds.plday] = plSel; saveWeek(w); save(); }
   else if (ds.plfill) {

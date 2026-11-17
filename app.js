@@ -1141,11 +1141,12 @@ const VIEWS = {
         <div class="vk-now"><b>${fmtNum(last.kg)}</b><span>kg</span></div>
         ${diff ? `<span class="vk-bdg ${good ? "ok" : "warn"}">${diff < 0 ? "↓" : "↑"} ${fmtNum(Math.abs(diff))} kg på ${weeks} ${weeks === 1 ? "vecka" : "veckor"}</span>` : ""}
         <div class="vk-chart">${weightChart()}</div>` : `<span class="klabel">Ingen vägning än</span><div class="muted small">Väg dig nedan, så syns utvecklingen här.</div>`}</section>
-      <div class="klabel sechead">Väg dig idag</div>
+      <div class="row between vk-dayrow"><span class="klabel">${wDay() === TODAY ? "Väg dig idag" : weights()[wDay()] ? "Rätta vägningen" : "Väg in i efterhand"}</span>
+        <label class="vk-date">${wDay() === TODAY ? "Idag" : cap(dateLabel(wDay()))}${icon("down", 14)}<input type="date" data-wdatein max="${TODAY}" value="${wDay()}" aria-label="Välj dag"></label></div>
       ${ruler("wlog")}
-      <button class="primary wide bigbtn vk-save" data-wsave data-wdate="${TODAY}">Spara vägning</button>
+      <button class="primary wide bigbtn vk-save" data-wsave data-wdate="${wDay()}">Spara vägning${wDay() === TODAY ? "" : ` för ${shortDate(wDay())}`}</button>
       ${bmiCard(Object.assign({}, S.profile, { weight: rulGet("wlog") }))}
-      ${days.length ? `<div class="klabel sechead">Senaste vägningarna</div><div class="vk-hist">${days.slice(0, 8).map(d => `<div><small>${shortDate(d)}</small><b>${fmtNum(weights()[d])} kg</b></div>`).join("")}</div>` : ""}
+      ${days.length ? `<div class="klabel sechead">Senaste vägningarna</div><div class="vk-hist">${days.slice(0, 8).map(d => `<button class="${d === wDay() ? "on" : ""}" data-wpick="${d}" aria-label="Rätta ${dateLabel(d)}"><small>${shortDate(d)}</small><b>${fmtNum(weights()[d])} kg</b></button>`).join("")}</div>` : ""}
       <div class="klabel sechead">Vägning</div>
       <section class="card">
         <label class="field">Vägningsdag<select data-weighday>${WD.map((w, i) => `<option value="${i}" ${weighDay() === i ? "selected" : ""}>${WD_LONG[i].replace(/^./, c => c.toUpperCase())}</option>`).join("")}</select></label>
@@ -2046,7 +2047,7 @@ document.addEventListener("click", ev => {
   if (ds.passdoneclose !== undefined) { passDone = null; tab = "idag"; render(); window.scrollTo(0, 0); return; }
   if (ds.tab) {
     if (ds.tab === "vanner" && tab !== "vanner") vannerBack = tab;
-    if (ds.tab === "vagning" && tab !== "vagning") { vikBack = tab; wDraft = null; }
+    if (ds.tab === "vagning" && tab !== "vagning") { vikBack = tab; wDraft = null; wDate = null; }
     passDone = null;
     // Under passet: Träna visar översikten (passet fortsätter i bakgrunden); från en annan flik tar Träna dig tillbaka till passet
     if (ds.tab === "pass" && focus) focus.suspended = prevTab === "pass" && !focus.suspended && !editing && !libCtx && !editDate;
@@ -2159,7 +2160,7 @@ document.addEventListener("click", ev => {
     const date = ds.wdate || logDate(), inp = $("wkg");
     // Sidan Vikt har en linjal (wDraft); vägning i efterhand i Historik har ett fält
     if (!logWeight(inp ? +String(inp.value).replace(",", ".") : rulGet("wlog"), date)) { if (inp) fieldError(inp, "Skriv vikten i kg, till exempel 80,5"); return; }
-    weightEditing = false; wDraft = null;
+    weightEditing = false; wDraft = null; wDate = null;
     toast(`Vikt sparad: ${fmtNum(weights()[date])} kg`);
   }
   else if (ds.wedit !== undefined) weightEditing = true;

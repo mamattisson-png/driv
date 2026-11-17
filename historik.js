@@ -87,10 +87,6 @@ function daySheet() {
   const d = histDay, e = eaten(d), title = dateLabel(d).replace(/^./, c => c.toUpperCase());
   const head = back => `<div class="row between hsheet-top">${back ? `<button class="backbtn" data-hsub="">${icon("left", 18)}${title}</button>` : `<h2>${title}</h2>`}
     <button class="small ghost iconbtn" data-hclose aria-label="Stäng">${icon("close", 18)}</button></div>`;
-  // Underlägen: dailys och vikt ändras i samma fönster
-  if (histSub === "dailys") return `<div class="overlay" data-hclose><div class="sheet hsheet">${head(true)}${dailiesCard()}</div></div>`;
-  if (histSub === "vikt") return `<div class="overlay" data-hclose><div class="sheet hsheet">${head(true)}<h3 class="sheet-sub">Vikt</h3>
-    <div class="row"><input id="wkg" type="number" inputmode="decimal" step="0.1" placeholder="kg" aria-label="Vikt i kg" value="${weights()[d] ?? ""}"><button class="primary" data-wsave data-wdate="${d}">Spara</button></div></div></div>`;
   const ws = workoutsOn(d);   // även påbörjade pass utan set, så att de går att fortsätta i efterhand
   const dl = dailyList(d), n = dl.length, done = dl.filter(x => dailyDone(d, x.id)).length;
   const line = (ic, name, val, attrs) => `<button class="hline" ${attrs}><span class="hl-ic">${ic}</span><span class="grow">${name}</span><span class="muted">${val}</span>${icon("right", 16)}</button>`;
@@ -101,9 +97,9 @@ function daySheet() {
     ${actsOn(d).map((a, i) => `<button class="hline" data-actedit="${i}" data-actdate="${d}"><span class="hl-ic">${icon("aktivitet", 18)}</span><span class="grow">${esc(a.name)}</span><span class="muted">${actLine(a)}</span>${icon("right", 16)}</button>`).join("")}
     ${!ws.length && !actsOn(d).length ? `<div class="muted hnone">Ingen träning loggad.</div>` : ""}
     <div class="hlines">
-      ${n ? line(ring, "Dailys", `${done} av ${n}`, 'data-hsub="dailys"') : ""}
+      ${n ? line(ring, "Dailys", `${done} av ${n}`, `data-hdailys="${d}"`) : ""}
       ${line(icon("kost", 18), "Mat", e.kcal ? `${tnum(e.kcal)} kcal · ${e.protein} g protein` : "Inget loggat", "data-hfood")}
-      ${S.hideWeight ? "" : line(icon("vikt", 18), "Vikt", weights()[d] ? `${fmtNum(weights()[d])} kg` : "Ingen vägning", 'data-hsub="vikt"')}
+      ${S.hideWeight ? "" : line(icon("vikt", 18), "Vikt", weights()[d] ? `${fmtNum(weights()[d])} kg` : "Ingen vägning", `data-hvikt="${d}"`)}
     </div>
     <div class="hadd"><button class="linkbtn2" data-hpass="">${icon("plus", 16)}Logga pass${d === TODAY ? "" : " i efterhand"}</button>
       <button class="linkbtn2" data-actnew="" data-actdate="${d}">${icon("plus", 16)}Aktivitet</button></div>
@@ -274,7 +270,7 @@ function historikView() {
 }
 
 document.addEventListener("click", ev => {
-  const t = ev.target.closest("[data-histday],[data-hclose],[data-hmonth],[data-hpass],[data-hfood],[data-hview],[data-weekex],[data-hsub],[data-hper],[data-hstrall],[data-wsave]");
+  const t = ev.target.closest("[data-histday],[data-hclose],[data-hmonth],[data-hpass],[data-hfood],[data-hview],[data-weekex],[data-hsub],[data-hper],[data-hstrall],[data-wsave],[data-hdailys],[data-hvikt]");
   if (!t || t.disabled) return;
   if (t.classList.contains("overlay") && ev.target !== t) return;   // klick inne i fönstret
   const ds = t.dataset;
@@ -282,6 +278,9 @@ document.addEventListener("click", ev => {
   if (ds.wsave !== undefined) { const v = +String(($("wkg") || {}).value || "").replace(",", "."); if (histSub === "vikt" && v > 0) histSub = null; return; }
   if (ds.weekex !== undefined) weekExOpen = !weekExOpen;
   else if (ds.hsub !== undefined) histSub = ds.hsub || null;
+  // Dailys och vikt ändras på sina egna ställen: Dailys → Vecka för den veckan, och sidan Vikt för den dagen
+  else if (ds.hdailys) { histDay = null; histSub = null; tab = "dailys"; dlView = "vecka"; dlWeek = weekStart(ds.hdailys); rutPage = false; rutOpen = null; window.scrollTo(0, 0); }
+  else if (ds.hvikt) { histDay = null; histSub = null; vikBack = "historik"; tab = "vagning"; wDate = ds.hvikt; wDraft = null; window.scrollTo(0, 0); }
   else if (ds.hper) histPer = ds.hper;
   else if (ds.hstrall !== undefined) strAll = !strAll;
   else if (ds.hview) histView = ds.hview;

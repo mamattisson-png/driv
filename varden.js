@@ -10,7 +10,21 @@ let vardenBack = "profil";
 // Linjalerna: min, max, steg, punkter per enhet, ett streck per, en siffra per
 // Vägningen (wlog) har en egen linjal som inte sparar förrän man trycker Spara vägning
 let wDraft = null;
-const wlogStart = () => weights()[TODAY] ?? (latestWeight() || {}).kg ?? S.profile.weight;
+let wDate = null;   // dagen som vägs på sidan Vikt (null = idag); tidigare dagar går att väga in eller rätta
+const wDay = () => wDate && wDate <= TODAY ? wDate : TODAY;
+const wlogStart = () => weights()[wDay()] ?? (latestWeight() || {}).kg ?? S.profile.weight;
+document.addEventListener("change", ev => {
+  const t = ev.target.closest && ev.target.closest("[data-wdatein]");
+  if (!t || !t.value) return;
+  wDate = t.value > TODAY ? TODAY : t.value; wDraft = null; render();
+});
+document.addEventListener("click", ev => {
+  const t = ev.target.closest && ev.target.closest("[data-wpick]");
+  if (!t) return;
+  ev.stopImmediatePropagation();
+  wDate = t.dataset.wpick; wDraft = null; render();
+  const r = document.querySelector(".vk-dayrow"); if (r) r.scrollIntoView({ block: "center" });
+}, true);
 const rulGet = f => f === "wlog" ? (wDraft ?? wlogStart()) : S.profile[f];
 function rulSet(f, v) { if (f === "wlog") wDraft = v; else setProfileValue(f, v); }
 const RULERS = {
