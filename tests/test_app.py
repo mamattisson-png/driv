@@ -2389,6 +2389,11 @@ def test_uppvarmning_under_passet(page):
     assert page.evaluate(f"(workoutsOn(TODAY)[0].warm || {{}})['{ex}']") is None
     assert page.locator(".fset.warm").count() == 0
     assert page.evaluate(f"workoutsOn(TODAY)[0].sets['{ex}'].filter(s => s && s.ok).length") == 1
+    # Eller direkt med × i uppvärmningsrutan
+    page.click("[data-fmore]")
+    page.click(f'[data-warmadd="{ex}"]')
+    page.click(f'.fset.warm.active [data-warmdel="{ex}"]')
+    assert page.evaluate("S.plan.days[0].ex[0].warm") is None and page.locator(".fset.warm").count() == 0
 
 
 def test_okning_mellan_set_foljer_med(page):

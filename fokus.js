@@ -277,7 +277,8 @@ function focusView() {
         : `<button class="primary wide fdone" ${okAttrs(s)}>${s.drop && s.k + 1 < nDrops ? "Klar · direkt till nästa drop" : doneTxt}</button>`;
       setAction = btn;
       return `<li class="${cls}"><div class="fsethead"><button class="fcheck ${v.ok ? "on" : ""}" ${okAttrs(s)} aria-pressed="${!!v.ok}" aria-label="${s.w ? "Uppvärmning" : "Set"} ${s.i + 1} klart">${v.ok ? icon("check", 14) : `<span class="fb">${badge(s)}</span>`}</button>
-        <b class="grow">${s.w ? `Uppvärmning ${s.i + 1}` : s.drop ? `Drop${nDrops > 1 ? ` ${s.k + 1}` : ""}` : `Set ${s.i + 1}`}${amrapAt(s) ? ` <span class="settag">Max reps</span>` : dropAt(s) ? ` <span class="settag">Dropset</span>` : ""}</b>${note ? `<span class="muted small">${note}</span>` : ""}</div>
+        <b class="grow">${s.w ? `Uppvärmning ${s.i + 1}` : s.drop ? `Drop${nDrops > 1 ? ` ${s.k + 1}` : ""}` : `Set ${s.i + 1}`}${amrapAt(s) ? ` <span class="settag">Max reps</span>` : dropAt(s) ? ` <span class="settag">Dropset</span>` : ""}</b>${note ? `<span class="muted small">${note}</span>` : ""}
+        ${s.w ? `<button class="fwarmdel" data-warmdel="${ex.id}" data-wi="${s.i}" aria-label="Ta bort uppvärmning ${s.i + 1}">${icon("close", 16)}</button>` : ""}</div>
         ${fields}${s.drop && s === lastDrop && s.k < 3 && !v.ok ? `<button class="chipbtn dropmore" data-dropmore="${ex.id}">${icon("plus", 14)}En drop till efter den här</button>` : ""}</li>`;
     }
     const val = v.ok && hasData(v) ? fmt(v) : hasData(h) ? fmt(h) : "";

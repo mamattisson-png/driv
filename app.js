@@ -2138,10 +2138,11 @@ document.addEventListener("click", ev => {
     if (focus) focus.sel = null;
   }
   else if (ds.warmdel) {
-    // Det sista uppvärmningssetet tas bort, med det som eventuellt loggats i det
+    // Ett uppvärmningsset tas bort (× i rutan tar just det, Mer tar det sista), med det som eventuellt loggats i det
     const d = currentPassDay(), ex = d.ex.find(x => x.id === ds.warmdel), n = Math.max(0, (+ex.warm || 0) - 1), w = workoutFor(d);
+    const at = ds.wi != null ? +ds.wi : n;
     if (n) ex.warm = n; else delete ex.warm;
-    if (w && w.warm && w.warm[ex.id]) { w.warm[ex.id] = w.warm[ex.id].slice(0, n); if (!n) delete w.warm[ex.id]; }
+    if (w && w.warm && w.warm[ex.id]) { const a = w.warm[ex.id]; a.splice(at, 1); w.warm[ex.id] = a.slice(0, n); if (!n) delete w.warm[ex.id]; }
     if (focus) focus.sel = null;
     focusMore = false;
   }
