@@ -58,3 +58,25 @@ def test_show_more_keeps_scroll(page):
     assert y > 500
     page.click("[data-mskmore]")
     assert abs(page.evaluate("scrollY") - y) < 5
+
+
+def test_target_weight_and_charts(page):
+    start(page)
+    page.evaluate("""S.tourAsked = true; for (const k of [28, 21, 14, 7, 0]) weights()[shift(TODAY, -k)] = 84 - (28 - k) / 14;
+      S.profile.weight = latestWeight().kg; S.profile.goal = 'cut'; save(); tab = 'profil'; render()""")
+    page.click("#p-vikt [data-tab='vagning']")
+    # Målvikten sätts på sidan Vikt och syns som streckad linje
+    assert page.locator(".ch-goal").count() == 0
+    page.click('[data-wtarget="set"]')
+    assert page.evaluate("S.profile.targetWeight") == 77
+    page.click('[data-wtarget="0.5"]')
+    assert page.evaluate("S.profile.targetWeight") == 77.5
+    assert page.locator(".ch-goal").count() == 1 and "kvar till 77,5 kg" in page.inner_text(".vk-hero")
+    # Perioden byts, och ett tryck i grafen visar en vägning
+    page.click('[data-wrange="28"]')
+    assert page.evaluate("wRange") == 28
+    box = page.locator("svg[data-chpts]").bounding_box()
+    page.mouse.click(box["x"] + box["width"] * 0.3, box["y"] + 50)
+    assert "kg" in page.text_content(".ch-tipt")
+    page.click('[data-wtarget="clear"]')
+    assert page.evaluate("S.profile.targetWeight") is None

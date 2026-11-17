@@ -2683,6 +2683,43 @@ button.acttile { min-height: 64px; cursor: pointer; }
 .gprot { display: flex; flex-direction: column; align-items: flex-end; } .gprot b { font: 800 22px "Unbounded", sans-serif; } .gprot small { color: var(--muted); }
 
 .fwarmdel { width: 32px; height: 32px; min-height: 0; padding: 0; flex: none; border-radius: 16px; border: 0; background: var(--card-2); color: var(--muted); display: grid; place-items: center; margin-left: 8px; }
+
+/* Grafer */
+.ch-wrap { position: relative; margin-top: 4px; }
+.ch { display: block; width: 100%; height: auto; overflow: visible; touch-action: pan-y; }
+.ch-grid { stroke: var(--line); stroke-width: 1; }
+.ch-ax { fill: var(--muted); font: 400 11px "Lexend", sans-serif; }
+.ch-goal { stroke: var(--ok); stroke-width: 1.5; stroke-dasharray: 4 4; }
+.ch-bars .ch-goal { stroke: var(--text); }
+.ch-goalt { fill: var(--ok-text); font: 600 11px "Lexend", sans-serif; }
+.ch-bars .ch-goalt { fill: var(--text); }
+.ch-line { fill: none; stroke: var(--accent-strong); stroke-width: 2.5; stroke-linecap: round; }
+.ch-pt { fill: var(--card); stroke: var(--accent-strong); stroke-width: 2; }
+.ch-end { fill: var(--accent-strong); stroke: var(--card); stroke-width: 3; }
+.ch-cross { stroke: var(--line-strong); stroke-width: 1; }
+.ch-sel { fill: var(--accent-strong); stroke: var(--card); stroke-width: 3; }
+.ch-tipbg { fill: var(--card-2); }
+.ch-tipt { fill: var(--text); font: 600 12px "Lexend", sans-serif; }
+.ch-val { fill: var(--text); font: 600 12px "Lexend", sans-serif; }
+.ch-b path { fill: color-mix(in srgb, var(--accent-strong) 30%, var(--card-2)); }
+.ch-b.pb path { fill: var(--accent-strong); }
+.ch-b.ok path { fill: var(--ok); }
+.ch-b.under path { fill: color-mix(in srgb, var(--ok) 30%, var(--card-2)); }
+.ch-b.now path { fill: var(--line-strong); }
+.ch-b.sel path { stroke: var(--text); stroke-width: 2; }
+.ch-read { min-height: 18px; margin-top: 4px; text-align: center; }
+.ch-hero { display: flex; align-items: baseline; gap: 8px; margin: 8px 0 6px; }
+.ch-hero b { font: 800 34px/1 "Unbounded", sans-serif; } .ch-hero span { color: var(--muted); }
+.ch-chip { display: inline-block; padding: 4px 10px; border-radius: 99px; background: var(--card-2); color: var(--text); font-weight: 600; font-size: 12.5px; }
+.ch-chip.ok { background: var(--ok-soft); color: var(--ok-text); }
+.ch-chip.acc { background: var(--accent-soft); color: var(--accent-text); }
+.ch-note { margin-top: 6px; }
+.ch-rng { display: flex; gap: 4px; margin: 12px 0 0; }
+.ch-rng button { min-height: 32px; padding: 0 12px; border: 0; border-radius: 99px; background: none; color: var(--muted); font: inherit; font-size: 12.5px; }
+.ch-rng button.on { background: var(--card-2); color: var(--text); font-weight: 600; }
+.vk-target { align-items: center; gap: 12px; }
+.vk-target > span { display: flex; flex-direction: column; gap: 2px; }
+.vk-tclear { display: block; margin-top: 6px; }
 </style>
 </head>
 <body>
@@ -2721,6 +2758,7 @@ button.acttile { min-height: 64px; cursor: pointer; }
 <script src="rutiner.js"></script>
 <script src="dailyvy.js"></script>
 <script src="varden.js"></script>
+<script src="grafer.js"></script>
 <script src="app.js"></script>
 <script src="livsmedel.js" async></script>
 <script>

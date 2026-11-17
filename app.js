@@ -840,38 +840,21 @@ function weighHint() {
   const wd = weekdayOf(TODAY), d = weighDay();
   return wd < d ? `Väg dig ${WD_LONG[d]}` : wd === d ? "Väg dig idag" : "Inte vägd den här veckan · väg dig idag";
 }
-// Vägningar som punkter och veckosnitt som linje, de senaste åtta veckorna
+// Vikten över vald period: varje vägning (veckosnitt när perioden är lång), med målvikten som streckad linje
+let wRange = 56;   // dagar som visas: 28, 56, 182 eller 365
+const W_RANGES = [[28, "4 v"], [56, "8 v"], [182, "6 mån"], [365, "År"]];
 function weightChart() {
-  const start = shift(weekStart(TODAY), -49), days = [];
-  for (let i = 0; i < 56; i++) days.push(shift(start, i));
-  const pts = days.map((d, i) => ({ i, d, kg: weights()[d] })).filter(p => p.kg > 0);
-  if (pts.length < 2) return `<div class="muted">Grafen visas när du vägt dig minst två gånger.</div>`;
-  const avgs = [];
-  for (let w = 0; w < 8; w++) {
-    const a = weekAvgWeight(shift(start, w * 7));
-    if (a != null) avgs.push({ i: w * 7 + 3, kg: a, ws: shift(start, w * 7) });
+  const from = shift(TODAY, -wRange + 1), days = Object.keys(weights()).filter(d => d >= from && d <= TODAY && weights()[d] > 0).sort();
+  if (days.length < 2) return `<div class="muted small">Grafen visas när du vägt dig minst två gånger${wRange < 365 ? " under perioden" : ""}.</div>`;
+  const short = d => `${+d.slice(8)} ${MONTHS[+d.slice(5, 7) - 1].slice(0, 3)}`;
+  let pts = days.map(d => ({ d, v: weights()[d], tip: `${short(d)} · ${fmtNum(weights()[d])} kg` }));
+  if (pts.length > 10) {   // fler än en vägning i veckan: ett snitt per vecka, så att kurvan blir lugn
+    const by = {}; for (const p of pts) (by[weekStart(p.d)] = by[weekStart(p.d)] || []).push(p.v);
+    pts = Object.keys(by).sort().map(ws => { const v = by[ws].reduce((a, b) => a + b, 0) / by[ws].length; return { d: ws, v, tip: `v.${weekNo(ws)} · ${fmtNum(Math.round(v * 10) / 10)} kg` }; });
   }
-  const W = 320, H = 170, L = 34, Rr = 12, T = 14, B = 26;
-  let lo = Math.min(...pts.map(p => p.kg)), hi = Math.max(...pts.map(p => p.kg));
-  if (hi - lo < 1) { lo -= 0.5; hi += 0.5; }
-  const pad = (hi - lo) * 0.15; lo -= pad; hi += pad;
-  const x = i => L + i * (W - L - Rr) / 55, y = v => T + (hi - v) * (H - T - B) / (hi - lo);
-  const ticks = [lo, (lo + hi) / 2, hi];
-  const path = avgs.map((a, k) => `${k ? "L" : "M"}${x(a.i).toFixed(1)},${y(a.kg).toFixed(1)}`).join(" ");
-  const last = pts[pts.length - 1];
-  return `<div class="readout" id="wreadout">${WD[weekdayOf(last.d)]} ${last.d.slice(8)}/${+last.d.slice(5, 7)}: <b>${fmtNum(last.kg)} kg</b></div>
-    <svg class="chart" viewBox="0 0 ${W} ${H}" data-readout="wreadout" role="img" aria-label="Vikt de senaste åtta veckorna">
-      ${ticks.map(t => `<line class="grid" x1="${L}" x2="${W - Rr}" y1="${y(t).toFixed(1)}" y2="${y(t).toFixed(1)}"/>
-        <text class="axis" x="${L - 6}" y="${(y(t) + 4).toFixed(1)}" text-anchor="end">${fmtNum(Math.round(t * 2) / 2)}</text>`).join("")}
-      ${[0, 3, 7].map(w => `<text class="axis" x="${x(w * 7 + 3).toFixed(1)}" y="${H - 6}" text-anchor="middle">v.${weekNo(shift(start, w * 7))}</text>`).join("")}
-      ${pts.map(p => `<circle class="wdot" cx="${x(p.i).toFixed(1)}" cy="${y(p.kg).toFixed(1)}" r="3"/>`).join("")}
-      ${avgs.length > 1 ? `<path class="line" d="${path}"/>` : ""}
-      ${avgs.map(a => `<circle class="dot" cx="${x(a.i).toFixed(1)}" cy="${y(a.kg).toFixed(1)}" r="4.5"/>`).join("")}
-      ${pts.map(p => `<g data-pt data-label="${WD[weekdayOf(p.d)]} ${p.d.slice(8)}/${+p.d.slice(5, 7)}: ${fmtNum(p.kg)} kg"><circle class="hit" cx="${x(p.i).toFixed(1)}" cy="${y(p.kg).toFixed(1)}" r="10"/></g>`).join("")}
-      ${avgs.map(a => `<g data-pt data-label="Snitt v.${weekNo(a.ws)}: ${fmtNum(a.kg)} kg"><circle class="hit" cx="${x(a.i).toFixed(1)}" cy="${y(a.kg).toFixed(1)}" r="12"/></g>`).join("")}
-      <text class="axis" x="${L}" y="10">kg</text>
-    </svg>
-    <div class="legend muted small"><span><i class="lg-dot"></i>Vägning</span><span><i class="lg-line"></i>Veckosnitt</span></div>`;
+  const lab = d => wRange > 120 ? MONTHS[+d.slice(5, 7) - 1].slice(0, 3) : `v.${weekNo(d)}`;
+  pts.forEach((p, i) => { if (i === 0 || i === pts.length - 1 || i === Math.round((pts.length - 1) / 2)) p.label = lab(p.d); });
+  return areaChart({ pts, goal: S.profile.targetWeight ?? null, unit: "kg", id: "w", aria: `Vikt, ${W_RANGES.find(r => r[0] === wRange)[1]}` });
 }
 
 // ---------- Rendering ----------
@@ -1132,15 +1115,20 @@ const VIEWS = {
     const back = { pass: "Träna", dailys: "Dailys", kost: "Kost", historik: "Historik", profil: "Inställningar", varden: "Dina värden" }[vikBack] || "Hem";
     const days = Object.keys(weights()).sort().reverse(), last = latestWeight();
     // Förändringen de senaste åtta veckorna; grön när den går åt det håll målet säger
-    const old = days.filter(d => d >= shift(TODAY, -56)).pop(), diff = last && old && old !== last.date ? Math.round((last.kg - weights()[old]) * 10) / 10 : null;
-    const goal = S.profile.goal, good = diff != null && (goal === "cut" ? diff < 0 : goal === "bulk" ? diff > 0 : Math.abs(diff) <= 0.5);
+    const old = days.filter(d => d >= shift(TODAY, -wRange)).pop(), diff = last && old && old !== last.date ? Math.round((last.kg - weights()[old]) * 10) / 10 : null;
+    const tw = S.profile.targetWeight, goal = S.profile.goal;
+    // Grön när vikten rört sig mot målvikten (eller åt det håll målet säger, utan målvikt)
+    const good = diff != null && (tw != null ? Math.abs(last.kg - tw) < Math.abs(weights()[old] - tw) : goal === "cut" ? diff < 0 : goal === "bulk" ? diff > 0 : Math.abs(diff) <= 0.5);
     const weeks = old ? Math.max(1, Math.round(rutDays(old, last.date) / 7)) : 0;
     return `<div class="weigh-page"><button class="backbtn" data-tab="${vikBack}">${icon("left", 18)}${back}</button><h1>Vikt</h1>
       <p class="muted vk-sub">Väg dig ${WD_LONG[weighDay()]}ar</p>
       <section class="card vk-hero">${last ? `<span class="klabel">Senast · ${dateLabel(last.date)}</span>
         <div class="vk-now"><b>${fmtNum(last.kg)}</b><span>kg</span></div>
-        ${diff ? `<span class="vk-bdg ${good ? "ok" : "warn"}">${diff < 0 ? "↓" : "↑"} ${fmtNum(Math.abs(diff))} kg på ${weeks} ${weeks === 1 ? "vecka" : "veckor"}</span>` : ""}
-        <div class="vk-chart">${weightChart()}</div>` : `<span class="klabel">Ingen vägning än</span><div class="muted small">Väg dig nedan, så syns utvecklingen här.</div>`}</section>
+        ${diff ? `<span class="vk-bdg ${good ? "ok" : "warn"}">${diff < 0 ? "↓" : "↑"} ${fmtNum(Math.abs(diff))} kg på ${weeks} ${weeks === 1 ? "vecka" : "veckor"}${tw != null && good ? " · mot målet" : ""}</span>` : ""}
+        ${tw != null ? `<span class="muted small">${Math.abs(last.kg - tw) < 0.05 ? "Du är på din målvikt" : `${fmtNum(Math.round(Math.abs(last.kg - tw) * 10) / 10)} kg kvar till ${fmtNum(tw)} kg`}</span>` : ""}
+        <div class="ch-rng" role="radiogroup" aria-label="Period">${W_RANGES.map(([d, l]) => `<button role="radio" data-wrange="${d}" class="${wRange === d ? "on" : ""}" aria-checked="${wRange === d}">${l}</button>`).join("")}</div>
+        <div class="vk-chart">${weightChart()}</div>
+        <div class="ch-note muted small">Tryck eller dra i grafen för att se en vägning.</div>` : `<span class="klabel">Ingen vägning än</span><div class="muted small">Väg dig nedan, så syns utvecklingen här.</div>`}</section>
       <div class="row between vk-dayrow"><span class="klabel">${wDay() === TODAY ? "Väg dig idag" : weights()[wDay()] ? "Rätta vägningen" : "Väg in i efterhand"}</span>
         <label class="vk-date">${wDay() === TODAY ? "Idag" : cap(dateLabel(wDay()))}${icon("down", 14)}<input type="date" data-wdatein max="${TODAY}" value="${wDay()}" aria-label="Välj dag"></label></div>
       ${ruler("wlog")}
@@ -1149,7 +1137,11 @@ const VIEWS = {
       ${days.length ? `<div class="klabel sechead">Senaste vägningarna</div><div class="vk-hist">${days.slice(0, 8).map(d => `<button class="${d === wDay() ? "on" : ""}" data-wpick="${d}" aria-label="Rätta ${dateLabel(d)}"><small>${shortDate(d)}</small><b>${fmtNum(weights()[d])} kg</b></button>`).join("")}</div>` : ""}
       <div class="klabel sechead">Vägning</div>
       <section class="card">
-        <label class="field">Vägningsdag<select data-weighday>${WD.map((w, i) => `<option value="${i}" ${weighDay() === i ? "selected" : ""}>${WD_LONG[i].replace(/^./, c => c.toUpperCase())}</option>`).join("")}</select></label>
+        <div class="row between vk-target"><span><b>Målvikt</b><span class="muted small">${S.profile.targetWeight != null ? "Visas som streckad linje i grafen" : "Ingen vald"}</span></span>
+          ${S.profile.targetWeight != null ? `<span class="ux-stp"><button data-wtarget="-0.5" aria-label="Lägre målvikt">${icon("minus", 16)}</button><b>${fmtNum(S.profile.targetWeight)}</b><button data-wtarget="0.5" aria-label="Högre målvikt">${icon("plus", 16)}</button></span>`
+            : `<button class="small" data-wtarget="set">Sätt målvikt</button>`}</div>
+        ${S.profile.targetWeight != null ? `<button class="link small vk-tclear" data-wtarget="clear">Ta bort målvikt</button>` : ""}
+        <label class="field" style="margin-top:12px">Vägningsdag<select data-weighday>${WD.map((w, i) => `<option value="${i}" ${weighDay() === i ? "selected" : ""}>${WD_LONG[i].replace(/^./, c => c.toUpperCase())}</option>`).join("")}</select></label>
         <label class="psw" style="margin-top:12px"><span class="grow">Visa vikt i Historik</span><input type="checkbox" class="switch" data-showweight ${S.hideWeight ? "" : "checked"}></label>
         <div class="muted small" style="margin-top:4px">Döljer du vikten används den ändå i kalorimålet, och sparade vägningar finns kvar.</div></section></div>`;
   },
@@ -1601,31 +1593,19 @@ function weeklySeries(id) {
 function chartModal(id) {
   const series = weeklySeries(id), pts = series.filter(x => x.best);
   // Vikt om övningen körts med vikt, annars reps eller sekunder
-  const useKg = pts.some(x => x.best.kg), val = b => useKg ? b.kg : b.reps;
+  const useKg = pts.some(x => x.best.kg), val = b => b ? (useKg ? +b.kg : +b.reps) : 0;
   const unit = useKg ? "kg" : repUnit(id);
   if (pts.length < 2) return `<div class="muted" style="margin:12px 0">Grafen visas när du loggat ${esc(EX[id].name)} två olika veckor.</div>`;
-  const W = 320, H = 170, L = 34, Rr = 12, T = 14, B = 26;
-  const vals = pts.map(x => val(x.best));
-  let lo = Math.min(...vals), hi = Math.max(...vals);
-  if (lo === hi) { lo -= 1; hi += 1; }
-  const pad = (hi - lo) * 0.15; lo = Math.max(0, lo - pad); hi += pad;
-  const x = i => L + i * (W - L - Rr) / (series.length - 1);
-  const y = v => T + (hi - v) * (H - T - B) / (hi - lo);
-  const ticks = [lo, (lo + hi) / 2, hi];
-  const idx = series.map((s, i) => s.best ? i : -1).filter(i => i >= 0);
-  const path = idx.map((i, k) => `${k ? "L" : "M"}${x(i).toFixed(1)},${y(val(series[i].best)).toFixed(1)}`).join(" ");
-  const last = idx[idx.length - 1];
-  return `<div class="readout" id="readout">v.${series[last].week}: <b>${fmtSet(series[last].best, id)}</b></div>
-    <svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Bästa set per vecka i ${esc(EX[id].name)}">
-      ${ticks.map(t => `<line class="grid" x1="${L}" x2="${W - Rr}" y1="${y(t).toFixed(1)}" y2="${y(t).toFixed(1)}"/>
-        <text class="axis" x="${L - 6}" y="${(y(t) + 4).toFixed(1)}" text-anchor="end">${fmtNum(Math.round(t * 2) / 2)}</text>`).join("")}
-      ${series.map((s, i) => i % 3 === 2 || i === series.length - 1 ? `<text class="axis" x="${x(i).toFixed(1)}" y="${H - 6}" text-anchor="middle">v.${s.week}</text>` : "").join("")}
-      <path class="line" d="${path}"/>
-      ${idx.map(i => `<g data-pt="${i}" data-label="v.${series[i].week}: ${esc(fmtSet(series[i].best, id))}">
-        <circle class="hit" cx="${x(i).toFixed(1)}" cy="${y(val(series[i].best)).toFixed(1)}" r="14"/>
-        <circle class="dot" cx="${x(i).toFixed(1)}" cy="${y(val(series[i].best)).toFixed(1)}" r="4.5"/></g>`).join("")}
-      <text class="axis" x="${L}" y="10">${unit}</text>
-    </svg>
+  const best = Math.max(...pts.map(x => val(x.best))), first = pts[0], last = pts[pts.length - 1], diff = Math.round((val(last.best) - val(first.best)) * 10) / 10;
+  const isPb = val(last.best) >= best, firstI = series.indexOf(first);
+  const vals = series.map((s, i) => ({ v: val(s.best), cls: s.best && val(s.best) >= best ? "pb" : "",
+    tip: s.best ? `v.${s.week} · ${fmtSet(s.best, id)}` : `v.${s.week} · inte gjord`,
+    top: s.best && (i === firstI || val(s.best) >= best) ? chNum(val(s.best)) : "",
+    label: i === 0 || i === series.length - 1 || i === 6 ? `v.${s.week}` : "" }));
+  return `<div class="ch-hero"><b>${fmtNum(val(last.best))}</b><span>${useKg ? `kg × ${last.best.reps}` : unit}</span></div>
+    <span class="ch-chip ${isPb ? "acc" : diff > 0 ? "ok" : ""}">${isPb ? "Rekord · " : ""}${diff > 0 ? `+${fmtNum(diff)}` : diff < 0 ? `−${fmtNum(-diff)}` : "±0"} ${unit} på ${series.length - firstI} veckor</span>
+    ${barChart({ vals, base: Math.max(0, Math.floor(Math.min(...pts.map(x => val(x.best))) * 0.8 / 5) * 5), aria: `Bästa set per vecka i ${EX[id].name}` })}
+    <div class="ch-note muted small">Stapeln är veckans bästa set. Orange är rekordet. Tryck på en stapel för att se den.</div>
     <table class="charttable"><tr><th>Vecka</th><th>Bästa set</th></tr>
       ${pts.slice().reverse().map(s => `<tr><td>v.${s.week}</td><td>${fmtSet(s.best, id)}</td></tr>`).join("")}</table>`;
 }
@@ -1749,7 +1729,7 @@ function renderModal() {
   }
   if (modal.chart) {
     return `<div class="overlay" data-close><div class="sheet"><div class="row between"><h2>${esc(EX[modal.chart].name)}</h2><button class="small ghost" data-close>${icon("close", 18)}</button></div>
-      <div class="muted">Bästa set per vecka, senaste 12 veckorna</div>${chartModal(modal.chart)}</div></div>`;
+      <div class="klabel" style="margin-top:6px">Bästa set · 12 veckor</div>${chartModal(modal.chart)}</div></div>`;
   }
   if (modal.prof) {
     // Ändra profilen i en ruta i stället för att hoppa ned i listan
@@ -2164,6 +2144,13 @@ document.addEventListener("click", ev => {
     toast(`Vikt sparad: ${fmtNum(weights()[date])} kg`);
   }
   else if (ds.wedit !== undefined) weightEditing = true;
+  else if (ds.wrange) wRange = +ds.wrange;
+  else if (ds.wtarget) {
+    const p = S.profile, last = latestWeight();
+    if (ds.wtarget === "clear") delete p.targetWeight;
+    else if (ds.wtarget === "set") p.targetWeight = Math.round(((last ? last.kg : p.weight) + (p.goal === "cut" ? -5 : p.goal === "bulk" ? 3 : 0)) * 2) / 2;
+    else p.targetWeight = Math.max(30, Math.min(250, Math.round((p.targetWeight + +ds.wtarget) * 2) / 2));
+  }
   // Löpning bockas av genom att fylla i km eller minuter; bocken leder dit
   else if (ds.runcheck) {
     if (!dailyDone(logDate(), ds.runcheck)) { const k = document.querySelector(`[data-run="${ds.runcheck}"][data-f="km"]`); if (k) k.focus(); }

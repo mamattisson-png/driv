@@ -394,7 +394,7 @@ def test_utveckling_visar_personbasta_och_okning(page):
     assert "Bänkpress +12,5 kg" in win and "60 kg × 8" in win
     assert "2" in page.inner_text(".hstat >> nth=0")
     row.click()
-    assert page.locator(".sheet .chart").count() == 1
+    assert page.locator(".sheet .ch-bars").count() == 1
 
 
 def test_recept_byggs_och_loggas_per_portion(page):
