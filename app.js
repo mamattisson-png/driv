@@ -1059,19 +1059,18 @@ function dailyClockRefresh() {
 let supplementEditing = null;
 function supplementForm() {
   const a = S.supplements || [];
-  return supplementEditing !== null ? (() => { const old = a[supplementEditing] || {}; return `<form id="supplement-form" class="supplement-form"><h3>${supplementEditing < 0 ? "Lägg till kosttillskott" : "Redigera kosttillskott"}</h3><label>Namn<input name="name" required maxlength="80" placeholder="T.ex. Kreatin" value="${esc(old.name || "")}"></label><label>Ikon<select name="icon"><option value="◇" ${!old.icon || old.icon==="◇"?"selected":""}>◇ Standard</option><option value="◈" ${old.icon==="◈"?"selected":""}>◈ Kapsel</option><option value="✦" ${old.icon==="✦"?"selected":""}>✦ Vitamin</option><option value="●" ${old.icon==="●"?"selected":""}>● Tablett</option><option value="♡" ${old.icon==="♡"?"selected":""}>♡ Hälsa</option></select></label><label>Dosering<input name="dose" maxlength="60" placeholder="T.ex. 5 g" value="${esc(old.dose || "")}"></label><label>Anteckning (valfri)<textarea name="note" rows="2" maxlength="300" placeholder="T.ex. tillsammans med frukost">${esc(old.note || "")}</textarea></label><div class="row"><button type="button" class="ghost" data-suppcancel>Avbryt</button><button type="submit">Spara</button></div></form>`; })() : "";
+  return supplementEditing !== null ? (() => { const old = a[supplementEditing] || {}; return `<form id="supplement-form" class="supplement-form"><h3>${supplementEditing < 0 ? "Lägg till kosttillskott" : "Redigera kosttillskott"}</h3><label>Namn<input name="name" required maxlength="80" placeholder="T.ex. Kreatin" value="${esc(old.name || "")}"></label><label>Ikon<select name="icon"><option value="◇" ${!old.icon || old.icon==="◇"?"selected":""}>◇ Standard</option><option value="◈" ${old.icon==="◈"?"selected":""}>◈ Kapsel</option><option value="✦" ${old.icon==="✦"?"selected":""}>✦ Vitamin</option><option value="●" ${old.icon==="●"?"selected":""}>● Tablett</option><option value="♡" ${old.icon==="♡"?"selected":""}>♡ Hälsa</option></select></label><label>Dosering<input name="dose" maxlength="60" placeholder="T.ex. 5 g" value="${esc(old.dose || "")}"></label><label>Anteckning (valfri)<textarea name="note" rows="2" maxlength="300" placeholder="T.ex. tillsammans med frukost">${esc(old.note || "")}</textarea></label><div class="row">${supplementEditing >= 0 ? `<button type="button" class="ghost dangerbtn" data-suppdel="${supplementEditing}">Ta bort</button>` : ""}<button type="button" class="ghost" data-suppcancel>Avbryt</button><button type="submit">Spara</button></div></form>`; })() : "";
 }
 function supplementsCard() {
   const a = S.supplements || [];
   const rows = a.map((x,i) => {
     const ok = day().dailies["supp:"+x.id] === true;
-    return `<div class="daily ${ok ? "ok" : ""}"><div class="dailys-suppicon">${esc(x.icon || "◇")}</div><div class="grow"><b>${esc(x.name)}</b><span class="muted small">${esc(x.dose || "")}</span>${x.note ? `<div class="muted small" style="margin-top:4px">${esc(x.note)}</div>` : ""}</div><button class="done-btn big ${ok ? "on" : ""}" data-suppcheck="${esc(x.id)}" aria-label="Markera ${esc(x.name)} som taget">${icon("check",18)}</button><button class="ghost small" data-suppedit="${i}" aria-label="Redigera">✎</button></div>`;
+    return `<div class="daily ${ok ? "ok" : ""}"><div class="dailys-suppicon">${esc(x.icon || "◇")}</div><div class="grow"><b>${esc(x.name)}</b><span class="muted small">${esc(x.dose || "")}</span>${x.note ? `<div class="muted small" style="margin-top:4px">${esc(x.note)}</div>` : ""}</div><button class="done-btn big ${ok ? "on" : ""}" data-suppcheck="${esc(x.id)}" aria-label="Markera ${esc(x.name)} som taget">${icon("check",18)}</button></div>`;
   }).join("");
-  const form = supplementForm();
-  return `<section class="card dailies" aria-label="Kosttillskott"><div class="dhead"><h2>Kosttillskott</h2><span class="muted small">${a.filter(x=>day().dailies["supp:"+x.id]).length} av ${a.length} tagna</span></div>${rows}${form}${supplementEditing === null ? `<button class="ghost small" data-suppadd style="margin-top:10px">+ Lägg till kosttillskott</button>` : ""}</section>`;
+  return `<section class="card dailies" aria-label="Kosttillskott"><div class="dhead"><h2>Kosttillskott</h2><span class="muted small">${a.filter(x=>day().dailies["supp:"+x.id]).length} av ${a.length} tagna</span></div>${rows}</section>`;
 }
 document.addEventListener("click", ev => {
-  const t = ev.target.closest?.("[data-dclockstart],[data-dclockpause],[data-dclockskip],[data-dclockstop],[data-suppadd],[data-suppedit],[data-suppcheck],[data-suppcancel]");
+  const t = ev.target.closest?.("[data-dclockstart],[data-dclockpause],[data-dclockskip],[data-dclockstop],[data-suppadd],[data-suppedit],[data-suppcheck],[data-suppcancel],[data-suppdel]");
   if (!t) return;
   ev.stopImmediatePropagation();
   const d = t.dataset;
@@ -1088,6 +1087,7 @@ document.addEventListener("click", ev => {
   else if (d.dclockstop !== undefined) {dailyClock=null;clearInterval(dailyClockTick);dailyClockTick=null;}
   else if (d.suppcheck) day().dailies["supp:"+d.suppcheck] = !day().dailies["supp:"+d.suppcheck];
   else if (d.suppcancel !== undefined) supplementEditing = null;
+  else if (d.suppdel !== undefined) { const a = S.supplements || [], x = a[+d.suppdel]; if (x) { a.splice(+d.suppdel, 1); toast(`${x.name} är borttaget`); } supplementEditing = null; }
   else if (d.suppadd !== undefined || d.suppedit !== undefined) supplementEditing = d.suppedit !== undefined ? +d.suppedit : -1;
   save();render();
 }, true);
@@ -1109,7 +1109,7 @@ function dailiesCard(inPass, banded) {
     ${exRows("daily", S.daily, true)}
     </div>`;
   if (!n) return `<div class="card"><h2>Dailys</h2><div class="muted">Det du vill göra varje dag, till exempel plankan eller hängande benlyft.</div>
-    <button style="margin-top:10px" data-openpick="daily">+ Lägg till daily</button></div>`;
+    <div class="muted small" style="margin-top:8px">Ställ in dem under Dailys → Upplägg.</div></div>`;
   const done = list.filter(e => dailyDone(date, e.id)).length, st = streakOf(allDailiesDone);
   const rows = list.map(e => {
     const id = e.id, ok = dailyDone(date, id), its = streakOf(d => dailyDone(d, id)), v = L.dailies[id] || {};
