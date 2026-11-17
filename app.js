@@ -2137,6 +2137,14 @@ document.addEventListener("click", ev => {
     ex.warm = Math.min(5, (+ex.warm || 0) + 1);
     if (focus) focus.sel = null;
   }
+  else if (ds.warmdel) {
+    // Det sista uppvärmningssetet tas bort, med det som eventuellt loggats i det
+    const d = currentPassDay(), ex = d.ex.find(x => x.id === ds.warmdel), n = Math.max(0, (+ex.warm || 0) - 1), w = workoutFor(d);
+    if (n) ex.warm = n; else delete ex.warm;
+    if (w && w.warm && w.warm[ex.id]) { w.warm[ex.id] = w.warm[ex.id].slice(0, n); if (!n) delete w.warm[ex.id]; }
+    if (focus) focus.sel = null;
+    focusMore = false;
+  }
   else if (ds.setcount) {
     const d = currentPassDay(), ex = d.ex.find(x => x.id === ds.ex);
     ex.sets = Math.max(1, ex.sets + +ds.setcount);

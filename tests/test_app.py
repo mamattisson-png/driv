@@ -2382,6 +2382,13 @@ def test_uppvarmning_under_passet(page):
     assert page.evaluate(f"workoutsOn(TODAY)[0].warm['{ex}'][0].ok") is True
     # Uppvärmningen räknas inte som arbetsset
     assert page.evaluate(f"workoutsOn(TODAY)[0].sets['{ex}'].filter(s => s && s.ok).length") == 1
+    # Ett tillagt uppvärmningsset går att ta bort igen under Mer
+    page.click("[data-fmore]")
+    page.click(f'[data-warmdel="{ex}"]')
+    assert page.evaluate("S.plan.days[0].ex[0].warm") is None
+    assert page.evaluate(f"(workoutsOn(TODAY)[0].warm || {{}})['{ex}']") is None
+    assert page.locator(".fset.warm").count() == 0
+    assert page.evaluate(f"workoutsOn(TODAY)[0].sets['{ex}'].filter(s => s && s.ok).length") == 1
 
 
 def test_okning_mellan_set_foljer_med(page):
