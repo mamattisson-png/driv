@@ -97,6 +97,7 @@ Senast uppdaterad: 2026-11-06. Status bygger på dokumenterade publiceringar och
 | 93 | Dailys: växla mellan Dag och Vecka, veckotabell med kosttillskott, Planera veckan med en rutin per veckodag och snabbval | Dailys | Hög | Klar |
 | 94 | Dailys: Upplägg samlar allt som ändras (Varje dag med kosttillskott, rutiner, veckan med fasta dagar eller turordning), rutiner dras med fingret, missade dagar bockas av i Vecka | Dailys | Hög | Klar |
 | 95 | Vikt: egen sida med linjal, kurva och BMI; Ditt mål i starten med linjaler; vikt och BMI bara på sidan Vikt; regel om att varje uppgift finns på ett ställe | Kropp | Hög | Klar |
+| 96 | Passet: uppvärmningsset går att ta bort under Mer | Träning | Medel | Klar |
 
 ## Detaljer och acceptanskriterier
 
