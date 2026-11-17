@@ -2344,7 +2344,7 @@ def test_firande_nar_alla_dailys_ar_klara(page):
         page.click(f'[data-dcheck="{i}"]')
         assert page.locator(".burst").count() == 0
     page.click(f'[data-dcheck="{ids[-1]}"]')
-    assert page.locator(".burst").count() == 1 and page.locator(".dlx-prog.pulse").count() == 1
+    assert page.locator(".burst").count() == 1 and page.locator(".dl-done.pulse").count() == 1
     # Öppnas appen igen med allt klart blir det inget nytt firande
     page.reload()
     go(page, "dailys")
@@ -2887,3 +2887,16 @@ def test_musclewiki_lankar_ar_kontrollerade_och_direkt_till_ovningen(page):
     assert page.evaluate("Object.keys(MW_LANK).filter(id => !EX[id])") == []
     assert page.evaluate("[...MW_GRUND].every(id => EX[id] && mwUrl(id) && mwBase(id))") is True
     assert page.evaluate("mwBase('stx_split_db')") is False and page.evaluate("mwUrl('stx_split_db')").endswith("dumbbell-split-squat")
+
+
+def test_dubbletter_slas_ihop_och_gamla_id_byts(page):
+    """Övningar som fanns dubbelt finns nu en gång; sparade val med det gamla id:t byts till det som finns kvar."""
+    start(page)
+    assert page.evaluate("['strg_single_knee', 'strg_couch', 'strg_toe_wall'].some(id => EX[id])") is False
+    page.evaluate("""S.daily = [exEntry('kna_mot_brost')]; S.daily.push({id: 'strg_single_knee', sets: 2, reps: '30 s/ben'});
+      S.plan.days[0].ex.push({id: 'strg_couch', sets: 2, reps: '30 s'});
+      S.log[TODAY] = S.log[TODAY] || {workouts: [], dailies: {}, food: []}; S.log[TODAY].dailies.strg_toe_wall = true; save()""")
+    page.reload()
+    assert page.evaluate("S.daily.map(e => e.id)") == ['kna_mot_brost']
+    assert page.evaluate("S.plan.days[0].ex.some(e => e.id === 'strx_couch') && !S.plan.days[0].ex.some(e => e.id === 'strg_couch')") is True
+    assert page.evaluate("dailyDone(TODAY, 'strx_calf_toe_wall')") is True

@@ -80,7 +80,7 @@ for (const tag of ['neck','shoulders','chest','lats','triceps','biceps','forearm
 console.log(`${rows.length} new stretches: ${timed} timed, ${dynamic} dynamic; old exercises/links unchanged; figures and targets valid.`);
 
 
-// Audit consistency across all 125 stretch exercises, not just the 83 extra ones.
+// Audit consistency across all 122 stretch exercises, not just the 83 extra ones.
 // This is an offline data regression test, NOT independent verification of MW content.
 {
   const auditFile = fs.readFileSync(path.join(root, 'docs/stretch-musclewiki-review-queue.md'), 'utf8');
@@ -90,9 +90,9 @@ console.log(`${rows.length} new stretches: ${timed} timed, ${dynamic} dynamic; o
       const cells = line.split('|').map(cell => cell.trim());
       return { id: cells[1], source: cells[3], url: cells[4], status: cells[5], evidence: cells[6] };
     });
-  assert.equal(auditRows.length, 125, 'Audit queue must cover all 125 stretches');
-  assert.equal(new Set(auditRows.map(row => row.id)).size, 125, 'Duplicate audit ID');
-  for (const [source, count] of [['ovningar.js', 26], ['stretch-extra.js', 83], ['stretch-guide.js', 16]]) {
+  assert.equal(auditRows.length, 122, 'Audit queue must cover all 122 stretches');
+  assert.equal(new Set(auditRows.map(row => row.id)).size, 122, 'Duplicate audit ID');
+  for (const [source, count] of [['ovningar.js', 26], ['stretch-extra.js', 83], ['stretch-guide.js', 13]]) {
     assert.equal(auditRows.filter(row => row.source === source).length, count, source);
   }
 
@@ -102,7 +102,7 @@ console.log(`${rows.length} new stretches: ${timed} timed, ${dynamic} dynamic; o
   const guideList = guideSource.split('const more = [')[1]?.split('\n  ];')[0];
   assert.ok(guideList, 'Stretch guide exercise list not found');
   const guideCodes = new Set([...guideList.matchAll(/^\s*\["([a-z0-9_]+)",\s*"/gm)].map(m => m[1]));
-  assert.equal(guideCodes.size, 16, 'Expected 16 guide stretches');
+  assert.equal(guideCodes.size, 13, 'Expected 13 guide stretches');
   const guideMapBlock = guideSource.match(/const verifiedDirectLinks = \{([\s\S]*?)\n\s*\};/);
   assert.ok(guideMapBlock, 'Guide direct-link map not found');
   const guideLinks = Object.fromEntries(
@@ -154,7 +154,7 @@ console.log(`${rows.length} new stretches: ${timed} timed, ${dynamic} dynamic; o
       }
     }
   }
-  console.log('125 stretch audit entries match code: 29 reviewed direct links, 96 without exact match.');
+  console.log('122 stretch audit entries match code: 28 reviewed direct links, 94 without exact match.');
 }
 
 

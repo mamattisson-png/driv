@@ -101,6 +101,8 @@ Senast uppdaterad: 2026-11-06. Status bygger på dokumenterade publiceringar och
 | 97 | Historik visar dailys och vikt och länkar till där de ändras; Vecka bläddrar bakåt; Vikt kan väga in en tidigare dag | Historik | Medel | Klar |
 | 98 | Grafer i en gemensam stil (stor siffra, tolkning, mjuk kurva eller staplar, mållinje, tryck och dra) och målvikt på sidan Vikt | Design | Hög | Klar |
 | 99 | MuscleWiki: 15 nya icke-stretchlänkar (6 direkta, 9 märkta grundövningar). Sju föreslagna stretchlänkar återhålls i väntan på exakt rörelseverifiering. | Träning | Låg | Pågår |
+| 100 | Tre dubblettövningar (soffstretch, tåstretch mot vägg, knä mot bröst) slås ihop; sparade val byts automatiskt | Träning | Låg | Klar |
+| 101 | Dailys Dag: tydligt kvitto när dagen är klar och kompaktare övningsrader | Dailys | Medel | Klar |
 
 ## Detaljer och acceptanskriterier
 

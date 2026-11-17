@@ -94,7 +94,7 @@ class MobileStretchSmoke(unittest.TestCase):
             cells = [cell.strip() for cell in line.split("|")]
             if len(cells) > 6 and cells[5] in ("verified", "no_exact_match"):
                 rows.append((cells[1], cells[4], cells[5]))
-        self.assertEqual(len(rows), 125, "Every stretch must be covered by the mobile test")
+        self.assertEqual(len(rows), 122, "Every stretch must be covered by the mobile test")
 
         for exercise_id, expected_url, status in rows:
             with self.subTest(exercise=exercise_id):

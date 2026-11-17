@@ -1,6 +1,6 @@
 # MuscleWiki stretch verification queue
 
-125 unique exercises. Status `pending` means NOT verified, even if code already contains a link. `verified` requires checking MuscleWiki's actual instructions against DRIV cues, position, equipment and variation. `no_exact_match` means searched without an exact equivalent. Never substitute generic category URLs. Update this queue when editing code. Do not reset previously reviewed entries.
+122 unique exercises. Status `pending` means NOT verified, even if code already contains a link. `verified` requires checking MuscleWiki's actual instructions against DRIV cues, position, equipment and variation. `no_exact_match` means searched without an exact equivalent. Never substitute generic category URLs. Update this queue when editing code. Do not reset previously reviewed entries.
 
 | ID | Swedish name | Source | Existing direct URL | Review status | Evidence |
 |---|---|---|---|---|---|
@@ -115,17 +115,14 @@
 | strx_soleus_chair | Sittande fotledsstretch med häl i golvet | stretch-extra.js | — | no_exact_match | Searched seated bent-knee soleus/ankle stretch with heel grounded; no exact individual exercise found. |
 | strg_supine_twist | Liggande vridning med böjda knän | stretch-guide.js | https://musclewiki.com/exercise/lumbar-rotation-1-supine-passive | verified | Lumbar Rotation 1 Supine Passive: knees bent, feet flat, knees drop together sideways, slow breathing; matches DRIV. |
 | strg_sphinx | Sfinxen | stretch-guide.js | https://musclewiki.com/exercise/sphinx-pose | verified | Sphinx Pose: prone, elbows beneath shoulders, forearms on floor, chest lifted with hips grounded; matches DRIV. |
-| strg_single_knee | Ett knä mot bröstet | stretch-guide.js | https://musclewiki.com/exercise/glute-stretch-static-unilateral | verified | Glute Stretch Static Unilateral: supine, bend and pull one knee to chest, hold and switch; matches DRIV. |
 | strg_pelvic_tilt | Bäckentippning i ryggliggande | stretch-guide.js | — | no_exact_match | Searched supine posterior pelvic tilt; MuscleWiki results use tilt as setup for hamstring exercises, not the standalone DRIV movement. |
 | strg_happy_baby | Glada bebisen | stretch-guide.js | https://musclewiki.com/exercise/happy-baby | verified | Happy Baby: supine, knees toward chest, grasp outer feet, knees toward armpits and gentle rocking; matches DRIV. |
 | strg_chin_tuck | Hakindrag | stretch-guide.js | — | no_exact_match | Searched upright seated/standing chin tuck; available laying chin tucks are supine and therefore not the same position. |
-| strg_couch | Soffstretch mot vägg | stretch-guide.js | — | no_exact_match | Searched wall couch stretch with rear foot against wall and upright lunge; no matching individual MuscleWiki page found. |
 | strg_side_lunge | Sidoutfall med paus | stretch-guide.js | https://musclewiki.com/exercise/bodyweight-cossack-squat | verified | Bodyweight Cossack Squat: wide stance, one knee bent and opposite leg straight, rise and alternate; matches DRIV side lunge with pause. |
 | strg_lying_butterfly | Liggande fjäril | stretch-guide.js | — | no_exact_match | Searched supine/reclined butterfly; no exact individual MuscleWiki instructions found for supine soles-together knees-out hold. |
 | strg_heel_on_step | Baksida lår med hälen på pall | stretch-guide.js | — | no_exact_match | Searched elevated-heel hamstring stretch; Pyramid Pose uses foot on floor, not heel on low stool. |
 | strg_doorway_hamstring | Baksida lår i dörröppning | stretch-guide.js | — | no_exact_match | Searched doorway supine hamstring stretch; no individual matching exercise found. |
 | strg_side_quad | Sidoliggande framsida lår | stretch-guide.js | — | no_exact_match | Searched side-lying quad stretch; no matching individual exercise found. |
 | strg_step_calf | Vadstretch på trappsteg | stretch-guide.js | — | no_exact_match | Step calf results are dynamic calf raises, not a static heel-below-step hold. |
-| strg_toe_wall | Tåstretch mot vägg | stretch-guide.js | — | no_exact_match | Calves Stretch Variation Three uses balls of both feet on platform and drops heels; not toe-to-wall plantar stretch. |
 | strg_forearm_wall | Underarmsstretch mot vägg | stretch-guide.js | — | no_exact_match | Forearms Stretch Variation One/Two use different palm/finger positions or movement; no exact fingers-down palm-wall body rotation match. |
 | strg_door_hang | Lätt häng i dörrkarm | stretch-guide.js | — | no_exact_match | Searched door-frame supported hang; no exact partial-bodyweight supported doorway hang exercise found. |

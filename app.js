@@ -301,7 +301,24 @@ function upgradeFood(s) {
   }
   return s;
 }
-const normalize = s => upgradeFood(upgradeWorkouts(upgradeDailies(s)));
+// Övningar som fanns dubbelt under två namn: det gamla id:t byts mot det som finns kvar, i pass, dailys och loggen
+const EX_SAME = { strg_single_knee: "kna_mot_brost", strg_couch: "strx_couch", strg_toe_wall: "strx_calf_toe_wall" };
+function upgradeSame(s) {
+  const fix = list => { if (!Array.isArray(list)) return list;
+    const out = []; for (const e of list) { if (e && EX_SAME[e.id]) e.id = EX_SAME[e.id]; if (!e || !out.some(x => x.id === e.id)) out.push(e); } return out; };
+  for (const d of (s.plan && s.plan.days) || []) d.ex = fix(d.ex);
+  for (const t of s.tpls || []) t.ex = fix(t.ex);
+  s.daily = fix(s.daily);
+  for (const r of s.dailyRoutines || []) r.ex = fix(r.ex);
+  for (const L of Object.values(s.log || {})) {
+    for (const [o, n] of Object.entries(EX_SAME)) {
+      if (L.dailies && o in L.dailies) { if (!(n in L.dailies) || L.dailies[o]) L.dailies[n] = L.dailies[o]; delete L.dailies[o]; }
+      for (const w of L.workouts || []) { if (w.sets && w.sets[o]) { w.sets[n] = w.sets[n] || w.sets[o]; delete w.sets[o]; } if (w.warm && w.warm[o]) { w.warm[n] = w.warm[n] || w.warm[o]; delete w.warm[o]; } }
+    }
+  }
+  return s;
+}
+const normalize = s => upgradeSame(upgradeFood(upgradeWorkouts(upgradeDailies(s))));
 
 function load() {
   try {
@@ -892,7 +909,7 @@ function cheerCheck() {
 // Litet och på plats: konfetti ur bocken man tryckte på, och ringen överst pulserar en gång
 function celebrate() {
   const btn = lastCheck && [...document.querySelectorAll(lastCheck)].find(e => e.getClientRects().length);
-  const ring = document.querySelector(".dlx-prog");
+  const ring = document.querySelector(".dl-done") || document.querySelector(".dlx-prog");
   if (ring) ring.classList.add("pulse");
   const at = (btn || ring);
   if (at) {

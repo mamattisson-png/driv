@@ -174,7 +174,6 @@ const MW_LANK = {
   "stegupp": "dumbbell-step-up",
   "strg_happy_baby": "happy-baby",
   "strg_side_lunge": "bodyweight-cossack-squat",
-  "strg_single_knee": "glute-stretch-static-unilateral",
   "strg_sphinx": "sphinx-pose",
   "strg_supine_twist": "lumbar-rotation-1-supine-passive",
   "strx_adductor_rock": "adductor-stretch-dynamic-unilateral-4-point-position",
