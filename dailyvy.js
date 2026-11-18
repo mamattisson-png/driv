@@ -6,6 +6,7 @@
 // Laddas efter rutiner.js och före app.js.
 
 let dlView = "dag";   // "dag" eller "vecka"
+let dlShowList = false;   // när dagen är klar visas en sammanfattning; listan bara när man vill ändra
 let dlWeek = null;    // måndagen i veckan som visas under Vecka (null = den här veckan)
 let plSel = null;     // rutinen man lägger ut på veckans dagar ("" är vila)
 let uxOpen = null;    // övningen som är utfälld på en rutins sida (index)
@@ -62,18 +63,36 @@ function dlDayView() {
     const ok = !!(S.log[date] && S.log[date].dailies["supp:" + x.id]);
     return `<button class="dl-pill ${ok ? "on" : ""}" data-suppcheck="${esc(x.id)}" aria-pressed="${ok}"><span class="dl-pc">${ok ? icon("check", 14) : ""}</span>${esc(x.name)}${x.dose ? ` <small>${esc(x.dose)}</small>` : ""}</button>`;
   }).join("");
-  // Allt gjort (övningar och kosttillskott): ett tydligt kvitto överst, och raderna blir lugna
+  // Allt gjort (övningar och kosttillskott): en sammanfattning i stället för listan med bockar.
+  // Listan går att fälla ut för att ångra eller ändra.
   const aDone = a.filter(x => S.log[date] && S.log[date].dailies["supp:" + x.id]).length;
   const allOk = ex.length + a.length > 0 && n === ex.length && aDone === a.length;
-  const st = allOk ? streakOf(allDailiesDone) : 0;
-  const done = allOk ? `<div class="dl-done" role="status"><span class="dl-dic">${icon("check", 26)}</span><span><b>Dagen är klar</b>
-    <small>${ex.length ? `${ex.length} ${ex.length === 1 ? "övning" : "övningar"}` : ""}${ex.length && a.length ? " och " : ""}${a.length ? `${a.length} kosttillskott` : ""}${st > 1 ? ` · ${st} dagar i rad` : ""}</small></span></div>` : "";
-  return `<div class="${allOk ? "dl-allok" : ""}"><div class="dl-h"><div class="grow"><span class="dl-k"><i style="background:${col}"></i>${when}</span><b>${rut ? esc(rut.name) : "Dagens dailys"}</b></div>
-      ${dailyRoutines().length ? `<button class="linkbtn2 dl-byt" data-rutsheet="1">Byt rutin</button>` : ""}</div>
-    ${done}${ex.length && !allOk ? `<div class="dl-p dlx-prog" style="--pc:${col}"><span>${ex.map(e => `<i class="${dailyDone(date, e.id) ? "on" : ""}"></i>`).join("")}</span><small>${n} av ${ex.length} klara</small></div>` : ""}${ex.length ? `
-    <div class="dl-rows">${ex.map(row).join("")}</div>`
+  const head = `<div class="dl-h"><div class="grow"><span class="dl-k"><i style="background:${col}"></i>${when}</span><b>${rut ? esc(rut.name) : "Dagens dailys"}</b></div>
+      ${dailyRoutines().length && !allOk ? `<button class="linkbtn2 dl-byt" data-rutsheet="1">Byt rutin</button>` : ""}</div>`;
+  const list = `${ex.length ? `<div class="dl-rows">${ex.map(row).join("")}</div>`
       : `<div class="dl-empty"><b>${hasDailies() ? "Ingen rutin idag" : "Inga dailys än"}</b><button class="linkbtn2" data-rutpage>Ställ in under Upplägg${icon("right", 14)}</button></div>`}
-    ${a.length ? `<div class="klabel dl-sec">Kosttillskott</div><div class="dl-pills">${pills}</div>` : ""}</div>`;
+    ${a.length ? `<div class="klabel dl-sec">Kosttillskott</div><div class="dl-pills">${pills}</div>` : ""}`;
+  if (allOk) {
+    const st = streakOf(allDailiesDone), ws = weekStart(date);
+    const greet = date !== TODAY ? "Dagen var klar" : st >= 7 ? "Grymt, en hel vecka i rad!" : st >= 3 ? "Bra jobbat, du är i farten!" : "Bra jobbat idag!";
+    const week = weekDates(ws).map((d, i) => { const ok = allDailiesDone(d) && (S.supplements || []).every(x => S.log[d] && S.log[d].dailies["supp:" + x.id]);
+      return `<span class="ds-d ${ok ? "ok" : ""} ${d === date ? "t" : ""} ${d > TODAY ? "f" : ""}"><i>${ok ? icon("check", 12) : ""}</i>${WD[i][0]}</span>`; }).join("");
+    return `<div class="dl-sum" role="status">
+      <div class="ds-burst" aria-hidden="true">${icon("check", 40)}</div>
+      <h2 class="ds-h">${greet}</h2>
+      <p class="ds-sub">${rut ? `${esc(rut.name)} · ` : ""}${when.replace("Idag · ", "")}</p>
+      <div class="ds-stats">
+        ${ex.length ? `<div><b>${ex.length}</b><span>${ex.length === 1 ? "övning" : "övningar"}</span></div>` : ""}
+        ${a.length ? `<div><b>${a.length}</b><span>kosttillskott</span></div>` : ""}
+        <div><b>${st}</b><span>${st === 1 ? "dag i rad" : "dagar i rad"}</span></div></div>
+      <div class="ds-figs">${ex.slice(0, 6).map(e => `<span>${figure(e.id)}</span>`).join("")}</div>
+      <div class="ds-week">${week}</div>
+      <button class="ds-more" data-dllist aria-expanded="${dlShowList}">${dlShowList ? "Dölj" : "Visa eller ändra"} dagens dailys${icon(dlShowList ? "up" : "down", 16)}</button></div>
+      ${dlShowList ? `<div class="dl-allok">${list}</div>` : ""}`;
+  }
+  return `<div>${head}
+    ${ex.length ? `<div class="dl-p dlx-prog" style="--pc:${col}"><span>${ex.map(e => `<i class="${dailyDone(date, e.id) ? "on" : ""}"></i>`).join("")}</span><small>${n} av ${ex.length} klara</small></div>` : ""}
+    ${list}</div>`;
 }
 
 // ---------- Vecka ----------
@@ -192,11 +211,12 @@ function dailysPage() {
 }
 
 document.addEventListener("click", ev => {
-  const t = ev.target.closest && ev.target.closest("[data-dlweek],[data-wkck],[data-upinfo],[data-dlview],[data-plsel],[data-plday],[data-plfill],[data-uppmode],[data-uxopen],[data-uxsets]");
+  const t = ev.target.closest && ev.target.closest("[data-dllist],[data-dlweek],[data-wkck],[data-upinfo],[data-dlview],[data-plsel],[data-plday],[data-plfill],[data-uppmode],[data-uxopen],[data-uxsets]");
   if (!t) return;
   const ds = t.dataset;
   ev.stopImmediatePropagation();
-  if (ds.dlweek) { const cur = weekStart(TODAY), n = shift(dlWeek || cur, +ds.dlweek); dlWeek = n >= cur ? null : n; }
+  if (ds.dllist !== undefined) dlShowList = !dlShowList;
+  else if (ds.dlweek) { const cur = weekStart(TODAY), n = shift(dlWeek || cur, +ds.dlweek); dlWeek = n >= cur ? null : n; }
   else if (ds.wkck) {
     // Bocka av eller ångra en dag i efterhand; dagen minns vilken rutin den hade
     const L = day(ds.wkck), id = ds.wkid, r = routineOn(ds.wkck);

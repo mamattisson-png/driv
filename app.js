@@ -909,7 +909,7 @@ function cheerCheck() {
 // Litet och på plats: konfetti ur bocken man tryckte på, och ringen överst pulserar en gång
 function celebrate() {
   const btn = lastCheck && [...document.querySelectorAll(lastCheck)].find(e => e.getClientRects().length);
-  const ring = document.querySelector(".dl-done") || document.querySelector(".dlx-prog");
+  const ring = document.querySelector(".ds-burst") || document.querySelector(".dlx-prog");
   if (ring) ring.classList.add("pulse");
   const at = (btn || ring);
   if (at) {

@@ -190,8 +190,12 @@ def test_day_done_banner(page):
     start(page)
     page.evaluate("S.daily = [exEntry('plankan')]; S.supplements = [{id: 's1', name: 'Kreatin'}]; save()")
     go(page, 'dailys')
-    assert page.locator('.dl-done').count() == 0
+    assert page.locator('.dl-sum').count() == 0
     page.click('[data-dcheck=plankan]')
-    assert page.locator('.dl-done').count() == 0   # kosttillskottet återstår
+    assert page.locator('.dl-sum').count() == 0   # kosttillskottet återstår
     page.click('[data-suppcheck=s1]')
-    assert "Dagen är klar" in page.inner_text('.dl-done')
+    assert "Bra jobbat" in page.inner_text('.dl-sum') and page.locator('.dl-rows').count() == 0
+    page.click('[data-dllist]')
+    assert page.locator('.dl-rows [data-dcheck=plankan]').count() == 1
+    page.click('[data-dcheck=plankan]')
+    assert page.locator('.dl-sum').count() == 0
