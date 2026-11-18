@@ -2044,7 +2044,7 @@ document.addEventListener("click", ev => {
   if (ds.chart) { modal = { chart: ds.chart }; render(); return; }
   if (ds.letter) { modal = { letter: ds.letter }; render(); return; }
   // Lägg till och byt övning sker i det gemensamma övningsbiblioteket (muskelsok.js)
-  if (ds.openpick) { modal = null; openLibrary({ kind: isDailyT(ds.openpick) ? "daily" : "workout", target: ds.openpick, ...(ds.openpick.startsWith("dag:") ? { today: true } : {}) }); render(); return; }
+  if (ds.openpick) { modal = null; openLibrary({ kind: isDailyT(ds.openpick) ? "daily" : "workout", target: ds.openpick, ...(ds.openpick.startsWith("dag:") ? { today: ds.dlahead !== "true" } : {}) }); render(); return; }
   if (ds.swap) { exSheet = null; openLibrary({ kind: isDailyT(ds.swap) ? "daily" : "workout", target: ds.swap, replace: +ds.idx }); render(); return; }
   if (ds.askai !== undefined) { askClaude(); return; }
   if (ds.tplname !== undefined && passDone) { passDone.tplNaming = true; render(); const f = $("tplname"); if (f) { f.focus(); f.select(); } return; }

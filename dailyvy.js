@@ -7,7 +7,8 @@
 
 let dlView = "dag";   // "dag" eller "vecka"
 let dlShowList = false;
-let dlRowMenu = null;   // övningen vars ⋯-meny är öppen i Dag   // när dagen är klar visas en sammanfattning; listan bara när man vill ändra
+let dlEditing = false;   // Dag: läget där övningar läggs till och tas bort
+let dlAhead = false;     // i det läget: ändringen gäller även framåt (annars bara idag)   // när dagen är klar visas en sammanfattning; listan bara när man vill ändra
 let dlWeek = null;    // måndagen i veckan som visas under Vecka (null = den här veckan)
 let plSel = null;     // rutinen man lägger ut på veckans dagar ("" är vila)
 let uxOpen = null;    // övningen som är utfälld på en rutins sida (index)
@@ -56,12 +57,12 @@ function dlDayView() {
   const when = `${date === TODAY ? "Idag · " : ""}${cap(WD_LONG[wd])} ${+date.slice(-2)}`;
   const row = e => {
     const ok = dailyDone(date, e.id), x = EX[e.id];
-    const open = dlRowMenu === e.id;
-    return `<div class="dl-row ${ok ? "ok" : ""} ${open ? "open" : ""}"><div class="dl-rl">${thumb(e.id, "dl-f")}
-      <button class="grow dl-name" data-dlmenu="${e.id}" aria-expanded="${open}"><b>${esc(x.name)}</b><small>${e.sets} × ${esc(e.reps || "")}</small></button>
-      ${!ok && e === next && !isRun(e.id) && !open ? `<button class="dl-play" data-dclockstart="${e.id}" aria-label="Starta ${esc(x.name)}">${icon("play", 18)}</button>` : ""}
-      <button class="dl-ck ${ok ? "on" : ""}" data-dcheck="${e.id}" aria-pressed="${ok}" aria-label="${esc(x.name)} klar">${icon("check", 20)}</button></div>
-      ${open ? `<div class="dl-ed"><button data-dldrop="${e.id}" data-dlwhen="today">Ta bort idag</button><button data-dldrop="${e.id}" data-dlwhen="ahead">Ta bort framåt</button></div>` : ""}</div>`;
+    if (dlEditing) return `<div class="dl-row dl-erow">
+      <button class="dl-minus" data-dldrop="${e.id}" aria-label="Ta bort ${esc(x.name)}">${icon("minus", 16)}</button>${thumb(e.id, "dl-f")}
+      <span class="grow dl-name"><b>${esc(x.name)}</b><small>${e.sets} × ${esc(e.reps || "")}</small></span></div>`;
+    return `<div class="dl-row ${ok ? "ok" : ""}">${thumb(e.id, "dl-f")}<span class="grow dl-name"><b>${esc(x.name)}</b><small>${e.sets} × ${esc(e.reps || "")}</small></span>
+      ${!ok && e === next && !isRun(e.id) ? `<button class="dl-play" data-dclockstart="${e.id}" aria-label="Starta ${esc(x.name)}">${icon("play", 18)}</button>` : ""}
+      <button class="dl-ck ${ok ? "on" : ""}" data-dcheck="${e.id}" aria-pressed="${ok}" aria-label="${esc(x.name)} klar">${icon("check", 20)}</button></div>`;
   };
   const pills = a.map(x => {
     const ok = !!(S.log[date] && S.log[date].dailies["supp:" + x.id]);
@@ -72,11 +73,13 @@ function dlDayView() {
   const aDone = a.filter(x => S.log[date] && S.log[date].dailies["supp:" + x.id]).length;
   const allOk = ex.length + a.length > 0 && n === ex.length && aDone === a.length;
   const head = `<div class="dl-h"><div class="grow"><span class="dl-k"><i style="background:${col}"></i>${when}</span><b>${rut ? esc(rut.name) : "Dagens dailys"}</b></div>
-      ${dailyRoutines().length && !allOk ? `<button class="linkbtn2 dl-byt" data-rutsheet="1">Byt rutin</button>` : ""}</div>`;
-  const list = `${ex.length ? `<div class="dl-rows">${ex.map(row).join("")}</div><button class="dl-addex" data-openpick="dag:${date}">${icon("plus", 14)}Lägg till övning</button>`
+      ${dlEditing ? `<button class="dl-done2" data-dledit2>Klar</button>` : `${dailyRoutines().length && !allOk ? `<button class="linkbtn2 dl-byt" data-rutsheet="1">Byt rutin</button>` : ""}
+      <button class="dl-pen" data-dledit2 aria-label="Ändra dagens övningar">${icon("edit", 16)}</button>`}</div>
+    ${dlEditing ? `<div class="dl-when" role="radiogroup" aria-label="Gäller"><button role="radio" data-dlahead="false" class="${dlAhead ? "" : "on"}" aria-checked="${!dlAhead}">Bara idag</button><button role="radio" data-dlahead="true" class="${dlAhead ? "on" : ""}" aria-checked="${dlAhead}">Även framåt</button></div>` : ""}`;
+  const list = `${ex.length ? `<div class="dl-rows">${ex.map(row).join("")}</div>${dlEditing ? `<button class="dl-row dl-erow dl-addrow" data-openpick="dag:${date}" data-dlahead="${dlAhead}"><span class="dl-plus">${icon("plus", 16)}</span><span class="dl-pf"></span><span class="grow dl-name"><b>Lägg till övning</b><small>${dlAhead ? "Även framåt" : "Bara idag"}</small></span></button>` : ""}`
       : `<div class="dl-empty"><b>${hasDailies() ? "Ingen rutin idag" : "Inga dailys än"}</b><button class="linkbtn2" data-rutpage>Ställ in under Upplägg${icon("right", 14)}</button></div>`}
     ${a.length ? `<div class="klabel dl-sec">Kosttillskott</div><div class="dl-pills">${pills}</div>` : ""}`;
-  if (allOk) {
+  if (allOk && !dlEditing) {
     const st = streakOf(allDailiesDone), ws = weekStart(date);
     const greet = date !== TODAY ? "Dagen var klar" : st >= 7 ? "Grymt, en hel vecka i rad!" : st >= 3 ? "Bra jobbat, du är i farten!" : "Bra jobbat idag!";
     const week = weekDates(ws).map((d, i) => { const ok = allDailiesDone(d) && (S.supplements || []).every(x => S.log[d] && S.log[d].dailies["supp:" + x.id]);
@@ -95,7 +98,7 @@ function dlDayView() {
       ${dlShowList ? `<div class="dl-allok">${list}</div>` : ""}`;
   }
   return `<div>${head}
-    ${ex.length ? `<div class="dl-p dlx-prog" style="--pc:${col}"><span>${ex.map(e => `<i class="${dailyDone(date, e.id) ? "on" : ""}"></i>`).join("")}</span><small>${n} av ${ex.length} klara</small></div>` : ""}
+    ${ex.length && !dlEditing ? `<div class="dl-p dlx-prog" style="--pc:${col}"><span>${ex.map(e => `<i class="${dailyDone(date, e.id) ? "on" : ""}"></i>`).join("")}</span><small>${n} av ${ex.length} klara</small></div>` : ""}
     ${list}</div>`;
 }
 
@@ -215,18 +218,19 @@ function dailysPage() {
 }
 
 document.addEventListener("click", ev => {
-  const t = ev.target.closest && ev.target.closest("[data-dlmenu],[data-dldrop],[data-dllist],[data-dlweek],[data-wkck],[data-upinfo],[data-dlview],[data-plsel],[data-plday],[data-plfill],[data-uppmode],[data-uxopen],[data-uxsets]");
+  const t = ev.target.closest && ev.target.closest("[data-dledit2],[data-dlahead]:not([data-openpick]),[data-dldrop],[data-dllist],[data-dlweek],[data-wkck],[data-upinfo],[data-dlview],[data-plsel],[data-plday],[data-plfill],[data-uppmode],[data-uxopen],[data-uxsets]");
   if (!t) return;
   const ds = t.dataset;
   ev.stopImmediatePropagation();
-  if (ds.dlmenu) dlRowMenu = dlRowMenu === ds.dlmenu ? null : ds.dlmenu;
+  if (ds.dledit2 !== undefined) { dlEditing = !dlEditing; dlAhead = false; }
+  else if (ds.dlahead !== undefined) dlAhead = ds.dlahead === "true";
   else if (ds.dldrop) {
-    // Ta bort bara idag (dagen minns det), eller även framåt (ur rutinen och Varje dag; en tillagd-bara-idag tas bort ur dagen)
+    // Ta bort bara idag (dagen minns det), eller även framåt (ur rutinen och Varje dag); en tillagd-bara-idag tas bort ur dagen
     const date = logDate(), L = day(date), id = ds.dldrop, name = EX[id].name;
     if (L.dailyAdd && L.dailyAdd.some(e => e.id === id)) L.dailyAdd = L.dailyAdd.filter(e => e.id !== id);
-    else if (ds.dlwhen === "today") (L.dailyDrop = L.dailyDrop || []).push(id);
+    if (!dlAhead) { if (dailyList(date).some(e => e.id === id)) (L.dailyDrop = L.dailyDrop || []).push(id); }
     else { const r = routineOn(date); for (const list of [S.daily || [], r ? r.ex : []]) { const i = list.findIndex(e => e.id === id); if (i >= 0) list.splice(i, 1); } }
-    dlRowMenu = null; save(); toast(`${name} borttagen ${ds.dlwhen === "today" ? "bara idag" : "även framåt"}`);
+    save(); toast(`${name} borttagen ${dlAhead ? "även framåt" : "bara idag"}`);
   }
   else if (ds.dllist !== undefined) dlShowList = !dlShowList;
   else if (ds.dlweek) { const cur = weekStart(TODAY), n = shift(dlWeek || cur, +ds.dlweek); dlWeek = n >= cur ? null : n; }
