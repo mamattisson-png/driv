@@ -1340,8 +1340,8 @@ def test_vanner_kod_flode_och_peppning(page):
     assert page.locator(".fsheet").count() == 0 and "Bo" in page.inner_text("#app")
     # Hem visar Bos senaste pass på raden Vänner, som leder till vänsidan
     go(page, "idag")
-    page.wait_for_function("document.querySelector('.h3-row[data-tab=\"vanner\"]').innerText.includes('Bo körde Push')")
-    page.click('.h3-row[data-tab="vanner"]')
+    page.wait_for_function("document.querySelector('.homehead .frdot') && document.querySelector('.frbtn').getAttribute('aria-label').includes('Bo har tränat')")
+    page.click('.homehead .frbtn')
     # Vänsidan: igår hopfällt, fälls ut med ett tryck; peppningen sparas
     assert page.evaluate("tab") == "vanner" and "Igår · 1 pass" in page.text_content("#app")
     page.click('[data-fday="2026-10-21"]')
@@ -2906,3 +2906,14 @@ def test_dubbletter_slas_ihop_och_gamla_id_byts(page):
     assert page.evaluate("S.daily.map(e => e.id)") == ['kna_mot_brost']
     assert page.evaluate("S.plan.days[0].ex.some(e => e.id === 'strx_couch') && !S.plan.days[0].ex.some(e => e.id === 'strg_couch')") is True
     assert page.evaluate("dailyDone(TODAY, 'strx_calf_toe_wall')") is True
+
+
+def test_vanner_knapp_pa_hem(page):
+    start(page)
+    # Vänner nås från en knapp uppe på Hem; en prick visar när en vän har tränat
+    assert page.locator('.homehead [data-tab="vanner"]').count() == 1 and page.locator(".frdot").count() == 0
+    page.evaluate("account.step = 'in'; social.loaded = true; social.feed = [{ name: 'Anna', pass: 'Pull', mine: false }]; render()")
+    assert page.locator(".homehead .frdot").count() == 1 and page.locator('.home3 [data-tab="vanner"]').count() == 1
+    page.evaluate("account.step = 'out'; social.feed = []; render()")
+    page.click('.homehead [data-tab="vanner"]')
+    assert page.evaluate("tab") == "vanner"

@@ -1215,10 +1215,8 @@ const VIEWS = {
       : isActDay(d) ? `<div class="row h3-actbtns">${actButtons(d, "h3-btn")}</div>`
       : d.ex.length ? `<button class="h3-btn" data-focusstart="${d.id}">${icon("play", 16)}${started ? "Fortsätt" : "Starta"} ${esc(d.name)}</button>`
       : `<button class="h3-btn ghost" data-seepass="${d.id}">Lägg till övningar</button>`;
-    const row = (ic, title, sub, attrs, end = "right") => `<button class="h3-row" ${attrs}><span class="h3-ic">${ic}</span><span class="grow"><b>${title}</b><small>${sub}</small></span>${icon(end, 18)}</button>`;
     const ws = weekStart(TODAY), weighed = weekDates(ws).some(x => x <= TODAY && weights()[x] > 0), avg = weekAvgWeight(ws);
     const others = typeof social !== "undefined" && account.step === "in" && social.loaded ? social.feed.filter(a => !a.mine) : [];
-    const friendSub = others.length ? `${esc(others[0].name)} körde ${esc(others[0].pass)} · peppa` : "Träna tillsammans och följ varandra";
     // Dagens tre saker: det som återstår först (numrerat), det som är klart krymper till en rad med bock
     const passCard = n => done ? `<button class="h3-card h3-head done" data-seepass="${d.id}">${no(n, true)}<span class="grow"><b>${esc(d.name)} klart</b><small>${passInfo}</small></span>${icon("right", 18)}</button>`
       : `<section class="h3-card h3-passcard ${done ? "done" : ""}"><button class="h3-head" data-seepass="${d.id}" aria-label="${passLab}: ${esc(d.name)}">${no(n, done)}
@@ -1235,6 +1233,7 @@ const VIEWS = {
     return `<div class="home3">
       <header class="homehead"><div class="brand"><img src="icons/icon-192-v2.png" alt=""><div class="ordbild"><span class="wordmark">DRIV</span><span class="slogan">Ditt mål. <em>Ditt driv.</em></span></div></div>
         <span class="row h3-hbtns"><button class="gear avbtn infobtn" data-tourstart aria-label="Visa appguiden">${icon("info", 20)}</button>
+        <button class="gear avbtn frbtn" data-tab="vanner" aria-label="${others.length ? `Vänner · ${esc(others[0].name)} har tränat` : "Vänner"}">${icon("vanner", 20)}${others.length ? '<i class="frdot" aria-hidden="true"></i>' : ""}</button>
         <button class="gear avbtn setbtn" data-tab="profil" aria-label="Inställningar">${GEAR_SVG}</button></span></header>
       ${S.tourAsked !== false ? "" : `<section class="tour-offer"><span class="h3-ic">${icon("info", 20)}</span><span class="grow"><b>Ny i Driv?</b><small>En kort rundtur visar var allt finns.</small></span>
         <button class="small primary" data-tourstart>Visa</button><button class="small ghost" data-tourskip>Inte nu</button></section>`}
@@ -1242,7 +1241,7 @@ const VIEWS = {
       ${streakStrip()}
       ${typeof friendsNudge === "function" ? friendsNudge() : ""}${accountNudge()}${installNudge()}
       ${homeCards}
-      ${others.length ? `<section class="h3-list">${row(icon("vanner", 18), "Vänner", friendSub, 'data-tab="vanner"')}</section>` : ""}</div>`;
+</div>`;
   },
 
   pass() {
