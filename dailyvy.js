@@ -57,9 +57,9 @@ function dlDayView() {
   const when = `${date === TODAY ? "Idag · " : ""}${cap(WD_LONG[wd])} ${+date.slice(-2)}`;
   const row = e => {
     const ok = dailyDone(date, e.id), x = EX[e.id];
-    if (dlEditing) return `<div class="dl-row dl-erow">
-      <button class="dl-minus" data-dldrop="${e.id}" aria-label="Ta bort ${esc(x.name)}">${icon("minus", 16)}</button>${thumb(e.id, "dl-f")}
-      <span class="grow dl-name"><b>${esc(x.name)}</b><small>${e.sets} × ${esc(e.reps || "")}</small></span></div>`;
+    if (dlEditing) return `<div class="dl-row dl-erow">${thumb(e.id, "dl-f")}
+      <span class="grow dl-name"><b>${esc(x.name)}</b><small>${e.sets} × ${esc(e.reps || "")}</small></span>
+      <button class="dl-minus" data-dldrop="${e.id}" aria-label="Ta bort ${esc(x.name)}">${icon("close", 18)}</button></div>`;
     return `<div class="dl-row ${ok ? "ok" : ""}">${thumb(e.id, "dl-f")}<span class="grow dl-name"><b>${esc(x.name)}</b><small>${e.sets} × ${esc(e.reps || "")}</small></span>
       ${!ok && e === next && !isRun(e.id) ? `<button class="dl-play" data-dclockstart="${e.id}" aria-label="Starta ${esc(x.name)}">${icon("play", 18)}</button>` : ""}
       <button class="dl-ck ${ok ? "on" : ""}" data-dcheck="${e.id}" aria-pressed="${ok}" aria-label="${esc(x.name)} klar">${icon("check", 20)}</button></div>`;
@@ -76,7 +76,7 @@ function dlDayView() {
       ${dlEditing ? `<button class="dl-done2" data-dledit2>Klar</button>` : `${dailyRoutines().length && !allOk ? `<button class="linkbtn2 dl-byt" data-rutsheet="1">Byt rutin</button>` : ""}
       <button class="dl-pen" data-dledit2 aria-label="Ändra dagens övningar">${icon("edit", 16)}</button>`}</div>
     ${dlEditing ? `<div class="dl-when" role="radiogroup" aria-label="Gäller"><button role="radio" data-dlahead="false" class="${dlAhead ? "" : "on"}" aria-checked="${!dlAhead}">Bara idag</button><button role="radio" data-dlahead="true" class="${dlAhead ? "on" : ""}" aria-checked="${dlAhead}">Även framåt</button></div>` : ""}`;
-  const list = `${ex.length ? `<div class="dl-rows">${ex.map(row).join("")}</div>${dlEditing ? `<button class="dl-row dl-erow dl-addrow" data-openpick="dag:${date}" data-dlahead="${dlAhead}"><span class="dl-plus">${icon("plus", 16)}</span><span class="dl-pf"></span><span class="grow dl-name"><b>Lägg till övning</b><small>${dlAhead ? "Även framåt" : "Bara idag"}</small></span></button>` : ""}`
+  const list = `${ex.length ? `<div class="dl-rows">${ex.map(row).join("")}</div>${dlEditing ? `<button class="dl-row dl-erow dl-addrow" data-openpick="dag:${date}" data-dlahead="${dlAhead}"><span class="dl-pf">${icon("plus", 20)}</span><span class="grow dl-name"><b>Lägg till övning</b><small>${dlAhead ? "Även framåt" : "Bara idag"}</small></span></button>` : ""}`
       : `<div class="dl-empty"><b>${hasDailies() ? "Ingen rutin idag" : "Inga dailys än"}</b><button class="linkbtn2" data-rutpage>Ställ in under Upplägg${icon("right", 14)}</button></div>`}
     ${a.length ? `<div class="klabel dl-sec">Kosttillskott</div><div class="dl-pills">${pills}</div>` : ""}`;
   if (allOk && !dlEditing) {
