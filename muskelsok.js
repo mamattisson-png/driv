@@ -79,7 +79,7 @@ function openLibrary(ctx) {
   mskDetail = null;
   window.scrollTo(0, 0);
 }
-const libTargetName = t => t === "daily" ? "Dailys" : String(t).startsWith("rut:") ? (routineById(t.slice(4)) || { name: "Dailys" }).name : t.startsWith("draft:") ? draft.days[+t.slice(6)].name : dayById(t).name;
+const libTargetName = t => t === "daily" ? "Dailys" : String(t).startsWith("dag:") ? "dagens dailys" : String(t).startsWith("rut:") ? (routineById(t.slice(4)) || { name: "Dailys" }).name : t.startsWith("draft:") ? draft.days[+t.slice(6)].name : dayById(t).name;
 
 function muscleView() {
   if (mskDetail && EX[mskDetail]) return stretchPage(mskDetail);
@@ -187,7 +187,7 @@ document.addEventListener("click", ev => {
     // Tillagd mitt i ett pass: gå direkt till den nya övningen
     if (c.replace == null && focus && focus.dayId === c.target) { const k = exList(c.target).findIndex(e => e.id === ds.libpick); if (k >= 0) focus.idx = k; }
     libCtx = null; save(); render();
-    toast(c.replace != null ? `Bytt till ${name}` : `${name} tillagd i ${c.today ? "dagens pass" : libTargetName(c.target)}`);
+    toast(c.replace != null ? `Bytt till ${name}` : String(c.target).startsWith("dag:") ? `${name} tillagd ${c.today ? "bara idag" : "även framåt"}` : `${name} tillagd i ${c.today ? "dagens pass" : libTargetName(c.target)}`);
     return;
   }
   else if (ds.libclose !== undefined) libCtx = null;
