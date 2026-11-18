@@ -111,6 +111,7 @@ console.log(`${rows.length} new stretches: ${timed} timed, ${dynamic} dynamic; o
   );
   const liveLinks = JSON.parse(run('JSON.stringify(MW)'));
   // These two variants do not exactly match MuscleWiki's demonstrated motion.
+  assert.equal(liveLinks.arm_over_brost, undefined, 'Across-chest stretch must not link to a rotation demo');
   assert.equal(liveLinks.strx_open_book, undefined, 'Straight-arm open book must not link to bent-arm variation');
   assert.equal(liveLinks.strx_shoulder_rolls, undefined, 'Bidirectional shoulder circles must not link to single-direction demo');
   const exerciseIds = new Set(JSON.parse(run('JSON.stringify(Object.keys(EX).filter(id => EX[id].cat === "stretch"))')));
@@ -154,7 +155,7 @@ console.log(`${rows.length} new stretches: ${timed} timed, ${dynamic} dynamic; o
       }
     }
   }
-  console.log('122 stretch audit entries match code: 28 reviewed direct links, 94 without exact match.');
+  console.log('122 stretch audit entries match code: 27 reviewed direct links, 95 without exact match.');
 }
 
 
