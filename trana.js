@@ -130,7 +130,7 @@ function traningView() {
     <div class="klabel h3-sec">Mer</div>
     <section class="h3-list">
       ${tpls().length ? row("trana", "Passmallar", esc(tpls().map(p => p.name).join(", ")), 'data-trsheet="tpls"') : ""}
-      ${row("search", "Övningar", `${Object.keys(EX).length} övningar · sök och läs instruktioner`, "data-exlib")}
+      ${row("search", "Övningar", `${Object.keys(EX).length} övningar och stretch · sök och läs instruktioner`, "data-exlib")}
       ${row("aktivitet", "Logga annan träning", "Utanför schemat · padel, löpning, EMS …", `data-actnew="" data-actdate="${TODAY}"`, "plus")}
     </section>
     ${trSheet === "dailys" ? dailysSheet() : trSheet === "tpls" ? tplSheet() : ""}`;
