@@ -2761,6 +2761,20 @@ button.acttile { min-height: 64px; cursor: pointer; }
 .vk-target { align-items: center; gap: 12px; }
 .vk-target > span { display: flex; flex-direction: column; gap: 2px; }
 .vk-tclear { display: block; margin-top: 6px; }
+
+/* Svit på Hem */
+.sv { display: flex; align-items: center; gap: 10px; margin: 14px 0 6px; padding: 12px 10px 12px 6px; border-radius: 20px; background: var(--card); }
+.sv-f { position: relative; width: 56px; flex: none; display: flex; flex-direction: column; align-items: center; }
+.sv-f { padding-top: 2px; }
+.sv-n { font: 800 8.5px "Unbounded", sans-serif; fill: #fff; }
+.sv-f small { color: var(--accent-text); font-weight: 700; font-size: 12px; }
+.sv-days { flex: 1; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; }
+.sv-d { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.sv-d small { color: var(--muted); font-size: 12px; }
+.sv-d i { width: 34px; height: 34px; border-radius: 17px; display: grid; place-items: center; font-style: normal; font-size: 13px; background: var(--card-2); color: var(--text); }
+.sv-d.f i { background: none; border: 1.5px solid var(--line-strong); color: var(--muted); }
+.sv-d i.on { background: var(--text); color: var(--bg); }
+.sv-d.t small { color: var(--text); font-weight: 700; }
 </style>
 </head>
 <body>
