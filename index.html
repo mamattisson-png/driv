@@ -2501,6 +2501,20 @@ button.acttile { min-height: 64px; cursor: pointer; }
 .dl-allok .dl-row.ok .dl-ck.on { width: 30px; height: 30px; min-height: 0; border-radius: 15px; margin-right: 6px; }
 .dl-allok .dl-row.ok .dl-ck.on svg { width: 16px; height: 16px; }
 .dl-allok .dl-row.ok b { color: var(--text); }
+.dl-name { display: flex; flex-direction: column; min-width: 0; line-height: 1.25; }
+.dl-name b { font-size: 15px; font-weight: 600; } .dl-name small { color: var(--muted); font-size: 12.5px; }
+.dl-row.ok .dl-name b { color: var(--muted); } .dl-allok .dl-row.ok .dl-name b { color: var(--text); }
+.dl-pen { width: 36px; height: 36px; min-height: 0; padding: 0; margin-bottom: 2px; border-radius: 18px; border: 1px solid var(--line); background: var(--card); color: var(--muted); display: grid; place-items: center; flex: none; }
+.dl-editbtn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 44px; margin-top: 8px; border-radius: 14px; border: 1px solid var(--line-strong); background: none; color: var(--text); font: inherit; font-size: 14px; font-weight: 600; }
+.dl-done2 { min-height: 36px; padding: 0 16px; margin-bottom: 2px; border-radius: 18px; border: 0; background: var(--text); color: var(--bg); font: inherit; font-size: 14px; font-weight: 700; flex: none; }
+.dl-when { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; margin: 0 0 10px; border-radius: 12px; background: var(--card); }
+.dl-when button { min-height: 34px; border: 0; border-radius: 9px; background: none; color: var(--muted); font: inherit; font-size: 13.5px; font-weight: 600; }
+.dl-when button.on { background: var(--card-2); color: var(--text); }
+.dl-erow { gap: 10px; }
+.dl-minus { width: 40px; height: 40px; min-height: 0; padding: 0; border-radius: 20px; border: 1.5px solid var(--line-strong); background: none; color: var(--muted); display: grid; place-items: center; flex: none; }
+.dl-addrow { width: 100%; color: var(--text); font: inherit; text-align: left; }
+.dl-addrow .dl-name b { color: var(--accent-text); }
+.dl-pf { width: 42px; height: 42px; border-radius: 21px; border: 1.5px solid var(--line-strong); color: var(--accent-text); display: grid; place-items: center; flex: none; }
 .dl-sum { position: relative; margin: 14px 0 10px; padding: 26px 18px 16px; border-radius: 26px; text-align: center; overflow: hidden;
   background: radial-gradient(120% 80% at 50% 0%, color-mix(in srgb, var(--ok) 26%, var(--card)) 0%, var(--card) 70%); border: 1px solid var(--line); }
 .ds-burst { width: 84px; height: 84px; margin: 0 auto 12px; border-radius: 42px; display: grid; place-items: center; background: var(--ok); color: #0d0e10; box-shadow: 0 0 0 10px color-mix(in srgb, var(--ok) 18%, transparent); animation: dspop .5s ease-out; }

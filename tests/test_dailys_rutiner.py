@@ -128,8 +128,9 @@ def test_week_edit_routine_and_today_switch_only_today(page):
     page.click('[data-rutpick=rb]')
     assert page.text_content('.dl-h b') == 'Mage B'
     assert page.evaluate("S.dailyWeek[0]") == 'ra' and page.evaluate("routinePlanned(shift(TODAY, 7)).name") == 'Mage A'
-    # Dag och Vecka har inga knappar för att ändra; allt ändras under Upplägg
-    assert page.locator('.dlx [data-openpick], .dlx [data-suppadd], .dlx [data-suppedit]').count() == 0
+    # Dag lägger bara till för dagen (eller framåt via väljaren); kosttillskott ändras bara under Upplägg
+    assert page.locator('.dlx [data-openpick]').count() == 0 and page.locator('.dl-editbtn').count() == 1
+    assert page.locator('.dlx [data-suppadd], .dlx [data-suppedit]').count() == 0
     page.click('[data-dlview=vecka]')
     assert page.locator('.dlx [data-openpick], .dlx [data-suppadd], .dlx [data-suppedit], .dlx [data-rutopen]').count() == 0
 
@@ -199,3 +200,31 @@ def test_day_done_banner(page):
     assert page.locator('.dl-rows [data-dcheck=plankan]').count() == 1
     page.click('[data-dcheck=plankan]')
     assert page.locator('.dl-sum').count() == 0
+
+
+def test_day_add_and_remove_today_or_ahead(page):
+    prepare(page, "manual")   # dagens rutin Mage A: plankan, russian_twist; Varje dag: promenad
+    assert page.locator('.dl-minus, .dl-addrow').count() == 0   # vanliga läget: bara listan
+    page.click('[data-dledit2]')
+    # Lägg till bara idag
+    page.click('.dl-addrow')
+    assert page.locator('[data-libtoday="true"].on').count() == 1
+    page.fill('#mskq', 'dead bug'); page.click('[data-libpick="dead_bug"]')
+    assert 'dead_bug' in page.evaluate("dailyList(TODAY).map(e => e.id)")
+    assert 'dead_bug' not in page.evaluate("routineById('ra').ex.map(e => e.id)")
+    assert 'dead_bug' not in page.evaluate("dailyList(shift(TODAY, 7)).map(e => e.id)")
+    # Ta bort bara idag: finns kvar i rutinen
+    page.click('[data-dldrop="plankan"]')
+    assert 'plankan' not in page.evaluate("dailyList(TODAY).map(e => e.id)")
+    assert 'plankan' in page.evaluate("routineById('ra').ex.map(e => e.id)")
+    # Även framåt: tillagt i rutinen, borttaget ur rutinen
+    page.click('[data-dlahead="true"]:not([data-openpick])')
+    page.click('.dl-addrow')
+    assert page.locator('[data-libtoday="false"].on').count() == 1
+    page.fill('#mskq', 'sidoplanka'); page.click('[data-libpick="sidoplanka"]')
+    assert 'sidoplanka' in page.evaluate("routineById('ra').ex.map(e => e.id)")
+    page.click('[data-dlahead="true"]:not([data-openpick])')
+    page.click('[data-dldrop="russian_twist"]')
+    assert 'russian_twist' not in page.evaluate("routineById('ra').ex.map(e => e.id)")
+    page.click('.dl-done2')
+    assert page.locator('.dl-minus').count() == 0

@@ -7,7 +7,7 @@
 // Utan rutiner fungerar Dailys precis som tidigare. Laddas före app.js; app.js ritar vyerna.
 
 const dailyRoutines = () => S.dailyRoutines || [];
-const isDailyT = t => t === "daily" || String(t).startsWith("rut:");
+const isDailyT = t => t === "daily" || String(t).startsWith("rut:") || String(t).startsWith("dag:");
 const routineById = id => dailyRoutines().find(r => r.id === id);
 const RUT_MODES = { manual: "Välj själv", alternate: "Varannan dag", rotate: "Rotation", week: "Veckoschema" };
 const rutMode = () => RUT_MODES[S.dailyMode] ? S.dailyMode : "manual";
@@ -33,11 +33,14 @@ function routineOn(date) {
   return own || routinePlanned(date);
 }
 // Alla dailyövningar en dag: Varje dag och dagens rutin (samma övning bara en gång)
+// Dagens egna ändringar ligger på dagen: L.dailyAdd (tillagda bara den dagen) och L.dailyDrop (borttagna bara den dagen)
 function dailyList(date = logDate()) {
-  const r = routineOn(date), seen = new Set(), out = [];
-  for (const e of [...(S.daily || []), ...(r ? r.ex : [])]) if (EX[e.id] && !seen.has(e.id)) { seen.add(e.id); out.push(e); }
+  const r = routineOn(date), seen = new Set(), out = [], L = S.log[date] || {}, drop = L.dailyDrop || [];
+  for (const e of [...(S.daily || []), ...(r ? r.ex : []), ...(L.dailyAdd || [])]) if (EX[e.id] && !seen.has(e.id) && !drop.includes(e.id)) { seen.add(e.id); out.push(e); }
   return out;
 }
+// "dag:<datum>" är dagens lista i Dag; framåt betyder dagens rutin (eller Varje dag när dagen saknar rutin)
+const dayTarget = date => { const r = routineOn(date); return r ? "rut:" + r.id : "daily"; };
 const hasDailies = () => (S.daily || []).length > 0 || dailyRoutines().some(r => r.ex.length);
 function chooseRoutine(id, date = logDate()) {
   day(date).dailyRoutine = id;

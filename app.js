@@ -154,6 +154,14 @@ const KEY_V1 = window.DRIV_TEST ? "driv-test-v1" : "ppl-traning-v1";
 
 // Lägg till en övning i ett pass eller Dailys, eller byt ut övningen på plats replace. Används av övningsbiblioteket.
 function addExercise(target, id, replace, today) {
+  // Dag i Dailys: bara den dagen, eller framåt i dagens rutin (eller Varje dag)
+  if (String(target).startsWith("dag:")) {
+    const date = target.slice(4), L = day(date);
+    if (L.dailyDrop) L.dailyDrop = L.dailyDrop.filter(x => x !== id);
+    if (today) { const a = L.dailyAdd || (L.dailyAdd = []); if (!a.some(e => e.id === id) && !dailyList(date).some(e => e.id === id)) a.push(exEntry(id)); }
+    else { const list = exList(dayTarget(date)); if (!list.some(e => e.id === id)) list.push(exEntry(id)); }
+    return;
+  }
   const list = exList(target);
   if (replace != null) {
     const orig = list[replace], e = exEntry(id);
@@ -1466,6 +1474,7 @@ const ssLabel = (d, idx) => { const g = ssGroup(d, idx); return g ? `Superset ${
 // Övningslistor kan ligga i ett passdag-id, "draft:<index>" (upplägget) eller "daily"
 function exList(target) {
   if (target === "daily") return S.daily;
+  if (target.startsWith("dag:")) return dailyList(target.slice(4));
   if (target.startsWith("rut:")) return routineById(target.slice(4)).ex;
   if (target.startsWith("draft:")) return draft.days[+target.slice(6)].ex;
   return dayById(target).ex;
@@ -2035,7 +2044,7 @@ document.addEventListener("click", ev => {
   if (ds.chart) { modal = { chart: ds.chart }; render(); return; }
   if (ds.letter) { modal = { letter: ds.letter }; render(); return; }
   // Lägg till och byt övning sker i det gemensamma övningsbiblioteket (muskelsok.js)
-  if (ds.openpick) { modal = null; openLibrary({ kind: isDailyT(ds.openpick) ? "daily" : "workout", target: ds.openpick }); render(); return; }
+  if (ds.openpick) { modal = null; openLibrary({ kind: isDailyT(ds.openpick) ? "daily" : "workout", target: ds.openpick, ...(ds.openpick.startsWith("dag:") ? { today: ds.dlahead !== "true" } : {}) }); render(); return; }
   if (ds.swap) { exSheet = null; openLibrary({ kind: isDailyT(ds.swap) ? "daily" : "workout", target: ds.swap, replace: +ds.idx }); render(); return; }
   if (ds.askai !== undefined) { askClaude(); return; }
   if (ds.tplname !== undefined && passDone) { passDone.tplNaming = true; render(); const f = $("tplname"); if (f) { f.focus(); f.select(); } return; }
