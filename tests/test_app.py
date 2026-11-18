@@ -111,7 +111,7 @@ def test_hem_visar_dagens_pass(page):
     d = page.evaluate("({name: todaysPass().d.name, n: todaysPass().d.ex.length, title: passMuscles(todaysPass().d)})")
     tile = page.inner_text(".h3-passcard")
     assert d["name"].upper() in tile.upper() and "Starta" in tile and d["title"] in tile
-    assert "0 av 3 pass" in page.inner_text(".h3-sub")
+    assert page.locator(".h3-sub").count() == 0 and page.locator(".sv").count() == 1
     page.click(".h3-passcard .h3-head")
     # Kortet öppnar passet på Träna, där det startas
     assert page.evaluate("[tab, passOpen]") == ["pass", True]
@@ -2083,8 +2083,9 @@ def test_hem_steg_och_ovrigt_idag(page):
     # Tre steg; klara steg får en bock i stället för siffran
     assert page.locator(".h3-no").count() == 3 and page.locator(".h3-no.ok").count() == 1
     assert "Dailys klara" in page.inner_text("#app")
-    rows = page.locator(".h3-list .h3-row")
-    assert rows.count() == 3 and "Vänner" in rows.nth(2).inner_text() and "Vikt" not in rows.all_inner_texts()[1]
+    # Klara steg hamnar sist; Stretch och Annan träning finns under Träna, Vänner bara när en vän har tränat
+    assert "Dailys klara" in page.locator(".home3 .h3-card").last.inner_text()
+    assert page.locator(".h3-list .h3-row").count() == 0 and page.locator('.home3 [data-tab="stretchguide"]').count() == 0
     # Passkortet startar passet direkt
     page.click(".h3-btn[data-focusstart]")
     assert page.locator(".focus").count() == 1
@@ -2115,7 +2116,9 @@ def test_ovningsbiblioteket(page):
 
 def test_stretchguide_omraden_och_lagg_till(page):
     start(page)
-    page.click('[data-tab="stretchguide"]')
+    go(page, "pass")
+    page.click("[data-exlib]")
+    page.click('[data-mskmode="st"]')
     # Stretch-läget, och alla stretchövningar hör till minst en muskel
     assert page.locator('[data-mskmode="st"][aria-selected="true"]').count() == 1
     assert page.evaluate("Object.keys(EX).filter(id => EX[id].cat === 'stretch').every(id => stretchMuscles(id).length)")
@@ -2289,9 +2292,9 @@ def test_ett_namn_och_en_tillbakaknapp(page):
     page.click("[data-exlib]")
     assert page.inner_text(".msk h1") == "Övningar"
     go(page, "idag")
-    assert "Annan träning" in page.inner_text("#app") and page.locator('[data-tab="vagning"]').count() == 0
+    assert page.locator('[data-tab="vagning"]').count() == 0
     # Tillbaka säger vart: ‹ Hem
-    page.click('.h3-row[data-tab="vanner"]')
+    page.evaluate("tab = 'vanner'; render()")
     assert page.inner_text(".backbtn").strip() == "Hem"
 
 
@@ -2780,10 +2783,13 @@ def test_hem_visar_vad_som_ar_klart_och_vad_som_aterstar(page):
     d = page.evaluate("S.plan.days[0].id")
     page.evaluate(f"""() => {{ S.supplements = []; S.log[TODAY] = {{ workouts: [{{ dayId: '{d}', done: true, sets: {{}} }}], dailies: {{}}, food: [] }};
       S.daily.forEach(e => S.log[TODAY].dailies[e.id] = true); save(); render(); }}""")
-    assert page.inner_text(".h3-sub").startswith("Träningen och Dailys är klara · Kosten återstår")
+    # Det som återstår (kosten) står först med en siffra, det som är klart krymper till en rad med bock
+    cards = page.locator(".home3 .h3-card")
+    assert "Logga dagens mat" in cards.nth(0).inner_text() and page.locator(".h3-no.ok").count() == 2
+    assert "klart" in cards.nth(1).inner_text() and page.locator(".h3-passcard").count() == 0
     assert "Allt klart" not in page.inner_text(".h3-greet")
     page.evaluate("logFood({ name: 'Middag', kcal: macros().kcal, protein: 100 }, 2); render()")
-    assert page.inner_text(".h3-sub").startswith("Alla dagens mål är klara") and "Allt klart" in page.inner_text(".h3-greet")
+    assert page.locator(".h3-no.ok").count() == 3 and "Allt klart" in page.inner_text(".h3-greet")
 
 
 def test_under_setet_en_rad_och_resten_under_mer(page):

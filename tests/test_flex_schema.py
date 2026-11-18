@@ -58,7 +58,7 @@ def test_activity_done_counts_as_pass(page):
     assert w["done"] and w["act"]["name"] == "Yoga" and w["act"]["min"] == 30
     assert page.evaluate("weekSummary(weekStart(TODAY)).passes") == 1
     go(page, "idag")
-    assert "Motion" in page.text_content(".h3-passcard")
+    assert "Motion" in page.text_content('.home3 [data-seepass]')
     page.evaluate("histDay = TODAY; tab = 'historik'; render()")
     assert "Från schemat" in page.text_content(".hsheet")
 

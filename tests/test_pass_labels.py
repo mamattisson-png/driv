@@ -45,8 +45,8 @@ def test_completed_today_is_labelled_on_both_screens(page):
     assert page.text_content('.tpass .tp-top .pst') == 'Klar'
     assert 'Kör igen' in page.inner_text('.tpass [data-focusstart]')
     go(page, 'idag')
-    assert page.text_content('.h3-passcard .klabel') == 'Genomfört idag'
-    assert 'Passet klart' in page.inner_text('.h3-passcard .h3-btn')
+    # På Hem krymper ett klart pass till en rad med bock
+    assert page.locator('.h3-passcard').count() == 0 and 'klart' in page.inner_text('.home3 [data-seepass]')
 
 
 def test_started_pass_is_ongoing_not_just_next(page):

@@ -106,6 +106,7 @@ Senast uppdaterad: 2026-11-06. Status bygger på dokumenterade publiceringar och
 | 102 | Dailys Dag: sammanfattning med Bra jobbat idag och konfetti ur den stora bocken när allt är klart, listan fälls ut för att ändra | Dailys | Medel | Klar |
 | 103 | Dailys Dag: knappen Ändra övningar, lägg till eller ta bort bara idag eller även framåt | Dailys | Medel | Klar |
 | 104 | Hem: svit i Strava-stil med låga, veckor i rad och veckans dagar | Hem | Medel | Klar |
+| 105 | Hem: bara svit och dagens tre saker, det som återstår först och klart krymper; Stretch och Annan träning finns under Träna | Hem | Medel | Klar |
 
 ## Detaljer och acceptanskriterier
 

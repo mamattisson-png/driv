@@ -1201,14 +1201,6 @@ const VIEWS = {
     // Samma etiketter som på Träna: Nästa pass (flexibelt) eller Dagens pass (fasta dagar), Pågående och Genomfört
     const freeIdle = t.free && !done && !started;   // inget schema och inget loggat idag
     const passLab = t.rest ? "Vilodag" : done ? "Genomfört idag" : started ? "Pågående pass" : freeIdle ? "Träning idag" : passLabel(t);
-    // När passet är gjort: vad som är klart och vad som återstår av dagens mål
-    const doneSub = () => {
-      const ok = [["Träningen", true], ["Dailys", dailysOk || !total], ["kosten", foodOk]];
-      const klar = ok.filter(x => x[1]).map(x => x[0]), kvar = ok.filter(x => !x[1]).map(x => x[0]);
-      const list = a => cap(a.length > 1 ? `${a.slice(0, -1).join(", ")} och ${a[a.length - 1]}` : a[0]);
-      return !kvar.length ? "Alla dagens mål är klara" : `${list(klar)} ${klar.length > 1 ? "är klara" : "är klar"} · ${list(kvar)} återstår`;
-    };
-    const sub = t.rest ? "Vilodag idag" : done ? doneSub() : started ? `${esc(d.name)} är påbörjat` : freeIdle ? (S.plan.motionOnly ? "Logga motion när du har tränat" : "Inget schema · logga det du gör") : `${esc(d.name)} står på schemat`;
     const date = cap(new Date().toLocaleDateString("sv-SE", { weekday: "long", day: "numeric", month: "long" }));
     // Siffran blir en grön bock när steget är klart; orange bara för det man trycker på
     const no = (n, ok) => `<span class="h3-no ${ok ? "ok" : ""}" aria-hidden="true">${ok ? icon("check", 14) : n}</span>`;
@@ -1224,10 +1216,22 @@ const VIEWS = {
       : d.ex.length ? `<button class="h3-btn" data-focusstart="${d.id}">${icon("play", 16)}${started ? "Fortsätt" : "Starta"} ${esc(d.name)}</button>`
       : `<button class="h3-btn ghost" data-seepass="${d.id}">Lägg till övningar</button>`;
     const row = (ic, title, sub, attrs, end = "right") => `<button class="h3-row" ${attrs}><span class="h3-ic">${ic}</span><span class="grow"><b>${title}</b><small>${sub}</small></span>${icon(end, 18)}</button>`;
-    const stretchId = Object.keys(EX).find(id => EX[id].cat === "stretch");
     const ws = weekStart(TODAY), weighed = weekDates(ws).some(x => x <= TODAY && weights()[x] > 0), avg = weekAvgWeight(ws);
     const others = typeof social !== "undefined" && account.step === "in" && social.loaded ? social.feed.filter(a => !a.mine) : [];
     const friendSub = others.length ? `${esc(others[0].name)} körde ${esc(others[0].pass)} · peppa` : "Träna tillsammans och följ varandra";
+    // Dagens tre saker: det som återstår först (numrerat), det som är klart krymper till en rad med bock
+    const passCard = n => done ? `<button class="h3-card h3-head done" data-seepass="${d.id}">${no(n, true)}<span class="grow"><b>${esc(d.name)} klart</b><small>${passInfo}</small></span>${icon("right", 18)}</button>`
+      : `<section class="h3-card h3-passcard ${done ? "done" : ""}"><button class="h3-head" data-seepass="${d.id}" aria-label="${passLab}: ${esc(d.name)}">${no(n, done)}
+        <span class="grow"><span class="klabel ${done ? "oktext" : "accent"}">${passLab}</span><b class="h3-pass">${esc(t.rest ? "Vila" : freeIdle ? "Inget loggat än" : d.name)}</b><small>${passInfo}</small></span>${icon("right", 18)}</button>
+        ${passBtn}</section>`;
+    const foodCard = n => `<button class="h3-card h3-head ${foodOk ? "done" : ""}" data-tab="kost">${no(n, foodOk)}<span class="grow"><b>${foodOk ? "Kalorimålet nått" : "Logga dagens mat"}</b>
+        <small>${tnum(e.kcal)} / ${tnum(m.kcal)} kcal · ${tnum(e.protein)} / ${tnum(m.protein)} g protein</small>
+        ${foodOk ? "" : `<span class="h3-bar"><i style="width:${Math.min(100, Math.round(100 * e.kcal / Math.max(1, m.kcal)))}%"></i></span>`}</span>${icon("right", 18)}</button>`;
+    const dailyCard = n => `<button class="h3-card h3-head ${dailysOk ? "done" : ""}" data-tab="dailys">${no(n, dailysOk)}<span class="grow"><b>${dailysOk ? "Dailys klara" : "Gör dina dailys"}</b>
+        <small>${total ? `${completed} av ${total} idag` : "Lägg till det du vill göra varje dag"}</small></span>${icon("right", 18)}</button>`;
+    const items = [[passCard, done || !!t.rest], [foodCard, foodOk], [dailyCard, dailysOk]];
+    let nr = 0;
+    const homeCards = [...items.filter(x => !x[1]), ...items.filter(x => x[1])].map(([f, ok]) => f(ok ? 0 : ++nr)).join("");
     return `<div class="home3">
       <header class="homehead"><div class="brand"><img src="icons/icon-192-v2.png" alt=""><div class="ordbild"><span class="wordmark">DRIV</span><span class="slogan">Ditt mål. <em>Ditt driv.</em></span></div></div>
         <span class="row h3-hbtns"><button class="gear avbtn infobtn" data-tourstart aria-label="Visa appguiden">${icon("info", 20)}</button>
@@ -1235,23 +1239,10 @@ const VIEWS = {
       ${S.tourAsked !== false ? "" : `<section class="tour-offer"><span class="h3-ic">${icon("info", 20)}</span><span class="grow"><b>Ny i Driv?</b><small>En kort rundtur visar var allt finns.</small></span>
         <button class="small primary" data-tourstart>Visa</button><button class="small ghost" data-tourskip>Inte nu</button></section>`}
       <div class="muted h3-date">${date}</div><h1 class="h3-greet">${greeting}</h1>
-      <div class="muted h3-sub">${sub} · ${passGoal(passes)} i veckan</div>
       ${streakStrip()}
       ${typeof friendsNudge === "function" ? friendsNudge() : ""}${accountNudge()}${installNudge()}
-      <section class="h3-card h3-passcard ${done ? "done" : ""}"><button class="h3-head" data-seepass="${d.id}" aria-label="${passLab}: ${esc(d.name)}">${no(1, done)}
-        <span class="grow"><span class="klabel ${done ? "oktext" : "accent"}">${passLab}</span><b class="h3-pass">${esc(t.rest ? "Vila" : freeIdle ? "Inget loggat än" : d.name)}</b><small>${passInfo}</small></span>${icon("right", 18)}</button>
-        ${passBtn}</section>
-      <button class="h3-card h3-head ${foodOk ? "done" : ""}" data-tab="kost">${no(2, foodOk)}<span class="grow"><b>${foodOk ? "Kalorimålet nått" : "Logga dagens mat"}</b>
-        <small>${tnum(e.kcal)} / ${tnum(m.kcal)} kcal · ${tnum(e.protein)} / ${tnum(m.protein)} g protein</small>
-        <span class="h3-bar"><i style="width:${Math.min(100, Math.round(100 * e.kcal / Math.max(1, m.kcal)))}%"></i></span></span>${icon("right", 18)}</button>
-      <button class="h3-card h3-head ${dailysOk ? "done" : ""}" data-tab="dailys">${no(3, dailysOk)}<span class="grow"><b>${dailysOk ? "Dailys klara" : "Gör dina dailys"}</b>
-        <small>${total ? `${completed} av ${total} idag` : "Lägg till det du vill göra varje dag"}</small></span>${icon("right", 18)}</button>
-      <div class="klabel h3-sec">Övrigt idag</div>
-      <section class="h3-list">
-        ${row(stretchId ? figure(stretchId) : icon("utseende", 18), "Stretch", "Övningar som töjer · välj kroppsdel", 'data-tab="stretchguide"')}
-        ${S.plan.free ? "" : row(icon("aktivitet", 18), "Annan träning", "Löpning, padel, promenad …", "data-homeactivity", "plus")}
-        ${row(icon("vanner", 18), "Vänner", friendSub, 'data-tab="vanner"')}
-      </section></div>`;
+      ${homeCards}
+      ${others.length ? `<section class="h3-list">${row(icon("vanner", 18), "Vänner", friendSub, 'data-tab="vanner"')}</section>` : ""}</div>`;
   },
 
   pass() {
