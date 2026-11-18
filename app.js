@@ -911,21 +911,26 @@ let lastCheck = null;   // bocken man senast tryckte på, så att konfettin komm
 document.addEventListener("click", ev => { const b = ev.target.closest && ev.target.closest("[data-dcheck],[data-suppcheck]"); if (b) lastCheck = b.dataset.dcheck ? `[data-dcheck="${b.dataset.dcheck}"]` : `[data-suppcheck="${b.dataset.suppcheck}"]`; }, true);
 function cheerCheck() {
   const date = logDate(), done = allDailysToday();
-  if (cheerState && cheerState.date === date && !cheerState.done && done) celebrate();
+  const fire = cheerState && cheerState.date === date && !cheerState.done && done;
   cheerState = { date, done };
+  if (!fire) return;
+  // På Dailys: listan fälls ihop så att sammanfattningen syns, och konfettin kommer ur den stora bocken
+  if (tab === "dailys" && typeof dlShowList !== "undefined" && dlShowList) { dlShowList = false; render(); }
+  if (tab === "dailys") window.scrollTo(0, 0);
+  celebrate();
 }
 // Litet och på plats: konfetti ur bocken man tryckte på, och ringen överst pulserar en gång
 function celebrate() {
   const btn = lastCheck && [...document.querySelectorAll(lastCheck)].find(e => e.getClientRects().length);
   const ring = document.querySelector(".ds-burst") || document.querySelector(".dlx-prog");
   if (ring) ring.classList.add("pulse");
-  const at = (btn || ring);
+  const big = ring && ring.classList.contains("ds-burst"), at = big ? ring : (btn || ring);
   if (at) {
-    const r = at.getBoundingClientRect(), el = document.createElement("div");
+    const r = at.getBoundingClientRect(), el = document.createElement("div"), n = big ? 48 : 22, far = big ? 70 : 38, spread = big ? 90 : 44;
     el.className = "burst"; el.setAttribute("aria-hidden", "true");
     el.style.cssText = `left:${r.left + r.width / 2}px;top:${r.top + r.height / 2}px`;
     const cols = ["#ff6b1a", "#6fd99a", "#fbbf24", "#5e95ff", "#ff8a47", "#b17cff"];
-    el.innerHTML = Array.from({ length: 22 }, (_, i) => { const a = i / 22 * Math.PI * 2 + Math.random() * .3, d = 38 + Math.random() * 44;
+    el.innerHTML = Array.from({ length: n }, (_, i) => { const a = i / n * Math.PI * 2 + Math.random() * .3, d = far + Math.random() * spread;
       return `<i style="--dx:${(Math.cos(a) * d).toFixed(0)}px;--dy:${(Math.sin(a) * d - 14).toFixed(0)}px;--r:${Math.round(Math.random() * 360)}deg;background:${cols[i % cols.length]};${i % 3 ? "" : "width:6px;height:6px;border-radius:50%;"}"></i>`; }).join("");
     document.body.appendChild(el);
     setTimeout(() => el.remove(), 1200);
