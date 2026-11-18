@@ -4,7 +4,6 @@
 // Saknas en verifierad exakt matchning visas ingen länk. Övriga övningslänkar är
 // oförändrade från main och granskas separat.
 const MW_LANK = {
-  "arm_over_brost": "shoulders-stretch-variation-four",
   "armhavningar": "push-up",
   "armhavningar_bank": "incline-push-up",
   "armhavningar_kna": "bodyweight-knee-push-ups",
