@@ -74,9 +74,9 @@ function dlDayView() {
   const allOk = ex.length + a.length > 0 && n === ex.length && aDone === a.length;
   const head = `<div class="dl-h"><div class="grow"><span class="dl-k"><i style="background:${col}"></i>${when}</span><b>${rut ? esc(rut.name) : "Dagens dailys"}</b></div>
       ${dlEditing ? `<button class="dl-done2" data-dledit2>Klar</button>` : `${dailyRoutines().length && !allOk ? `<button class="linkbtn2 dl-byt" data-rutsheet="1">Byt rutin</button>` : ""}
-      <button class="dl-pen" data-dledit2 aria-label="Ändra dagens övningar">${icon("edit", 16)}</button>`}</div>
+`}</div>
     ${dlEditing ? `<div class="dl-when" role="radiogroup" aria-label="Gäller"><button role="radio" data-dlahead="false" class="${dlAhead ? "" : "on"}" aria-checked="${!dlAhead}">Bara idag</button><button role="radio" data-dlahead="true" class="${dlAhead ? "on" : ""}" aria-checked="${dlAhead}">Även framåt</button></div>` : ""}`;
-  const list = `${ex.length ? `<div class="dl-rows">${ex.map(row).join("")}</div>${dlEditing ? `<button class="dl-row dl-erow dl-addrow" data-openpick="dag:${date}" data-dlahead="${dlAhead}"><span class="dl-pf">${icon("plus", 20)}</span><span class="grow dl-name"><b>Lägg till övning</b><small>${dlAhead ? "Även framåt" : "Bara idag"}</small></span></button>` : ""}`
+  const list = `${ex.length ? `<div class="dl-rows">${ex.map(row).join("")}</div>${!dlEditing ? `<button class="dl-editbtn" data-dledit2>${icon("edit", 16)}Ändra övningar</button>` : ""}${dlEditing ? `<button class="dl-row dl-erow dl-addrow" data-openpick="dag:${date}" data-dlahead="${dlAhead}"><span class="dl-pf">${icon("plus", 20)}</span><span class="grow dl-name"><b>Lägg till övning</b><small>${dlAhead ? "Även framåt" : "Bara idag"}</small></span></button>` : ""}`
       : `<div class="dl-empty"><b>${hasDailies() ? "Ingen rutin idag" : "Inga dailys än"}</b><button class="linkbtn2" data-rutpage>Ställ in under Upplägg${icon("right", 14)}</button></div>`}
     ${a.length ? `<div class="klabel dl-sec">Kosttillskott</div><div class="dl-pills">${pills}</div>` : ""}`;
   if (allOk && !dlEditing) {

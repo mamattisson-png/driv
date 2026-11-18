@@ -129,7 +129,7 @@ def test_week_edit_routine_and_today_switch_only_today(page):
     assert page.text_content('.dl-h b') == 'Mage B'
     assert page.evaluate("S.dailyWeek[0]") == 'ra' and page.evaluate("routinePlanned(shift(TODAY, 7)).name") == 'Mage A'
     # Dag lägger bara till för dagen (eller framåt via väljaren); kosttillskott ändras bara under Upplägg
-    assert page.locator('.dlx [data-openpick]').count() == 0 and page.locator('.dl-pen').count() == 1
+    assert page.locator('.dlx [data-openpick]').count() == 0 and page.locator('.dl-editbtn').count() == 1
     assert page.locator('.dlx [data-suppadd], .dlx [data-suppedit]').count() == 0
     page.click('[data-dlview=vecka]')
     assert page.locator('.dlx [data-openpick], .dlx [data-suppadd], .dlx [data-suppedit], .dlx [data-rutopen]').count() == 0
