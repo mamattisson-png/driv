@@ -67,7 +67,7 @@ function dlDayView() {
       ? `<button class="dl-ck sets ${part ? "part" : ""}" style="--p:${Math.round(100 * got / tot)}%" data-dcheck="${e.id}" aria-label="${esc(x.name)}: set ${got + 1} av ${tot} klart">${part ? `<b>${got}/${tot}</b>` : icon("check", 20)}</button>`
       : `<button class="dl-ck ${ok ? "on" : ""}" data-dcheck="${e.id}" aria-pressed="${ok}" aria-label="${esc(x.name)} klar">${icon("check", 20)}</button>`;
     return `<div class="dl-row ${ok ? "ok" : ""}">${thumb(e.id, "dl-f")}<span class="grow dl-name"><b>${esc(x.name)}</b><small>${e.sets} × ${esc(e.reps || "")}${part ? ` · ${got} av ${tot} set klara` : ""}</small></span>
-      ${!ok && e === next && !isRun(e.id) ? `<button class="dl-play" data-dclockstart="${e.id}" aria-label="${part ? "Fortsätt" : "Starta"} ${esc(x.name)}">${icon("play", 18)}</button>` : ""}
+      ${!ok && !isRun(e.id) ? `<button class="dl-play ${e === next ? "" : "alt"}" data-dclockstart="${e.id}" aria-label="${part ? "Fortsätt" : "Starta"} ${esc(x.name)}">${icon("play", 18)}</button>` : ""}
       ${ck}</div>`;
   };
   const pills = a.map(x => {

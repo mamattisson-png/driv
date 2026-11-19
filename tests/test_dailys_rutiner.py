@@ -262,3 +262,12 @@ def test_set_i_dailys(page):
     assert not page.evaluate("dailyDone(TODAY, 'plankan')")
     page.click('[data-dcheck=plankan]'); page.click('[data-dcheck=plankan]')
     assert page.evaluate("dailyDone(TODAY, 'plankan')") and page.evaluate("day().dailies['set:plankan']") is None
+
+
+def test_dailys_kan_startas_i_valfri_ordning(page):
+    start(page)
+    page.evaluate("S.supplements = []; S.daily = [{id:'plankan',sets:3,reps:'45 s'}, {id:'russian_twist',sets:3,reps:'20'}]; save()")
+    go(page, 'dailys')
+    assert page.locator('[data-dclockstart]').count() == 2
+    page.click('[data-dclockstart=russian_twist]')
+    assert page.evaluate("dailyClock.id") == 'russian_twist'
