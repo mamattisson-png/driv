@@ -126,6 +126,7 @@ Senast uppdaterad: 2026-11-06. Status bygger på dokumenterade publiceringar och
 | 122 | Hem: frys sviten – en missad vecka per månad räddar sviten, med isbricka under flamman | Hem | Liten | Klar |
 | 123 | Vänner: utmaningar (först till / flest pass) och månadens topplista; kräver supabase/utmaningar.sql | Vänner | Medel | Klar |
 | 124 | Vänner: utmana flera vänner samtidigt, en gemensam topplista per utmaning; kör supabase/utmaningar.sql igen | Vänner | Liten | Klar |
+| 125 | Hem: tryck på isbrickan under flamman för en förklaring av frysningen | Hem | Liten | Klar |
 
 ## Detaljer och acceptanskriterier
 
