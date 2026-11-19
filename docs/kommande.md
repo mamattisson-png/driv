@@ -112,6 +112,7 @@ Senast uppdaterad: 2026-11-06. Status bygger på dokumenterade publiceringar och
 | 108 | Kost: bröd från affären går att logga i skivor (mjukt bröd ca 35 g, knäckebröd ca 12 g) | Kost | Liten | Klar |
 | 109 | Kost: Proviva, Kalles kaviar, Gainomax, Barebells, Nocco, Celsius, Daim, Piggelin, Pannbiff m.fl.; Messmör, Kesella, Nudlar, Risifrutti och Special K hittas rätt | Kost | Liten | Klar |
 | 110 | Träna: telefonen vibrerar när ett pass eller en aktivitet är klar (Android) | Träna | Liten | Klar |
+| 111 | Kost: streckkodsskannern läser dryck bättre (zoom, autofokus, stående koder) och räknar dryck i ml | Kost | Liten | Klar |
 
 ## Detaljer och acceptanskriterier
 

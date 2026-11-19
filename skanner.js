@@ -41,12 +41,21 @@ async function startCamera() {
     scanner.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: false });
     video.srcObject = scanner.stream;
     await video.play();
+    // Zoom och autofokus: då kan man hålla telefonen längre bort, och en böjd kod på en burk blir rakare
+    try {
+      const track = scanner.stream.getVideoTracks()[0], caps = track.getCapabilities ? track.getCapabilities() : {}, adv = {};
+      if (caps.focusMode && caps.focusMode.includes("continuous")) adv.focusMode = "continuous";
+      if (caps.zoom && caps.zoom.max >= 1.5) adv.zoom = Math.min(caps.zoom.max, 2);
+      if (Object.keys(adv).length) await track.applyConstraints({ advanced: [adv] });
+    } catch (e) { /* kameran kan inte zooma */ }
   } catch (e) {
     scanner.el.querySelector(".scan-view").hidden = true;
     scanStatus("Kameran gick inte att starta. Skriv in streckkoden under i stället.");
     return;
   }
   scanStatus("Rikta kameran mot streckkoden.");
+  // Efter en stund utan träff: tips för burkar och flaskor
+  scanner.hint = setTimeout(() => { if (scanner.stream) scanStatus("Svårt att läsa? Håll telefonen en bit bort så att koden ser rak ut, gärna utan reflexer. Siffrorna under koden går också att skriva in."); }, 6000);
   // Inbyggd streckkodsläsare där den finns (Chrome på Android), annars ZXing
   if ("BarcodeDetector" in window) {
     const det = new window.BarcodeDetector({ formats: ["ean_13", "ean_8", "upc_a", "upc_e"] });
@@ -77,10 +86,21 @@ async function startCamera() {
     if (!scanner.stream) return;
     const w = video.videoWidth, h = video.videoHeight;
     if (w && h && video.readyState >= 2) {
-      // Mitten av bilden (där ramen är), högst 1000 punkter bred
-      const sw = Math.round(w * .85), sh = Math.round(h * .5), k = Math.min(1, 1000 / sw);
-      canvas.width = Math.round(sw * k); canvas.height = Math.round(sh * k);
-      ctx.drawImage(video, (w - sw) / 2, (h - sh) / 2, sw, sh, 0, 0, canvas.width, canvas.height);
+      // Mitten av bilden (där ramen är), högst 1000 punkter bred. Varannan gång vrids en stående bit 90°,
+      // så att koder som står lodrätt (vanligt på burkar och flaskor) också går att läsa.
+      scanner.flip = !scanner.flip;
+      if (!scanner.flip) {
+        const sw = Math.round(w * .85), sh = Math.round(h * .5), k = Math.min(1, 1000 / sw);
+        canvas.width = Math.round(sw * k); canvas.height = Math.round(sh * k);
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.drawImage(video, (w - sw) / 2, (h - sh) / 2, sw, sh, 0, 0, canvas.width, canvas.height);
+      } else {
+        const sw = Math.round(w * .5), sh = Math.round(h * .85), k = Math.min(1, 1000 / sh);
+        canvas.width = Math.round(sh * k); canvas.height = Math.round(sw * k);
+        ctx.setTransform(0, 1, -1, 0, canvas.width, 0);
+        ctx.drawImage(video, (w - sw) / 2, (h - sh) / 2, sw, sh, 0, 0, Math.round(sw * k), Math.round(sh * k));
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+      }
       try {
         const res = reader.decodeWithState(new ZX.BinaryBitmap(new ZX.HybridBinarizer(new ZX.HTMLCanvasElementLuminanceSource(canvas))));
         return onBarcode(res.getText());
@@ -92,7 +112,7 @@ async function startCamera() {
 }
 
 function stopCamera() {
-  clearTimeout(scanner.timer);
+  clearTimeout(scanner.timer); clearTimeout(scanner.hint);
   if (scanner.zx) { try { scanner.zx.reset(); } catch (e) { /* redan stoppad */ } scanner.zx = null; }
   if (scanner.stream) scanner.stream.getTracks().forEach(t => t.stop());
   scanner.stream = null;
@@ -121,7 +141,7 @@ async function lookupBarcode(code) {
   scanStatus(`Söker ${code}…`);
   out.innerHTML = "";
   try {
-    const res = await fetch(`https://world.openfoodfacts.org/api/v2/product/${code}.json?fields=product_name,product_name_sv,brands,nutriments,serving_quantity,quantity`);
+    const res = await fetch(`https://world.openfoodfacts.org/api/v2/product/${code}.json?fields=product_name,product_name_sv,brands,nutriments,serving_quantity,quantity,product_quantity,product_quantity_unit`);
     const data = await res.json();
     const pr = data.product, n = pr && pr.nutriments || {};
     const kcal = n["energy-kcal_100g"] ?? (n.energy_100g ? n.energy_100g / 4.184 : null);
@@ -132,11 +152,14 @@ async function lookupBarcode(code) {
     }
     const name = [pr.product_name_sv || pr.product_name, (pr.brands || "").split(",")[0]].filter(Boolean).join(" · ") || `Produkt ${code}`;
     scanner.product = { code, name, kcal: +kcal, p: +(n.proteins_100g || 0), fa: n.fat_100g == null ? null : +n.fat_100g, fi: +(n.fiber_100g || 0) };
-    const portion = Math.round(+pr.serving_quantity || 100);
+    // Dryck räknas i ml (1 ml ≈ 1 g); en burk eller flaska föreslås som mängd
+    const q = typeof productQuantity === "function" ? productQuantity(pr.quantity) : null;
+    const ml = (q && q.basis === "ml") || pr.product_quantity_unit === "ml", unit = ml ? "ml" : "g";
+    const portion = Math.round(+pr.serving_quantity || (ml && q && q.amount <= 1000 ? q.amount : 0) || 100);
     scanStatus("Hittad! Ange hur mycket du åt.");
     out.innerHTML = `<div class="card scan-product"><b>${esc(name)}</b>
-      <div class="muted">${Math.round(kcal)} kcal · ${fmtNum(+(n.proteins_100g || 0))} g protein per 100 g</div>
-      <div class="row" style="margin-top:10px"><label class="field grow">Mängd (g)<input id="scangrams" type="number" inputmode="decimal" min="0" step="any" value="${portion}"></label>
+      <div class="muted">${Math.round(kcal)} kcal · ${fmtNum(+(n.proteins_100g || 0))} g protein per 100 ${unit}</div>
+      <div class="row" style="margin-top:10px"><label class="field grow">Mängd (${unit})<input id="scangrams" type="number" inputmode="decimal" min="0" step="any" value="${portion}"></label>
         <div class="grow" id="scancalc"></div></div>
       <button class="primary wide" style="margin-top:10px" data-scanlog>Logga</button>
       <button class="small" data-scanagain>Skanna en annan vara</button></div>`;
