@@ -904,7 +904,27 @@ let vikBack = "idag";   // dit tillbaka-pilen på Vikt går
 let vannerBack = "idag"; // dit tillbaka-pilen på vänsidan går
 let passDone = null;     // { dayId, date } medan skärmen för ett avslutat pass visas
 // Ett avslutat pass känns i handen: tre korta och en lång (fungerar på Android, inte på iPhone)
-function buzzDone() { try { if (navigator.vibrate) navigator.vibrate([60, 50, 60, 50, 220]); } catch (e) { /* inte tillåtet */ } }
+function buzzDone() { try { if (navigator.vibrate) navigator.vibrate([60, 50, 60, 50, 220]); } catch (e) { /* inte tillåtet */ } cheerSound(); }
+// En kort fanfar och ett "Hurra!" med telefonens röst; går att stänga av i Inställningar
+function cheerSound() {
+  if (S.doneSound === false) return;
+  try {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (AC) {
+      const ac = new AC(), t0 = ac.currentTime + 0.02;
+      [[523.25, 0, 0.14], [659.25, 0.13, 0.14], [783.99, 0.26, 0.14], [1046.5, 0.39, 0.55]].forEach(([f, at, len]) => {
+        const o = ac.createOscillator(), g = ac.createGain();
+        o.type = "triangle"; o.frequency.value = f;
+        g.gain.setValueAtTime(0.0001, t0 + at); g.gain.exponentialRampToValueAtTime(0.3, t0 + at + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t0 + at + len);
+        o.connect(g); g.connect(ac.destination); o.start(t0 + at); o.stop(t0 + at + len + 0.05);
+      });
+      setTimeout(() => ac.close(), 1600);
+    }
+    if (window.speechSynthesis && window.SpeechSynthesisUtterance) setTimeout(() => {
+      const u = new SpeechSynthesisUtterance("Hurra!"); u.lang = "sv-SE"; u.rate = 1.05; u.pitch = 1.3; speechSynthesis.speak(u);
+    }, 700);
+  } catch (e) { /* ljud inte tillåtet */ }
+}
 let chosenDay = null;
 let editing = false;
 let dailyEditing = false;
@@ -1303,6 +1323,7 @@ const VIEWS = {
           <div class="grid2" style="margin-top:10px">
             <label class="field">Basövningar (sek)<input type="number" inputmode="numeric" id="restcompound" value="${rs.compound}"></label>
             <label class="field">Isolering och mage (sek)<input type="number" inputmode="numeric" id="restiso" value="${rs.iso}"></label></div>`)}
+        ${profRow("ljud", "bell", "Ljud när passet är klart", S.doneSound === false ? "Av" : "Fanfar och Hurra!", null, `<input type="checkbox" role="switch" class="switch" data-donesound aria-label="Ljud när passet är klart" ${S.doneSound === false ? "" : "checked"}>`)}
         ${profRow("aktiviteter", "aktivitet", "Annan träning", [S.actCount !== false ? "Räknas som pass" : "", S.actKcal ? "kcal läggs till" : ""].filter(Boolean).join(" · ") || "Padel, vandring och annat", `
           <label class="card psw"><span class="grow">En aktivitet på minst 45 minuter räknas som ett pass i veckan</span><input type="checkbox" class="switch" data-actcount ${S.actCount !== false ? "checked" : ""}></label>
           <label class="card psw"><span class="grow">Lägg till förbrända kcal i dagens kalorimål</span><input type="checkbox" class="switch" data-actkcal ${S.actKcal ? "checked" : ""}></label>
@@ -2194,6 +2215,7 @@ document.addEventListener("click", ev => {
     return;
   }
   else if (ds.resttoggle !== undefined) S.rest = Object.assign({}, restSettings(), { on: t.checked });
+  else if (ds.donesound !== undefined) { S.doneSound = t.checked; if (t.checked) cheerSound(); }
   else if (ds.sendcode !== undefined) { sendLoginCode(); return; }
   else if (ds.oauth) { signInWithProvider(ds.oauth); return; }
   else if (ds.fbsend !== undefined) { sendFeedback(); return; }

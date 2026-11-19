@@ -2926,3 +2926,15 @@ def test_vibration_nar_passet_ar_klart(page):
     page.evaluate(f"""() => {{ const w = workoutFor(dayById('{d}')); S.plan.days[0].ex.forEach(e => w.sets[e.id] = [{{ kg: 10, reps: 8, ok: true }}]); save(); }}""")
     page.evaluate(f"""() => {{ const b = document.createElement('button'); b.dataset.finish = '{d}'; document.body.appendChild(b); b.click(); }}""")
     assert [60, 50, 60, 50, 220] in page.evaluate("window.buzz")
+
+
+def test_hurra_ljud_kan_stangas_av(page):
+    start(page)
+    page.evaluate("window.said = []; window.SpeechSynthesisUtterance = function (t) { this.text = t; }; Object.defineProperty(window, 'speechSynthesis', { value: { speak: u => window.said.push(u.text) } })")
+    page.evaluate("cheerSound()"); page.wait_for_timeout(900)
+    assert page.evaluate("window.said") == ["Hurra!"]
+    go(page, "profil")
+    page.click("[data-donesound]")
+    assert page.evaluate("S.doneSound") is False
+    page.evaluate("window.said = []; cheerSound()"); page.wait_for_timeout(900)
+    assert page.evaluate("window.said") == []
