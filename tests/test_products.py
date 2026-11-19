@@ -335,3 +335,13 @@ def test_maträtter_och_inga_gissningar_mitt_i_ord(page):
     # "te" i "tempura" och "ris" i ett okänt ord ska inte bli kaffe eller ris
     assert name("tempura") == "Tempura" and name("risottoliknande") is None
     assert name("bananer") == name("banan")
+
+
+def test_fler_ratter_och_fika(page):
+    start(page)
+    page.wait_for_timeout(500)
+    name = lambda q: page.evaluate("q => { const i = parseFood(q).items[0]; return i.known ? i.name : null; }", q)
+    assert name("fläsk med löksås") == "Fläsk med löksås" and name("kardemummabulle") == "Kardemummabulle"
+    assert name("kebabpizza") == "Kebabpizza" and name("mazarin") == "Mazarin" and name("stekt ägg") == "Stekt ägg"
+    for q in ["lussekatt", "bibimbap", "västerbottenpaj", "räkcocktail", "whopper", "kantarellsoppa"]:
+        assert name(q), q
