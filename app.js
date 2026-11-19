@@ -949,7 +949,8 @@ function celebrate() {
     document.body.appendChild(el);
     setTimeout(() => el.remove(), 1200);
   }
-  if (navigator.vibrate) try { navigator.vibrate(30); } catch (e) { /* inte tillåtet */ }
+  // Alla dailys klara: samma tydliga vibration som när ett pass är klart
+  if (big) buzzDone(); else if (navigator.vibrate) try { navigator.vibrate(30); } catch (e) { /* inte tillåtet */ }
 }
 function render() {
   if (libCtx && libCtx.tab !== tab) libCtx = null;   // en annan flik lämnar biblioteket

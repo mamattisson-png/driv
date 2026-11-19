@@ -228,3 +228,17 @@ def test_day_add_and_remove_today_or_ahead(page):
     assert 'russian_twist' not in page.evaluate("routineById('ra').ex.map(e => e.id)")
     page.click('.dl-done2')
     assert page.locator('.dl-minus').count() == 0
+
+
+def test_stora_bocken_blinkar_inte_och_vibrerar(page):
+    start(page)
+    page.evaluate("window.buzz = []; navigator.vibrate = p => { window.buzz.push(p); return true; }")
+    page.evaluate("S.supplements = []; S.daily = [{id:'plankan',sets:3,reps:'45 s'}]; save(); tab = 'dailys'; render()")
+    page.evaluate("cheerState = { date: logDate(), done: false }")
+    page.evaluate("day().dailies.plankan = true; save(); render(); cheerCheck()")
+    assert page.locator(".ds-burst.pop").count() == 1
+    assert [60, 50, 60, 50, 220] in page.evaluate("window.buzz")
+    # En omritning efteråt (t.ex. synk) får inte få bocken att hoppa in igen
+    page.wait_for_timeout(50)
+    page.evaluate("render()")
+    assert page.locator(".ds-burst").count() == 1 and page.locator(".ds-burst.pop").count() == 0

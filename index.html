@@ -2520,7 +2520,8 @@ button.acttile { min-height: 64px; cursor: pointer; }
 .dl-pf { width: 42px; height: 42px; border-radius: 21px; border: 1.5px solid var(--line-strong); color: var(--accent-text); display: grid; place-items: center; flex: none; }
 .dl-sum { position: relative; margin: 14px 0 10px; padding: 26px 18px 16px; border-radius: 26px; text-align: center; overflow: hidden;
   background: radial-gradient(120% 80% at 50% 0%, color-mix(in srgb, var(--ok) 26%, var(--card)) 0%, var(--card) 70%); border: 1px solid var(--line); }
-.ds-burst { width: 84px; height: 84px; margin: 0 auto 12px; border-radius: 42px; display: grid; place-items: center; background: var(--ok); color: #0d0e10; box-shadow: 0 0 0 10px color-mix(in srgb, var(--ok) 18%, transparent); animation: dspop .5s ease-out; }
+.ds-burst { width: 84px; height: 84px; margin: 0 auto 12px; border-radius: 42px; display: grid; place-items: center; background: var(--ok); color: #0d0e10; box-shadow: 0 0 0 10px color-mix(in srgb, var(--ok) 18%, transparent); }
+.ds-burst.pop { animation: dspop .5s ease-out; }
 @keyframes dspop { 0% { transform: scale(.6); opacity: 0; } 70% { transform: scale(1.08); } 100% { transform: scale(1); opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .ds-burst { animation: none; } }
 .ds-h { margin: 0; font: 800 24px/1.15 "Unbounded", sans-serif; }

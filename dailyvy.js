@@ -1,4 +1,5 @@
 "use strict";
+let dsPopped = null;   // dagen vars stora bock redan har hoppat in
 // ---------- Dailys: Dag, Vecka och Upplägg ----------
 // Dag och Vecka visar och bockar av; inget ändras där. Allt ändras på ett ställe, Upplägg, i tre steg:
 // 1 Varje dag (övningar och kosttillskott som alltid är med), 2 Rutiner, 3 Veckan (fasta dagar eller turordning).
@@ -84,8 +85,10 @@ function dlDayView() {
     const greet = date !== TODAY ? "Dagen var klar" : st >= 7 ? "Grymt, en hel vecka i rad!" : st >= 3 ? "Bra jobbat, du är i farten!" : "Bra jobbat idag!";
     const week = weekDates(ws).map((d, i) => { const ok = allDailiesDone(d) && (S.supplements || []).every(x => S.log[d] && S.log[d].dailies["supp:" + x.id]);
       return `<span class="ds-d ${ok ? "ok" : ""} ${d === date ? "t" : ""} ${d > TODAY ? "f" : ""}"><i>${ok ? icon("check", 12) : ""}</i>${WD[i][0]}</span>`; }).join("");
+    // Bocken hoppar in en gång per dag; en omritning (synk, sparning) ska inte få den att blinka
+    const popNow = dsPopped !== date; setTimeout(() => { if (popNow) dsPopped = date; }, 0);
     return `<div class="dl-sum" role="status">
-      <div class="ds-burst" aria-hidden="true">${icon("check", 40)}</div>
+      <div class="ds-burst ${dsPopped === date ? "" : "pop"}" aria-hidden="true">${icon("check", 40)}</div>
       <h2 class="ds-h">${greet}</h2>
       <p class="ds-sub">${rut ? `${esc(rut.name)} · ` : ""}${when.replace("Idag · ", "")}</p>
       <div class="ds-stats">
