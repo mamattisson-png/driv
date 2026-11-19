@@ -971,7 +971,7 @@ function celebrate() {
     setTimeout(() => el.remove(), 1200);
   }
   // Alla dailys klara: samma tydliga vibration som när ett pass är klart
-  if (big) buzzDone(); else if (navigator.vibrate) try { navigator.vibrate(30); } catch (e) { /* inte tillåtet */ }
+  if (big) { buzzDone(); if (typeof track === "function") track("dailys_klara"); } else if (navigator.vibrate) try { navigator.vibrate(30); } catch (e) { /* inte tillåtet */ }
 }
 function render() {
   if (libCtx && libCtx.tab !== tab) libCtx = null;   // en annan flik lämnar biblioteket
@@ -1179,6 +1179,7 @@ const VIEWS = {
   },
   stretchguide() { return muscleView(); },
   varden() { return vardenView(); },
+  statistik() { return statsView(); },
   vagning() {
     const back = { pass: "Träna", dailys: "Dailys", kost: "Kost", historik: "Historik", profil: "Inställningar", varden: "Dina värden" }[vikBack] || "Hem";
     const days = Object.keys(weights()).sort().reverse(), last = latestWeight();
@@ -1353,6 +1354,10 @@ const VIEWS = {
         <div class="prow"><div class="prow-line"><button class="prow-head" data-tab="kommande"><span class="pic">${icon("idea", 20)}</span><span class="grow"><b>Kommande funktioner</b>
           <span class="muted small">Se vad som är på gång i Driv</span></span><span class="chev">${icon("right", 18)}</span></button></div></div>
         ${sbEnabled ? profRow("tyck", "chat", "Tyck till", "Vad saknas, vad är krångligt?", feedbackCard()) : ""}
+        ${sbEnabled ? profRow("statistik", "trend", "Anonym statistik", S.noStats ? "Av" : "Hjälper oss se vad som används och vad som går fel", null,
+          `<input type="checkbox" role="switch" class="switch" data-nostats aria-label="Skicka anonym statistik" ${S.noStats ? "" : "checked"}>`) : ""}
+        ${typeof stats !== "undefined" && stats.admin ? `<div class="prow"><div class="prow-line"><button class="prow-head" data-tab="statistik"><span class="pic">${icon("trend", 20)}</span><span class="grow"><b>Statistik</b>
+          <span class="muted small">Aktiva, händelser och fel (bara för dig)</span></span><span class="chev">${icon("right", 18)}</span></button></div></div>` : ""}
         ${isDevAccount() ? `<div class="prow"><div class="prow-line"><button class="prow-head" data-opentest><span class="pic">${icon("test", 20)}</span><span class="grow"><b>Testläge</b>
           <span class="muted small">Egen data som inte rör ditt konto</span></span><span class="chev">${icon("right", 18)}</span></button></div></div>` : ""}`)}
 `;
@@ -2194,7 +2199,7 @@ document.addEventListener("click", ev => {
     shareWorkout(dayById(ds.finish), logDate(), w.done);
     // Ett sparat pass visar skärmen Pass klart; i efterhand går man tillbaka till dagen i Historik
     if (w.done && editDate) { histDay = editDate; editDate = null; tab = "historik"; }
-    else if (w.done) { passDone = { dayId: ds.finish, date: logDate(), ex: ranEx }; tab = "idag"; buzzDone(); }
+    else if (w.done) { passDone = { dayId: ds.finish, date: logDate(), ex: ranEx }; tab = "idag"; buzzDone(); if (typeof track === "function") track("pass_klart"); }
   }
   // Uppvärmning under passet: ett lättare set läggs före arbetsseten och blir det man står på
   // Dropset: en drop till, ytterligare ca 25 % lättare
@@ -2439,6 +2444,7 @@ document.addEventListener("input", ev => {
 
 restoreOldSwaps();
 render();
+if (typeof trackWeek === "function") trackWeek();   // anonym: en signal per enhet och vecka
 connectCloud();
 connectSupabase();
 remindIfDue();

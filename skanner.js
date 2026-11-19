@@ -171,6 +171,7 @@ async function lookupBarcode(code) {
     const ml = (q && q.basis === "ml") || pr.product_quantity_unit === "ml", unit = ml ? "ml" : "g";
     const portion = Math.round(+pr.serving_quantity || (ml && q && q.amount <= 1000 ? q.amount : 0) || 100);
     scanStatus("Hittad! Ange hur mycket du åt.");
+    if (typeof track === "function") track("skanner");
     out.innerHTML = `<div class="card scan-product"><b>${esc(name)}</b>
       <div class="muted">${Math.round(kcal)} kcal · ${fmtNum(+(n.proteins_100g || 0))} g protein per 100 ${unit}</div>
       <div class="row" style="margin-top:10px"><label class="field grow">Mängd (${unit})<input id="scangrams" type="number" inputmode="decimal" min="0" step="any" value="${portion}"></label>

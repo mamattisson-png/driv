@@ -92,6 +92,8 @@ Kör även [`supabase/vanner.sql`](supabase/vanner.sql) i SQL Editor. Den skapar
 
 Kör sedan [`supabase/utmaningar.sql`](supabase/utmaningar.sql) på samma sätt. Den lägger till utmaningar mellan vänner (först till ett antal pass, eller flest pass under en period) och månadens topplista. Bara antal pass delas. Utan filen visas varken utmaningar eller månadsfliken, resten fungerar som vanligt.
 
+Kör även [`supabase/statistik.sql`](supabase/statistik.sql). Den tar emot anonym statistik (några fasta händelser och en signal per enhet och vecka) och felrapporter, utan användar-id, e-post eller IP-adress. Gör dig sedan till admin med raden längst ner i filen (byt till din e-post); då syns Statistik under Inställningar. Utan filen skickas statistiken ingenstans och appen fungerar som vanligt.
+
 ## Tester
 
 Webbläsartesterna i [`tests/`](tests) går igenom upplägg, pass och veckojämförelse, dagens mål, vilotimer, dailys, vikt, påminnelser, kost, streckkod, lagring, synk mellan enheter och start utan nät. Externa tjänster (Supabase, Open Food Facts) simuleras. De körs automatiskt i GitHub vid varje push, och lokalt med:

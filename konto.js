@@ -138,6 +138,7 @@ async function connectSupabase() {
       if (epoch !== (account.epoch || 0)) return;
       localStorage.setItem("driv-synced", user.id);
       await loadSocial();
+      if (typeof checkStatsAdmin === "function") await checkStatsAdmin();
     } catch (e) {
       if (epoch === (account.epoch || 0)) { cloud.status = "error"; account.restoreError = true; }
     } finally {

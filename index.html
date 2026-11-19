@@ -2835,6 +2835,15 @@ button.sv-ice::after { content: ""; position: absolute; inset: -10px; }   /* st√
 .chfr button { display: inline-flex; align-items: center; gap: 6px; }
 .chgoal { margin-top: 12px; }
 .chempty { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; color: var(--text); font: inherit; border: 0; }
+.stcard { display: flex; flex-direction: column; gap: 6px; }
+.stbig { display: flex; align-items: baseline; gap: 10px; }
+.stbig b { font: 700 36px "Unbounded", sans-serif; }
+.strow { display: flex; align-items: center; gap: 12px; min-height: 36px; }
+.strow b, .strow > .muted { width: 64px; text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.strow.sthead { min-height: 20px; }
+.sterr { display: flex; flex-direction: column; gap: 2px; padding: 8px 0; }
+.sterr + .sterr { border-top: 1px solid var(--line); }
+.sterr b { font-size: 14px; font-weight: 600; overflow-wrap: anywhere; }
 </style>
 </head>
 <body>
@@ -2862,6 +2871,7 @@ button.sv-ice::after { content: ""; position: absolute; inset: -10px; }   /* st√
 <script src="kost.js"></script>
 <script src="historik.js"></script>
 <script src="social.js"></script>
+<script src="statistik.js"></script>
 <script src="profil.js"></script>
 <script src="notiser.js"></script>
 <script src="motion.js"></script>

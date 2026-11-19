@@ -52,6 +52,7 @@ function markFresh(f) {
   freshT = setTimeout(() => { fresh = new WeakSet(); }, 2500);
 }
 function logFood(item, meal = currentMeal()) {
+  if (typeof track === "function") track("mat_loggad");
   const f = { name: item.name, kcal: Math.round(+item.kcal || 0), protein: Math.round(+item.protein || 0), meal };
   if (item.fat != null) f.fat = g1(+item.fat);
   if (item.fiber != null) f.fiber = g1(+item.fiber);
@@ -342,6 +343,7 @@ document.addEventListener("click", ev => {
   else if (ds.rn !== undefined) recipeOpen.n = Math.max(0.5, Math.min(10, recipeOpen.n + +ds.dir * 0.5));
   else if (ds.rdel) recipeEdit.items.splice(+ds.rdel, 1);
   else if (ds.rsave !== undefined) {
+    if (typeof track === "function") track("recept_sparat");
     const r = recipeEdit, name = (r.name || "").trim() || "Mitt recept";
     const rec = { name, portions: r.portions, items: r.items };
     const old = r.idx == null ? {} : recipes()[r.idx];

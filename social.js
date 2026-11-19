@@ -387,7 +387,7 @@ document.addEventListener("click", ev => {
   else if (ds.chcreate !== undefined) {
     const d = chDraft, [from, to] = chPeriod(d.per);
     socialAction(() => socialRpc("driv_challenge_create", { p_friends: d.friends, p_kind: d.kind, p_goal: d.kind === "forst" ? d.goal : null, p_start: from, p_end: to }))
-      .then(() => { if (!social.msg) { friendsSheet = null; chDraft = null; toast(d.friends.length > 1 ? `${d.friends.length} vänner är utmanade` : "Utmaningen är skickad"); render(); } });
+      .then(() => { if (!social.msg) { if (typeof track === "function") track("utmaning_skapad"); friendsSheet = null; chDraft = null; toast(d.friends.length > 1 ? `${d.friends.length} vänner är utmanade` : "Utmaningen är skickad"); render(); } });
   }
   else if (ds.chdel) {
     if (chArm !== +ds.chdel) { chArm = +ds.chdel; render(); return; }
