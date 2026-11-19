@@ -115,6 +115,7 @@ Senast uppdaterad: 2026-11-06. Status bygger på dokumenterade publiceringar och
 | 111 | Kost: streckkodsskannern läser dryck bättre (zoom, autofokus, stående koder) och räknar dryck i ml | Kost | Liten | Klar |
 | 112 | Dailys: telefonen vibrerar tydligt när alla dailys är klara, och stora bocken blinkar inte längre | Dailys | Liten | Klar |
 | 113 | Kost: lampknapp i streckkodsskannern (Android) mot dåligt ljus och reflexer | Kost | Liten | Klar |
+| 114 | Dailys: kugghjulet ligger inte längre ovanpå timern för en övning | Dailys | Liten | Klar |
 
 ## Detaljer och acceptanskriterier
 
