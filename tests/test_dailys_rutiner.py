@@ -242,3 +242,12 @@ def test_stora_bocken_blinkar_inte_och_vibrerar(page):
     page.wait_for_timeout(50)
     page.evaluate("render()")
     assert page.locator(".ds-burst").count() == 1 and page.locator(".ds-burst.pop").count() == 0
+
+
+def test_inget_kugghjul_over_timern(page):
+    start(page)
+    page.evaluate("S.daily = [{id:'plankan',sets:3,reps:'45 s'}]; save(); tab = 'dailys'; render()")
+    assert page.locator("#app > .gear").count() == 1
+    page.evaluate("dailyClock = { id: 'plankan', set: 1, sets: 3, sec: 45, left: 45, run: false }; render()")
+    # Timern har eget kryss; kugghjulet ska inte ligga ovanpå kortet
+    assert page.locator("#app > .gear").count() == 0
