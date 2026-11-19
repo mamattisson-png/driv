@@ -1,7 +1,8 @@
 "use strict";
 // Kontrollerade länkar till MuscleWiki: övning → sidan för just den övningen (https://musclewiki.com/exercise/<slug>).
-// Varje adress är bekräftad i sökresultat 2026-11 (MuscleWiki hämtas aldrig direkt). Övningar utan
-// säker träff saknas här och visar ingen länk, hellre ingen länk än en till fel övning.
+// Stretchlänkarna är avstämda mot docs/stretch-musclewiki-review-queue.md.
+// Saknas en verifierad exakt matchning visas ingen länk. Övriga övningslänkar är
+// oförändrade från main och granskas separat.
 const MW_LANK = {
   "armhavningar": "push-up",
   "armhavningar_bank": "incline-push-up",
@@ -37,7 +38,6 @@ const MW_LANK = {
   "diamant_armhavningar": "diamond-push-ups",
   "dips": "parralel-bar-dips",
   "dodhang": "dead-hang",
-  "duvan": "pigeon-pose",
   "enarms_kabelrodd": "cable-single-arm-neutral-grip-row",
   "enbens_benpress": "machine-single-leg-leg-press",
   "enbens_benspark": "machine-leg-extension",
@@ -46,8 +46,7 @@ const MW_LANK = {
   "enbens_tahavning": "bodyweight-single-leg-calf-raise",
   "ezcurl": "ez-bar-curl",
   "face_pulls": "machine-face-pulls",
-  "figur_fyra": "glutes-stretch-variation-two",
-  "fjarilen": "bodyweight-butterfly-stretch",
+  "figur_fyra": "reclining-pigeon-pose",
   "fladdersparkar": "laying-alternating-leg-raise",
   "flyes_maskin": "machine-pec-fly",
   "framatfallning": "standing-forward-bend",
@@ -77,7 +76,6 @@ const MW_LANK = {
   "hip_thrust": "barbell-hip-thrust",
   "hoftabduktion_kabel": "cable-standing-hip-abduction",
   "hoftabduktion_maskin": "machine-hip-abduction",
-  "hoftbojare_stretch": "hip-flexor-stretch-kneeling-lunge-1",
   "hoga_armhavningar": "decline-push-up",
   "hoga_pike_pushups": "elevated-pike-press",
   "hollow_hold": "hollow-hold",
@@ -108,8 +106,6 @@ const MW_LANK = {
   "koncentrationscurl": "dumbbell-concentration-curl",
   "l_sit": "hanging-l-sit",
   "landminepress": "landmine-half-kneeling-single-arm-overhead-press",
-  "latsstretch_bank": "lat-and-shoulder-external-rotation-stretch-1-kneeling-dowel",
-  "liggande_hamstring": "hamstring-stretch-supine-static",
   "lop": "treadmill-jog",
   "lutande_bankpress": "barbell-incline-bench-press",
   "lutande_brostpress_maskin": "machine-plate-loaded-incline-chest-press",
@@ -161,7 +157,6 @@ const MW_LANK = {
   "sittande_framatfallning": "seated-forward-bend",
   "sittande_vadpress": "machine-seated-calf-raises",
   "sittande_vadpress_hantel": "dumbbell-seated-calf-raise",
-  "sittande_vridning": "seated-twist",
   "situps_vikt": "dumbbell-situp",
   "skivstangsrodd": "barbell-bent-over-row",
   "skullcrushers": "barbell-skullcrusher",
@@ -177,27 +172,18 @@ const MW_LANK = {
   "staende_hantelpress": "dumbbell-overhead-press",
   "stegupp": "dumbbell-step-up",
   "strg_happy_baby": "happy-baby",
+  "strg_side_lunge": "bodyweight-cossack-squat",
   "strg_sphinx": "sphinx-pose",
   "strg_supine_twist": "lumbar-rotation-1-supine-passive",
   "strx_adductor_rock": "adductor-stretch-dynamic-unilateral-4-point-position",
   "strx_ankle_circles": "ankle-circle",
-  "strx_arm_circles": "forward-arm-circle",
-  "strx_biceps_wall": "biceps-stretch-variation-one",
+  "strx_calf_step_hold": "calf-stretch-on-box-bilateral",
   "strx_calf_toe_wall": "calves-stretch-variation-one",
-  "strx_couch": "hip-flexor-stretch-kneeling-lunge-3",
-  "strx_figure_four_chair": "glute-hip-rotator-stretch-3-seated",
   "strx_hamstring_stagger": "hamstrings-stretch-variation-two",
-  "strx_neck_turn": "traps-stretch-variation-two",
+  "strx_neck_nod": "laying-chin-tucks",
   "strx_puppy": "puppy-pose",
-  "strx_quad_halfkneel_grasp": "crescent-moon-pose-quad-stretch-with-block",
-  "strx_quad_prone": "quads-stretch-variation-four",
+  "strx_quad_prone": "quad-stretch-floor-prone",
   "strx_soleus_wall": "soleus-stretch-static",
-  "strx_stacked_shins": "double-pigeon-pose",
-  "strx_standing_sidebend": "lats-stretch-variation-two",
-  "strx_supine_wipers": "lumbar-rotation-2-supine-active",
-  "strx_triceps_towel": "triceps-stretch-variation-two",
-  "strx_wrist_extensor": "wrist-extensor-stretch-seated",
-  "strx_wrist_flexor": "wrist-flexor-stretch-seated",
   "stx_bar_press_pause": "barbell-overhead-press",
   "stx_bar_row_deadstop": "barbell-pronated-pendlay-row",
   "stx_bar_row_pause": "barbell-bent-over-row",
@@ -331,5 +317,6 @@ const MW_LANK = {
   "vaggsittning": "wall-sit",
   "viktade_dips": "dumbbell-weighted-dip"
 };
-// Varianter (paus, tempo, grepp) som MuscleWiki inte har egna sidor för: länken visar grundövningen
+
+// Varianter som länkar till grundövningen, tydligt märkta i gränssnittet.
 const MW_GRUND = new Set(["stx_bar_row_pause", "stx_bench_pause", "stx_bench_tempo", "stx_cable_row_pause", "stx_cable_row_under", "stx_db_pause_bench", "stx_db_pause_fly", "stx_pushup_pause", "stx_pushup_slow"]);

@@ -1,0 +1,54 @@
+name: Stretch links PR checks
+on:
+  pull_request:
+    paths:
+      - 'ovningar.js'
+      - 'stretch-extra.js'
+      - 'stretch-guide.js'
+      - 'app.js'
+      - 'muskelsok.js'
+      - 'index.html'
+      - 'mw-lankar.js'
+      - 'sw.js'
+      - 'figur.js'
+      - 'tests/test_stretch_extra.cjs'
+      - 'tests/test_stretch_mobile.py'
+      - 'tests/test_release_safety.py'
+      - 'tests/sync.test.cjs'
+      - 'tools/sw-version.py'
+      - 'docs/stretch-musclewiki-review-queue.md'
+      - '.github/workflows/stretch-links-check.yml'
+  push:
+    branches: [fix/stretch-musclewiki-links-20261103]
+permissions:
+  contents: read
+jobs:
+  stretch-validation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check project invariants
+        run: python -m unittest discover -s tests -p 'test_release_safety.py' -v
+      - name: Validate stretch exercise data and direct-link allowlist
+        run: node tests/test_stretch_extra.cjs
+      - name: Install Playwright client for runner-provided Chrome
+        run: |
+          python -m pip install playwright==1.56.0
+      - name: Test stretch details at 390x844 mobile viewport
+        run: python -m unittest discover -s tests -p 'test_stretch_mobile.py' -v
+      - name: Test concurrent and offline sync merging
+        run: node --test tests/sync.test.cjs
+      - name: Verify offline cache generation without modifying branch
+        run: python tools/sw-version.py
+      - name: Check generated service worker diff
+        run: |
+          git diff --check
+          git diff --exit-code -- sw.js
