@@ -245,7 +245,7 @@ const FOODS = [
   { n: ["korv stroganoff", "biff stroganoff", "stroganoff"], kcal: 150, p: 7, portion: 450, st: 450 },
   { n: ["ramen"], kcal: 90, p: 5, portion: 550, st: 550 },
   { n: ["pyttipanna"], kcal: 140, p: 6, portion: 400, st: 400 },
-  { n: ["korv med bröd"], kcal: 250, p: 9, st: 130 },
+  { n: ["korv med bröd", "hot dog", "varmkorv"], kcal: 250, p: 9, st: 130 },
   { n: ["korv med mos"], kcal: 160, p: 5, portion: 400, st: 400 },
   { n: ["kycklinggryta", "kyckling curry", "kycklingcurry"], kcal: 130, p: 11, portion: 400, st: 400 },
   { n: ["chili con carne", "chili"], kcal: 120, p: 9, portion: 400, st: 400 },
@@ -289,7 +289,7 @@ const FOODS = [
   { n: ["glass"], kcal: 200, p: 3.5, dl: 50, st: 70 },
   { n: ["kanelbulle", "bulle"], kcal: 350, p: 7, st: 80 },
   { n: ["pizza"], kcal: 250, p: 11, st: 350, bit: 45 },
-  { n: ["hamburgare", "burgare"], kcal: 250, p: 13, st: 220 },
+  { n: ["hamburgare", "burgare", "cheeseburgare", "cheeseburger"], kcal: 250, p: 13, st: 220 },
   { n: ["socker"], kcal: 400, p: 0, tsk: 4, msk: 12 },
   { n: ["honung"], kcal: 320, p: 0.3, tsk: 7, msk: 21 },
   { n: ["sylt"], kcal: 200, p: 0.4, msk: 15, tsk: 5 },
@@ -319,7 +319,95 @@ const FOODS = [
   ...spices(["ingefära malen", "kardemumma", "muskot", "spiskummin", "koriander malen", "nejlika", "kanel"], { def: "tsk", kcal: 300, p: 8, fat: 8, fib: 30, tsk: 2, msk: 6, krm: 0.5 }),
   ...spices(["tacokrydda", "grillkrydda", "kycklingkrydda", "fiskkrydda"], { def: "tsk", kcal: 280, p: 8, fat: 5, fib: 15, tsk: 3, msk: 9, krm: 0.7 }),
   { n: ["buljongtärning", "buljong tärning", "fond"], label: "Buljongtärning", def: "st", kcal: 250, p: 8, fat: 18, fib: 0, st: 10, tsk: 4, msk: 12, portion: 10 },
-  ...spices(["buljong", "hönsbuljong", "köttbuljong", "grönsaksbuljong", "fiskbuljong"], { kcal: 5, p: 0.5, fat: 0.2, fib: 0, dl: 100, portion: 250 }),  // Vanliga varor som saknades eller gav fel träff (ungefärliga värden per 100 g eller 100 ml)
+  ...spices(["buljong", "hönsbuljong", "köttbuljong", "grönsaksbuljong", "fiskbuljong"], { kcal: 5, p: 0.5, fat: 0.2, fib: 0, dl: 100, portion: 250 }),  // Maträtter från hela världen och svensk husmanskost (ungefärliga värden per 100 g)
+  { n: ["currywurst"], label: "Currywurst", kcal: 230, p: 10, st: 200 },
+  { n: ["tonfisksallad"], label: "Tonfisksallad", kcal: 150, p: 12, portion: 250 },
+  { n: ["haggis"], label: "Haggis", kcal: 250, p: 11, portion: 200 },
+  { n: ["shepherd's pie", "shepherds pie", "cottage pie"], label: "Shepherd's pie", kcal: 120, p: 7, portion: 400, st: 400 },
+  { n: ["full english breakfast", "full english", "engelsk frukost"], label: "Engelsk frukost", kcal: 190, p: 10, portion: 450, st: 450 },
+  { n: ["bangers and mash"], label: "Bangers and mash", kcal: 160, p: 6, portion: 450, st: 450 },
+  { n: ["yorkshire pudding"], label: "Yorkshire pudding", kcal: 210, p: 7, st: 60 },
+  { n: ["irish stew", "irländsk gryta"], label: "Irish stew", kcal: 100, p: 8, portion: 400 },
+  { n: ["cornish pasty", "pasty"], label: "Cornish pasty", kcal: 270, p: 7, st: 250 },
+  { n: ["fish and chips"], label: "Fish and chips", kcal: 230, p: 10, portion: 450, st: 450 },
+  { n: ["club sandwich"], label: "Club sandwich", kcal: 230, p: 13, st: 300 },
+  { n: ["blt", "blt-macka"], label: "BLT", kcal: 250, p: 10, st: 200 },
+  { n: ["tapas"], label: "Tapas", kcal: 200, p: 8, portion: 300 },
+  { n: ["gazpacho"], label: "Gazpacho", kcal: 40, p: 1, portion: 300, dl: 100 },
+  { n: ["churros"], label: "Churros", kcal: 400, p: 5, st: 25, portion: 100 },
+  { n: ["patatas bravas"], label: "Patatas bravas", kcal: 160, p: 2, portion: 250 },
+  { n: ["souvlaki"], label: "Souvlaki", kcal: 190, p: 20, portion: 250, st: 125 },
+  { n: ["gyros"], label: "Gyros", kcal: 220, p: 15, portion: 350, st: 350 },
+  { n: ["spanakopita"], label: "Spanakopita", kcal: 280, p: 9, portion: 200, bit: 100 },
+  { n: ["grekisk sallad", "horiatiki"], label: "Grekisk sallad", kcal: 110, p: 4, portion: 300 },
+  { n: ["calzone"], label: "Calzone", kcal: 250, p: 11, st: 400 },
+  { n: ["bruschetta"], label: "Bruschetta", kcal: 200, p: 6, st: 40, portion: 120 },
+  { n: ["minestrone", "minestronesoppa"], label: "Minestrone", kcal: 50, p: 2, portion: 350, dl: 100 },
+  { n: ["ossobuco"], label: "Ossobuco", kcal: 140, p: 16, portion: 400 },
+  { n: ["coq au vin"], label: "Coq au vin", kcal: 120, p: 13, portion: 400 },
+  { n: ["boeuf bourguignon", "bourguignon"], label: "Boeuf bourguignon", kcal: 130, p: 13, portion: 400 },
+  { n: ["ratatouille"], label: "Ratatouille", kcal: 60, p: 1.5, portion: 300 },
+  { n: ["quiche lorraine", "quiche", "paj med skinka"], label: "Quiche", kcal: 300, p: 11, bit: 150, portion: 150 },
+  { n: ["croque monsieur"], label: "Croque monsieur", kcal: 280, p: 14, st: 200 },
+  { n: ["crème brûlée", "creme brulee"], label: "Crème brûlée", kcal: 300, p: 4, st: 120 },
+  { n: ["bouillabaisse"], label: "Bouillabaisse", kcal: 80, p: 9, portion: 400 },
+  { n: ["wienerschnitzel", "schnitzel", "pannerad schnitzel"], label: "Schnitzel", kcal: 230, p: 18, st: 200, portion: 200 },
+  { n: ["bratwurst"], label: "Bratwurst", kcal: 300, p: 13, st: 100 },
+  { n: ["sauerkraut", "surkål"], label: "Surkål", kcal: 20, p: 1, portion: 100 },
+  { n: ["pretzel", "kringla"], label: "Pretzel", kcal: 340, p: 9, st: 100 },
+  { n: ["gulasch", "gulaschgryta"], label: "Gulasch", kcal: 110, p: 11, portion: 400 },
+  { n: ["pierogi"], label: "Pierogi", kcal: 210, p: 7, portion: 250, st: 30 },
+  { n: ["blinier", "blini"], label: "Blinier", kcal: 230, p: 6, st: 40 },
+  { n: ["pelmeni"], label: "Pelmeni", kcal: 230, p: 10, portion: 250 },
+  { n: ["enchiladas", "enchilada"], label: "Enchiladas", kcal: 170, p: 9, portion: 350, st: 175 },
+  { n: ["quesadilla"], label: "Quesadilla", kcal: 270, p: 12, st: 250 },
+  { n: ["nachos"], label: "Nachos", kcal: 300, p: 10, portion: 250 },
+  { n: ["fajitas", "fajita"], label: "Fajitas", kcal: 160, p: 11, portion: 350, st: 175 },
+  { n: ["mac and cheese", "mac n cheese"], label: "Mac and cheese", kcal: 170, p: 7, portion: 300 },
+  { n: ["bbq ribs", "revben"], label: "Revbensspjäll", kcal: 280, p: 18, portion: 300 },
+  { n: ["clam chowder"], label: "Clam chowder", kcal: 90, p: 4, portion: 350, dl: 100 },
+  { n: ["pancakes", "amerikanska pannkakor"], label: "Amerikanska pannkakor", kcal: 230, p: 6, st: 50, portion: 150 },
+  { n: ["wrap", "kycklingwrap"], label: "Wrap", kcal: 200, p: 10, st: 300 },
+  { n: ["buddha bowl", "bowl"], label: "Buddha bowl", kcal: 130, p: 5, portion: 450, st: 450 },
+  { n: ["gyoza"], label: "Gyoza", kcal: 200, p: 8, st: 25, portion: 150 },
+  { n: ["katsu", "tonkatsu", "chicken katsu"], label: "Katsu", kcal: 230, p: 15, portion: 350 },
+  { n: ["onigiri"], label: "Onigiri", kcal: 170, p: 4, st: 110 },
+  { n: ["tempura"], label: "Tempura", kcal: 230, p: 8, portion: 200 },
+  { n: ["teriyaki", "kyckling teriyaki", "teriyakikyckling"], label: "Kyckling teriyaki", kcal: 160, p: 15, portion: 350 },
+  { n: ["misosoppa", "miso soppa"], label: "Misosoppa", kcal: 25, p: 2, portion: 250, dl: 100 },
+  { n: ["tom yum", "tom yam"], label: "Tom yum", kcal: 40, p: 4, portion: 400, dl: 100 },
+  { n: ["massaman", "massaman curry"], label: "Massaman curry", kcal: 150, p: 10, portion: 400 },
+  { n: ["grön curry", "green curry", "röd curry", "red curry", "thaicurry", "kycklingcurry", "curry med kyckling"], label: "Thaicurry", kcal: 140, p: 10, portion: 400 },
+  { n: ["pho"], label: "Pho", kcal: 60, p: 5, portion: 600 },
+  { n: ["banh mi"], label: "Banh mi", kcal: 230, p: 11, st: 250 },
+  { n: ["vårrullar", "vårrulle", "springrolls"], label: "Vårrullar", kcal: 220, p: 6, st: 70, portion: 210 },
+  { n: ["kung pao", "kung pao kyckling"], label: "Kung pao", kcal: 150, p: 12, portion: 350 },
+  { n: ["sötsur kyckling", "sötsur sås med kyckling"], label: "Sötsur kyckling", kcal: 180, p: 10, portion: 400 },
+  { n: ["friterat ris", "stekt ris", "nasi goreng"], label: "Stekt ris", kcal: 170, p: 5, portion: 350 },
+  { n: ["dumplings", "dumpling", "dim sum"], label: "Dumplings", kcal: 220, p: 8, st: 25, portion: 200 },
+  { n: ["butter chicken", "murgh makhani"], label: "Butter chicken", kcal: 150, p: 12, portion: 400 },
+  { n: ["dal", "dahl", "linsgryta"], label: "Dal", kcal: 110, p: 6, portion: 300 },
+  { n: ["samosa"], label: "Samosa", kcal: 260, p: 6, st: 90 },
+  { n: ["korma", "kycklingkorma"], label: "Korma", kcal: 160, p: 11, portion: 400 },
+  { n: ["shawarma"], label: "Shawarma", kcal: 210, p: 14, st: 350, portion: 350 },
+  { n: ["tabbouleh"], label: "Tabbouleh", kcal: 120, p: 3, portion: 200 },
+  { n: ["tagine"], label: "Tagine", kcal: 110, p: 9, portion: 400 },
+  { n: ["stekt strömming", "strömming"], label: "Stekt strömming", kcal: 230, p: 15, portion: 200 },
+  { n: ["kalops"], label: "Kalops", kcal: 120, p: 12, portion: 400 },
+  { n: ["dillkött"], label: "Dillkött", kcal: 110, p: 12, portion: 400 },
+  { n: ["flygande jacob", "flygande jakob"], label: "Flygande Jacob", kcal: 180, p: 13, portion: 400 },
+  { n: ["skomakarlåda"], label: "Skomakarlåda", kcal: 150, p: 12, portion: 400 },
+  { n: ["oxjärpar", "järpar"], label: "Oxjärpar", kcal: 230, p: 15, st: 70, portion: 210 },
+  { n: ["isterband"], label: "Isterband", kcal: 280, p: 12, st: 120 },
+  { n: ["gravlax", "gravad lax"], label: "Gravad lax", kcal: 160, p: 20, portion: 100, skiva: 15 },
+  { n: ["palt"], label: "Palt", kcal: 150, p: 4, st: 125 },
+  { n: ["biff à la lindström", "biff a la lindström", "lindströmsbiff"], label: "Biff à la Lindström", kcal: 220, p: 14, st: 150 },
+  { n: ["prinsesstårta"], label: "Prinsesstårta", kcal: 280, p: 4, bit: 100, st: 100 },
+  { n: ["äppelpaj"], label: "Äppelpaj", kcal: 250, p: 3, bit: 150, portion: 150 },
+  { n: ["svampsoppa", "champinjonsoppa"], label: "Svampsoppa", kcal: 70, p: 2, portion: 300, dl: 100 },
+  { n: ["toast skagen", "skagenröra"], label: "Toast skagen", kcal: 220, p: 9, st: 200 },
+  { n: ["lövbiff"], label: "Lövbiff", kcal: 140, p: 22, portion: 150 },
+  // Vanliga varor som saknades eller gav fel träff (ungefärliga värden per 100 g eller 100 ml)
   { n: ["kesella", "kesella kvarg"], label: "Kesella", kcal: 125, p: 7.5, dl: 100, msk: 20 },
   { n: ["messmör"], label: "Messmör", kcal: 310, p: 8, msk: 15, tsk: 5 },
   { n: ["risifrutti"], label: "Risifrutti", kcal: 120, p: 3, st: 175 },
@@ -374,6 +462,16 @@ function midWord(text, food) {
     if ((i === 0 || /[\s,(/-]/.test(text[i - 1])) && !/\p{L}/u.test(text[i + name.length] || "")) return false;
   }
   return true;
+}
+// Hur många bokstäver ordet fortsätter efter namnet: böjningar som "-er" och "-arna" är korta
+function midRest(text, food) {
+  let best = Infinity;
+  for (const name of food.n) for (let i = text.indexOf(name); i >= 0; i = text.indexOf(name, i + 1)) {
+    if (i && !/[\s,(/-]/.test(text[i - 1])) continue;
+    const m = text.slice(i + name.length).match(/^\p{L}*/u);
+    best = Math.min(best, m ? m[0].length : 0);
+  }
+  return best === Infinity ? 0 : best;
 }
 function wholeWordFood(text) {
   const toks = fold(text).split(/[^\p{L}\p{N}]+/u).filter(Boolean);
@@ -432,7 +530,7 @@ function parseItem(raw, index = 0) {
   const selected = typeof chosenProduct === "function" ? chosenProduct(s, index) : null;
   if (!selected && typeof ambiguousProduct === "function" && ambiguousProduct(s)) return { text: raw.trim(), known: false };
   let food = selected || findFood(s), corrected = null;
-  if (!selected && food && midWord(s, food)) { const whole = wholeWordFood(s); if (whole) food = whole; }
+  if (!selected && food && midWord(s, food)) { const whole = wholeWordFood(s); if (whole) food = whole; else { const n = food.n.filter(x => startsWord(s, x)).sort((a, b) => b.length - a.length)[0] || "", rest = midRest(s, food); if (rest > 4 && n.length < rest) food = null; } }
   if (!food) {
     const pre = suggestFoods(s, 1)[0];
     if (pre && !pre.fuzzy && !pre.food.code && fold(pre.name).startsWith(fold(s) + " ")) food = pre.food;

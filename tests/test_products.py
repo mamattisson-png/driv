@@ -324,3 +324,14 @@ def test_lampa_i_skannern(page):
     assert True in page.evaluate("window.torch")
     page.click("[data-scantorch]")
     page.wait_for_function("document.querySelector('[data-scantorch]').getAttribute('aria-pressed') === 'false'")
+
+
+def test_maträtter_och_inga_gissningar_mitt_i_ord(page):
+    start(page)
+    page.wait_for_timeout(500)
+    name = lambda q: page.evaluate("q => { const i = parseFood(q).items[0]; return i.known ? i.name : null; }", q)
+    for q in ["haggis", "pho", "butter chicken", "shepherd's pie", "kalops", "gyoza", "ratatouille", "tonfisksallad"]:
+        assert name(q), q
+    # "te" i "tempura" och "ris" i ett okänt ord ska inte bli kaffe eller ris
+    assert name("tempura") == "Tempura" and name("risottoliknande") is None
+    assert name("bananer") == name("banan")
