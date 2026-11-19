@@ -123,6 +123,7 @@ Senast uppdaterad: 2026-11-06. Status bygger på dokumenterade publiceringar och
 | 119 | Dailys: set bockas av ett i taget med en ring som fylls, och alla övningar kan startas i valfri ordning | Dailys | Medel | Klar |
 | 120 | Dailys: siffran i setringen står mitt i ringen | Dailys | Liten | Klar |
 | 121 | Träna: automatisk progression – vikten backar om du missar, lättare pass när du står still, och Nästa gång efter passet | Träna | Medel | Klar |
+| 122 | Hem: frys sviten – en missad vecka per månad räddar sviten, med isbricka under flamman | Hem | Liten | Klar |
 
 ## Detaljer och acceptanskriterier
 
