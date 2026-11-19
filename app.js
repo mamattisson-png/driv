@@ -810,6 +810,20 @@ function dailyDone(date, id) {
   const v = S.log[date] && S.log[date].dailies[id];
   return isRun(id) ? !!(v && (v.km || v.min)) : v === true;
 }
+// Set i Dailys: varje tryck på bocken klarar ett set; den blir klar när alla set är gjorda.
+// Påbörjade set sparas som dailies["set:id"], så att de synkas som resten av dagens dailys.
+const dailyTotal = id => { const e = dailyList(logDate()).find(x => x.id === id); return Math.max(1, +(e ? e.sets : 1) || 1); };
+function dailySetsDone(date, id) {
+  if (dailyDone(date, id)) return Infinity;
+  return +((S.log[date] && S.log[date].dailies["set:" + id]) || 0);
+}
+function tickDailySet(id) {
+  const L = day(), total = dailyTotal(id);
+  if (dailyDone(logDate(), id)) { L.dailies[id] = false; delete L.dailies["set:" + id]; return; }
+  const n = (+L.dailies["set:" + id] || 0) + 1;
+  if (n >= total) { L.dailies[id] = true; delete L.dailies["set:" + id]; }
+  else L.dailies["set:" + id] = n;
+}
 const allDailiesDone = date => { const L = dailyList(date); return L.length > 0 && L.every(e => dailyDone(date, e.id)); };
 // Antal dagar i rad som test(datum) gäller, räknat från idag eller igår
 function streakOf(test) {
@@ -1043,10 +1057,12 @@ function dailyClockAdvance() {
   dailyClockSound();
   if (c.phase === "work") {
     if (c.set >= c.total) {
-      if (dailyList().some(x => x.id === c.id)) day().dailies[c.id] = true;
+      if (dailyList().some(x => x.id === c.id)) { day().dailies[c.id] = true; delete day().dailies["set:" + c.id]; }
       c.phase = "done"; clearInterval(dailyClockTick); dailyClockTick = null;
       save(); render(); return;
     }
+    if (dailyList().some(x => x.id === c.id) && !dailyDone(logDate(), c.id)) day().dailies["set:" + c.id] = Math.max(c.set, +day().dailies["set:" + c.id] || 0);
+    save();
     c.phase = "rest"; c.paused = false; c.end = Date.now() + c.rest * 1000;
   } else {
     c.phase = "work"; c.set++; c.paused = false; c.end = Date.now() + c.work * 1000;
@@ -1084,7 +1100,7 @@ document.addEventListener("click", ev => {
     const e = dailyList().find(x => x.id === d.dclockstart) || (EX[d.dclockstart] && { id: d.dclockstart, sets: EX[d.dclockstart].sets, reps: EX[d.dclockstart].reps }); if (!e) return;
     const timed = /\d+\s*(?:sek|s)\b/i.test(e.reps || "");
     const work = dailySeconds(e);
-    dailyClock = {id:e.id,work,timed,reps:e.reps||"",rest:30,total:Math.max(1,+e.sets||1),set:1,phase:"work",end:Date.now()+work*1000,paused:false};
+    dailyClock = {id:e.id,work,timed,reps:e.reps||"",rest:30,total:Math.max(1,+e.sets||1),set:Math.min(Math.max(1,+e.sets||1),(+((S.log[logDate()]||{dailies:{}}).dailies["set:"+e.id])||0)+1),phase:"work",end:Date.now()+work*1000,paused:false};
     clearInterval(dailyClockTick); dailyClockTick = setInterval(dailyClockRefresh,250);
   } else if (d.dclockpause !== undefined && dailyClock) {
     if (dailyClock.paused) {dailyClock.end = Date.now()+dailyClock.remaining;dailyClock.paused=false;}
@@ -2169,7 +2185,7 @@ document.addEventListener("click", ev => {
     ex.sets = Math.max(1, ex.sets + +ds.setcount);
     syncDone(d);
   }
-  else if (ds.dcheck) day().dailies[ds.dcheck] = !dailyDone(logDate(), ds.dcheck);
+  else if (ds.dcheck) tickDailySet(ds.dcheck);
   else if (ds.dedit !== undefined) dailyEditing = dailyEditing === true ? false : true;
   else if (ds.letterclose) S.letterSeen = ds.letterclose;
   else if (ds.showweight !== undefined) S.hideWeight = !t.checked;

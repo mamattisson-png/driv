@@ -1,7 +1,7 @@
 """Dailys med sparade rutiner: växling mellan dagar, byte för dagen och att inget går förlorat."""
 import datetime
 
-from conftest import start, go, back_to_day
+from conftest import start, go, back_to_day, tick
 
 
 def prepare(page, mode="alternate"):
@@ -42,7 +42,7 @@ def test_alternate_and_rotation(page):
 
 def test_switch_for_today_keeps_checks_and_continues_rotation(page):
     prepare(page, "rotate")
-    page.click('[data-dcheck=plankan]')
+    tick(page, 'plankan')
     page.click('.dl-byt')
     page.click('[data-rutpick=rb]')
     assert page.text_content('.dl-h b') == 'Mage B'
@@ -55,7 +55,7 @@ def test_switch_for_today_keeps_checks_and_continues_rotation(page):
 def test_all_done_counts_routine(page):
     prepare(page)
     for ex in ['promenad', 'plankan', 'russian_twist']:
-        page.click(f'[data-dcheck={ex}]')
+        tick(page, ex)
     assert page.evaluate("allDailiesDone(TODAY)")
     assert page.evaluate("S.log[TODAY].dailyRoutine") == 'ra'
 
@@ -192,13 +192,13 @@ def test_day_done_banner(page):
     page.evaluate("S.daily = [exEntry('plankan')]; S.supplements = [{id: 's1', name: 'Kreatin'}]; save()")
     go(page, 'dailys')
     assert page.locator('.dl-sum').count() == 0
-    page.click('[data-dcheck=plankan]')
+    tick(page, 'plankan')
     assert page.locator('.dl-sum').count() == 0   # kosttillskottet återstår
     page.click('[data-suppcheck=s1]')
     assert "Bra jobbat" in page.inner_text('.dl-sum') and page.locator('.dl-rows').count() == 0
     page.click('[data-dllist]')
     assert page.locator('.dl-rows [data-dcheck=plankan]').count() == 1
-    page.click('[data-dcheck=plankan]')
+    page.click('[data-dcheck=plankan]')   # ett tryck på en klar bock nollställer
     assert page.locator('.dl-sum').count() == 0
 
 
@@ -251,3 +251,14 @@ def test_inget_kugghjul_over_timern(page):
     page.evaluate("dailyClock = { id: 'plankan', set: 1, sets: 3, sec: 45, left: 45, run: false }; render()")
     # Timern har eget kryss; kugghjulet ska inte ligga ovanpå kortet
     assert page.locator("#app > .gear").count() == 0
+
+
+def test_set_i_dailys(page):
+    start(page)
+    page.evaluate("S.supplements = []; S.daily = [{id:'plankan',sets:3,reps:'45 s'}]; save()")
+    go(page, 'dailys')
+    page.click('[data-dcheck=plankan]')
+    assert "1/3" in page.inner_text('[data-dcheck=plankan]') and "1 av 3 set klara" in page.inner_text('.dl-row')
+    assert not page.evaluate("dailyDone(TODAY, 'plankan')")
+    page.click('[data-dcheck=plankan]'); page.click('[data-dcheck=plankan]')
+    assert page.evaluate("dailyDone(TODAY, 'plankan')") and page.evaluate("day().dailies['set:plankan']") is None

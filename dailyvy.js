@@ -61,9 +61,14 @@ function dlDayView() {
     if (dlEditing) return `<div class="dl-row dl-erow">${thumb(e.id, "dl-f")}
       <span class="grow dl-name"><b>${esc(x.name)}</b><small>${e.sets} × ${esc(e.reps || "")}</small></span>
       <button class="dl-minus" data-dldrop="${e.id}" aria-label="Ta bort ${esc(x.name)}">${icon("close", 18)}</button></div>`;
-    return `<div class="dl-row ${ok ? "ok" : ""}">${thumb(e.id, "dl-f")}<span class="grow dl-name"><b>${esc(x.name)}</b><small>${e.sets} × ${esc(e.reps || "")}</small></span>
-      ${!ok && e === next && !isRun(e.id) ? `<button class="dl-play" data-dclockstart="${e.id}" aria-label="Starta ${esc(x.name)}">${icon("play", 18)}</button>` : ""}
-      <button class="dl-ck ${ok ? "on" : ""}" data-dcheck="${e.id}" aria-pressed="${ok}" aria-label="${esc(x.name)} klar">${icon("check", 20)}</button></div>`;
+    // Flera set: ringen runt bocken fylls ett set i taget
+    const tot = Math.max(1, +e.sets || 1), got = ok ? tot : Math.min(tot - 1, dailySetsDone(date, e.id)), part = !ok && got > 0;
+    const ck = tot > 1 && !isRun(e.id) && !ok
+      ? `<button class="dl-ck sets ${part ? "part" : ""}" style="--p:${Math.round(100 * got / tot)}%" data-dcheck="${e.id}" aria-label="${esc(x.name)}: set ${got + 1} av ${tot} klart">${part ? `<b>${got}/${tot}</b>` : icon("check", 20)}</button>`
+      : `<button class="dl-ck ${ok ? "on" : ""}" data-dcheck="${e.id}" aria-pressed="${ok}" aria-label="${esc(x.name)} klar">${icon("check", 20)}</button>`;
+    return `<div class="dl-row ${ok ? "ok" : ""}">${thumb(e.id, "dl-f")}<span class="grow dl-name"><b>${esc(x.name)}</b><small>${e.sets} × ${esc(e.reps || "")}${part ? ` · ${got} av ${tot} set klara` : ""}</small></span>
+      ${!ok && e === next && !isRun(e.id) ? `<button class="dl-play" data-dclockstart="${e.id}" aria-label="${part ? "Fortsätt" : "Starta"} ${esc(x.name)}">${icon("play", 18)}</button>` : ""}
+      ${ck}</div>`;
   };
   const pills = a.map(x => {
     const ok = !!(S.log[date] && S.log[date].dailies["supp:" + x.id]);

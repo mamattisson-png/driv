@@ -1,6 +1,6 @@
 """Webbläsartester för Driv. Kör med: python -m pytest tests"""
 import pytest
-from conftest import finish_setup, go, open_app, start, to_step, pick, open_daily_add, back_to_day
+from conftest import finish_setup, go, open_app, start, to_step, pick, open_daily_add, back_to_day, tick
 
 KONTO = '.mepage2'   # profilsidan visar kontot längst ned (e-post, logga ut)
 
@@ -527,7 +527,7 @@ def test_dailys_under_passet(page):
     assert "Dailys 0/2" in page.inner_text("[data-fdopen]")
     page.click("[data-fdopen]")
     assert page.locator(".overlay [data-dedit]").count() == 0
-    page.click('.overlay [data-dcheck="plankan"]')
+    tick(page, 'plankan', '.overlay ')
     assert page.evaluate("dailyDone(TODAY, 'plankan')") is True
     assert page.locator(".overlay").count() == 1   # fönstret står kvar tills man stänger
     page.click(".overlay button.wide[data-fdclose]")
@@ -625,7 +625,7 @@ def test_dailys_flyttas_over_fran_gammalt_format(page):
     # Löpning med km och minuter finns i dailys-panelen
     go(page, "pass")
     page.evaluate("trSheet = 'dailys'; render()")
-    page.click("[data-dcheck=plankan]")
+    tick(page, 'plankan')
     assert page.evaluate("dailyDone(TODAY, 'plankan')")
     # Löpningen får samma bock när km är ifyllt
     run_ok = "document.querySelector('[data-runcheck=lop]').classList.contains('on')"
@@ -1251,7 +1251,7 @@ def test_fyra_flikar_och_profil_via_kugghjulet(page):
     assert page.evaluate("tab") == "profil" and "Inställningar" in page.inner_text("h1")
     # Dailys har en egen flik
     go(page, "dailys")
-    page.click("[data-dcheck=plankan]")
+    tick(page, 'plankan')
     assert page.evaluate("dailyDone(TODAY, 'plankan')")
 
 
@@ -1540,7 +1540,7 @@ def test_stretch_som_daily(page):
     assert "Duvan" in page.inner_text("#app")
     back_to_day(page)
     assert "2 × 45 s/sida" in page.inner_text("#app")
-    page.click('[data-dcheck="duvan"]')
+    tick(page, 'duvan')
     assert page.evaluate("dailyDone(TODAY, 'duvan')") is True
     # Stretch hålls en tid: i ett pass syns bara sekunder, ingen vikt
     assert page.evaluate("isTimed('duvan') && gearOf('duvan') === null && restFor('duvan') === restSettings().iso") is True
@@ -2344,9 +2344,9 @@ def test_firande_nar_alla_dailys_ar_klara(page):
     ids = page.evaluate("S.daily.map(e => e.id)")
     page.evaluate("S.supplements = []; render()")
     for i in ids[:-1]:
-        page.click(f'[data-dcheck="{i}"]')
+        tick(page, i)
         assert page.locator(".burst").count() == 0
-    page.click(f'[data-dcheck="{ids[-1]}"]')
+    tick(page, ids[-1])
     assert page.locator(".burst").count() == 1 and page.locator(".ds-burst.pulse").count() == 1
     # Öppnas appen igen med allt klart blir det inget nytt firande
     page.reload()
