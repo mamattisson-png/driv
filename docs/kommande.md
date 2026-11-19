@@ -119,6 +119,7 @@ Senast uppdaterad: 2026-11-06. Status bygger på dokumenterade publiceringar och
 | 115 | Pass: övningsnamnen överst bryts mellan orden (inte "Bänkpres / s"); större tryckyta för i-knapparna i Upplägg | Träna | Liten | Klar |
 | 116 | Recept: ingredienser söks med förslag medan man skriver, ett tryck lägger till | Kost | Liten | Klar |
 | 117 | Kost: ett 90-tal nya maträtter (t.ex. haggis, pho, butter chicken, kalops, gyoza); ord som bara börjar likadant gissas inte (tempura blev kaffe) | Kost | Liten | Klar |
+| 118 | Kost: ett 70-tal rätter till (pizzor, husmanskost, fika, sallader, snabbmat, Asien); rättade felträffar som fläsk med löksås → läsk | Kost | Liten | Klar |
 
 ## Detaljer och acceptanskriterier
 
