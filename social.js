@@ -28,6 +28,14 @@ async function loadSocial() {
     const [friends, feed] = profile ? await Promise.all([socialRpc("driv_friends"), socialRpc("driv_feed")]) : [[], []];
     if (!active()) return;
     Object.assign(social, { profile, friends, feed, loaded: true, error: false });
+    if (profile) {
+      const m = TODAY.slice(0, 8) + "01";
+      const [month, challenges] = await Promise.all([
+        socialRpc("driv_board", { p_from: m, p_to: monthEnd(TODAY) }).catch(() => null),
+        socialRpc("driv_challenges").catch(() => null)]);
+      if (!active()) return;
+      Object.assign(social, { month, challenges });
+    }
   } catch (e) { if (!active()) return; social.loaded = true; social.error = true; }
   render();
 }
@@ -106,6 +114,11 @@ let friendsDayOpen = null, friendsTodayAll = false, friendsTopAll = false;
 let friendsPage = null;   // "lista" när hela vänlistan visas
 let friendsSheet = null;  // "bjud", "dela" eller en väns id
 let friendsSort = "namn", friendsQ = "";
+let friendsTopRange = "vecka";   // topplistan: "vecka" eller "manad"
+let chDraft = null;              // ny utmaning: { friend, kind, goal, per }
+let chArm = null;                // utmaning som ska tas bort vid nästa tryck
+const monthEnd = d => { const [y, m] = d.split("-").map(Number); return `${y}-${String(m).padStart(2, "0")}-${String(new Date(y, m, 0).getDate()).padStart(2, "0")}`; };
+const MONTH_SV = ["januari", "februari", "mars", "april", "maj", "juni", "juli", "augusti", "september", "oktober", "november", "december"];
 const FRIENDS_TODAY = 4;
 // Pass den här veckan (måndag–söndag) och senaste passet. Nyare databas skickar dem med vännerna,
 // annars räknas de ur flödet.
@@ -147,6 +160,7 @@ function friendsView() {
     ${days.map(([d, list]) => `<section class="fsec" aria-label="${dayName(d)}"><h2 class="klabel fsec-h">${dayName(d)} · ${list.length} pass</h2>
       ${friendsDayOpen === d ? `<div class="card flist">${list.map(feedEvent).join("")}</div>`
         : `<button class="card fday" data-fday="${d}" aria-expanded="false">${avatars([...new Set(list.map(a => a.name))], 2)}<span class="grow">${esc(names(list))}</span>${icon("down", 16)}</button>`}</section>`).join("")}
+    ${challengesView()}
     ${weekTop()}
     ${friendsLinks()}
     ${friendsSheetView()}`;
@@ -154,19 +168,75 @@ function friendsView() {
 // Veckans topp: de tre första och ens egen plats. Hela listan fälls ut på plats.
 function weekTop() {
   if (!social.friends.length) return "";
-  const p = social.profile, rows = social.friends.map(f => ({ name: f.name, n: friendWeek(f) }));
-  if (p.sharing) rows.push({ name: p.name, n: myWeek(), me: true });
+  const p = social.profile, month = friendsTopRange === "manad" && social.month;
+  const rows = month ? social.month.map(r => ({ name: r.name, n: +r.n, me: !!r.me }))
+    : social.friends.map(f => ({ name: f.name, n: friendWeek(f) }));
+  if (!month && p.sharing) rows.push({ name: p.name, n: myWeek(), me: true });
   if (!rows.some(r => r.n)) return "";
   rows.sort((a, b) => b.n - a.n || a.name.localeCompare(b.name, "sv"));
   rows.forEach((r, i) => { r.place = i && rows[i - 1].n === r.n ? rows[i - 1].place : i + 1; });
   const mi = rows.findIndex(r => r.me);
   const row = r => `<div class="trow ${r.me ? "me" : ""}"><span class="tplace">${r.place}</span>${avatar(r.name, "sm")}<span class="grow tname">${r.me ? "Du" : esc(r.name)}</span>
-    <span class="tdots" aria-hidden="true">${Array.from({ length: 7 }, (_, k) => `<i class="${k < r.n ? "on" : ""}"></i>`).join("")}</span><b class="tnum">${r.n}</b></div>`;
+    ${month ? `<span class="tbar" aria-hidden="true"><i style="width:${Math.round(100 * r.n / Math.max(1, rows[0].n))}%"></i></span>`
+      : `<span class="tdots" aria-hidden="true">${Array.from({ length: 7 }, (_, k) => `<i class="${k < r.n ? "on" : ""}"></i>`).join("")}</span>`}<b class="tnum">${r.n}</b></div>`;
   const list = friendsTopAll ? rows.map(row).join("")
     : rows.slice(0, 3).map(row).join("") + (mi > 3 ? `<div class="tgap" aria-hidden="true">···</div>` : "") + (mi >= 3 ? row(rows[mi]) : "");
-  return `<section class="card ftop" aria-label="Veckans topp"><div class="row between"><h2 class="klabel">Veckans topp · pass</h2><span class="muted small">av ${rows.length}</span></div>
+  const seg = social.month ? `<div class="tseg2" role="tablist" aria-label="Period">${[["vecka", "Vecka"], ["manad", cap(MONTH_SV[+TODAY.slice(5, 7) - 1])]].map(([k, l]) =>
+    `<button role="tab" data-ftrange="${k}" class="${friendsTopRange === k ? "on" : ""}" aria-selected="${friendsTopRange === k}">${l}</button>`).join("")}</div>` : `<span class="muted small">av ${rows.length}</span>`;
+  return `<section class="card ftop" aria-label="${month ? "Månadens topp" : "Veckans topp"}"><div class="row between"><h2 class="klabel">${social.month ? "Topplista" : "Veckans topp · pass"}</h2>${seg}</div>
     <div class="tlist">${list}</div>
     ${rows.length > 3 ? `<button class="fmore" data-ftop>${friendsTopAll ? "Visa färre" : "Hela listan"}${icon(friendsTopAll ? "up" : "right", 16)}</button>` : ""}</section>`;
+}
+// Utmaningar mot vänner: först till ett antal pass, eller flest pass under en period
+function chStatus(c) {
+  const ended = c.end_day < TODAY, left = Math.round((parse(c.end_day) - parse(TODAY)) / 864e5) + 1, them = esc(c.them_name);
+  const me = c.me_reached, th = c.them_reached;
+  if (c.kind === "forst") {
+    if (me && (!th || me < th)) return ["win", "Du var först!"];
+    if (th && (!me || th < me)) return ["lose", `${them} var först`];
+    if (me && th) return ["tie", "Samma dag, oavgjort"];
+    if (ended) return ["tie", "Ingen nådde målet"];
+  } else if (ended) {
+    return +c.me_n > +c.them_n ? ["win", "Du vann!"] : +c.me_n < +c.them_n ? ["lose", `${them} vann`] : ["tie", "Oavgjort"];
+  } else if (+c.me_n !== +c.them_n) return [+c.me_n > +c.them_n ? "lead" : "", `${+c.me_n > +c.them_n ? "Du leder" : `${them} leder`} · ${left} ${left === 1 ? "dag" : "dagar"} kvar`];
+  return ["", `${left} ${left === 1 ? "dag" : "dagar"} kvar`];
+}
+function challengesView() {
+  if (social.challenges == null || !social.friends.length) return "";
+  const list = social.challenges.map(c => {
+    const max = c.kind === "forst" ? +c.goal : Math.max(1, +c.me_n, +c.them_n), [cls, txt] = chStatus(c);
+    const bar = (name, n, me) => `<div class="chrow ${me ? "me" : ""}"><span class="chname">${me ? "Du" : esc(name)}</span><span class="chbar"><i style="width:${Math.min(100, Math.round(100 * n / max))}%"></i></span><b>${n}</b></div>`;
+    return `<div class="chcard"><div class="row between"><span class="col"><b>${c.kind === "forst" ? `Först till ${c.goal} pass` : "Flest pass"}</b>
+        <span class="muted small">${shortDate(c.start_day)}–${shortDate(c.end_day)}</span></span>
+        <button class="iconbtn ghost chdel ${chArm === c.id ? "armed" : ""}" data-chdel="${c.id}" aria-label="${chArm === c.id ? "Tryck igen för att ta bort" : "Ta bort utmaningen"}">${chArm === c.id ? "Ta bort?" : icon("close", 16)}</button></div>
+      ${bar("", +c.me_n, true)}${bar(c.them_name, +c.them_n, false)}
+      <span class="chstat ${cls}">${txt}</span></div>`;
+  }).join("");
+  return `<section class="fsec" aria-label="Utmaningar"><div class="row between fsec-h"><h2 class="klabel">Utmaningar</h2>
+      <button class="linkbtn2 small" data-fsheet="utmana">${icon("plus", 14)}Utmana en vän</button></div>
+    ${list ? `<div class="card chlist">${list}</div>` : `<button class="card fempty chempty" data-fsheet="utmana"><span class="hricon">${icon("flame", 22)}</span><span class="col"><b>Utmana en vän</b>
+      <span class="muted small">Först till 12 pass, eller flest pass den här månaden</span></span></button>`}</section>`;
+}
+function chPeriod(per) {
+  if (per === "vecka") { const ws = weekStart(TODAY); return [ws, shift(ws, 6)]; }
+  if (per === "30") return [TODAY, shift(TODAY, 29)];
+  return [TODAY.slice(0, 8) + "01", monthEnd(TODAY)];
+}
+function challengeSheet(wrap, close) {
+  const d = chDraft || (chDraft = { friend: social.friends[0] && social.friends[0].id, kind: "forst", goal: 12, per: "manad" });
+  const seg = (attr, opts, cur) => `<div class="tseg2 wide">${opts.map(([k, l]) => `<button data-${attr}="${k}" class="${cur === k ? "on" : ""}" aria-pressed="${cur === k}">${l}</button>`).join("")}</div>`;
+  const [from, to] = chPeriod(d.per);
+  return wrap("Utmana en vän", `<div class="row between"><h2 class="sheeth">Utmana en vän</h2>${close}</div>
+    <div class="klabel sechead">Vem</div>
+    <div class="chips chfr">${social.friends.map(f => `<button data-chfriend="${esc(String(f.id))}" class="${String(d.friend) === String(f.id) ? "on" : ""}" aria-pressed="${String(d.friend) === String(f.id)}">${avatar(f.name, "xs")}${esc(f.name)}</button>`).join("")}</div>
+    <div class="klabel sechead">Utmaning</div>
+    ${seg("chkind", [["forst", "Först till"], ["flest", "Flest pass"]], d.kind)}
+    ${d.kind === "forst" ? `<div class="row between chgoal"><span>Antal pass</span><span class="ux-stp"><button data-chgoal="-1" aria-label="Färre pass">${icon("minus", 16)}</button><b>${d.goal}</b><button data-chgoal="1" aria-label="Fler pass">${icon("plus", 16)}</button></span></div>` : ""}
+    <div class="klabel sechead">Period</div>
+    ${seg("chper", [["vecka", "Veckan"], ["manad", "Månaden"], ["30", "30 dagar"]], d.per)}
+    <p class="muted small">${shortDate(from)}–${shortDate(to)}. Pass ni redan kört under perioden räknas med.</p>
+    ${social.msg ? `<p class="small warntext">${esc(social.msg)}</p>` : ""}
+    <button class="primary wide bigbtn" data-chcreate ${d.friend && !social.busy ? "" : "disabled"}>Skicka utmaningen</button>`);
 }
 function friendsLinks() {
   const p = social.profile, n = social.friends.length;
@@ -181,6 +251,7 @@ function friendsSheetView() {
   const p = social.profile, wrap = (label, inner) => `<div class="overlay" data-fsheet=""><div class="sheet fsheet" role="dialog" aria-label="${label}">${inner}</div></div>`;
   const msg = social.msg ? `<div class="ferr" role="alert">${icon("info", 16)}<span>${esc(social.msg)}</span></div>` : "";
   const close = `<button class="small ghost iconbtn" data-fsheet="" aria-label="Stäng">${icon("close", 18)}</button>`;
+  if (friendsSheet === "utmana") return challengeSheet(wrap, close);
   if (friendsSheet === "bjud") return wrap("Bjud in eller lägg till", `<div class="row between"><span class="col"><span class="klabel">Din vänkod</span><b class="vcode">${esc(p.code)}</b></span>${close}</div>
     <div class="muted small">Skicka länken till en kompis. När hen öppnar den blir ni vänner.</div>
     <button class="primary wide bigbtn" data-sharecode>${icon("share", 18)}Bjud in</button>
@@ -283,7 +354,7 @@ async function socialAction(fn, okMsg) {
 }
 
 document.addEventListener("click", ev => {
-  const t = ev.target.closest("[data-kudos],[data-kudosall],[data-fday],[data-ftoday],[data-ftop],[data-flist],[data-fsheet],[data-fsort],[data-fjump],[data-invitelater],[data-gofriends],[data-dropcode],[data-profsave],[data-addfriend],[data-unfriend],[data-sharecode],[data-renameprof]");
+  const t = ev.target.closest("[data-kudos],[data-kudosall],[data-fday],[data-ftoday],[data-ftop],[data-flist],[data-fsheet],[data-fsort],[data-fjump],[data-invitelater],[data-gofriends],[data-dropcode],[data-profsave],[data-addfriend],[data-unfriend],[data-sharecode],[data-renameprof],[data-ftrange],[data-chfriend],[data-chkind],[data-chgoal],[data-chper],[data-chcreate],[data-chdel]");
   if (!t || t.disabled) return;
   const ds = t.dataset;
   if (ds.kudos) {
@@ -301,6 +372,20 @@ document.addEventListener("click", ev => {
   else if (ds.fday) { friendsDayOpen = friendsDayOpen === ds.fday ? null : ds.fday; render(); }
   else if (ds.ftoday !== undefined) { friendsTodayAll = !friendsTodayAll; render(); }
   else if (ds.ftop !== undefined) { friendsTopAll = !friendsTopAll; render(); }
+  else if (ds.ftrange) { friendsTopRange = ds.ftrange; render(); }
+  else if (ds.chfriend) { chDraft.friend = ds.chfriend; render(); }
+  else if (ds.chkind) { chDraft.kind = ds.chkind; render(); }
+  else if (ds.chgoal) { chDraft.goal = Math.max(1, Math.min(100, chDraft.goal + +ds.chgoal)); render(); }
+  else if (ds.chper) { chDraft.per = ds.chper; render(); }
+  else if (ds.chcreate !== undefined) {
+    const d = chDraft, [from, to] = chPeriod(d.per);
+    socialAction(() => socialRpc("driv_challenge_create", { p_friend: d.friend, p_kind: d.kind, p_goal: d.kind === "forst" ? d.goal : null, p_start: from, p_end: to }))
+      .then(() => { if (!social.msg) { friendsSheet = null; chDraft = null; toast("Utmaningen är skickad"); render(); } });
+  }
+  else if (ds.chdel) {
+    if (chArm !== +ds.chdel) { chArm = +ds.chdel; render(); return; }
+    chArm = null; socialAction(() => socialRpc("driv_challenge_delete", { p_id: +ds.chdel }));
+  }
   else if (ds.flist !== undefined) { friendsPage = friendsPage ? null : "lista"; friendsQ = ""; friendsSheet = null; render(); window.scrollTo(0, 0); }
   else if (ds.fsheet !== undefined) {
     if (t.classList.contains("overlay") && ev.target !== t) return;   // klick inne i bladet
