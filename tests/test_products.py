@@ -269,3 +269,16 @@ def test_byte_till_forpackning_bevarar_matmangden(page):
       return {n:a.n,grams:amtGrams(a),text:amtText(a)};
     }''')
     assert result=={'n':0.25,'grams':100,'text':'0,25 förpackning'}
+
+
+def test_helt_ord_vinner_over_borjan_av_ordet(page):
+    # "lingongrova" ska bli brödet, inte lingon (som börjar likadant)
+    start(page)
+    page.wait_for_function("typeof offFood === 'function'")
+    page.evaluate('addProducts([%s])' % json.dumps({**PRODUCT, 'code': '7310000000002', 'product_name_sv': 'LingonGrova', 'brands': ['Testbagarn'], 'quantity': '500 g',
+                                                    'nutriments': {'energy-kcal_100g': 266, 'proteins_100g': 8.8}}))
+    item = page.evaluate("parseFood('lingongrova').items[0]")
+    assert item['known'] and 'LingonGrova' in item['name']
+    # Böjningar av ett känt livsmedel fungerar som förut
+    assert page.evaluate("parseFood('bananer').items[0].food.n[0]") == page.evaluate("findFood('banan').n[0]")
+    assert page.evaluate("parseFood('lingon').items[0].food.n").count('lingon') == 1

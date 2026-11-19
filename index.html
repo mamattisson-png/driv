@@ -292,6 +292,9 @@
   .wlist { display: flex; flex-direction: column; gap: 8px; }
   .wlink { width: 100%; background: none; border: 0; padding: 0; color: inherit; font: inherit; text-align: left; display: flex; align-items: center; cursor: pointer; }
   .homehead .gear.setbtn { width: 44px; height: 44px; background: var(--card); color: var(--text); border: 1px solid var(--line); }
+  .homehead .gear.frbtn { position: relative; top: auto; right: auto; width: 44px; height: 44px; background: var(--card); color: var(--text); border: 1px solid var(--line); }
+  @media (max-width: 340px) { .homehead { gap: 8px; } .homehead .h3-hbtns { gap: 4px; } .homehead .gear.avbtn { width: 40px; height: 40px; } }
+  .homehead .frdot { position: absolute; top: 7px; right: 7px; width: 10px; height: 10px; border-radius: 50%; background: var(--accent-strong); box-shadow: 0 0 0 2px var(--card); }
   #app > h1 { padding-right: 52px; }
   .editbar { display: flex; align-items: center; gap: 10px; background: var(--accent-soft); border-radius: 12px; padding: 10px 12px; margin: 0 44px 12px 0; }
   .editbar b { flex: 1; }
