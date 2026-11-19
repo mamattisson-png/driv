@@ -32,7 +32,7 @@ const FOODS = [
   { n: ["müsli", "musli"], kcal: 380, p: 9, dl: 45 },
   { n: ["granola"], kcal: 460, p: 9, dl: 40 },
   { n: ["cornflakes", "flingor"], kcal: 380, p: 7, dl: 12 },
-  { n: ["knäckebröd", "knäcke"], kcal: 350, p: 10, st: 12, skiva: 12 },
+  { n: ["knäckebröd", "knäcke", "wasa"], kcal: 350, p: 10, st: 12, skiva: 12 },
   { n: ["fralla", "frallor", "småfranska"], kcal: 270, p: 9, st: 60 },
   { n: ["rostbröd", "toast"], kcal: 260, p: 8, skiva: 25, st: 25 },
   { n: ["bröd", "limpa", "brödskiva"], kcal: 250, p: 8, skiva: 35, st: 35 },
@@ -133,7 +133,7 @@ const FOODS = [
   { n: ["halloumi"], kcal: 320, p: 22, skiva: 30, st: 200, portion: 100 },
   { n: ["parmesan", "parmesanost"], kcal: 400, p: 33, msk: 6, tsk: 2 },
   { n: ["brie", "camembert", "mögelost"], kcal: 330, p: 20, bit: 30 },
-  { n: ["färskost", "philadelphia", "mascarpone"], kcal: 260, p: 6, msk: 15, tsk: 5 },
+  { n: ["färskost", "philadelphia", "cream cheese", "mascarpone"], kcal: 260, p: 6, msk: 15, tsk: 5 },
   { n: ["ricotta"], kcal: 140, p: 11, dl: 100, msk: 15 },
   { n: ["riven ost", "pizzaost"], kcal: 330, p: 25, dl: 35, nave: 30 },
   { n: ["skyr", "ab-fil", "a-fil"], kcal: 60, p: 10, dl: 100, st: 150 },
@@ -158,7 +158,7 @@ const FOODS = [
   { n: ["skorpor", "skorpa"], kcal: 410, p: 11, st: 12 },
   { n: ["riskakor", "riskaka"], kcal: 390, p: 8, st: 8 },
   { n: ["polarbröd", "tunnbröd"], kcal: 290, p: 8, st: 40 },
-  { n: ["havrefras", "special k", "frukostflingor"], kcal: 370, p: 10, dl: 15 },
+  { n: ["havrefras", "frukostflingor"], kcal: 370, p: 10, dl: 15 },
   { n: ["chiapudding"], kcal: 130, p: 5, portion: 200 },
   { n: ["overnight oats"], kcal: 150, p: 7, portion: 250 },
 
@@ -197,7 +197,7 @@ const FOODS = [
   { n: ["nutella", "chokladkräm"], kcal: 540, p: 6, msk: 18, tsk: 7 },
   { n: ["hummus"], kcal: 250, p: 8, msk: 20, dl: 100 },
   { n: ["guacamole"], kcal: 150, p: 2, msk: 20, dl: 100 },
-  { n: ["tzatziki", "kesella"], kcal: 90, p: 5, msk: 20, dl: 100 },
+  { n: ["tzatziki"], kcal: 90, p: 5, msk: 20, dl: 100 },
   { n: ["bearnaisesås", "bearnaise", "hollandaise"], kcal: 600, p: 1, msk: 15, dl: 100 },
   { n: ["vitlökssås", "kebabsås", "dressing"], kcal: 350, p: 1.5, msk: 15, dl: 100 },
   { n: ["brunsås", "gräddsås", "sås"], kcal: 100, p: 2, dl: 100, msk: 15 },
@@ -234,7 +234,7 @@ const FOODS = [
   { n: ["burrito"], kcal: 200, p: 9, st: 350 },
   { n: ["sushi"], kcal: 150, p: 6, bit: 30, st: 30, portion: 350 },
   { n: ["pad thai"], kcal: 180, p: 8, portion: 400, st: 400 },
-  { n: ["wok", "nudlar", "nudelwok"], kcal: 150, p: 7, portion: 400, st: 400 },
+  { n: ["wok", "nudelwok"], kcal: 150, p: 7, portion: 400, st: 400 },
   { n: ["spaghetti bolognese", "pasta bolognese", "bolognese"], kcal: 150, p: 7, portion: 450, st: 450 },
   { n: ["carbonara", "pasta carbonara", "spaghetti carbonara"], kcal: 210, p: 9, portion: 400, st: 400 },
   { n: ["laxpasta"], kcal: 170, p: 9, portion: 400, st: 400 },
@@ -296,7 +296,7 @@ const FOODS = [
   { n: ["ketchup"], kcal: 100, p: 1, msk: 15 },
   { n: ["majonnäs", "majonäs"], kcal: 700, p: 1, msk: 15, tsk: 5 },
   { n: ["pesto"], kcal: 450, p: 5, msk: 15 },
-  { n: ["läsk", "cola"], kcal: 42, p: 0, dl: 100, burk: 330, glas: 200, st: 330 },
+  { n: ["läsk", "cola", "coca-cola", "coca cola"], kcal: 42, p: 0, dl: 100, burk: 330, glas: 200, st: 330 },
   { n: ["cola zero", "pepsi max", "coca-cola zero", "light läsk", "sockerfri läsk", "zero"], kcal: 0.4, p: 0, dl: 100, burk: 330, glas: 200, st: 330 },
   { n: ["apelsinjuice", "juice"], kcal: 45, p: 0.5, dl: 100, glas: 200 },
   { n: ["öl"], kcal: 43, p: 0.4, dl: 100, burk: 330, st: 330, glas: 400 },
@@ -319,7 +319,22 @@ const FOODS = [
   ...spices(["ingefära malen", "kardemumma", "muskot", "spiskummin", "koriander malen", "nejlika", "kanel"], { def: "tsk", kcal: 300, p: 8, fat: 8, fib: 30, tsk: 2, msk: 6, krm: 0.5 }),
   ...spices(["tacokrydda", "grillkrydda", "kycklingkrydda", "fiskkrydda"], { def: "tsk", kcal: 280, p: 8, fat: 5, fib: 15, tsk: 3, msk: 9, krm: 0.7 }),
   { n: ["buljongtärning", "buljong tärning", "fond"], label: "Buljongtärning", def: "st", kcal: 250, p: 8, fat: 18, fib: 0, st: 10, tsk: 4, msk: 12, portion: 10 },
-  ...spices(["buljong", "hönsbuljong", "köttbuljong", "grönsaksbuljong", "fiskbuljong"], { kcal: 5, p: 0.5, fat: 0.2, fib: 0, dl: 100, portion: 250 }),
+  ...spices(["buljong", "hönsbuljong", "köttbuljong", "grönsaksbuljong", "fiskbuljong"], { kcal: 5, p: 0.5, fat: 0.2, fib: 0, dl: 100, portion: 250 }),  // Vanliga varor som saknades eller gav fel träff (ungefärliga värden per 100 g eller 100 ml)
+  { n: ["kesella", "kesella kvarg"], label: "Kesella", kcal: 125, p: 7.5, dl: 100, msk: 20 },
+  { n: ["messmör"], label: "Messmör", kcal: 310, p: 8, msk: 15, tsk: 5 },
+  { n: ["risifrutti"], label: "Risifrutti", kcal: 120, p: 3, st: 175 },
+  { n: ["nudlar", "äggnudlar", "risnudlar"], label: "Nudlar kokta", kcal: 140, p: 4.5, portion: 200 },
+  { n: ["snabbnudlar", "nudelpaket"], label: "Snabbnudlar", kcal: 450, p: 9, st: 65 },
+  { n: ["special k"], label: "Special K", kcal: 375, p: 9, dl: 12, portion: 40 },
+  { n: ["pannbiff", "pannbiffar"], label: "Pannbiff", kcal: 230, p: 16, st: 120 },
+  { n: ["kalles kaviar", "kalles"], label: "Kalles kaviar", kcal: 450, p: 12, msk: 15, tsk: 5 },
+  { n: ["proviva"], label: "Proviva", kcal: 45, p: 0.3, dl: 100, glas: 200, st: 200 },
+  { n: ["gainomax", "gainomax recovery"], label: "Gainomax", kcal: 90, p: 8, dl: 100, st: 250 },
+  { n: ["barebells"], label: "Barebells", kcal: 360, p: 36, st: 55 },
+  { n: ["nocco"], label: "Nocco", kcal: 5, p: 0, dl: 100, burk: 330, st: 330 },
+  { n: ["celsius"], label: "Celsius", kcal: 3, p: 0, dl: 100, burk: 355, st: 355 },
+  { n: ["daim"], label: "Daim", kcal: 535, p: 5, st: 28 },
+  { n: ["piggelin"], label: "Piggelin", kcal: 70, p: 0, st: 60 },
 ];
 
 const UNITS = [
@@ -418,6 +433,10 @@ function parseItem(raw, index = 0) {
   if (!selected && typeof ambiguousProduct === "function" && ambiguousProduct(s)) return { text: raw.trim(), known: false };
   let food = selected || findFood(s), corrected = null;
   if (!selected && food && midWord(s, food)) { const whole = wholeWordFood(s); if (whole) food = whole; }
+  if (!food) {
+    const pre = suggestFoods(s, 1)[0];
+    if (pre && !pre.fuzzy && !pre.food.code && fold(pre.name).startsWith(fold(s) + " ")) food = pre.food;
+  }
   if (!food) {
     const fz = fuzzyFood(s);
     if (fz) { food = fz.food; corrected = fz.label; }
