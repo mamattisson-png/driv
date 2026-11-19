@@ -117,6 +117,7 @@ Senast uppdaterad: 2026-11-06. Status bygger på dokumenterade publiceringar och
 | 113 | Kost: lampknapp i streckkodsskannern (Android) mot dåligt ljus och reflexer | Kost | Liten | Klar |
 | 114 | Dailys: kugghjulet ligger inte längre ovanpå timern för en övning | Dailys | Liten | Klar |
 | 115 | Pass: övningsnamnen överst bryts mellan orden (inte "Bänkpres / s"); större tryckyta för i-knapparna i Upplägg | Träna | Liten | Klar |
+| 116 | Recept: ingredienser söks med förslag medan man skriver, ett tryck lägger till | Kost | Liten | Klar |
 
 ## Detaljer och acceptanskriterier
 
