@@ -1,5 +1,15 @@
 # MuscleWiki – verifieringslogg för stretchbiblioteket
 
+## Aktuell kontroll 2026-11-19 (ersätter äldre antal nedan)
+
+- Aktuell källa: [granskningskön](docs/stretch-musclewiki-review-queue.md) och testerna på PR-grenen `fix/stretch-musclewiki-links-20261103`, head `1cce21a603c33387d758f01a2c244f914b133dda` före denna dokumentationsuppdatering.
+- **122** unika stretchövningar: **27** granskade individuella MuscleWiki-direktlänkar (`verified`), **95** utan exakt motsvarighet (`no_exact_match`), **0** väntande. Äldre avsnitt nedan med 125/31/94 är historiska, inte aktuell status.
+- **Oberoende textkontroll utförd 2026-11-19:** samtliga 27 direkta `https://musclewiki.com/exercise/<slug>`-adresser öppnades som individuella övningssidor och deras publika textinstruktioner kontrollerades mot granskningskön. Ingen uppenbar textbaserad felmatchning upptäcktes. Detta bekräftar inte att respektive bild/video demonstrerar exakt rätt rörelse.
+- Koden och regressionskontrollerna avvisar generiska MuscleWiki-kategorier och visar ingen MuscleWiki-länk när exakt direktmatchning saknas. `tests/test_stretch_extra.cjs` jämför granskningskön mot båda länkregistren och kontrollerar renderad stretchdetalj.
+- GitHub Actions på föregående head var gröna: [Stretch links PR checks](https://github.com/mamattisson-png/driv/actions/runs/44496468530) och [Tester](https://github.com/mamattisson-png/driv/actions/runs/44496468544). Den emulerade mobilkontrollen omfattar 390×844, samtliga 122 stretchdetaljer, touch-navigering, lägg till i Dailys och start av timer.
+- **Ej publiceringsklar:** visuell verifiering av alla 27 bilder/videor, dokumenterad kontroll på fysisk mobil och säker integrering med aktuell `main` återstår. Vid kontrollen var grenen 6 commits bakom `main` och GitHub rapporterade `mergeable=false`. Alla tester måste åter köras efter eventuell integrering.
+- Ingen ändring av `main` eller produktion får göras utan separat godkännande.
+
 ## Mobil regression och direktlänksfix 2026-11-11
 
 - En mobilstor webbläsarkontroll av föregående förhandsversion upptäckte en blockerare i `muskelsok.js`: varje stretchdetalj visade en generisk `https://musclewiki.com/exercises`-länk oavsett övning. Det syntes inte i det tidigare datatestet eller i `app.js`-modalen.
