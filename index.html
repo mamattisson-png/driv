@@ -1598,8 +1598,13 @@
     font: 800 22px "Unbounded", sans-serif; color: var(--text); }
   .rnamein:focus { border-color: var(--accent); outline: 0; }
   .rport { margin: 14px 0 10px; }
-  .ringin input { padding: 0 104px 0 16px; }
-  .ringin [data-ringadd] { position: absolute; right: 6px; min-height: 40px; border-radius: 12px; }
+  .ringin input { padding: 0 16px 0 42px; }
+  .ringsugg { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+  .ringsugg:empty { display: none; }
+  .ringsugg button { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 48px; padding: 0 14px; border-radius: 14px; border: 1px solid var(--line);
+    background: var(--card); color: var(--text); font: inherit; text-align: left; }
+  .ringsugg button .grow { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+  .ringsugg .ringtyped { color: var(--accent-text); border-style: dashed; }
   .ringlist { background: var(--card-2); border-radius: 18px; padding: 0 12px; }
   .ringlist .krow.ing { padding: 9px 0; border-top: 1px solid var(--line); gap: 10px; }
   .ringlist .krow.ing:first-child { border-top: 0; }

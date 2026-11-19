@@ -132,3 +132,19 @@ def test_history_food_entry_opens_overview_without_previous_meal_or_search(page)
     assert page.locator('.kdnav').count()==1 and page.locator('#fname').count()==0
     assert page.evaluate('logDate()')==date
     assert page.evaluate('eaten().kcal')==400
+
+
+def test_recept_ingrediens_med_forslag(page):
+    from conftest import start
+    start(page)
+    page.evaluate("recipeEdit = { name: 'Test', portions: 4, items: [] }; tab = 'recept'; render()")
+    page.click("#ring"); page.keyboard.type("morot")
+    page.wait_for_selector("[data-ringpick='0']")
+    assert "Morot" in page.inner_text("[data-ringpick='0']")
+    page.click("[data-ringpick='0']")
+    assert page.evaluate("recipeEdit.items.map(i => i.name)") == ["Morot"]
+    assert page.input_value("#ring") == "" and page.inner_text("#ringsugg") == ""
+    # Flera saker på en gång läggs till som de står
+    page.fill("#ring", "ägg, lök"); page.dispatch_event("#ring", "input")
+    page.click("[data-ringadd]")
+    assert len(page.evaluate("recipeEdit.items")) == 3
