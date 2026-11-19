@@ -117,3 +117,12 @@ def back_to_day(page):
     while page.locator("[data-rutback]").count():
         page.click("[data-rutback]")
     page.click("[data-dlview=dag]")
+
+
+def tick(page, ex, scope=""):
+    """Bockar av en daily helt: ett tryck per set tills den är klar."""
+    sel = f'{scope}[data-dcheck="{ex}"]'
+    for _ in range(10):
+        if page.evaluate("id => dailyDone(logDate(), id)", ex):
+            return
+        page.click(sel)

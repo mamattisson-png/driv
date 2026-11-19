@@ -1,4 +1,5 @@
 "use strict";
+let dsPopped = null;   // dagen vars stora bock redan har hoppat in
 // ---------- Dailys: Dag, Vecka och Upplägg ----------
 // Dag och Vecka visar och bockar av; inget ändras där. Allt ändras på ett ställe, Upplägg, i tre steg:
 // 1 Varje dag (övningar och kosttillskott som alltid är med), 2 Rutiner, 3 Veckan (fasta dagar eller turordning).
@@ -50,6 +51,13 @@ const dlToggle = () => `<div class="dl-top"><div class="dl-tg" role="tablist" ar
   `<button role="tab" data-dlview="${k}" class="${dlView === k ? "on" : ""}" aria-selected="${dlView === k}">${l}</button>`).join("")}</div>
   <button class="dl-upp" data-rutpage aria-label="Upplägg">${icon("upplagg", 20)}</button></div>`;
 
+// Ringen runt bocken: en bit per set, de klara gröna. Samma tunna linje som en vanlig bock.
+function setRing(got, tot) {
+  const r = 18, c = 2 * Math.PI * r, gap = tot > 1 ? 4 : 0, seg = c / tot - gap;
+  const arcs = Array.from({ length: tot }, (_, i) => `<circle cx="20" cy="20" r="${r}" fill="none" stroke-width="2.5" stroke-linecap="round" class="${i < got ? "ok" : ""}"
+    stroke-dasharray="${seg.toFixed(2)} ${(c - seg).toFixed(2)}" stroke-dashoffset="${(-(i * c / tot) - gap / 2).toFixed(2)}"/>`).join("");
+  return `<svg class="dl-ring" viewBox="0 0 40 40" aria-hidden="true">${arcs}</svg>`;
+}
 function dlDayView() {
   const date = logDate(), ex = dailyList(date), rut = routineOn(date), a = S.supplements || [];
   const n = ex.filter(e => dailyDone(date, e.id)).length, next = ex.find(e => !dailyDone(date, e.id));
@@ -60,9 +68,14 @@ function dlDayView() {
     if (dlEditing) return `<div class="dl-row dl-erow">${thumb(e.id, "dl-f")}
       <span class="grow dl-name"><b>${esc(x.name)}</b><small>${e.sets} × ${esc(e.reps || "")}</small></span>
       <button class="dl-minus" data-dldrop="${e.id}" aria-label="Ta bort ${esc(x.name)}">${icon("close", 18)}</button></div>`;
-    return `<div class="dl-row ${ok ? "ok" : ""}">${thumb(e.id, "dl-f")}<span class="grow dl-name"><b>${esc(x.name)}</b><small>${e.sets} × ${esc(e.reps || "")}</small></span>
-      ${!ok && e === next && !isRun(e.id) ? `<button class="dl-play" data-dclockstart="${e.id}" aria-label="Starta ${esc(x.name)}">${icon("play", 18)}</button>` : ""}
-      <button class="dl-ck ${ok ? "on" : ""}" data-dcheck="${e.id}" aria-pressed="${ok}" aria-label="${esc(x.name)} klar">${icon("check", 20)}</button></div>`;
+    // Flera set: ringen runt bocken fylls ett set i taget
+    const tot = Math.max(1, +e.sets || 1), got = ok ? tot : Math.min(tot - 1, dailySetsDone(date, e.id)), part = !ok && got > 0;
+    const ck = tot > 1 && !isRun(e.id) && !ok
+      ? `<button class="dl-ck sets ${part ? "part" : ""}" data-dcheck="${e.id}" aria-label="${esc(x.name)}: set ${got + 1} av ${tot} klart">${setRing(got, tot)}${part ? `<b>${got}/${tot}</b>` : ""}</button>`
+      : `<button class="dl-ck ${ok ? "on" : ""}" data-dcheck="${e.id}" aria-pressed="${ok}" aria-label="${esc(x.name)} klar">${icon("check", 20)}</button>`;
+    return `<div class="dl-row ${ok ? "ok" : ""}">${thumb(e.id, "dl-f")}<span class="grow dl-name"><b>${esc(x.name)}</b><small>${e.sets} × ${esc(e.reps || "")}${part ? ` · ${got} av ${tot} set klara` : ""}</small></span>
+      ${!ok && !isRun(e.id) ? `<button class="dl-play ${e === next ? "" : "alt"}" data-dclockstart="${e.id}" aria-label="${part ? "Fortsätt" : "Starta"} ${esc(x.name)}">${icon("play", 18)}</button>` : ""}
+      ${ck}</div>`;
   };
   const pills = a.map(x => {
     const ok = !!(S.log[date] && S.log[date].dailies["supp:" + x.id]);
@@ -84,8 +97,10 @@ function dlDayView() {
     const greet = date !== TODAY ? "Dagen var klar" : st >= 7 ? "Grymt, en hel vecka i rad!" : st >= 3 ? "Bra jobbat, du är i farten!" : "Bra jobbat idag!";
     const week = weekDates(ws).map((d, i) => { const ok = allDailiesDone(d) && (S.supplements || []).every(x => S.log[d] && S.log[d].dailies["supp:" + x.id]);
       return `<span class="ds-d ${ok ? "ok" : ""} ${d === date ? "t" : ""} ${d > TODAY ? "f" : ""}"><i>${ok ? icon("check", 12) : ""}</i>${WD[i][0]}</span>`; }).join("");
+    // Bocken hoppar in en gång per dag; en omritning (synk, sparning) ska inte få den att blinka
+    const popNow = dsPopped !== date; setTimeout(() => { if (popNow) dsPopped = date; }, 0);
     return `<div class="dl-sum" role="status">
-      <div class="ds-burst" aria-hidden="true">${icon("check", 40)}</div>
+      <div class="ds-burst ${dsPopped === date ? "" : "pop"}" aria-hidden="true">${icon("check", 40)}</div>
       <h2 class="ds-h">${greet}</h2>
       <p class="ds-sub">${rut ? `${esc(rut.name)} · ` : ""}${when.replace("Idag · ", "")}</p>
       <div class="ds-stats">

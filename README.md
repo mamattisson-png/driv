@@ -90,6 +90,8 @@ Näringsvärden kommer delvis från [Livsmedelsverkets livsmedelsdatabas](https:
 
 Kör även [`supabase/vanner.sql`](supabase/vanner.sql) i SQL Editor. Den skapar tabellerna för profiler, vänner, delade pass och peppningar, samt funktionerna appen använder. Tabellerna kan inte läsas direkt; funktionerna kontrollerar själva vem som frågar. Där finns också funktionen som raderar ett konto med allt som hör till det. Kör filen igen när den ändrats; den kan köras flera gånger. Vännernas veckosiffror och senaste pass kommer därifrån, med äldre funktioner räknas de ur flödet i stället.
 
+Kör sedan [`supabase/utmaningar.sql`](supabase/utmaningar.sql) på samma sätt. Den lägger till utmaningar mellan vänner (först till ett antal pass, eller flest pass under en period) och månadens topplista. Bara antal pass delas. Utan filen visas varken utmaningar eller månadsfliken, resten fungerar som vanligt.
+
 ## Tester
 
 Webbläsartesterna i [`tests/`](tests) går igenom upplägg, pass och veckojämförelse, dagens mål, vilotimer, dailys, vikt, påminnelser, kost, streckkod, lagring, synk mellan enheter och start utan nät. Externa tjänster (Supabase, Open Food Facts) simuleras. De körs automatiskt i GitHub vid varje push, och lokalt med:

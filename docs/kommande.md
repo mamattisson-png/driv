@@ -113,6 +113,18 @@ Senast uppdaterad: 2026-11-06. Status bygger på dokumenterade publiceringar och
 | 109 | Kost: Proviva, Kalles kaviar, Gainomax, Barebells, Nocco, Celsius, Daim, Piggelin, Pannbiff m.fl.; Messmör, Kesella, Nudlar, Risifrutti och Special K hittas rätt | Kost | Liten | Klar |
 | 110 | Träna: telefonen vibrerar när ett pass eller en aktivitet är klar (Android) | Träna | Liten | Klar |
 | 111 | Kost: streckkodsskannern läser dryck bättre (zoom, autofokus, stående koder) och räknar dryck i ml | Kost | Liten | Klar |
+| 112 | Dailys: telefonen vibrerar tydligt när alla dailys är klara, och stora bocken blinkar inte längre | Dailys | Liten | Klar |
+| 113 | Kost: lampknapp i streckkodsskannern (Android) mot dåligt ljus och reflexer | Kost | Liten | Klar |
+| 114 | Dailys: kugghjulet ligger inte längre ovanpå timern för en övning | Dailys | Liten | Klar |
+| 115 | Pass: övningsnamnen överst bryts mellan orden (inte "Bänkpres / s"); större tryckyta för i-knapparna i Upplägg | Träna | Liten | Klar |
+| 116 | Recept: ingredienser söks med förslag medan man skriver, ett tryck lägger till | Kost | Liten | Klar |
+| 117 | Kost: ett 90-tal nya maträtter (t.ex. haggis, pho, butter chicken, kalops, gyoza); ord som bara börjar likadant gissas inte (tempura blev kaffe) | Kost | Liten | Klar |
+| 118 | Kost: ett 70-tal rätter till (pizzor, husmanskost, fika, sallader, snabbmat, Asien); rättade felträffar som fläsk med löksås → läsk | Kost | Liten | Klar |
+| 119 | Dailys: set bockas av ett i taget med en ring som fylls, och alla övningar kan startas i valfri ordning | Dailys | Medel | Klar |
+| 120 | Dailys: siffran i setringen står mitt i ringen | Dailys | Liten | Klar |
+| 121 | Träna: automatisk progression – vikten backar om du missar, lättare pass när du står still, och Nästa gång efter passet | Träna | Medel | Klar |
+| 122 | Hem: frys sviten – en missad vecka per månad räddar sviten, med isbricka under flamman | Hem | Liten | Klar |
+| 123 | Vänner: utmaningar (först till / flest pass) och månadens topplista; kräver supabase/utmaningar.sql | Vänner | Medel | Klar |
 
 ## Detaljer och acceptanskriterier
 

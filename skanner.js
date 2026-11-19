@@ -11,7 +11,8 @@ function openScanner() {
   el.className = "overlay scan-overlay";
   el.innerHTML = `<div class="sheet scan-sheet" role="dialog" aria-label="Skanna streckkod">
     <div class="row between"><h2>Skanna streckkod</h2><button class="small ghost" data-scanclose aria-label="Stäng">${icon("close", 18)}</button></div>
-    <div class="scan-view"><video playsinline muted></video><div class="scan-frame"></div></div>
+    <div class="scan-view"><video playsinline muted></video><div class="scan-frame"></div>
+      <button class="scan-torch" data-scantorch hidden aria-pressed="false" aria-label="Tänd lampan">${icon("sol", 20)}<span>Lampa</span></button></div>
     <div class="muted" id="scanstatus">Startar kameran…</div>
     <div class="row" style="margin-top:10px"><input id="scancode" inputmode="numeric" placeholder="Eller skriv streckkoden" autocomplete="off">
       <button class="small" data-scanlookup>Sök</button></div>
@@ -47,6 +48,8 @@ async function startCamera() {
       if (caps.focusMode && caps.focusMode.includes("continuous")) adv.focusMode = "continuous";
       if (caps.zoom && caps.zoom.max >= 1.5) adv.zoom = Math.min(caps.zoom.max, 2);
       if (Object.keys(adv).length) await track.applyConstraints({ advanced: [adv] });
+      const tb = scanner.el.querySelector("[data-scantorch]");
+      if (tb && caps.torch) { tb.hidden = false; tb.setAttribute("aria-pressed", "false"); tb.setAttribute("aria-label", "Tänd lampan"); }
     } catch (e) { /* kameran kan inte zooma */ }
   } catch (e) {
     scanner.el.querySelector(".scan-view").hidden = true;
@@ -109,6 +112,17 @@ async function startCamera() {
     scanner.timer = setTimeout(tick, 120);
   };
   tick();
+}
+
+// Lampan hjälper i dåligt ljus och mot reflexer på burkar och flaskor
+async function toggleTorch(btn) {
+  const track = scanner.stream && scanner.stream.getVideoTracks()[0];
+  if (!track) return;
+  const on = btn.getAttribute("aria-pressed") !== "true";
+  try {
+    await track.applyConstraints({ advanced: [{ torch: on }] });
+    btn.setAttribute("aria-pressed", String(on)); btn.setAttribute("aria-label", on ? "Släck lampan" : "Tänd lampan");
+  } catch (e) { btn.hidden = true; }
 }
 
 function stopCamera() {
@@ -188,12 +202,13 @@ function logScanned() {
 
 // Skannerns knappar ligger utanför appens vanliga omritning
 document.addEventListener("click", ev => {
-  const t = ev.target.closest && ev.target.closest("[data-scan], [data-scanclose], [data-scanlookup], [data-scanlog], [data-scanagain], .scan-overlay");
+  const t = ev.target.closest && ev.target.closest("[data-scan], [data-scanclose], [data-scanlookup], [data-scanlog], [data-scanagain], [data-scantorch], .scan-overlay");
   if (!t) return;
   if (t.matches("[data-scan]")) openScanner();
   else if (t.matches("[data-scanclose]") || (t.classList.contains("scan-overlay") && ev.target === t)) closeScanner();
   else if (t.matches("[data-scanlookup]")) { stopCamera(); lookupBarcode(scanner.el.querySelector("#scancode").value); }
   else if (t.matches("[data-scanlog]")) logScanned();
+  else if (t.matches("[data-scantorch]")) toggleTorch(t);
   else if (t.matches("[data-scanagain]")) {
     scanner.product = null;
     scanner.el.querySelector("#scanresult").innerHTML = "";

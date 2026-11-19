@@ -276,15 +276,38 @@ function addIngredients() {
   recipeEdit.msg = r.unknown.length ? `Känns inte igen: ${r.unknown.join(", ")}. Skriv mängd och livsmedel, t.ex. "200 g nötfärs".` : "";
   render();
   const again = $("ring");
-  if (again) { again.value = r.unknown.join(", "); again.focus(); }
+  if (again) { again.value = r.unknown.join(", "); again.focus(); drawRingSugg(); }
 }
-document.addEventListener("keydown", ev => { if (ev.target.id === "ring" && ev.key === "Enter") { ev.preventDefault(); addIngredients(); } });
+// Förslag medan man skriver, som sökningen i Kost. Ett tryck lägger till ingrediensen direkt.
+// Det man skrivit och som inte har ett förslag kan läggas till som det står ("2 dl grädde, lök").
+let ringHits = [];
+function drawRingSugg() {
+  const el = $("ring"), out = $("ringsugg");
+  if (!el || !out) return;
+  const text = el.value, parts = text.split(/\s*,\s*|\s+och\s+/), last = (parts[parts.length - 1] || "").trim();
+  const { rest } = splitAmount(last);
+  ringHits = rest.length >= 2 ? suggestFoods(rest, 5) : [];
+  const typed = text.trim();
+  out.innerHTML = ringHits.map((x, i) => `<button type="button" role="option" data-ringpick="${i}"><span class="grow">${esc(cap(x.label))}</span><span class="muted small">${tnum(x.food.kcal)} kcal/100 ${x.food.basis === "ml" ? "ml" : "g"}</span></button>`).join("")
+    + (typed && (parts.length > 1 || !ringHits.length) ? `<button type="button" class="ringtyped" data-ringadd>${icon("plus", 16)}<span class="grow">Lägg till "${esc(typed)}"</span></button>` : "");
+}
+function pickIngredient(i) {
+  const x = ringHits[i], el = $("ring");
+  if (!x || !el) return;
+  const parts = el.value.split(/(\s*,\s*|\s+och\s+)/), last = parts.pop() || "", { prefix } = splitAmount(last.trim());
+  if (x.food.code && typeof chooseProduct === "function") chooseProduct(0, x.food);
+  el.value = parts.join("") + prefix + x.name;
+  addIngredients();
+}
+document.addEventListener("input", ev => { if (ev.target.id === "ring") drawRingSugg(); });
+document.addEventListener("keydown", ev => { if (ev.target.id === "ring" && ev.key === "Enter") { ev.preventDefault(); if (ringHits.length === 1 && !/[,]|\soch\s/.test(ev.target.value)) pickIngredient(0); else addIngredients(); } });
 document.addEventListener("click", ev => {
-  const t = ev.target.closest("[data-rlist],[data-rclose],[data-rnew],[data-rmeal],[data-rsort],[data-redit],[data-ruse],[data-rcancel],[data-rport],[data-ringadd],[data-rdel],[data-rsave],[data-rremove],[data-ristep],[data-ropen],[data-rback],[data-rn]");
+  const t = ev.target.closest("[data-rlist],[data-rclose],[data-rnew],[data-rmeal],[data-rsort],[data-redit],[data-ruse],[data-rcancel],[data-rport],[data-ringadd],[data-ringpick],[data-rdel],[data-rsave],[data-rremove],[data-ristep],[data-ropen],[data-rback],[data-rn]");
   if (!t || t.disabled) return;
   if (t.classList.contains("overlay") && ev.target !== t) return;   // klick inne i fönstret
   const ds = t.dataset;
   if (ds.ringadd !== undefined) { addIngredients(); return; }
+  if (ds.ringpick !== undefined) { pickIngredient(+ds.ringpick); return; }
   const top = () => window.scrollTo(0, 0);
   if (ds.rlist !== undefined) { if (tab !== "recept") recBack = tab; tab = "recept"; recipeOpen = null; recipeEdit = null; recQ = ""; top(); }
   else if (ds.rclose !== undefined) { tab = recBack || "kost"; recipeOpen = null; recipeEdit = null; top(); }
@@ -496,7 +519,8 @@ function recipeEditPage() {
       ${tile(p.fat != null ? `${fmtNum(Math.round(p.fat))} g` : "–", "fett")}${tile(p.fat != null ? `${fmtNum(Math.round(p.fiber))} g` : "–", "fibrer")}</div>
       <div class="muted small rtotal2">Hela receptet: ${tnum(t.kcal)} kcal</div>` : ""}
     <h2 class="ksec">Ingredienser${r.items.length ? ` · ${r.items.length}` : ""}</h2>
-    <div class="finput ringin"><input id="ring" placeholder="t.ex. nötfärs, ägg, lök, 2 dl grädde" autocomplete="off" aria-label="Ingredienser"><button class="primary small" data-ringadd>Lägg till</button></div>
+    <div class="finput ringin">${icon("search", 18)}<input id="ring" type="search" enterkeyhint="search" placeholder="Sök ingrediens, t.ex. nötfärs" autocomplete="off" aria-label="Sök ingrediens"></div>
+    <div id="ringsugg" class="ringsugg" role="listbox" aria-label="Förslag"></div>
     <div class="muted small rhint">Skriv bara vad som ingår. Utan mängd uppskattar vi en vanlig mängd för ${portionsText(r.portions).replace("1 portion", "en portion")}.</div>
     ${r.msg ? `<div class="muted small warntext rhint">${esc(r.msg)}</div>` : ""}
     ${r.items.length ? `<div class="kmeals ringlist">${r.items.map((it, k) => `<div class="kmcard krow ing"><span class="grow col"><b>${esc(ingText(it))}</b><span class="muted small">${tnum(it.kcal)} kcal · ${it.est ? `<span class="esttag">uppskattad mängd</span>` : it.amt ? "som du skrev" : `${fmtNum(+it.protein || 0)} g protein`}</span></span>

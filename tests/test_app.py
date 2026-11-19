@@ -1,6 +1,6 @@
 """Webbläsartester för Driv. Kör med: python -m pytest tests"""
 import pytest
-from conftest import finish_setup, go, open_app, start, to_step, pick, open_daily_add, back_to_day
+from conftest import finish_setup, go, open_app, start, to_step, pick, open_daily_add, back_to_day, tick
 
 KONTO = '.mepage2'   # profilsidan visar kontot längst ned (e-post, logga ut)
 
@@ -527,7 +527,7 @@ def test_dailys_under_passet(page):
     assert "Dailys 0/2" in page.inner_text("[data-fdopen]")
     page.click("[data-fdopen]")
     assert page.locator(".overlay [data-dedit]").count() == 0
-    page.click('.overlay [data-dcheck="plankan"]')
+    tick(page, 'plankan', '.overlay ')
     assert page.evaluate("dailyDone(TODAY, 'plankan')") is True
     assert page.locator(".overlay").count() == 1   # fönstret står kvar tills man stänger
     page.click(".overlay button.wide[data-fdclose]")
@@ -625,7 +625,7 @@ def test_dailys_flyttas_over_fran_gammalt_format(page):
     # Löpning med km och minuter finns i dailys-panelen
     go(page, "pass")
     page.evaluate("trSheet = 'dailys'; render()")
-    page.click("[data-dcheck=plankan]")
+    tick(page, 'plankan')
     assert page.evaluate("dailyDone(TODAY, 'plankan')")
     # Löpningen får samma bock när km är ifyllt
     run_ok = "document.querySelector('[data-runcheck=lop]').classList.contains('on')"
@@ -1251,7 +1251,7 @@ def test_fyra_flikar_och_profil_via_kugghjulet(page):
     assert page.evaluate("tab") == "profil" and "Inställningar" in page.inner_text("h1")
     # Dailys har en egen flik
     go(page, "dailys")
-    page.click("[data-dcheck=plankan]")
+    tick(page, 'plankan')
     assert page.evaluate("dailyDone(TODAY, 'plankan')")
 
 
@@ -1540,7 +1540,7 @@ def test_stretch_som_daily(page):
     assert "Duvan" in page.inner_text("#app")
     back_to_day(page)
     assert "2 × 45 s/sida" in page.inner_text("#app")
-    page.click('[data-dcheck="duvan"]')
+    tick(page, 'duvan')
     assert page.evaluate("dailyDone(TODAY, 'duvan')") is True
     # Stretch hålls en tid: i ett pass syns bara sekunder, ingen vikt
     assert page.evaluate("isTimed('duvan') && gearOf('duvan') === null && restFor('duvan') === restSettings().iso") is True
@@ -2344,9 +2344,9 @@ def test_firande_nar_alla_dailys_ar_klara(page):
     ids = page.evaluate("S.daily.map(e => e.id)")
     page.evaluate("S.supplements = []; render()")
     for i in ids[:-1]:
-        page.click(f'[data-dcheck="{i}"]')
+        tick(page, i)
         assert page.locator(".burst").count() == 0
-    page.click(f'[data-dcheck="{ids[-1]}"]')
+    tick(page, ids[-1])
     assert page.locator(".burst").count() == 1 and page.locator(".ds-burst.pulse").count() == 1
     # Öppnas appen igen med allt klart blir det inget nytt firande
     page.reload()
@@ -2926,3 +2926,41 @@ def test_vibration_nar_passet_ar_klart(page):
     page.evaluate(f"""() => {{ const w = workoutFor(dayById('{d}')); S.plan.days[0].ex.forEach(e => w.sets[e.id] = [{{ kg: 10, reps: 8, ok: true }}]); save(); }}""")
     page.evaluate(f"""() => {{ const b = document.createElement('button'); b.dataset.finish = '{d}'; document.body.appendChild(b); b.click(); }}""")
     assert [60, 50, 60, 50, 220] in page.evaluate("window.buzz")
+
+
+def test_ovningsnamn_bryts_inte_mitt_i_ordet(page):
+    start(page)
+    page.evaluate("tab = 'pass'; startFocus(S.plan.days[0].id); render()")
+    # Varje rad i rutan är hela ord; ett för långt ord slutar med … i stället för att brytas
+    lines = page.evaluate("[...document.querySelectorAll('.fsteps .nm .l')].map(e => [e.textContent, getComputedStyle(e).whiteSpace])")
+    assert lines and all(ws == "nowrap" for _, ws in lines)
+    first = page.evaluate("[...document.querySelectorAll('.fsteps [data-focusgo=\"0\"] .nm .l')].map(e => e.textContent).join(' ')")
+    assert first == page.evaluate("EX[S.plan.days[0].ex[0].id].name")
+    # i-knapparna i Upplägg har en tryckyta på minst 44 px
+    page.evaluate("focus = null; tab = 'dailys'; rutPage = true; rutOpen = null; render()")
+    assert page.evaluate("getComputedStyle(document.querySelector('.up-i'), '::after').inset") == "-11px"
+
+
+def test_progression_platå_och_backa(page):
+    start(page)
+    r = page.evaluate("""() => { const ex = { id: 'bankpress', reps: '6-8', sets: 3 };
+      const t = (...tops) => progressTarget(ex, tops.map(([kg, reps]) => ({ kg, reps, ok: true })));
+      return { up: t([60, 8]), rep: t([60, 7]), hold: t([60, 5]), down: t([60, 5], [60, 5]), deload: t([60, 6], [60, 6], [60, 6]), climbing: t([60, 7], [60, 6], [60, 6]) }; }""")
+    assert r["up"]["kg"] == 62.5 and r["up"]["kind"] == "up"
+    assert r["rep"]["reps"] == 8 and r["rep"]["kg"] == 60
+    assert r["hold"]["kind"] == "hold" and r["hold"]["kg"] == 60
+    assert r["down"]["kind"] == "down" and r["down"]["kg"] == 57.5
+    assert r["deload"]["kind"] == "deload" and r["deload"]["kg"] == 55
+    assert r["climbing"]["kind"] == "up"
+
+
+def test_frys_sviten(page):
+    start(page)
+    r = page.evaluate("""() => { const ws = weekStart(TODAY), add = (w, n) => { for (let k = 0; k < n; k++) { const d = shift(shift(ws, -7 * w), k); S.log[d] = { workouts: [{ dayId: S.plan.days[0].id, done: true, sets: {} }], dailies: {}, food: [] }; } };
+      S.plan.count = 3; [2, 3, 4].forEach(w => add(w, 3)); add(1, 1);
+      const one = streakInfo();
+      // Två missade veckor i rad bryter sviten
+      Object.keys(S.log).forEach(d => { if (d >= shift(ws, -14) && d < shift(ws, -7)) delete S.log[d]; });
+      return { one, two: streakInfo() }; }""")
+    assert r["one"]["n"] == 3 and len(r["one"]["frozen"]) == 1
+    assert r["two"]["n"] == 0

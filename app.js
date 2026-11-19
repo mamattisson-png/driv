@@ -810,6 +810,20 @@ function dailyDone(date, id) {
   const v = S.log[date] && S.log[date].dailies[id];
   return isRun(id) ? !!(v && (v.km || v.min)) : v === true;
 }
+// Set i Dailys: varje tryck på bocken klarar ett set; den blir klar när alla set är gjorda.
+// Påbörjade set sparas som dailies["set:id"], så att de synkas som resten av dagens dailys.
+const dailyTotal = id => { const e = dailyList(logDate()).find(x => x.id === id); return Math.max(1, +(e ? e.sets : 1) || 1); };
+function dailySetsDone(date, id) {
+  if (dailyDone(date, id)) return Infinity;
+  return +((S.log[date] && S.log[date].dailies["set:" + id]) || 0);
+}
+function tickDailySet(id) {
+  const L = day(), total = dailyTotal(id);
+  if (dailyDone(logDate(), id)) { L.dailies[id] = false; delete L.dailies["set:" + id]; return; }
+  const n = (+L.dailies["set:" + id] || 0) + 1;
+  if (n >= total) { L.dailies[id] = true; delete L.dailies["set:" + id]; }
+  else L.dailies["set:" + id] = n;
+}
 const allDailiesDone = date => { const L = dailyList(date); return L.length > 0 && L.every(e => dailyDone(date, e.id)); };
 // Antal dagar i rad som test(datum) gäller, räknat från idag eller igår
 function streakOf(test) {
@@ -883,15 +897,18 @@ function weightChart() {
 }
 
 // Sviten: veckor i rad med veckans mål nått (flamman), och veckans dagar med en ikon där man tränat
+const SNOW = `<svg viewBox="0 0 24 24" width="12" height="12" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2v20M3.3 7l17.4 10M3.3 17 20.7 7M9 4l3 3 3-3M9 20l3-3 3 3"/></svg>`;
 function streakStrip() {
-  const st = typeof weekStreak === "function" ? weekStreak() : 0, ws = weekStart(TODAY);
+  const si = typeof streakInfo === "function" ? streakInfo() : { n: 0, frozen: [], left: 0 }, st = si.n, ws = weekStart(TODAY);
+  const savedLast = si.frozen.includes(shift(ws, -7));
+  const ice = st > 0 ? `<span class="sv-ice ${si.left ? "" : "used"}" title="${si.left ? "1 frysning kvar den här månaden" : "Månadens frysning är använd"}" aria-label="${si.left ? "1 frysning kvar den här månaden" : "Månadens frysning är använd"}">${SNOW}${si.left}</span>` : "";
   const days = weekDates(ws).map((d, i) => {
     const trained = workoutsOn(d).some(w => w.done) || actsOn(d).length > 0;
     return `<span class="sv-d ${d === TODAY ? "t" : ""} ${d > TODAY ? "f" : ""}"><small>${WD[i][0]}</small><i class="${trained ? "on" : ""}">${trained ? icon("trana", 16) : +d.slice(-2)}</i></span>`;
   }).join("");
   return `<section class="sv" aria-label="Din svit: ${st} ${st === 1 ? "vecka" : "veckor"} i rad">
-    <div class="sv-f"><svg viewBox="0 0 24 24" width="46" height="46" aria-hidden="true"><path d="M12.5 1.5c.6 3.2 4 5.3 5.2 8.6 1.6 4.4-.9 11.4-5.7 11.4S4.6 18.2 5 14.2c.3-2.6 1.8-4.2 2.9-5.3.1 1.7.8 2.8 1.6 3.3-.3-4.3 1.2-7.6 3-10.7Z" fill="var(--accent-strong)"/><text x="12" y="18.2" text-anchor="middle" class="sv-n">${st}</text></svg><small>${st === 1 ? "Vecka" : "Veckor"}</small></div>
-    <div class="sv-days">${days}</div></section>`;
+    <div class="sv-f"><svg viewBox="0 0 24 24" width="46" height="46" aria-hidden="true"><path d="M12.5 1.5c.6 3.2 4 5.3 5.2 8.6 1.6 4.4-.9 11.4-5.7 11.4S4.6 18.2 5 14.2c.3-2.6 1.8-4.2 2.9-5.3.1 1.7.8 2.8 1.6 3.3-.3-4.3 1.2-7.6 3-10.7Z" fill="var(--accent-strong)"/><text x="12" y="18.2" text-anchor="middle" class="sv-n">${st}</text></svg><small>${st === 1 ? "Vecka" : "Veckor"}</small>${ice}</div>
+    <div class="sv-days">${days}${savedLast ? `<p class="sv-saved">${SNOW}Förra veckan frystes, sviten lever</p>` : ""}</div></section>`;
 }
 
 // ---------- Rendering ----------
@@ -949,7 +966,8 @@ function celebrate() {
     document.body.appendChild(el);
     setTimeout(() => el.remove(), 1200);
   }
-  if (navigator.vibrate) try { navigator.vibrate(30); } catch (e) { /* inte tillåtet */ }
+  // Alla dailys klara: samma tydliga vibration som när ett pass är klart
+  if (big) buzzDone(); else if (navigator.vibrate) try { navigator.vibrate(30); } catch (e) { /* inte tillåtet */ }
 }
 function render() {
   if (libCtx && libCtx.tab !== tab) libCtx = null;   // en annan flik lämnar biblioteket
@@ -968,7 +986,7 @@ function render() {
     ? `<div class="editbar">Du ändrar <b>${dateLabel(editDate)}</b><button class="small" data-editdone>Klar</button></div>` : "";
   // Samma inställningsknapp på alla huvudvyer. Hem har knappen i sin egen header.
   // Kugghjulet ligger på samma plats överallt; under ett pass har fokusvyn egna knappar där
-  const gear = tab === "idag" || tab === "profil" || tab === "minprofil" || tab === "upplagg" || tab === "varden" || passDone || inFocus ? "" : `<button class="gear" data-tab="profil" aria-label="Inställningar">${GEAR_SVG}</button>`;
+  const gear = tab === "idag" || tab === "profil" || tab === "minprofil" || tab === "upplagg" || tab === "varden" || passDone || inFocus || (tab === "dailys" && dailyClock) ? "" : `<button class="gear" data-tab="profil" aria-label="Inställningar">${GEAR_SVG}</button>`;
   document.getElementById("app").innerHTML = passDone ? passDoneView()
     : actSheet ? actPage() + tourView()   // Logga motion är en egen sida (aktivitet.js)
     : gear + banner + focusBar() + (libCtx ? muscleView() : VIEWS[tab]()) + (modal ? renderModal() : "") + (sgAdd && EX[sgAdd] ? stretchAddSheet(sgAdd) : "") + tourView();
@@ -1042,10 +1060,12 @@ function dailyClockAdvance() {
   dailyClockSound();
   if (c.phase === "work") {
     if (c.set >= c.total) {
-      if (dailyList().some(x => x.id === c.id)) day().dailies[c.id] = true;
+      if (dailyList().some(x => x.id === c.id)) { day().dailies[c.id] = true; delete day().dailies["set:" + c.id]; }
       c.phase = "done"; clearInterval(dailyClockTick); dailyClockTick = null;
       save(); render(); return;
     }
+    if (dailyList().some(x => x.id === c.id) && !dailyDone(logDate(), c.id)) day().dailies["set:" + c.id] = Math.max(c.set, +day().dailies["set:" + c.id] || 0);
+    save();
     c.phase = "rest"; c.paused = false; c.end = Date.now() + c.rest * 1000;
   } else {
     c.phase = "work"; c.set++; c.paused = false; c.end = Date.now() + c.work * 1000;
@@ -1083,7 +1103,7 @@ document.addEventListener("click", ev => {
     const e = dailyList().find(x => x.id === d.dclockstart) || (EX[d.dclockstart] && { id: d.dclockstart, sets: EX[d.dclockstart].sets, reps: EX[d.dclockstart].reps }); if (!e) return;
     const timed = /\d+\s*(?:sek|s)\b/i.test(e.reps || "");
     const work = dailySeconds(e);
-    dailyClock = {id:e.id,work,timed,reps:e.reps||"",rest:30,total:Math.max(1,+e.sets||1),set:1,phase:"work",end:Date.now()+work*1000,paused:false};
+    dailyClock = {id:e.id,work,timed,reps:e.reps||"",rest:30,total:Math.max(1,+e.sets||1),set:Math.min(Math.max(1,+e.sets||1),(+((S.log[logDate()]||{dailies:{}}).dailies["set:"+e.id])||0)+1),phase:"work",end:Date.now()+work*1000,paused:false};
     clearInterval(dailyClockTick); dailyClockTick = setInterval(dailyClockRefresh,250);
   } else if (d.dclockpause !== undefined && dailyClock) {
     if (dailyClock.paused) {dailyClock.end = Date.now()+dailyClock.remaining;dailyClock.paused=false;}
@@ -1750,6 +1770,7 @@ function passDoneView() {
         <span class="muted small">${fmtSet2({ kg: +p.t.kg || 0, reps: +p.t.reps || 0 }, p.id)}</span></span><span class="pbtag">PB ${gain(p)}</span></div>`).join("")}</section>` : ""}
     ${sharing ? `<label class="card pdshare"><span class="grow col"><b>Dela med vänner</b><span class="muted small">De ser att du kört ${esc(d.name)}, inga vikter</span></span>
       <input type="checkbox" role="switch" class="switch" data-pdshare ${passDone.shared === false ? "" : "checked"} aria-label="Dela passet med vänner"></label>` : ""}
+    ${nextTimeCard(d, date)}
     ${tplOffer(d)}
     ${inviteCard()}
     <div class="pdspace"></div>
@@ -1757,6 +1778,14 @@ function passDoneView() {
     <button class="wide ghost pdundo" data-passreopen="${d.id}">Ångra – passet är inte klart</button></div>`;
 }
 
+// Efter passet: vad Driv föreslår till nästa gång, per övning
+function nextTimeCard(d, date) {
+  const rows = d.ex.filter(x => topSet(setsOn(date, x.id))).map(x => ({ x, t: progressTarget(x, recentTops(x.id, shift(date, 1))) })).filter(r => r.t);
+  if (!rows.length) return "";
+  const tag = { up: "Uppåt", hold: "Samma", down: "Backa", deload: "Lättare" };
+  return `<section class="card pdnext" aria-label="Nästa gång"><div class="klabel">Nästa gång</div>${rows.map(({ x, t }) =>
+    `<div class="pdn"><span class="grow col"><b>${esc(EX[x.id].name)}</b><span class="muted small">${fmtTarget(t, x.id)}</span></span><span class="pntag ${t.kind}">${t.kind === "up" ? t.why : tag[t.kind]}</span></div>`).join("")}</section>`;
+}
 function renderModal() {
   if (modal.cancelPass) return cancelPassSheet(modal.cancelPass);
   if (modal.letter) {
@@ -1822,19 +1851,41 @@ const weightStep = id => EX[id].hold === "db" ? 2 : EX[id].cat === "legs" || id 
 const betterSet = (a, b) => !b || (+a.kg || 0) > (+b.kg || 0) || ((+a.kg || 0) === (+b.kg || 0) && (+a.reps || 0) > (+b.reps || 0));
 const topSet = sets => sets.filter(hasData).reduce((best, x) => betterSet(x, best) ? x : best, null);
 
-// Dagens mål med dubbel progression: nådde du toppen av intervallet förra gången höjs vikten
-// och reps börjar om nerifrån, annars siktar du på en rep (eller fem sekunder) till
-function todayTarget(ex) {
-  const top = topSet(lastSets(ex.id) || []);
-  if (!top) return null;
-  const kg = +top.kg || 0, reps = +top.reps || 0, { lo, hi } = repRange(ex.reps);
-  if (isTimed(ex.id)) return { kg, reps: reps + 5, why: "+5 s" };
-  if (EX[ex.id].bw && !kg) return { kg: 0, reps: reps + 1, why: "+1 rep" };
-  if (hi && reps >= hi) {
-    const step = weightStep(ex.id);
-    return { kg: kg + step, reps: lo || reps, why: `+${fmtNum(step)} kg` };
+// Bästa set från de senaste gångerna övningen gjordes före ett datum, senaste först
+function recentTops(exId, before, n = 3) {
+  const out = [];
+  for (const d of Object.keys(S.log).filter(x => x < before).sort().reverse()) {
+    const t = topSet(setsOn(d, exId));
+    if (t) { out.push(t); if (out.length >= n) break; }
   }
-  return { kg, reps: hi ? Math.min(reps + 1, hi) : reps + 1, why: "+1 rep" };
+  return out;
+}
+// Nästa mål med dubbel progression: nådde du toppen av intervallet höjs vikten och reps börjar om
+// nerifrån, annars siktar du på en rep (eller fem sekunder) till. Missar du botten av intervallet
+// två gånger på samma vikt backar vikten ett steg; står du still tre gånger blir det ett lättare
+// pass (−10 %) innan det går uppåt igen. kind: up, hold, down eller deload.
+function progressTarget(ex, tops) {
+  const top = tops[0];
+  if (!top) return null;
+  const kg = +top.kg || 0, reps = +top.reps || 0, { lo, hi } = repRange(ex.reps), step = weightStep(ex.id);
+  if (isTimed(ex.id)) return { kg, reps: reps + 5, why: "+5 s", kind: "up" };
+  if (EX[ex.id].bw && !kg) return { kg: 0, reps: reps + 1, why: "+1 rep", kind: "up" };
+  if (lo && reps < lo && kg > 0) {
+    const prev = tops[1];
+    if (prev && (+prev.kg || 0) === kg && (+prev.reps || 0) < lo && kg > step) return { kg: kg - step, reps: lo, why: `−${fmtNum(step)} kg`, kind: "down" };
+    return { kg, reps: lo, why: "samma vikt", kind: "hold" };
+  }
+  if (kg > 0 && tops.length >= 3 && tops.slice(0, 3).every(t => (+t.kg || 0) === kg) && reps <= (+tops[2].reps || 0) && !(hi && reps >= hi)) {
+    const d = Math.max(step, Math.round(kg * 0.1 / step) * step);
+    return { kg: kg - d, reps: hi || reps, why: "lättare pass", kind: "deload" };
+  }
+  if (hi && reps >= hi) return { kg: kg + step, reps: lo || reps, why: `+${fmtNum(step)} kg`, kind: "up" };
+  return { kg, reps: hi ? Math.min(reps + 1, hi) : reps + 1, why: "+1 rep", kind: "up" };
+}
+function todayTarget(ex) {
+  const tops = recentTops(ex.id, logDate());
+  if (!tops.length) { const t = topSet(lastSets(ex.id) || []); if (t) tops.push(t); }
+  return progressTarget(ex, tops);
 }
 const fmtTarget = (t, id) => fmtSet2({ kg: +t.kg || 0, reps: t.reps }, id);
 // Exempelvärden för ett set: dagens mål om det finns, annars förra gångens set
@@ -2168,7 +2219,7 @@ document.addEventListener("click", ev => {
     ex.sets = Math.max(1, ex.sets + +ds.setcount);
     syncDone(d);
   }
-  else if (ds.dcheck) day().dailies[ds.dcheck] = !dailyDone(logDate(), ds.dcheck);
+  else if (ds.dcheck) tickDailySet(ds.dcheck);
   else if (ds.dedit !== undefined) dailyEditing = dailyEditing === true ? false : true;
   else if (ds.letterclose) S.letterSeen = ds.letterclose;
   else if (ds.showweight !== undefined) S.hideWeight = !t.checked;

@@ -302,7 +302,8 @@ function focusView() {
       <div class="chips">${free.map(({ x, k }) => `<button data-sspair="${k}">${esc(EX[x.id].name)}</button>`).join("") || `<span class="muted small">Alla andra övningar ingår redan i ett superset.</span>`}</div></div>`;
   })() : "";
   const prevTop = prev && topSet(prev);
-  const tip = target ? `${prevTop ? `Förra gången ${fmt(prevTop)}. ` : ""}Prova <b>${fmtTarget(target, ex.id)}</b>.`
+  const why = target && { hold: " Samma vikt, sikta på hela intervallet.", down: " Vikten backar ett steg så att du klarar alla reps.", deload: " Du har stått still tre gånger: ett lättare pass nu, sedan uppåt igen." }[target.kind] || "";
+  const tip = target ? `${prevTop ? `Förra gången ${fmt(prevTop)}. ` : ""}Prova <b>${fmtTarget(target, ex.id)}</b>.${why}`
     : timed ? `Första gången: håll i ${esc(String(ex.reps).replace(/-/g, "–").replace(/\s*(s|sek(under)?)\b/, " s"))}.`
     : bw ? `Första gången: gör ${esc(String(ex.reps).replace(/-/g, "–"))} reps.`
     : `Första gången: välj en vikt du klarar ${esc(String(ex.reps).replace(/-/g, "–"))} gånger.`;
@@ -379,6 +380,12 @@ function endSheet(d, w) {
       <button class="wide endbtn endsecondary" data-fendclose>${icon("play", 18)}Fortsätt träna</button>
       ${!w || !w.end ? `<button class="ghost endcancel dangertext" data-passcancel="${d.id}">Avbryt passet utan att spara</button>` : ""}</div></div></div>`;
 }
+// Namnet i en ruta: första ordet på första raden, resten på andra. Ett ord som inte får plats slutar med "…"
+// i stället för att brytas mitt i ("Bänkpres / s").
+function stepName(name) {
+  const w = String(name).split(" "), first = w.shift();
+  return `<span class="l">${esc(first)}</span>${w.length ? `<span class="l">${esc(w.join(" "))}</span>` : ""}`;
+}
 // Övningarna som rutor överst: klara med bock, den aktuella markerad, superset sammanlänkade.
 // Upp till sex på en rad; fler delas på två rader. Med fler än åtta visas sju runt den aktuella och resten bakom "+N".
 function stepRow(d, w) {
@@ -390,7 +397,7 @@ function stepRow(d, w) {
     const nOk = ((w && w.sets[x.id]) || []).filter(z => z && z.ok).length, started = !done && nOk > 0;
     const ring = started ? ` style="--p:${Math.round(100 * Math.min(1, nOk / Math.max(1, +x.sets || 1)))}%"` : "";
     return `<button data-focusgo="${k}" class="xs ${k === focus.idx ? "on" : ""} ${done ? "done" : ""} ${started ? "started" : ""}${ss}" ${k === focus.idx ? 'aria-current="step"' : ""}
-      aria-label="${esc(EX[x.id].name)}${done ? ", klar" : started ? `, påbörjad, ${nOk} av ${x.sets} set` : ""}"><span class="fn"${ring}>${done ? icon("check", 11) : k + 1}</span><span class="nm">${esc(EX[x.id].name)}</span></button>`; };
+      aria-label="${esc(EX[x.id].name)}${done ? ", klar" : started ? `, påbörjad, ${nOk} av ${x.sets} set` : ""}"><span class="fn"${ring}>${done ? icon("check", 11) : k + 1}</span><span class="nm">${stepName(EX[x.id].name)}</span></button>`; };
   const tiles = Array.from({ length: to - from }, (_, i) => tile(from + i)).join("");
   const more = n <= MAX ? "" : focus.allSteps ? `<button class="xs fmore" data-fstepsall>Färre</button>`
     : `<button class="xs fmore" data-fstepsall aria-label="Visa alla ${n} övningar">+${n - (to - from)}</button>`;

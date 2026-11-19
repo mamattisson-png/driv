@@ -309,3 +309,39 @@ def test_skannad_dryck_raknas_i_ml(page):
     page.wait_for_selector("#scangrams")
     assert "Mängd (ml)" in page.inner_text(".scan-product") and page.input_value("#scangrams") == "330"
     assert "per 100 ml" in page.inner_text(".scan-product")
+
+
+def test_lampa_i_skannern(page):
+    start(page)
+    page.evaluate("""() => { const c = document.createElement('canvas'); c.width = 640; c.height = 480; c.getContext('2d').fillRect(0, 0, 10, 10);
+      const stream = c.captureStream(5), track = stream.getVideoTracks()[0]; window.torch = [];
+      track.getCapabilities = () => ({ torch: true }); track.applyConstraints = async c => { window.torch.push(c.advanced[0].torch); };
+      window.BarcodeDetector = class { async detect() { return []; } };
+      navigator.mediaDevices.getUserMedia = async () => stream; openScanner(); }""")
+    page.wait_for_selector("[data-scantorch]:not([hidden])")
+    page.click("[data-scantorch]")
+    page.wait_for_function("document.querySelector('[data-scantorch]').getAttribute('aria-pressed') === 'true'")
+    assert True in page.evaluate("window.torch")
+    page.click("[data-scantorch]")
+    page.wait_for_function("document.querySelector('[data-scantorch]').getAttribute('aria-pressed') === 'false'")
+
+
+def test_maträtter_och_inga_gissningar_mitt_i_ord(page):
+    start(page)
+    page.wait_for_timeout(500)
+    name = lambda q: page.evaluate("q => { const i = parseFood(q).items[0]; return i.known ? i.name : null; }", q)
+    for q in ["haggis", "pho", "butter chicken", "shepherd's pie", "kalops", "gyoza", "ratatouille", "tonfisksallad"]:
+        assert name(q), q
+    # "te" i "tempura" och "ris" i ett okänt ord ska inte bli kaffe eller ris
+    assert name("tempura") == "Tempura" and name("risottoliknande") is None
+    assert name("bananer") == name("banan")
+
+
+def test_fler_ratter_och_fika(page):
+    start(page)
+    page.wait_for_timeout(500)
+    name = lambda q: page.evaluate("q => { const i = parseFood(q).items[0]; return i.known ? i.name : null; }", q)
+    assert name("fläsk med löksås") == "Fläsk med löksås" and name("kardemummabulle") == "Kardemummabulle"
+    assert name("kebabpizza") == "Kebabpizza" and name("mazarin") == "Mazarin" and name("stekt ägg") == "Stekt ägg"
+    for q in ["lussekatt", "bibimbap", "västerbottenpaj", "räkcocktail", "whopper", "kantarellsoppa"]:
+        assert name(q), q

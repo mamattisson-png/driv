@@ -184,13 +184,24 @@ function spark(e) {
   const xy = pts.map((v, i) => `${(i / (pts.length - 1) * W).toFixed(1)},${(H - 3 - (hi > lo ? (v - lo) / (hi - lo) : .5) * (H - 6)).toFixed(1)}`).join(" ");
   return `<svg class="spark ${e.gain > 0 ? "up" : e.gain < 0 ? "down" : ""}" viewBox="0 0 ${W} ${H}" aria-hidden="true"><polyline points="${xy}"/></svg>`;
 }
-// Veckor i rad (bakåt från förra veckan, eller den här om målet redan nåtts) med minst målets antal pass
-function weekStreak() {
-  let ws = weekStart(TODAY), n = 0;
-  if (weekSummary(ws).passes < S.plan.count) ws = shift(ws, -7);
-  while (n < 200 && weekSummary(ws).passes >= S.plan.count) { n++; ws = shift(ws, -7); }
-  return n;
+// Veckor i rad (bakåt från förra veckan, eller den här om målet redan nåtts) med minst målets antal pass.
+// Frysning: en missad vecka per månad räddar sviten (räknas inte upp, men bryter inte). Två missade
+// veckor i rad bryter den ändå. Månaden räknas efter veckans måndag.
+function streakInfo() {
+  let ws = weekStart(TODAY), n = 0, frozen = [], lastFrozen = false;
+  const ok = w => weekSummary(w).passes >= S.plan.count, usedIn = m => frozen.some(f => f.slice(0, 7) === m);
+  if (!ok(ws)) ws = shift(ws, -7);
+  for (let i = 0; i < 260; i++) {
+    if (ok(ws)) { n++; lastFrozen = false; }
+    else if (!lastFrozen && !usedIn(ws.slice(0, 7)) && ok(shift(ws, -7))) { frozen.push(ws); lastFrozen = true; }
+    else break;
+    ws = shift(ws, -7);
+  }
+  // Frysningar kvar den här månaden
+  const left = usedIn(TODAY.slice(0, 7)) ? 0 : 1;
+  return { n, frozen, left };
 }
+function weekStreak() { return streakInfo().n; }
 const passesIn = (from, to) => Object.keys(S.log).filter(d => d >= from && d <= to).reduce((a, d) => a + workoutsOn(d).filter(w => w.done).length, 0);
 // Framsteg: bara sådant som verkligen hänt, högst tre
 function wins(p) {

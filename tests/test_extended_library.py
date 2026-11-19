@@ -1,6 +1,6 @@
 """Utökat innehåll ska fungera i befintlig väljare, dailys och träningslogg."""
 import pytest
-from conftest import start,go, pick, open_daily_add, back_to_day
+from conftest import start,go, pick, open_daily_add, back_to_day, tick
 
 
 def test_biblioteket_laddas_med_flera_hundra_nya_ovningar(page):
@@ -21,7 +21,7 @@ def test_ny_stretch_kan_laggas_till_som_daily_och_bevaras(page):
     page.fill('#mskq',page.evaluate('id=>EX[id].name',exercise))
     page.click(f'[data-libpick="{exercise}"]')
     back_to_day(page)
-    page.click(f'[data-dcheck="{exercise}"]')
+    tick(page, exercise)
     assert page.evaluate('id=>dailyDone(TODAY,id)',exercise)
     page.reload()
     assert page.evaluate('id=>S.daily.some(e=>e.id===id)&&dailyDone(TODAY,id)',exercise)

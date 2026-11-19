@@ -53,3 +53,26 @@ def test_profile_and_account_page_changes_photo(page, tmp_path):
     assert page.locator(".me2 img").count() == 1
     page.click(".mebar .backbtn")
     assert page.locator(".pcard img").count() == 1   # fotot syns även överst i Inställningar
+
+
+def test_utmaningar_och_manadens_topplista(page):
+    from test_app import SB_CONFIG
+    page.context.route("**/config.js", lambda r: r.fulfill(body=SB_CONFIG, content_type="application/javascript"))
+    start(page)
+    page.evaluate(STUB.replace("S.tourAsked", """account.step = 'in'; Object.assign(social, { month: [{name: 'Sara', n: 9, me: false}, {name: 'Marcus', n: 11, me: true}],
+      challenges: [{id: 1, kind: 'forst', goal: 12, start_day: shift(TODAY, -5), end_day: shift(TODAY, 5), mine: true, them_name: 'Sara', me_n: 12, them_n: 7, me_reached: TODAY, them_reached: null}] });
+      S.tourAsked"""))
+    assert "Först till 12 pass" in page.inner_text(".chlist") and "Du var först!" in page.inner_text(".chlist")
+    page.click('[data-ftrange="manad"]')
+    assert page.locator(".ftop .trow").first.inner_text().startswith("1")
+    assert "Du" in page.locator(".ftop .trow.me").inner_text()
+    # Ny utmaning skickas med vald vän, typ och period
+    page.click('.fsec-h [data-fsheet="utmana"]')
+    page.click('[data-chkind="flest"]'); page.click('[data-chper="vecka"]')
+    page.click("[data-chcreate]")
+    page.wait_for_function("__calls.some(c => c[0] === 'driv_challenge_create')")
+    call = page.evaluate("__calls.find(c => c[0] === 'driv_challenge_create')[1]")
+    assert call["p_friend"] == "u2" and call["p_kind"] == "flest" and call["p_goal"] is None
+    assert call["p_start"] == page.evaluate("weekStart(TODAY)")
+    # Ta bort kräver två tryck
+    page.evaluate("socialRpc = async (n, a) => { __calls.push([n, a]); return null; }; friendsSheet = null; render()")
