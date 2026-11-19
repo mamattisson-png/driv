@@ -113,6 +113,7 @@ Senast uppdaterad: 2026-11-06. Status bygger på dokumenterade publiceringar och
 | 109 | Kost: Proviva, Kalles kaviar, Gainomax, Barebells, Nocco, Celsius, Daim, Piggelin, Pannbiff m.fl.; Messmör, Kesella, Nudlar, Risifrutti och Special K hittas rätt | Kost | Liten | Klar |
 | 110 | Träna: telefonen vibrerar när ett pass eller en aktivitet är klar (Android) | Träna | Liten | Klar |
 | 111 | Kost: streckkodsskannern läser dryck bättre (zoom, autofokus, stående koder) och räknar dryck i ml | Kost | Liten | Klar |
+| 112 | Dailys: telefonen vibrerar tydligt när alla dailys är klara, och stora bocken blinkar inte längre | Dailys | Liten | Klar |
 
 ## Detaljer och acceptanskriterier
 
