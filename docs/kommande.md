@@ -121,6 +121,7 @@ Senast uppdaterad: 2026-11-06. Status bygger på dokumenterade publiceringar och
 | 117 | Kost: ett 90-tal nya maträtter (t.ex. haggis, pho, butter chicken, kalops, gyoza); ord som bara börjar likadant gissas inte (tempura blev kaffe) | Kost | Liten | Klar |
 | 118 | Kost: ett 70-tal rätter till (pizzor, husmanskost, fika, sallader, snabbmat, Asien); rättade felträffar som fläsk med löksås → läsk | Kost | Liten | Klar |
 | 119 | Dailys: set bockas av ett i taget med en ring som fylls, och alla övningar kan startas i valfri ordning | Dailys | Medel | Klar |
+| 120 | Dailys: siffran i setringen står mitt i ringen | Dailys | Liten | Klar |
 
 ## Detaljer och acceptanskriterier
 
