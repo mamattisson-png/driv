@@ -298,3 +298,14 @@ def test_vanliga_varor_och_inga_konstiga_gissningar(page):
     for q in ["proviva", "kalles kaviar", "gainomax", "barebells", "nocco", "celsius", "daim", "piggelin", "pannbiff"]:
         assert name(q), q
     assert name("2 burkar nocco") == "Nocco"
+
+
+def test_skannad_dryck_raknas_i_ml(page):
+    start(page)
+    page.evaluate("""() => { window.fetch = async () => ({ json: async () => ({ product: { product_name: 'Coca-Cola', brands: 'Coca-Cola', quantity: '33 cl',
+      nutriments: { 'energy-kcal_100g': 44, proteins_100g: 0 } } }) });
+      navigator.mediaDevices.getUserMedia = async () => { throw Error('ingen kamera'); }; openScanner(); }""")
+    page.evaluate("lookupBarcode('5449000000996')")
+    page.wait_for_selector("#scangrams")
+    assert "Mängd (ml)" in page.inner_text(".scan-product") and page.input_value("#scangrams") == "330"
+    assert "per 100 ml" in page.inner_text(".scan-product")
