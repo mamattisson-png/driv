@@ -2939,3 +2939,16 @@ def test_ovningsnamn_bryts_inte_mitt_i_ordet(page):
     # i-knapparna i Upplägg har en tryckyta på minst 44 px
     page.evaluate("focus = null; tab = 'dailys'; rutPage = true; rutOpen = null; render()")
     assert page.evaluate("getComputedStyle(document.querySelector('.up-i'), '::after').inset") == "-11px"
+
+
+def test_progression_platå_och_backa(page):
+    start(page)
+    r = page.evaluate("""() => { const ex = { id: 'bankpress', reps: '6-8', sets: 3 };
+      const t = (...tops) => progressTarget(ex, tops.map(([kg, reps]) => ({ kg, reps, ok: true })));
+      return { up: t([60, 8]), rep: t([60, 7]), hold: t([60, 5]), down: t([60, 5], [60, 5]), deload: t([60, 6], [60, 6], [60, 6]), climbing: t([60, 7], [60, 6], [60, 6]) }; }""")
+    assert r["up"]["kg"] == 62.5 and r["up"]["kind"] == "up"
+    assert r["rep"]["reps"] == 8 and r["rep"]["kg"] == 60
+    assert r["hold"]["kind"] == "hold" and r["hold"]["kg"] == 60
+    assert r["down"]["kind"] == "down" and r["down"]["kg"] == 57.5
+    assert r["deload"]["kind"] == "deload" and r["deload"]["kg"] == 55
+    assert r["climbing"]["kind"] == "up"

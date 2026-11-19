@@ -1767,6 +1767,7 @@ function passDoneView() {
         <span class="muted small">${fmtSet2({ kg: +p.t.kg || 0, reps: +p.t.reps || 0 }, p.id)}</span></span><span class="pbtag">PB ${gain(p)}</span></div>`).join("")}</section>` : ""}
     ${sharing ? `<label class="card pdshare"><span class="grow col"><b>Dela med vänner</b><span class="muted small">De ser att du kört ${esc(d.name)}, inga vikter</span></span>
       <input type="checkbox" role="switch" class="switch" data-pdshare ${passDone.shared === false ? "" : "checked"} aria-label="Dela passet med vänner"></label>` : ""}
+    ${nextTimeCard(d, date)}
     ${tplOffer(d)}
     ${inviteCard()}
     <div class="pdspace"></div>
@@ -1774,6 +1775,14 @@ function passDoneView() {
     <button class="wide ghost pdundo" data-passreopen="${d.id}">Ångra – passet är inte klart</button></div>`;
 }
 
+// Efter passet: vad Driv föreslår till nästa gång, per övning
+function nextTimeCard(d, date) {
+  const rows = d.ex.filter(x => topSet(setsOn(date, x.id))).map(x => ({ x, t: progressTarget(x, recentTops(x.id, shift(date, 1))) })).filter(r => r.t);
+  if (!rows.length) return "";
+  const tag = { up: "Uppåt", hold: "Samma", down: "Backa", deload: "Lättare" };
+  return `<section class="card pdnext" aria-label="Nästa gång"><div class="klabel">Nästa gång</div>${rows.map(({ x, t }) =>
+    `<div class="pdn"><span class="grow col"><b>${esc(EX[x.id].name)}</b><span class="muted small">${fmtTarget(t, x.id)}</span></span><span class="pntag ${t.kind}">${t.kind === "up" ? t.why : tag[t.kind]}</span></div>`).join("")}</section>`;
+}
 function renderModal() {
   if (modal.cancelPass) return cancelPassSheet(modal.cancelPass);
   if (modal.letter) {
@@ -1839,19 +1848,41 @@ const weightStep = id => EX[id].hold === "db" ? 2 : EX[id].cat === "legs" || id 
 const betterSet = (a, b) => !b || (+a.kg || 0) > (+b.kg || 0) || ((+a.kg || 0) === (+b.kg || 0) && (+a.reps || 0) > (+b.reps || 0));
 const topSet = sets => sets.filter(hasData).reduce((best, x) => betterSet(x, best) ? x : best, null);
 
-// Dagens mål med dubbel progression: nådde du toppen av intervallet förra gången höjs vikten
-// och reps börjar om nerifrån, annars siktar du på en rep (eller fem sekunder) till
-function todayTarget(ex) {
-  const top = topSet(lastSets(ex.id) || []);
-  if (!top) return null;
-  const kg = +top.kg || 0, reps = +top.reps || 0, { lo, hi } = repRange(ex.reps);
-  if (isTimed(ex.id)) return { kg, reps: reps + 5, why: "+5 s" };
-  if (EX[ex.id].bw && !kg) return { kg: 0, reps: reps + 1, why: "+1 rep" };
-  if (hi && reps >= hi) {
-    const step = weightStep(ex.id);
-    return { kg: kg + step, reps: lo || reps, why: `+${fmtNum(step)} kg` };
+// Bästa set från de senaste gångerna övningen gjordes före ett datum, senaste först
+function recentTops(exId, before, n = 3) {
+  const out = [];
+  for (const d of Object.keys(S.log).filter(x => x < before).sort().reverse()) {
+    const t = topSet(setsOn(d, exId));
+    if (t) { out.push(t); if (out.length >= n) break; }
   }
-  return { kg, reps: hi ? Math.min(reps + 1, hi) : reps + 1, why: "+1 rep" };
+  return out;
+}
+// Nästa mål med dubbel progression: nådde du toppen av intervallet höjs vikten och reps börjar om
+// nerifrån, annars siktar du på en rep (eller fem sekunder) till. Missar du botten av intervallet
+// två gånger på samma vikt backar vikten ett steg; står du still tre gånger blir det ett lättare
+// pass (−10 %) innan det går uppåt igen. kind: up, hold, down eller deload.
+function progressTarget(ex, tops) {
+  const top = tops[0];
+  if (!top) return null;
+  const kg = +top.kg || 0, reps = +top.reps || 0, { lo, hi } = repRange(ex.reps), step = weightStep(ex.id);
+  if (isTimed(ex.id)) return { kg, reps: reps + 5, why: "+5 s", kind: "up" };
+  if (EX[ex.id].bw && !kg) return { kg: 0, reps: reps + 1, why: "+1 rep", kind: "up" };
+  if (lo && reps < lo && kg > 0) {
+    const prev = tops[1];
+    if (prev && (+prev.kg || 0) === kg && (+prev.reps || 0) < lo && kg > step) return { kg: kg - step, reps: lo, why: `−${fmtNum(step)} kg`, kind: "down" };
+    return { kg, reps: lo, why: "samma vikt", kind: "hold" };
+  }
+  if (kg > 0 && tops.length >= 3 && tops.slice(0, 3).every(t => (+t.kg || 0) === kg) && reps <= (+tops[2].reps || 0) && !(hi && reps >= hi)) {
+    const d = Math.max(step, Math.round(kg * 0.1 / step) * step);
+    return { kg: kg - d, reps: hi || reps, why: "lättare pass", kind: "deload" };
+  }
+  if (hi && reps >= hi) return { kg: kg + step, reps: lo || reps, why: `+${fmtNum(step)} kg`, kind: "up" };
+  return { kg, reps: hi ? Math.min(reps + 1, hi) : reps + 1, why: "+1 rep", kind: "up" };
+}
+function todayTarget(ex) {
+  const tops = recentTops(ex.id, logDate());
+  if (!tops.length) { const t = topSet(lastSets(ex.id) || []); if (t) tops.push(t); }
+  return progressTarget(ex, tops);
 }
 const fmtTarget = (t, id) => fmtSet2({ kg: +t.kg || 0, reps: t.reps }, id);
 // Exempelvärden för ett set: dagens mål om det finns, annars förra gångens set

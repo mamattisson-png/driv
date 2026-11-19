@@ -302,7 +302,8 @@ function focusView() {
       <div class="chips">${free.map(({ x, k }) => `<button data-sspair="${k}">${esc(EX[x.id].name)}</button>`).join("") || `<span class="muted small">Alla andra övningar ingår redan i ett superset.</span>`}</div></div>`;
   })() : "";
   const prevTop = prev && topSet(prev);
-  const tip = target ? `${prevTop ? `Förra gången ${fmt(prevTop)}. ` : ""}Prova <b>${fmtTarget(target, ex.id)}</b>.`
+  const why = target && { hold: " Samma vikt, sikta på hela intervallet.", down: " Vikten backar ett steg så att du klarar alla reps.", deload: " Du har stått still tre gånger: ett lättare pass nu, sedan uppåt igen." }[target.kind] || "";
+  const tip = target ? `${prevTop ? `Förra gången ${fmt(prevTop)}. ` : ""}Prova <b>${fmtTarget(target, ex.id)}</b>.${why}`
     : timed ? `Första gången: håll i ${esc(String(ex.reps).replace(/-/g, "–").replace(/\s*(s|sek(under)?)\b/, " s"))}.`
     : bw ? `Första gången: gör ${esc(String(ex.reps).replace(/-/g, "–"))} reps.`
     : `Första gången: välj en vikt du klarar ${esc(String(ex.reps).replace(/-/g, "–"))} gånger.`;
