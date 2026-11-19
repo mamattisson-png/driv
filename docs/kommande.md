@@ -109,6 +109,9 @@ Senast uppdaterad: 2026-11-06. Status bygger på dokumenterade publiceringar och
 | 105 | Hem: bara svit och dagens tre saker, det som återstår först och klart krymper; Stretch och Annan träning finns under Träna | Hem | Medel | Klar |
 | 106 | Hem: knapp till Vänner uppe till höger, med prick när en vän har tränat | Hem | Liten | Klar |
 | 107 | Kost: namn som börjar som ett annat livsmedel (Lingongrova blev lingon) hittas rätt | Kost | Liten | Klar |
+| 108 | Kost: bröd från affären går att logga i skivor (mjukt bröd ca 35 g, knäckebröd ca 12 g) | Kost | Liten | Klar |
+| 109 | Kost: Proviva, Kalles kaviar, Gainomax, Barebells, Nocco, Celsius, Daim, Piggelin, Pannbiff m.fl.; Messmör, Kesella, Nudlar, Risifrutti och Special K hittas rätt | Kost | Liten | Klar |
+| 110 | Träna: telefonen vibrerar när ett pass eller en aktivitet är klar (Android) | Träna | Liten | Klar |
 
 ## Detaljer och acceptanskriterier
 

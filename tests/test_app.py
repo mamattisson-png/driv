@@ -2917,3 +2917,12 @@ def test_vanner_knapp_pa_hem(page):
     page.evaluate("account.step = 'out'; social.feed = []; render()")
     page.click('.homehead [data-tab="vanner"]')
     assert page.evaluate("tab") == "vanner"
+
+
+def test_vibration_nar_passet_ar_klart(page):
+    start(page)
+    page.evaluate("window.buzz = []; navigator.vibrate = p => { window.buzz.push(p); return true; }")
+    d = page.evaluate("S.plan.days[0].id")
+    page.evaluate(f"""() => {{ const w = workoutFor(dayById('{d}')); S.plan.days[0].ex.forEach(e => w.sets[e.id] = [{{ kg: 10, reps: 8, ok: true }}]); save(); }}""")
+    page.evaluate(f"""() => {{ const b = document.createElement('button'); b.dataset.finish = '{d}'; document.body.appendChild(b); b.click(); }}""")
+    assert [60, 50, 60, 50, 220] in page.evaluate("window.buzz")

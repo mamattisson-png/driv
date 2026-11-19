@@ -278,7 +278,23 @@ def test_helt_ord_vinner_over_borjan_av_ordet(page):
     page.evaluate('addProducts([%s])' % json.dumps({**PRODUCT, 'code': '7310000000002', 'product_name_sv': 'LingonGrova', 'brands': ['Testbagarn'], 'quantity': '500 g',
                                                     'nutriments': {'energy-kcal_100g': 266, 'proteins_100g': 8.8}}))
     item = page.evaluate("parseFood('lingongrova').items[0]")
+    # Bröd har en vikt per skiva
+    two = page.evaluate("parseFood('2 skivor lingongrova').items[0]")
+    assert two['known'] and two['grams'] == 70
     assert item['known'] and 'LingonGrova' in item['name']
     # Böjningar av ett känt livsmedel fungerar som förut
     assert page.evaluate("parseFood('bananer').items[0].food.n[0]") == page.evaluate("findFood('banan').n[0]")
     assert page.evaluate("parseFood('lingon').items[0].food.n").count('lingon') == 1
+
+
+def test_vanliga_varor_och_inga_konstiga_gissningar(page):
+    start(page)
+    page.wait_for_timeout(500)
+    name = lambda q: page.evaluate("q => { const i = parseFood(q).items[0]; return i.known ? i.name : null; }", q)
+    # Tidigare fel träffar
+    assert name("messmör") == "Messmör" and name("kesella") == "Kesella" and name("nudlar") == "Nudlar kokta"
+    assert name("risifrutti") == "Risifrutti" and name("special k") == "Special K"
+    # Tidigare saknade
+    for q in ["proviva", "kalles kaviar", "gainomax", "barebells", "nocco", "celsius", "daim", "piggelin", "pannbiff"]:
+        assert name(q), q
+    assert name("2 burkar nocco") == "Nocco"

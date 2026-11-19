@@ -48,6 +48,10 @@ function offFood(pr) {
     kcal: Math.round(kcal * 10) / 10, p, fat, fib, updated: productNumber(pr.last_modified_t, 5000000000) };
   if (basis === "ml") food.dl = 100;
   if (pack) food.forp = pack.amount;
+  // Bröd får en vikt per skiva, så att "2 skivor" fungerar: knäckebröd ca 12 g, mjukt bröd ca 35 g
+  const cats = pr.categories_tags || [], words = fold(`${brand} ${name}`);
+  const crisp = cats.includes("en:crispbreads") || /knack|crisp|ragrut|skorp|wasa|leksands|hart brod/.test(words);
+  if (basis === "g" && (crisp || cats.includes("en:breads") || /brod|grova|limpa|kavring|levain|toast/.test(words)) && !/tarta|kex|sockerkaka|chokladkaka|kladdkaka/.test(words)) food.skiva = crisp ? 12 : 35;
   return food;
 }
 function registerProduct(food) {
