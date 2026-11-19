@@ -2952,3 +2952,15 @@ def test_progression_platå_och_backa(page):
     assert r["down"]["kind"] == "down" and r["down"]["kg"] == 57.5
     assert r["deload"]["kind"] == "deload" and r["deload"]["kg"] == 55
     assert r["climbing"]["kind"] == "up"
+
+
+def test_frys_sviten(page):
+    start(page)
+    r = page.evaluate("""() => { const ws = weekStart(TODAY), add = (w, n) => { for (let k = 0; k < n; k++) { const d = shift(shift(ws, -7 * w), k); S.log[d] = { workouts: [{ dayId: S.plan.days[0].id, done: true, sets: {} }], dailies: {}, food: [] }; } };
+      S.plan.count = 3; [2, 3, 4].forEach(w => add(w, 3)); add(1, 1);
+      const one = streakInfo();
+      // Två missade veckor i rad bryter sviten
+      Object.keys(S.log).forEach(d => { if (d >= shift(ws, -14) && d < shift(ws, -7)) delete S.log[d]; });
+      return { one, two: streakInfo() }; }""")
+    assert r["one"]["n"] == 3 and len(r["one"]["frozen"]) == 1
+    assert r["two"]["n"] == 0

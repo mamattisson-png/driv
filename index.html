@@ -39,7 +39,7 @@
      Text och knappar har egna toner så att kontrasten når 4,5:1 (WCAG AA); --accent används för staplar, prickar och ramar. */
   :root {
     --bg: #f5f4f1; --card: #ffffff; --card-2: #efede9; --text: #141518; --muted: #5d6168;
-    --line: #e3e0da; --line-strong: #c9c5be; --mhead: #efede9; --accent: #ff6b1a; --accent-soft: #fde6d6;
+    --line: #e3e0da; --line-strong: #c9c5be; --mhead: #efede9; --accent: #ff6b1a; --accent-soft: #fde6d6; --ice: #1a5f99; --ice-soft: #e1eefa;
     --ok: #1f9d55; --ok-soft: #dcf3e5; --bad: #d23b3b; --bad-soft: #fbe3e3;
     --push: #c94800; --pull: #2f6fdb; --legs: #8a4fd6; --upper: #c2410c; --lower: #0e7c86; --full: #4d7c0f;
     --equip: #9aa1ab;
@@ -57,7 +57,7 @@
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
       --bg: #0d0e10; --card: #16181b; --card-2: #1f2226; --text: #f4f2ef; --muted: #9ea3aa;
-      --line: #2a2d32; --line-strong: #3a3e44; --mhead: #1f2226; --accent: #ff6b1a; --accent-soft: #3a2312;
+      --line: #2a2d32; --line-strong: #3a3e44; --mhead: #1f2226; --accent: #ff6b1a; --accent-soft: #3a2312; --ice: #8cc8ff; --ice-soft: #13283a;
       --ok: #6fd99a; --ok-soft: #173325; --bad: #ff9a9a; --bad-soft: #3a1d1d;
       --push: #ff6b1a; --pull: #5e95ff; --legs: #b17cff; --upper: #f59e0b; --lower: #2dd4bf; --full: #84cc16;
       --equip: #6b7178;
@@ -73,7 +73,7 @@
   :root[data-theme="light"] { color-scheme: light; }
   :root[data-theme="dark"] {
     --bg: #0d0e10; --card: #16181b; --card-2: #1f2226; --text: #f4f2ef; --muted: #9ea3aa;
-    --line: #2a2d32; --line-strong: #3a3e44; --mhead: #1f2226; --accent: #ff6b1a; --accent-soft: #3a2312;
+    --line: #2a2d32; --line-strong: #3a3e44; --mhead: #1f2226; --accent: #ff6b1a; --accent-soft: #3a2312; --ice: #8cc8ff; --ice-soft: #13283a;
     --ok: #6fd99a; --ok-soft: #173325; --bad: #ff9a9a; --bad-soft: #3a1d1d;
     --push: #ff6b1a; --pull: #5e95ff; --legs: #b17cff; --upper: #f59e0b; --lower: #2dd4bf; --full: #84cc16;
     --equip: #6b7178;
@@ -2802,6 +2802,9 @@ button.acttile { min-height: 64px; cursor: pointer; }
 .pntag { flex: none; padding: 4px 10px; border-radius: 99px; font: 600 12px "Lexend", sans-serif; background: var(--card-2); color: var(--text); }
 .pntag.up { background: var(--ok-soft); color: var(--ok-text); }
 .pntag.deload, .pntag.down { background: var(--accent-soft); color: var(--accent-text); }
+.sv-ice { display: inline-flex; align-items: center; gap: 2px; margin-top: 4px; padding: 2px 7px; border-radius: 99px; background: var(--ice-soft); color: var(--ice); font: 600 11px "Lexend", sans-serif; }
+.sv-ice.used { background: var(--card-2); color: var(--muted); }
+.sv-saved { grid-column: 1 / -1; display: flex; align-items: center; gap: 6px; margin: 6px 0 0; font-size: 12px; color: var(--ice); }
 </style>
 </head>
 <body>

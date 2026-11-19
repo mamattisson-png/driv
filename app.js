@@ -897,15 +897,18 @@ function weightChart() {
 }
 
 // Sviten: veckor i rad med veckans mål nått (flamman), och veckans dagar med en ikon där man tränat
+const SNOW = `<svg viewBox="0 0 24 24" width="12" height="12" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2v20M3.3 7l17.4 10M3.3 17 20.7 7M9 4l3 3 3-3M9 20l3-3 3 3"/></svg>`;
 function streakStrip() {
-  const st = typeof weekStreak === "function" ? weekStreak() : 0, ws = weekStart(TODAY);
+  const si = typeof streakInfo === "function" ? streakInfo() : { n: 0, frozen: [], left: 0 }, st = si.n, ws = weekStart(TODAY);
+  const savedLast = si.frozen.includes(shift(ws, -7));
+  const ice = st > 0 ? `<span class="sv-ice ${si.left ? "" : "used"}" title="${si.left ? "1 frysning kvar den här månaden" : "Månadens frysning är använd"}" aria-label="${si.left ? "1 frysning kvar den här månaden" : "Månadens frysning är använd"}">${SNOW}${si.left}</span>` : "";
   const days = weekDates(ws).map((d, i) => {
     const trained = workoutsOn(d).some(w => w.done) || actsOn(d).length > 0;
     return `<span class="sv-d ${d === TODAY ? "t" : ""} ${d > TODAY ? "f" : ""}"><small>${WD[i][0]}</small><i class="${trained ? "on" : ""}">${trained ? icon("trana", 16) : +d.slice(-2)}</i></span>`;
   }).join("");
   return `<section class="sv" aria-label="Din svit: ${st} ${st === 1 ? "vecka" : "veckor"} i rad">
-    <div class="sv-f"><svg viewBox="0 0 24 24" width="46" height="46" aria-hidden="true"><path d="M12.5 1.5c.6 3.2 4 5.3 5.2 8.6 1.6 4.4-.9 11.4-5.7 11.4S4.6 18.2 5 14.2c.3-2.6 1.8-4.2 2.9-5.3.1 1.7.8 2.8 1.6 3.3-.3-4.3 1.2-7.6 3-10.7Z" fill="var(--accent-strong)"/><text x="12" y="18.2" text-anchor="middle" class="sv-n">${st}</text></svg><small>${st === 1 ? "Vecka" : "Veckor"}</small></div>
-    <div class="sv-days">${days}</div></section>`;
+    <div class="sv-f"><svg viewBox="0 0 24 24" width="46" height="46" aria-hidden="true"><path d="M12.5 1.5c.6 3.2 4 5.3 5.2 8.6 1.6 4.4-.9 11.4-5.7 11.4S4.6 18.2 5 14.2c.3-2.6 1.8-4.2 2.9-5.3.1 1.7.8 2.8 1.6 3.3-.3-4.3 1.2-7.6 3-10.7Z" fill="var(--accent-strong)"/><text x="12" y="18.2" text-anchor="middle" class="sv-n">${st}</text></svg><small>${st === 1 ? "Vecka" : "Veckor"}</small>${ice}</div>
+    <div class="sv-days">${days}${savedLast ? `<p class="sv-saved">${SNOW}Förra veckan frystes, sviten lever</p>` : ""}</div></section>`;
 }
 
 // ---------- Rendering ----------
