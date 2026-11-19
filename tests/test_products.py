@@ -309,3 +309,18 @@ def test_skannad_dryck_raknas_i_ml(page):
     page.wait_for_selector("#scangrams")
     assert "Mängd (ml)" in page.inner_text(".scan-product") and page.input_value("#scangrams") == "330"
     assert "per 100 ml" in page.inner_text(".scan-product")
+
+
+def test_lampa_i_skannern(page):
+    start(page)
+    page.evaluate("""() => { const c = document.createElement('canvas'); c.width = 640; c.height = 480; c.getContext('2d').fillRect(0, 0, 10, 10);
+      const stream = c.captureStream(5), track = stream.getVideoTracks()[0]; window.torch = [];
+      track.getCapabilities = () => ({ torch: true }); track.applyConstraints = async c => { window.torch.push(c.advanced[0].torch); };
+      window.BarcodeDetector = class { async detect() { return []; } };
+      navigator.mediaDevices.getUserMedia = async () => stream; openScanner(); }""")
+    page.wait_for_selector("[data-scantorch]:not([hidden])")
+    page.click("[data-scantorch]")
+    page.wait_for_function("document.querySelector('[data-scantorch]').getAttribute('aria-pressed') === 'true'")
+    assert True in page.evaluate("window.torch")
+    page.click("[data-scantorch]")
+    page.wait_for_function("document.querySelector('[data-scantorch]').getAttribute('aria-pressed') === 'false'")
