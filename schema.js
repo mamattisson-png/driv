@@ -201,6 +201,7 @@ document.addEventListener("click", ev => {
     if (S.actRun && S.actRun.dayId === s.dayId) { w.start = S.actRun.start; S.actRun = null; }
     shareAct(a, s.date, true);
     toast(`${a.name} klar`);
+    if (s.date === TODAY && typeof buzzDone === "function") buzzDone();
   }
   actSheet = null; save(); render();
 }, true);

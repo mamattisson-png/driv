@@ -903,6 +903,8 @@ let profBack = "idag";   // fliken man kom från, dit tillbaka-pilen i Profil g�
 let vikBack = "idag";   // dit tillbaka-pilen på Vikt går
 let vannerBack = "idag"; // dit tillbaka-pilen på vänsidan går
 let passDone = null;     // { dayId, date } medan skärmen för ett avslutat pass visas
+// Ett avslutat pass känns i handen: tre korta och en lång (fungerar på Android, inte på iPhone)
+function buzzDone() { try { if (navigator.vibrate) navigator.vibrate([60, 50, 60, 50, 220]); } catch (e) { /* inte tillåtet */ } }
 let chosenDay = null;
 let editing = false;
 let dailyEditing = false;
@@ -2137,7 +2139,7 @@ document.addEventListener("click", ev => {
     shareWorkout(dayById(ds.finish), logDate(), w.done);
     // Ett sparat pass visar skärmen Pass klart; i efterhand går man tillbaka till dagen i Historik
     if (w.done && editDate) { histDay = editDate; editDate = null; tab = "historik"; }
-    else if (w.done) { passDone = { dayId: ds.finish, date: logDate(), ex: ranEx }; tab = "idag"; }
+    else if (w.done) { passDone = { dayId: ds.finish, date: logDate(), ex: ranEx }; tab = "idag"; buzzDone(); }
   }
   // Uppvärmning under passet: ett lättare set läggs före arbetsseten och blir det man står på
   // Dropset: en drop till, ytterligare ca 25 % lättare
