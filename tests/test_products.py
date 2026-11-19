@@ -278,6 +278,9 @@ def test_helt_ord_vinner_over_borjan_av_ordet(page):
     page.evaluate('addProducts([%s])' % json.dumps({**PRODUCT, 'code': '7310000000002', 'product_name_sv': 'LingonGrova', 'brands': ['Testbagarn'], 'quantity': '500 g',
                                                     'nutriments': {'energy-kcal_100g': 266, 'proteins_100g': 8.8}}))
     item = page.evaluate("parseFood('lingongrova').items[0]")
+    # Bröd har en vikt per skiva
+    two = page.evaluate("parseFood('2 skivor lingongrova').items[0]")
+    assert two['known'] and two['grams'] == 70
     assert item['known'] and 'LingonGrova' in item['name']
     # Böjningar av ett känt livsmedel fungerar som förut
     assert page.evaluate("parseFood('bananer').items[0].food.n[0]") == page.evaluate("findFood('banan').n[0]")
