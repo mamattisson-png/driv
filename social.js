@@ -187,35 +187,40 @@ function weekTop() {
     <div class="tlist">${list}</div>
     ${rows.length > 3 ? `<button class="fmore" data-ftop>${friendsTopAll ? "Visa färre" : "Hela listan"}${icon(friendsTopAll ? "up" : "right", 16)}</button>` : ""}</section>`;
 }
-// Utmaningar mot vänner: först till ett antal pass, eller flest pass under en period
+// Utmaningar mot en eller flera vänner: först till ett antal pass, eller flest pass under en period.
+// people: [{ name, me, n, reached }]
 function chStatus(c) {
-  const ended = c.end_day < TODAY, left = Math.round((parse(c.end_day) - parse(TODAY)) / 864e5) + 1, them = esc(c.them_name);
-  const me = c.me_reached, th = c.them_reached;
+  const ended = c.end_day < TODAY, left = Math.round((parse(c.end_day) - parse(TODAY)) / 864e5) + 1, P = c.people || [];
+  const who = list => list.map(p => p.me ? "Du" : esc(p.name)), join = a => a.length > 1 ? `${a.slice(0, -1).join(", ")} och ${a[a.length - 1]}` : a[0];
+  const days = `${left} ${left === 1 ? "dag" : "dagar"} kvar`;
   if (c.kind === "forst") {
-    if (me && (!th || me < th)) return ["win", "Du var först!"];
-    if (th && (!me || th < me)) return ["lose", `${them} var först`];
-    if (me && th) return ["tie", "Samma dag, oavgjort"];
+    const done = P.filter(p => p.reached), first = done.length ? done.reduce((a, p) => p.reached < a ? p.reached : a, done[0].reached) : null;
+    const win = done.filter(p => p.reached === first);
+    if (win.length) return [win.some(p => p.me) ? "win" : "lose", win.length === 1 ? (win[0].me ? "Du var först!" : `${esc(win[0].name)} var först`) : `${join(who(win))} var först samma dag`];
     if (ended) return ["tie", "Ingen nådde målet"];
-  } else if (ended) {
-    return +c.me_n > +c.them_n ? ["win", "Du vann!"] : +c.me_n < +c.them_n ? ["lose", `${them} vann`] : ["tie", "Oavgjort"];
-  } else if (+c.me_n !== +c.them_n) return [+c.me_n > +c.them_n ? "lead" : "", `${+c.me_n > +c.them_n ? "Du leder" : `${them} leder`} · ${left} ${left === 1 ? "dag" : "dagar"} kvar`];
-  return ["", `${left} ${left === 1 ? "dag" : "dagar"} kvar`];
+  }
+  const top = Math.max(0, ...P.map(p => +p.n)), lead = P.filter(p => +p.n === top);
+  if (ended) return lead.length === P.length ? ["tie", "Oavgjort"] : [lead.some(p => p.me) ? "win" : "lose", lead.length === 1 ? (lead[0].me ? "Du vann!" : `${esc(lead[0].name)} vann`) : `${join(who(lead))} delar segern`];
+  if (!top || lead.length === P.length) return ["", days];
+  return [lead.some(p => p.me) ? "lead" : "", `${lead.length === 1 ? (lead[0].me ? "Du leder" : `${esc(lead[0].name)} leder`) : `${join(who(lead))} leder`} · ${days}`];
 }
 function challengesView() {
   if (social.challenges == null || !social.friends.length) return "";
   const list = social.challenges.map(c => {
-    const max = c.kind === "forst" ? +c.goal : Math.max(1, +c.me_n, +c.them_n), [cls, txt] = chStatus(c);
-    const bar = (name, n, me) => `<div class="chrow ${me ? "me" : ""}"><span class="chname">${me ? "Du" : esc(name)}</span><span class="chbar"><i style="width:${Math.min(100, Math.round(100 * n / max))}%"></i></span><b>${n}</b></div>`;
+    const P = (c.people || []).slice().sort((a, b) => (c.kind === "forst" && (a.reached || "z") !== (b.reached || "z") ? ((a.reached || "z") < (b.reached || "z") ? -1 : 1) : 0) || +b.n - +a.n || b.me - a.me);
+    const max = c.kind === "forst" ? +c.goal : Math.max(1, ...P.map(p => +p.n)), [cls, txt] = chStatus(c);
+    const bar = p => `<div class="chrow ${p.me ? "me" : ""}"><span class="chname">${p.me ? "Du" : esc(p.name)}</span><span class="chbar"><i style="width:${Math.min(100, Math.round(100 * +p.n / max))}%"></i></span><b>${+p.n}</b></div>`;
+    const others = P.length - 1;
     return `<div class="chcard"><div class="row between"><span class="col"><b>${c.kind === "forst" ? `Först till ${c.goal} pass` : "Flest pass"}</b>
-        <span class="muted small">${shortDate(c.start_day)}–${shortDate(c.end_day)}</span></span>
-        <button class="iconbtn ghost chdel ${chArm === c.id ? "armed" : ""}" data-chdel="${c.id}" aria-label="${chArm === c.id ? "Tryck igen för att ta bort" : "Ta bort utmaningen"}">${chArm === c.id ? "Ta bort?" : icon("close", 16)}</button></div>
-      ${bar("", +c.me_n, true)}${bar(c.them_name, +c.them_n, false)}
+        <span class="muted small">${shortDate(c.start_day)}–${shortDate(c.end_day)}${others > 1 ? ` · ${others + 1} deltagare` : ""}</span></span>
+        <button class="iconbtn ghost chdel ${chArm === c.id ? "armed" : ""}" data-chdel="${c.id}" aria-label="${chArm === c.id ? "Tryck igen" : c.mine ? "Ta bort utmaningen" : "Lämna utmaningen"}">${chArm === c.id ? (c.mine ? "Ta bort?" : "Lämna?") : icon("close", 16)}</button></div>
+      ${P.map(bar).join("")}
       <span class="chstat ${cls}">${txt}</span></div>`;
   }).join("");
   return `<section class="fsec" aria-label="Utmaningar"><div class="row between fsec-h"><h2 class="klabel">Utmaningar</h2>
-      <button class="linkbtn2 small" data-fsheet="utmana">${icon("plus", 14)}Utmana en vän</button></div>
-    ${list ? `<div class="card chlist">${list}</div>` : `<button class="card fempty chempty" data-fsheet="utmana"><span class="hricon">${icon("flame", 22)}</span><span class="col"><b>Utmana en vän</b>
-      <span class="muted small">Först till 12 pass, eller flest pass den här månaden</span></span></button>`}</section>`;
+      <button class="linkbtn2 small" data-fsheet="utmana">${icon("plus", 14)}Ny utmaning</button></div>
+    ${list ? `<div class="card chlist">${list}</div>` : `<button class="card fempty chempty" data-fsheet="utmana"><span class="hricon">${icon("flame", 22)}</span><span class="col"><b>Utmana dina vänner</b>
+      <span class="muted small">En eller flera: först till 12 pass, eller flest pass den här månaden</span></span></button>`}</section>`;
 }
 function chPeriod(per) {
   if (per === "vecka") { const ws = weekStart(TODAY); return [ws, shift(ws, 6)]; }
@@ -223,12 +228,13 @@ function chPeriod(per) {
   return [TODAY.slice(0, 8) + "01", monthEnd(TODAY)];
 }
 function challengeSheet(wrap, close) {
-  const d = chDraft || (chDraft = { friend: social.friends[0] && social.friends[0].id, kind: "forst", goal: 12, per: "manad" });
+  const d = chDraft || (chDraft = { friends: [], kind: "forst", goal: 12, per: "manad" });
+  const on = f => d.friends.includes(String(f.id)), all = social.friends.length > 1 && social.friends.every(on);
   const seg = (attr, opts, cur) => `<div class="tseg2 wide">${opts.map(([k, l]) => `<button data-${attr}="${k}" class="${cur === k ? "on" : ""}" aria-pressed="${cur === k}">${l}</button>`).join("")}</div>`;
   const [from, to] = chPeriod(d.per);
-  return wrap("Utmana en vän", `<div class="row between"><h2 class="sheeth">Utmana en vän</h2>${close}</div>
-    <div class="klabel sechead">Vem</div>
-    <div class="chips chfr">${social.friends.map(f => `<button data-chfriend="${esc(String(f.id))}" class="${String(d.friend) === String(f.id) ? "on" : ""}" aria-pressed="${String(d.friend) === String(f.id)}">${avatar(f.name, "xs")}${esc(f.name)}</button>`).join("")}</div>
+  return wrap("Ny utmaning", `<div class="row between"><h2 class="sheeth">Ny utmaning</h2>${close}</div>
+    <div class="row between sechead"><span class="klabel">Vilka${d.friends.length ? ` · ${d.friends.length}` : ""}</span>${social.friends.length > 1 ? `<button class="linkbtn2 small" data-chall>${all ? "Ingen" : "Alla"}</button>` : ""}</div>
+    <div class="chips chfr">${social.friends.map(f => `<button data-chfriend="${esc(String(f.id))}" class="${on(f) ? "on" : ""}" aria-pressed="${on(f)}">${avatar(f.name, "xs")}${esc(f.name)}</button>`).join("")}</div>
     <div class="klabel sechead">Utmaning</div>
     ${seg("chkind", [["forst", "Först till"], ["flest", "Flest pass"]], d.kind)}
     ${d.kind === "forst" ? `<div class="row between chgoal"><span>Antal pass</span><span class="ux-stp"><button data-chgoal="-1" aria-label="Färre pass">${icon("minus", 16)}</button><b>${d.goal}</b><button data-chgoal="1" aria-label="Fler pass">${icon("plus", 16)}</button></span></div>` : ""}
@@ -236,7 +242,7 @@ function challengeSheet(wrap, close) {
     ${seg("chper", [["vecka", "Veckan"], ["manad", "Månaden"], ["30", "30 dagar"]], d.per)}
     <p class="muted small">${shortDate(from)}–${shortDate(to)}. Pass ni redan kört under perioden räknas med.</p>
     ${social.msg ? `<p class="small warntext">${esc(social.msg)}</p>` : ""}
-    <button class="primary wide bigbtn" data-chcreate ${d.friend && !social.busy ? "" : "disabled"}>Skicka utmaningen</button>`);
+    <button class="primary wide bigbtn" data-chcreate ${d.friends.length && !social.busy ? "" : "disabled"}>${d.friends.length > 1 ? `Utmana ${d.friends.length} vänner` : "Skicka utmaningen"}</button>`);
 }
 function friendsLinks() {
   const p = social.profile, n = social.friends.length;
@@ -354,7 +360,7 @@ async function socialAction(fn, okMsg) {
 }
 
 document.addEventListener("click", ev => {
-  const t = ev.target.closest("[data-kudos],[data-kudosall],[data-fday],[data-ftoday],[data-ftop],[data-flist],[data-fsheet],[data-fsort],[data-fjump],[data-invitelater],[data-gofriends],[data-dropcode],[data-profsave],[data-addfriend],[data-unfriend],[data-sharecode],[data-renameprof],[data-ftrange],[data-chfriend],[data-chkind],[data-chgoal],[data-chper],[data-chcreate],[data-chdel]");
+  const t = ev.target.closest("[data-kudos],[data-kudosall],[data-fday],[data-ftoday],[data-ftop],[data-flist],[data-fsheet],[data-fsort],[data-fjump],[data-invitelater],[data-gofriends],[data-dropcode],[data-profsave],[data-addfriend],[data-unfriend],[data-sharecode],[data-renameprof],[data-ftrange],[data-chfriend],[data-chall],[data-chkind],[data-chgoal],[data-chper],[data-chcreate],[data-chdel]");
   if (!t || t.disabled) return;
   const ds = t.dataset;
   if (ds.kudos) {
@@ -373,14 +379,15 @@ document.addEventListener("click", ev => {
   else if (ds.ftoday !== undefined) { friendsTodayAll = !friendsTodayAll; render(); }
   else if (ds.ftop !== undefined) { friendsTopAll = !friendsTopAll; render(); }
   else if (ds.ftrange) { friendsTopRange = ds.ftrange; render(); }
-  else if (ds.chfriend) { chDraft.friend = ds.chfriend; render(); }
+  else if (ds.chfriend) { const f = chDraft.friends, i = f.indexOf(ds.chfriend); if (i >= 0) f.splice(i, 1); else f.push(ds.chfriend); render(); }
+  else if (ds.chall !== undefined) { chDraft.friends = social.friends.every(f => chDraft.friends.includes(String(f.id))) ? [] : social.friends.map(f => String(f.id)); render(); }
   else if (ds.chkind) { chDraft.kind = ds.chkind; render(); }
   else if (ds.chgoal) { chDraft.goal = Math.max(1, Math.min(100, chDraft.goal + +ds.chgoal)); render(); }
   else if (ds.chper) { chDraft.per = ds.chper; render(); }
   else if (ds.chcreate !== undefined) {
     const d = chDraft, [from, to] = chPeriod(d.per);
-    socialAction(() => socialRpc("driv_challenge_create", { p_friend: d.friend, p_kind: d.kind, p_goal: d.kind === "forst" ? d.goal : null, p_start: from, p_end: to }))
-      .then(() => { if (!social.msg) { friendsSheet = null; chDraft = null; toast("Utmaningen är skickad"); render(); } });
+    socialAction(() => socialRpc("driv_challenge_create", { p_friends: d.friends, p_kind: d.kind, p_goal: d.kind === "forst" ? d.goal : null, p_start: from, p_end: to }))
+      .then(() => { if (!social.msg) { if (typeof track === "function") track("utmaning_skapad"); friendsSheet = null; chDraft = null; toast(d.friends.length > 1 ? `${d.friends.length} vänner är utmanade` : "Utmaningen är skickad"); render(); } });
   }
   else if (ds.chdel) {
     if (chArm !== +ds.chdel) { chArm = +ds.chdel; render(); return; }

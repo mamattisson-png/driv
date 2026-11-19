@@ -897,18 +897,22 @@ function weightChart() {
 }
 
 // Sviten: veckor i rad med veckans mål nått (flamman), och veckans dagar med en ikon där man tränat
+let iceInfo = false;   // förklaringen av frysningen visas under sviten
+document.addEventListener("click", ev => { const b = ev.target.closest && ev.target.closest("[data-iceinfo]"); if (!b) return; ev.stopImmediatePropagation(); iceInfo = !iceInfo; render(); }, true);
 const SNOW = `<svg viewBox="0 0 24 24" width="12" height="12" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2v20M3.3 7l17.4 10M3.3 17 20.7 7M9 4l3 3 3-3M9 20l3-3 3 3"/></svg>`;
 function streakStrip() {
   const si = typeof streakInfo === "function" ? streakInfo() : { n: 0, frozen: [], left: 0 }, st = si.n, ws = weekStart(TODAY);
   const savedLast = si.frozen.includes(shift(ws, -7));
-  const ice = st > 0 ? `<span class="sv-ice ${si.left ? "" : "used"}" title="${si.left ? "1 frysning kvar den här månaden" : "Månadens frysning är använd"}" aria-label="${si.left ? "1 frysning kvar den här månaden" : "Månadens frysning är använd"}">${SNOW}${si.left}</span>` : "";
+  const ice = st > 0 ? `<button class="sv-ice ${si.left ? "" : "used"}" data-iceinfo aria-expanded="${iceInfo}" aria-label="${si.left ? "1 frysning kvar den här månaden" : "Månadens frysning är använd"}. Visa förklaring">${SNOW}${si.left}</button>` : "";
+  const iceText = iceInfo ? `<p class="sv-info">${SNOW}<span><b>Frysning.</b> Missar du veckans mål räddar en frysning sviten, så att den inte bryts. Du får en per månad, och den används av sig själv.
+    ${si.left ? "Du har en kvar den här månaden." : "Månadens frysning är redan använd, nästa kommer den 1:a."} Två missade veckor i rad bryter sviten ändå.</span></p>` : "";
   const days = weekDates(ws).map((d, i) => {
     const trained = workoutsOn(d).some(w => w.done) || actsOn(d).length > 0;
     return `<span class="sv-d ${d === TODAY ? "t" : ""} ${d > TODAY ? "f" : ""}"><small>${WD[i][0]}</small><i class="${trained ? "on" : ""}">${trained ? icon("trana", 16) : +d.slice(-2)}</i></span>`;
   }).join("");
   return `<section class="sv" aria-label="Din svit: ${st} ${st === 1 ? "vecka" : "veckor"} i rad">
     <div class="sv-f"><svg viewBox="0 0 24 24" width="46" height="46" aria-hidden="true"><path d="M12.5 1.5c.6 3.2 4 5.3 5.2 8.6 1.6 4.4-.9 11.4-5.7 11.4S4.6 18.2 5 14.2c.3-2.6 1.8-4.2 2.9-5.3.1 1.7.8 2.8 1.6 3.3-.3-4.3 1.2-7.6 3-10.7Z" fill="var(--accent-strong)"/><text x="12" y="18.2" text-anchor="middle" class="sv-n">${st}</text></svg><small>${st === 1 ? "Vecka" : "Veckor"}</small>${ice}</div>
-    <div class="sv-days">${days}${savedLast ? `<p class="sv-saved">${SNOW}Förra veckan frystes, sviten lever</p>` : ""}</div></section>`;
+    <div class="sv-days">${days}${savedLast ? `<p class="sv-saved">${SNOW}Förra veckan frystes, sviten lever</p>` : ""}</div>${iceText}</section>`;
 }
 
 // ---------- Rendering ----------
@@ -967,7 +971,7 @@ function celebrate() {
     setTimeout(() => el.remove(), 1200);
   }
   // Alla dailys klara: samma tydliga vibration som när ett pass är klart
-  if (big) buzzDone(); else if (navigator.vibrate) try { navigator.vibrate(30); } catch (e) { /* inte tillåtet */ }
+  if (big) { buzzDone(); if (typeof track === "function") track("dailys_klara"); } else if (navigator.vibrate) try { navigator.vibrate(30); } catch (e) { /* inte tillåtet */ }
 }
 function render() {
   if (libCtx && libCtx.tab !== tab) libCtx = null;   // en annan flik lämnar biblioteket
@@ -1175,6 +1179,7 @@ const VIEWS = {
   },
   stretchguide() { return muscleView(); },
   varden() { return vardenView(); },
+  statistik() { return statsView(); },
   vagning() {
     const back = { pass: "Träna", dailys: "Dailys", kost: "Kost", historik: "Historik", profil: "Inställningar", varden: "Dina värden" }[vikBack] || "Hem";
     const days = Object.keys(weights()).sort().reverse(), last = latestWeight();
@@ -1349,6 +1354,10 @@ const VIEWS = {
         <div class="prow"><div class="prow-line"><button class="prow-head" data-tab="kommande"><span class="pic">${icon("idea", 20)}</span><span class="grow"><b>Kommande funktioner</b>
           <span class="muted small">Se vad som är på gång i Driv</span></span><span class="chev">${icon("right", 18)}</span></button></div></div>
         ${sbEnabled ? profRow("tyck", "chat", "Tyck till", "Vad saknas, vad är krångligt?", feedbackCard()) : ""}
+        ${sbEnabled ? profRow("statistik", "trend", "Anonym statistik", S.noStats ? "Av" : "Hjälper oss se vad som används och vad som går fel", null,
+          `<input type="checkbox" role="switch" class="switch" data-nostats aria-label="Skicka anonym statistik" ${S.noStats ? "" : "checked"}>`) : ""}
+        ${typeof stats !== "undefined" && stats.admin ? `<div class="prow"><div class="prow-line"><button class="prow-head" data-tab="statistik"><span class="pic">${icon("trend", 20)}</span><span class="grow"><b>Statistik</b>
+          <span class="muted small">Aktiva, händelser och fel (bara för dig)</span></span><span class="chev">${icon("right", 18)}</span></button></div></div>` : ""}
         ${isDevAccount() ? `<div class="prow"><div class="prow-line"><button class="prow-head" data-opentest><span class="pic">${icon("test", 20)}</span><span class="grow"><b>Testläge</b>
           <span class="muted small">Egen data som inte rör ditt konto</span></span><span class="chev">${icon("right", 18)}</span></button></div></div>` : ""}`)}
 `;
@@ -2190,7 +2199,7 @@ document.addEventListener("click", ev => {
     shareWorkout(dayById(ds.finish), logDate(), w.done);
     // Ett sparat pass visar skärmen Pass klart; i efterhand går man tillbaka till dagen i Historik
     if (w.done && editDate) { histDay = editDate; editDate = null; tab = "historik"; }
-    else if (w.done) { passDone = { dayId: ds.finish, date: logDate(), ex: ranEx }; tab = "idag"; buzzDone(); }
+    else if (w.done) { passDone = { dayId: ds.finish, date: logDate(), ex: ranEx }; tab = "idag"; buzzDone(); if (typeof track === "function") track("pass_klart"); }
   }
   // Uppvärmning under passet: ett lättare set läggs före arbetsseten och blir det man står på
   // Dropset: en drop till, ytterligare ca 25 % lättare
@@ -2435,6 +2444,7 @@ document.addEventListener("input", ev => {
 
 restoreOldSwaps();
 render();
+if (typeof trackWeek === "function") trackWeek();   // anonym: en signal per enhet och vecka
 connectCloud();
 connectSupabase();
 remindIfDue();

@@ -202,6 +202,7 @@ document.addEventListener("click", ev => {
     shareAct(a, s.date, true);
     toast(`${a.name} klar`);
     if (s.date === TODAY && typeof buzzDone === "function") buzzDone();
+    if (typeof track === "function") track("aktivitet_loggad");
   }
   actSheet = null; save(); render();
 }, true);
