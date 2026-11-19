@@ -2964,3 +2964,14 @@ def test_frys_sviten(page):
       return { one, two: streakInfo() }; }""")
     assert r["one"]["n"] == 3 and len(r["one"]["frozen"]) == 1
     assert r["two"]["n"] == 0
+
+
+def test_isbrickan_forklarar_frysningen(page):
+    start(page)
+    page.evaluate("""() => { const ws = weekStart(TODAY); for (const w of [1, 2]) for (const k of [0, 2, 4]) { const d = shift(shift(ws, -7 * w), k);
+      S.log[d] = { workouts: [{ dayId: S.plan.days[0].id, done: true, sets: {} }], dailies: {}, food: [] }; } S.plan.count = 3; save(); tab = 'idag'; render(); }""")
+    assert page.locator(".sv-info").count() == 0
+    page.click("[data-iceinfo]")
+    assert "räddar en frysning sviten" in page.inner_text(".sv-info")
+    page.click("[data-iceinfo]")
+    assert page.locator(".sv-info").count() == 0
