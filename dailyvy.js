@@ -51,6 +51,13 @@ const dlToggle = () => `<div class="dl-top"><div class="dl-tg" role="tablist" ar
   `<button role="tab" data-dlview="${k}" class="${dlView === k ? "on" : ""}" aria-selected="${dlView === k}">${l}</button>`).join("")}</div>
   <button class="dl-upp" data-rutpage aria-label="Upplägg">${icon("upplagg", 20)}</button></div>`;
 
+// Ringen runt bocken: en bit per set, de klara gröna. Samma tunna linje som en vanlig bock.
+function setRing(got, tot) {
+  const r = 18, c = 2 * Math.PI * r, gap = tot > 1 ? 4 : 0, seg = c / tot - gap;
+  const arcs = Array.from({ length: tot }, (_, i) => `<circle cx="20" cy="20" r="${r}" fill="none" stroke-width="2.5" stroke-linecap="round" class="${i < got ? "ok" : ""}"
+    stroke-dasharray="${seg.toFixed(2)} ${(c - seg).toFixed(2)}" stroke-dashoffset="${(-(i * c / tot) - gap / 2).toFixed(2)}"/>`).join("");
+  return `<svg class="dl-ring" viewBox="0 0 40 40" aria-hidden="true">${arcs}</svg>`;
+}
 function dlDayView() {
   const date = logDate(), ex = dailyList(date), rut = routineOn(date), a = S.supplements || [];
   const n = ex.filter(e => dailyDone(date, e.id)).length, next = ex.find(e => !dailyDone(date, e.id));
@@ -64,7 +71,7 @@ function dlDayView() {
     // Flera set: ringen runt bocken fylls ett set i taget
     const tot = Math.max(1, +e.sets || 1), got = ok ? tot : Math.min(tot - 1, dailySetsDone(date, e.id)), part = !ok && got > 0;
     const ck = tot > 1 && !isRun(e.id) && !ok
-      ? `<button class="dl-ck sets ${part ? "part" : ""}" style="--p:${Math.round(100 * got / tot)}%" data-dcheck="${e.id}" aria-label="${esc(x.name)}: set ${got + 1} av ${tot} klart">${part ? `<b>${got}/${tot}</b>` : icon("check", 20)}</button>`
+      ? `<button class="dl-ck sets ${part ? "part" : ""}" data-dcheck="${e.id}" aria-label="${esc(x.name)}: set ${got + 1} av ${tot} klart">${setRing(got, tot)}${part ? `<b>${got}/${tot}</b>` : ""}</button>`
       : `<button class="dl-ck ${ok ? "on" : ""}" data-dcheck="${e.id}" aria-pressed="${ok}" aria-label="${esc(x.name)} klar">${icon("check", 20)}</button>`;
     return `<div class="dl-row ${ok ? "ok" : ""}">${thumb(e.id, "dl-f")}<span class="grow dl-name"><b>${esc(x.name)}</b><small>${e.sets} × ${esc(e.reps || "")}${part ? ` · ${got} av ${tot} set klara` : ""}</small></span>
       ${!ok && !isRun(e.id) ? `<button class="dl-play ${e === next ? "" : "alt"}" data-dclockstart="${e.id}" aria-label="${part ? "Fortsätt" : "Starta"} ${esc(x.name)}">${icon("play", 18)}</button>` : ""}
