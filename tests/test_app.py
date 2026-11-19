@@ -2926,3 +2926,16 @@ def test_vibration_nar_passet_ar_klart(page):
     page.evaluate(f"""() => {{ const w = workoutFor(dayById('{d}')); S.plan.days[0].ex.forEach(e => w.sets[e.id] = [{{ kg: 10, reps: 8, ok: true }}]); save(); }}""")
     page.evaluate(f"""() => {{ const b = document.createElement('button'); b.dataset.finish = '{d}'; document.body.appendChild(b); b.click(); }}""")
     assert [60, 50, 60, 50, 220] in page.evaluate("window.buzz")
+
+
+def test_ovningsnamn_bryts_inte_mitt_i_ordet(page):
+    start(page)
+    page.evaluate("tab = 'pass'; startFocus(S.plan.days[0].id); render()")
+    # Varje rad i rutan är hela ord; ett för långt ord slutar med … i stället för att brytas
+    lines = page.evaluate("[...document.querySelectorAll('.fsteps .nm .l')].map(e => [e.textContent, getComputedStyle(e).whiteSpace])")
+    assert lines and all(ws == "nowrap" for _, ws in lines)
+    first = page.evaluate("[...document.querySelectorAll('.fsteps [data-focusgo=\"0\"] .nm .l')].map(e => e.textContent).join(' ')")
+    assert first == page.evaluate("EX[S.plan.days[0].ex[0].id].name")
+    # i-knapparna i Upplägg har en tryckyta på minst 44 px
+    page.evaluate("focus = null; tab = 'dailys'; rutPage = true; rutOpen = null; render()")
+    assert page.evaluate("getComputedStyle(document.querySelector('.up-i'), '::after').inset") == "-11px"
