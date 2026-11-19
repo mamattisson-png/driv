@@ -351,6 +351,26 @@ function findFood(text, list = FOODS) {
   return best;
 }
 
+// Namnet slutar mitt i ett ord: "lingon" i "lingongrova". Då vinner ett livsmedel som har hela ordet.
+function midWord(text, food) {
+  const name = food.n.filter(n => startsWord(text, n)).sort((a, b) => b.length - a.length)[0];
+  if (!name) return false;
+  for (let i = text.indexOf(name); i >= 0; i = text.indexOf(name, i + 1)) {
+    if ((i === 0 || /[\s,(/-]/.test(text[i - 1])) && !/\p{L}/u.test(text[i + name.length] || "")) return false;
+  }
+  return true;
+}
+function wholeWordFood(text) {
+  const toks = fold(text).split(/[^\p{L}\p{N}]+/u).filter(Boolean);
+  if (!toks.length) return null;
+  let best = null;
+  for (const e of searchIndex()) {
+    const words = e.words.map(w => w.replace(/[^\p{L}\p{N}]/gu, ""));
+    if (toks.every(t => words.includes(t)) && (!best || e.key.length < best.key.length)) best = e;
+  }
+  return best ? FOODS[best.i] : null;
+}
+
 function grams(food, qty, unit) {
   if (food.basis === "portion" && unit && unit !== "portion") return null;
   if (food.code && ((food.basis === "ml" && ["g", "hg", "kg"].includes(unit)) ||
@@ -397,6 +417,7 @@ function parseItem(raw, index = 0) {
   const selected = typeof chosenProduct === "function" ? chosenProduct(s, index) : null;
   if (!selected && typeof ambiguousProduct === "function" && ambiguousProduct(s)) return { text: raw.trim(), known: false };
   let food = selected || findFood(s), corrected = null;
+  if (!selected && food && midWord(s, food)) { const whole = wholeWordFood(s); if (whole) food = whole; }
   if (!food) {
     const fz = fuzzyFood(s);
     if (fz) { food = fz.food; corrected = fz.label; }
