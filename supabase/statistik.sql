@@ -81,6 +81,7 @@ begin
 end $$;
 
 revoke execute on function public.driv_track, public.driv_report_error, public.driv_is_admin, public.driv_stats from public;
+revoke execute on function public.driv_is_admin, public.driv_stats from anon;   -- bara inloggade (och sedan bara admin)
 grant execute on function public.driv_track, public.driv_report_error to anon, authenticated;
 grant execute on function public.driv_is_admin, public.driv_stats to authenticated;
 
