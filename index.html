@@ -2900,6 +2900,28 @@ button.hstatbtn .muted { display: inline-flex; align-items: center; gap: 2px; co
 .mline b { font-weight: 600; text-align: right; }
 .mshare { margin-top: 18px; display: flex; align-items: center; justify-content: center; gap: 8px; }
 .mnote { text-align: center; margin-top: 8px; }
+.up-goal { display: flex; align-items: center; gap: 12px; width: 100%; border: 0; background: color-mix(in srgb, var(--accent-strong) 10%, var(--card)); color: var(--text); font: inherit; text-align: left; }
+.up-goal > .ic:first-child { color: var(--accent-text); }
+.up-goal .col { gap: 2px; min-width: 0; }
+.up-goal small { color: var(--muted); }
+.gr-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+.gr-tile { display: flex; flex-direction: column; gap: 4px; padding: 12px; border-radius: 18px; border: 1px solid var(--line); background: var(--card); color: var(--text); font: inherit; text-align: left; min-height: 0; }
+.gr-tile b { font-size: 15px; }
+.gr-tile small { color: var(--muted); font-size: 12px; }
+.gr-figs { display: flex; gap: 4px; margin-bottom: 4px; }
+.gr-figs span { width: 44px; height: 44px; border-radius: 12px; background: var(--card-2); display: grid; place-items: center; overflow: hidden; }
+.gr-figs svg, .gr-figs img { width: 40px; height: 40px; }
+.gr-why { margin: 2px 0 10px; line-height: 1.45; }
+.dlx.up > .klabel { display: block; margin-top: 4px; }
+.gr-row .thumb { width: 52px; height: 52px; min-height: 0; flex: none; border-radius: 14px; }
+.gr-row .thumb svg, .gr-row .thumb img { width: 46px; height: 46px; }
+.gr-meta { display: flex; gap: 8px; margin-bottom: 10px; }
+.gr-meta span { padding: 4px 10px; border-radius: 99px; background: var(--card-2); font-size: 13px; font-weight: 600; }
+.gr-row { display: flex; align-items: center; gap: 12px; }
+.gr-row .col { gap: 2px; min-width: 0; }
+.gr-care { margin: 12px 4px 0; }
+.gr-add { margin-top: 16px; }
+.gr-note { text-align: center; margin-top: 8px; }
 </style>
 </head>
 <body>
@@ -2939,6 +2961,7 @@ button.hstatbtn .muted { display: inline-flex; align-items: center; gap: 2px; co
 <script src="guide.js"></script>
 <script src="rutiner.js"></script>
 <script src="dailyvy.js"></script>
+<script src="malrutiner.js"></script>
 <script src="varden.js"></script>
 <script src="grafer.js"></script>
 <script src="app.js"></script>

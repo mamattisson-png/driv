@@ -271,3 +271,18 @@ def test_dailys_kan_startas_i_valfri_ordning(page):
     assert page.locator('[data-dclockstart]').count() == 2
     page.click('[data-dclockstart=russian_twist]')
     assert page.evaluate("dailyClock.id") == 'russian_twist'
+
+
+def test_rutin_efter_mal(page):
+    start(page)
+    # Alla mål bygger på övningar som finns
+    assert page.evaluate("GOAL_ROUTINES.flatMap(g => g.ex.map(s => s.split('@')[0]).filter(id => !EX[id]))") == []
+    page.evaluate("S.dailyRoutines = []; save(); tab = 'dailys'; rutPage = true; rutOpen = null; render()")
+    page.click("[data-goallist]")
+    assert page.locator("[data-goalroutine]").count() == page.evaluate("GOAL_ROUTINES.length")
+    page.click('[data-goalroutine="landrygg"]')
+    assert "Stel ländrygg" in page.inner_text("h1") and "vårdpersonal" in page.inner_text("#app")
+    page.click("[data-goaladd]")
+    r = page.evaluate("S.dailyRoutines[0]")
+    assert r["name"] == "Stel ländrygg" and r["goal"] == "landrygg" and len(r["ex"]) == 6
+    assert page.evaluate("rutOpen") == r["id"]

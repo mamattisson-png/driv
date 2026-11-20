@@ -157,6 +157,7 @@ const upStep = (n, title, sub, dim) => `<div class="up-st ${dim ? "dim" : ""}"><
 const figs = list => `<span class="up-fg">${list.filter(e => EX[e.id]).slice(0, 3).map(e => `<span>${figure(e.id)}</span>`).join("")}</span>`;
 
 function uppView() {
+  if (typeof goalPick !== "undefined" && goalPick) return goalView();
   if (rutOpen) return uppDetail();
   const L = dailyRoutines(), every = (S.daily || []).filter(e => EX[e.id]), a = S.supplements || [], m = rutMode();
   const nameForm = `<form class="rutname" data-rutform="new"><input name="n" maxlength="40" required placeholder="T.ex. Mage A" aria-label="Rutinens namn"><button class="small primary" type="submit">Spara</button><button class="small ghost" type="button" data-rutcancel>Avbryt</button></form>`;
@@ -180,7 +181,8 @@ function uppView() {
       <button class="up-evr" data-rutopen="daily"><span class="up-k">Övningar</span><span class="grow">${every.length ? `<b>${esc(listNames(every, e => EX[e.id].name))}</b>` : `<b class="up-add">+ Lägg till</b>`}</span>${every.length ? figs(every) : ""}${icon("right", 18)}</button>
       <button class="up-evr" data-rutopen="supp"><span class="up-k">Kosttillskott</span><span class="grow">${a.length ? `<b>${esc(listNames(a, x => x.dose ? `${x.name} ${x.dose}` : x.name))}</b>` : `<b class="up-add">+ Lägg till</b>`}</span>${icon("right", 18)}</button></section>
     ${upStep(2, "Rutiner", L.length ? "olika övningar olika dagar" : "valfritt")}
-    <section class="up-list rutlist">${rows}${rutRename === "new" ? `<div class="up-li">${nameForm}</div>` : `<button class="up-li up-new" data-rutnew>+ Ny rutin</button>`}</section>
+    <section class="up-list rutlist">${rows}${rutRename === "new" ? `<div class="up-li">${nameForm}</div>` : `<button class="up-li up-new" data-rutnew>+ Ny rutin</button>`}
+      <button class="up-li up-goal" data-goallist>${icon("idea", 18)}<span class="grow col"><b>Välj efter mål</b><small>Mage, ländrygg, höfter, hållning …</small></span>${icon("right", 18)}</button></section>
     ${upStep(3, "Veckan", L.length ? "vilken rutin när" : "", !L.length)}
     ${L.length ? `<div class="seg two up-mode" role="radiogroup" aria-label="Hur rutinerna läggs ut">
         <button role="radio" data-uppmode="week" class="${m !== "rotate" ? "on" : ""}" aria-checked="${m !== "rotate"}">Fasta dagar</button>
