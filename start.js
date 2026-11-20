@@ -69,7 +69,7 @@ function loginView() {
   const prov = (id, logo, name) => `<button class="lprov2" data-oauth="${id}" ${a.busy ? "disabled" : ""} aria-label="Fortsätt med ${name}">${logo}<span>${name}</span></button>`;
   // Bara inloggningssätt som är påslagna i Supabase
   const on = a.providers || {}, provs = [["google", GOOGLE_G, "Google"], ["azure", MS_LOGO, "Microsoft"], ["facebook", FB_LOGO_C, "Facebook"]]
-    .filter(([id]) => on[id]).map(x => prov(...x)).join("");
+    .filter(([id]) => on[id]).map(x => x[0] === "google" && sbConf.googleClientId ? `<div id="gsibtn" class="gsibtn">${prov(...x)}</div>` : prov(...x)).join("");
   return `<div class="login loginv3"><div class="welcome-glow" aria-hidden="true"></div>
     <button class="backbtn" data-welcomelogin="">${icon("left", 18)}Tillbaka</button>
     <div class="l3hero"><img class="l3logo" src="icons/icon-192-v2.png" alt="">

@@ -2106,7 +2106,9 @@ button.h3-card.h3-head { background: var(--card); padding: 12px 14px; }
 .l3hint { margin: 8px 18px 0; }
 .loginv3 .loginmsg { margin: 8px 18px 0; }
 .l3or { margin: 26px 2px 14px; }
-.l3prov { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.l3prov { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); gap: 8px; }
+.gsibtn { display: grid; min-width: 0; }
+.gsibtn.on { grid-column: 1 / -1; justify-items: center; min-height: 44px; }
 .lprov2 { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; min-height: 68px; padding: 8px 4px; border-radius: 16px; border: 1px solid var(--line); background: var(--card); color: var(--text); font: 500 13px "Lexend", sans-serif; }
 .lprov2 svg { width: 22px; height: 22px; }
 .lprov2:disabled { opacity: .6; }

@@ -181,6 +181,52 @@ async function signInWithProvider(provider) {
   }
 }
 const signInWithGoogle = () => signInWithProvider("google");
+
+// Googles egen knapp (Google Identity Services): inloggningen sker här på driv.driveify.se och Google visar
+// appens namn i stället för Supabase-adressen. Googles bevis (ett id-token) lämnas sedan till Supabase.
+// Ett slumpat engångsvärde (nonce) skyddar mot att ett gammalt bevis återanvänds.
+const GSI_URL = "https://accounts.google.com/gsi/client";
+let gsiReady = null, gsiNonce = "";
+async function sha256hex(t) {
+  const b = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(t));
+  return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, "0")).join("");
+}
+function gsiInit() {
+  if (!gsiReady) gsiReady = (async () => {
+    if (!(window.google && google.accounts && google.accounts.id)) await loadScript(GSI_URL);
+    gsiNonce = [...crypto.getRandomValues(new Uint8Array(16))].map(x => x.toString(16).padStart(2, "0")).join("");
+    google.accounts.id.initialize({ client_id: sbConf.googleClientId, nonce: await sha256hex(gsiNonce), callback: onGoogleCredential,
+      ux_mode: "popup", context: "signin", itp_support: true, use_fedcm_for_button: true });
+  })().catch(e => { gsiReady = null; throw e; });
+  return gsiReady;
+}
+// Anropas efter varje omritning: byter reservknappen mot Googles knapp när skriptet är laddat
+async function mountGoogleButton() {
+  const el = document.getElementById("gsibtn");
+  if (!el || el.dataset.on || !sbConf.googleClientId) return;
+  el.dataset.on = "1";
+  try {
+    await gsiInit();
+    if (!el.isConnected) return;
+    const dark = document.documentElement.dataset.theme !== "light" && !(document.documentElement.dataset.theme !== "dark" && matchMedia("(prefers-color-scheme: light)").matches);
+    const box = document.createElement("div");
+    google.accounts.id.renderButton(box, { type: "standard", theme: dark ? "filled_black" : "outline", size: "large", text: "continue_with",
+      shape: "pill", logo_alignment: "center", width: Math.min(400, Math.max(200, el.clientWidth || 320)), locale: "sv" });
+    el.replaceChildren(box); el.classList.add("on");
+  } catch (e) { /* skriptet gick inte att ladda: reservknappen (vanlig inloggning via Supabase) står kvar */ }
+}
+async function onGoogleCredential(resp) {
+  account.busy = true; account.msg = ""; render();
+  try {
+    const sb = await supabaseClient();
+    const { error } = await sb.auth.signInWithIdToken({ provider: "google", token: resp.credential, nonce: gsiNonce });
+    if (error) throw error;
+    await connectSupabase();
+  } catch (e) {
+    account.msg = "Inloggningen med Google gick inte. Försök igen eller använd e-post.";
+  }
+  account.busy = false; render();
+}
 // Kom man tillbaka med ett fel visas det, och adressen rensas
 function oauthError() {
   const q = new URLSearchParams(location.search + "&" + location.hash.replace(/^#/, ""));

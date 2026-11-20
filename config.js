@@ -6,5 +6,7 @@ window.DRIV_CONFIG = {
   supabaseUrl: "https://zepugwoostphckstyrqf.supabase.co",
   supabaseAnonKey: "sb_publishable_CrXRGbR383ujiIptdZrhdQ_1gUNckS8",
   // Publik nyckel för notiser (Web Push). Den privata halvan finns bara bland Supabase-funktionens secrets.
+  // Googles Client ID för knappen "Fortsätt med Google" (inte hemlig; hemligheten finns bara i Supabase).
+  googleClientId: "995154790163-gp02ec0s3t3hdn7pehb65h9gk8dtnbuj.apps.googleusercontent.com",
   vapidPublicKey: "BHM13dgfWzzKV4NL9-b37Q0bkn2xOHwGUU6UYkGpbs1OdH1btJsNwBNQZI2-5Fv7uNDZyH7Knp2fYL5kDlRtzuA",
 };

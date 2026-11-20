@@ -999,6 +999,7 @@ function render() {
   if (focusScroll && focus) focusScroll.scrollTop = focus.scrollTop || 0;
   afterFocusRender();
   initRulers();
+  if (typeof mountGoogleButton === "function") mountGoogleButton();
   if (tour != null) requestAnimationFrame(positionTour);
   updateBadge();
   cheerCheck();
