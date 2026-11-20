@@ -3020,7 +3020,7 @@ def test_manaden_i_siffror(page):
       save(); tab = 'idag'; render(); }""")
     assert "november i siffror" in page.inner_text(".mcard").lower() and "3" in page.inner_text(".mcard-big")
     page.click(".mcard-open")
-    assert page.evaluate("tab") == "manad" and "2 nya rekord" in page.inner_text(".mtiles")
+    assert page.evaluate("tab") == "manad" and "2\nnya rekord" in page.inner_text(".mtiles")
     # Bilden ritas i telefonen
     assert page.evaluate("monthImage('2026-11').then(b => b && b.size > 1000)") is True
     # Stängt kort kommer inte tillbaka samma månad
