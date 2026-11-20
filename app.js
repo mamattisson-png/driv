@@ -1183,6 +1183,7 @@ const VIEWS = {
   varden() { return vardenView(); },
   statistik() { return statsView(); },
   rekord() { return rekordView(); },
+  manad() { return monthPage(); },
   vagning() {
     const back = { pass: "Träna", dailys: "Dailys", kost: "Kost", historik: "Historik", profil: "Inställningar", varden: "Dina värden" }[vikBack] || "Hem";
     const days = Object.keys(weights()).sort().reverse(), last = latestWeight();
@@ -1269,6 +1270,7 @@ const VIEWS = {
         <button class="small primary" data-tourstart>Visa</button><button class="small ghost" data-tourskip>Inte nu</button></section>`}
       <div class="muted h3-date">${date}</div><h1 class="h3-greet">${greeting}</h1>
       ${streakStrip()}
+      ${typeof monthCard === "function" ? monthCard() : ""}
       ${typeof friendsNudge === "function" ? friendsNudge() : ""}${accountNudge()}${installNudge()}
       ${homeCards}
 </div>`;

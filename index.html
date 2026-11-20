@@ -2878,6 +2878,28 @@ button.hstatbtn .muted { display: inline-flex; align-items: center; gap: 2px; co
 .rkval { flex: none; font: 700 15px "Lexend", sans-serif; font-variant-numeric: tabular-nums; }
 .rknew { display: inline-block; padding: 0 6px; border-radius: 99px; background: var(--accent-soft); color: var(--accent-text); font-size: 11px; font-weight: 700; }
 .rkstats { grid-template-columns: 1fr 1fr; }
+.mcard { position: relative; margin: 0 0 10px; border-radius: 22px; background: linear-gradient(135deg, color-mix(in srgb, var(--accent-strong) 22%, var(--card)), var(--card) 70%); }
+.mcard-open { display: flex; flex-direction: column; gap: 6px; width: 100%; padding: 16px 18px; border: 0; background: none; color: var(--text); font: inherit; text-align: left; border-radius: 22px; }
+.mcard-big { display: flex; align-items: baseline; gap: 8px; }
+.mcard-big b { font: 800 44px "Unbounded", sans-serif; color: var(--accent-text); line-height: 1; }
+.mcard-big span { font-weight: 600; }
+.mcard-row { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13px; color: var(--muted); }
+.mcard-row span { display: inline-flex; align-items: center; gap: 4px; }
+.mcard-go { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 600; color: var(--accent-text); }
+.mcard-x { position: absolute; top: 8px; right: 8px; width: 36px; height: 36px; min-height: 0; color: var(--muted); }
+.mpage > .klabel { display: block; margin-top: 4px; }
+.mpage h1 { margin: 2px 0 12px; }
+.mhero { display: flex; align-items: baseline; gap: 12px; padding: 20px; border-radius: 22px; background: linear-gradient(135deg, color-mix(in srgb, var(--accent-strong) 22%, var(--card)), var(--card) 70%); }
+.mhero b { font: 800 72px "Unbounded", sans-serif; color: var(--accent-text); line-height: 1; }
+.mtiles { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 10px 0; }
+.mtile { display: flex; flex-direction: column; gap: 2px; padding: 14px 16px; border-radius: 18px; background: var(--card); }
+.mtile b { font: 700 24px "Unbounded", sans-serif; }
+.mtile span { font-size: 13px; color: var(--muted); }
+.mline { display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 0 4px; border-bottom: 1px solid var(--line); }
+.mline > .ic { color: var(--muted); }
+.mline b { font-weight: 600; text-align: right; }
+.mshare { margin-top: 18px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.mnote { text-align: center; margin-top: 8px; }
 </style>
 </head>
 <body>
@@ -2906,6 +2928,7 @@ button.hstatbtn .muted { display: inline-flex; align-items: center; gap: 2px; co
 <script src="historik.js"></script>
 <script src="social.js"></script>
 <script src="statistik.js"></script>
+<script src="manad.js"></script>
 <script src="profil.js"></script>
 <script src="notiser.js"></script>
 <script src="motion.js"></script>

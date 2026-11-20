@@ -3009,3 +3009,21 @@ def test_rekordsidan(page):
     assert "62,5 kg × 6" in row and "Nytt" in row and "+7,5 kg" in row
     page.click('.rkrow[data-chart="bankpress"]')
     assert page.evaluate("modal && modal.chart") == "bankpress"
+
+
+def test_manaden_i_siffror(page):
+    import datetime
+    page.clock.install(time=datetime.datetime(2026, 12, 3, 9, 0))
+    start(page)
+    page.evaluate("""() => { const d = S.plan.days[0];
+      ['2026-11-03', '2026-11-10', '2026-11-17'].forEach((x, i) => S.log[x] = { workouts: [{ dayId: d.id, done: true, sets: { bankpress: [{ kg: 60 + i * 2.5, reps: 6, ok: true }] } }], dailies: {}, food: [] });
+      save(); tab = 'idag'; render(); }""")
+    assert "november i siffror" in page.inner_text(".mcard").lower() and "3" in page.inner_text(".mcard-big")
+    page.click(".mcard-open")
+    assert page.evaluate("tab") == "manad" and "2 nya rekord" in page.inner_text(".mtiles")
+    # Bilden ritas i telefonen
+    assert page.evaluate("monthImage('2026-11').then(b => b && b.size > 1000)") is True
+    # Stängt kort kommer inte tillbaka samma månad
+    page.evaluate("tab = 'idag'; render()")
+    page.click(".mcard-x")
+    assert page.locator(".mcard").count() == 0 and page.evaluate("S.monthSeen") == "2026-11"
