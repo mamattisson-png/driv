@@ -256,7 +256,8 @@ function progressView() {
   const start = from > (all.first || TODAY) ? from : (all.first || TODAY);
   const weeks = Math.max(1, Math.round((parse(TODAY) - parse(weekStart(start))) / 6048e5) + 1);
   const tile = (l, v, sub) => `<div class="hstat"><span class="klabel">${l}</span><b>${v}</b><span class="muted small">${sub}</span></div>`;
-  const stats = `<div class="hstats">${tile("Pass", p.passes, histPer === "all" ? "totalt" : "perioden")}${tile("Snitt", fmtNum(p.passes / weeks), "pass/vecka")}${tile("Nya PB", p.pbs, histPer === "all" ? "totalt" : "perioden")}</div>`;
+  const stats = `<div class="hstats">${tile("Pass", p.passes, histPer === "all" ? "totalt" : "perioden")}${tile("Snitt", fmtNum(p.passes / weeks), "pass/vecka")}
+    <button class="hstat hstatbtn" data-tab="rekord" aria-label="Nya personbästa: ${p.pbs}. Visa alla rekord"><span class="klabel">Nya PB</span><b>${p.pbs}</b><span class="muted small">Se rekorden ${icon("right", 12)}</span></button></div>`;
   const bars = Math.min(26, Math.max(4, weeks));
   // Styrka: övningar gjorda minst två gånger, med var man började och var man är nu. De som ökat mest först.
   // Övningar gjorda en gång samlas på en rad: där finns inget att jämföra med än.
@@ -277,6 +278,25 @@ function progressView() {
       : `<div class="muted hnone">Inga övningar loggade under perioden.</div>`}
     ${actSummary()}
     ${weightSection(w, wFirst, wLast)}`;
+}
+
+// Rekord: det bästa setet i varje övning, nyaste först. Bästa = högst vikt, eller samma vikt och fler reps.
+function rekordView() {
+  const all = progressData().ex.filter(e => EX[e.id] && !["stretch", "cardio"].includes(EX[e.id].cat))
+    .sort((a, b) => b.bestDate.localeCompare(a.bestDate) || EX[a.id].name.localeCompare(EX[b.id].name, "sv"));
+  const recent = shift(TODAY, -14), fresh = all.filter(e => e.bestDate >= recent).length;
+  const back = `<button class="backbtn" data-tab="historik">${icon("left", 18)}Historik</button><h1>Rekord</h1>`;
+  if (!all.length) return `${back}<p class="muted">Här samlas ditt bästa set i varje övning. Kör ett pass så dyker de första upp.</p>`;
+  const row = e => {
+    const up = e.times > 1 && e.gain > 0;
+    return `<button class="rkrow" data-chart="${e.id}" aria-label="${esc(EX[e.id].name)}: ${fmtSet(e.best, e.id)}, visa utvecklingen"><span class="thumb rkfig" aria-hidden="true">${figure(e.id)}</span>
+      <span class="grow col"><b>${esc(EX[e.id].name)}</b><span class="muted small">${e.bestDate >= recent ? `<span class="rknew">Nytt</span> ` : ""}${cap(dateLabel(e.bestDate))}${up ? ` · +${fmtNum(e.gain)} ${e.unit} sedan ${shortDate(e.firstDate)}` : ""}</span></span>
+      <span class="rkval">${fmtSet(e.best, e.id)}</span></button>`;
+  };
+  return `${back}<p class="muted lead">Ditt bästa set i varje övning. Tryck på en övning för hela kurvan.</p>
+    <div class="hstats rkstats"><div class="hstat"><span class="klabel">Övningar</span><b>${all.length}</b><span class="muted small">med rekord</span></div>
+      <div class="hstat"><span class="klabel">Nya</span><b>${fresh}</b><span class="muted small">senaste 2 veckorna</span></div></div>
+    <section class="card rklist">${all.map(row).join("")}</section>`;
 }
 
 function historikView() {

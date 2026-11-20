@@ -69,6 +69,8 @@ def test_alla_upplagg_har_giltiga_standardovningar(page):
         # Motion är ett eget val i starten, inte en programruta
         page.click('[data-onbkind="motion"]' if prog == "aktiviteter" else '[data-onbkind="gym"]')
         if prog != "aktiviteter":
+            if page.locator("[data-progmore]").count():
+                page.click("[data-progmore]")   # bara tre program syns först
             page.click(f'[data-prog="{prog}"]')
         assert page.evaluate(f"counts('{prog}')") == [1, 2, 3, 4, 5, 6, 7]
         page.click('[data-onb="2"]')
@@ -123,6 +125,9 @@ def test_kort_start_och_paminnelse_om_kalorimal(page):
     open_app(page)
     # Första gången: program, antal och dagar, och mål; övningar och dailys ändras sen
     to_step(page, 3)
+    # Kroppsvärdena är ihopfällda; målet räcker för att komma vidare
+    assert page.locator(".goalfields").count() == 0 and "Gör kalorimålet exakt" in page.inner_text(".goalmore")
+    page.click("[data-goalmore]")
     assert page.locator(".goalfields [data-rul]").count() == 3 and page.locator(".goalfields .vactrow").count() == 4
     assert page.locator("[data-openpick^=draft]").count() == 0
     page.click("[data-savesetup]")
@@ -139,6 +144,7 @@ def test_mal_i_starten_ger_eget_kalorimal(page):
     standard = page.evaluate("kcalGoal()")
     to_step(page, 3)
     page.click('[data-goalpick="cut"]')
+    page.click("[data-goalmore]")
     page.evaluate("""() => { const el = document.querySelector('[data-rul=weight]'); el.scrollLeft = (70 - RULERS.weight.min) * RULERS.weight.px; el.dispatchEvent(new Event('scroll')); }""")
     page.wait_for_function("S.profile.weight === 70")
     assert page.evaluate("S.profile.goal") == "cut" and page.evaluate("kcalGoal()") < standard
@@ -192,6 +198,7 @@ def test_vikt_jamfors_med_forra_veckan(page):
 def test_kroppsvikt_ovningar_raknas_i_reps_och_sekunder(page):
     open_app(page)
     to_step(page, 1)
+    page.click("[data-progmore]")
     page.click('[data-prog="cali"]')
     finish_setup(page)
     seed(page, """const d = S.plan.days[0]; S.log[shift(TODAY,-7)] = {workout:{dayId:d.id,done:true,sets:{
@@ -2249,9 +2256,9 @@ def test_valkomstsidan_tre_vagar_in_och_rundtur(page):
     page.click('.login [data-welcomelogin="login"]')
     assert "Logga in" in page.inner_text(".login h1")
     page.click('.login .backbtn')
-    # Utan konto: varning om att datan bara finns i telefonen
+    # Utan konto: ingen varning i starten (Hem påminner om att spara loggarna senare)
     page.click(".wnoacct")
-    assert "Du kör utan konto" in page.inner_text("#app")
+    assert "Du kör utan konto" not in page.inner_text("#app")
     finish_setup(page)
     # Rundturen erbjuds en gång på Hem
     assert page.locator(".tour-offer").count() == 1
@@ -2988,3 +2995,17 @@ def test_styrka_visar_fran_och_till(page):
     # En gång gjord: ingen egen rad, utan samlad med en förklaring
     assert page.locator('.hstr[data-chart="dips"]').count() == 0
     assert "Dips" in page.inner_text(".hstr-once") and "Kör dem igen" in page.inner_text(".hstr-once")
+
+
+def test_rekordsidan(page):
+    start(page)
+    page.evaluate("""() => { const d = S.plan.days[0];
+      const mk = (k, sets) => { S.log[shift(TODAY, -k)] = { workouts: [{ dayId: d.id, done: true, sets }], dailies: {}, food: [] }; };
+      mk(40, { bankpress: [{ kg: 55, reps: 8, ok: true }] }); mk(3, { bankpress: [{ kg: 62.5, reps: 6, ok: true }] });
+      save(); tab = 'historik'; histView = 'utveckling'; render(); }""")
+    page.click('.hstatbtn[data-tab="rekord"]')
+    assert page.evaluate("tab") == "rekord"
+    row = page.inner_text('.rkrow[data-chart="bankpress"]')
+    assert "62,5 kg × 6" in row and "Nytt" in row and "+7,5 kg" in row
+    page.click('.rkrow[data-chart="bankpress"]')
+    assert page.evaluate("modal && modal.chart") == "bankpress"

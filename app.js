@@ -912,7 +912,8 @@ function streakStrip() {
   }).join("");
   return `<section class="sv" aria-label="Din svit: ${st} ${st === 1 ? "vecka" : "veckor"} i rad">
     <div class="sv-f"><svg viewBox="0 0 24 24" width="46" height="46" aria-hidden="true"><path d="M12.5 1.5c.6 3.2 4 5.3 5.2 8.6 1.6 4.4-.9 11.4-5.7 11.4S4.6 18.2 5 14.2c.3-2.6 1.8-4.2 2.9-5.3.1 1.7.8 2.8 1.6 3.3-.3-4.3 1.2-7.6 3-10.7Z" fill="var(--accent-strong)"/><text x="12" y="18.2" text-anchor="middle" class="sv-n">${st}</text></svg><small>${st === 1 ? "Vecka" : "Veckor"}</small>${ice}</div>
-    <div class="sv-days">${days}${savedLast ? `<p class="sv-saved">${SNOW}Förra veckan frystes, sviten lever</p>` : ""}</div>${iceText}</section>`;
+    <div class="sv-days">${days}${savedLast ? `<p class="sv-saved">${SNOW}Förra veckan frystes, sviten lever</p>` : ""}</div>${iceText}
+    ${st === 0 ? `<p class="sv-start">Kör ${S.plan.count} ${S.plan.count === 1 ? "pass" : "pass"} den här veckan så tänds flamman.</p>` : ""}</section>`;
 }
 
 // ---------- Rendering ----------
@@ -1181,6 +1182,7 @@ const VIEWS = {
   stretchguide() { return muscleView(); },
   varden() { return vardenView(); },
   statistik() { return statsView(); },
+  rekord() { return rekordView(); },
   vagning() {
     const back = { pass: "Träna", dailys: "Dailys", kost: "Kost", historik: "Historik", profil: "Inställningar", varden: "Dina värden" }[vikBack] || "Hem";
     const days = Object.keys(weights()).sort().reverse(), last = latestWeight();

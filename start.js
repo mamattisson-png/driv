@@ -89,15 +89,24 @@ function loginView() {
 
 // Inloggad men utan sparat upplägg: ett besked överst i stegen
 function accountNote() {
-  if (account.step !== "in") return sbEnabled ? `<div class="card note-card warn-card"><b>Du kör utan konto.</b> <span class="muted">Allt sparas bara i den här telefonen och kan gå förlorat om du byter telefon eller rensar webbläsaren. Skapa konto när du vill under Inställningar.</span></div>` : "";
+  if (account.step !== "in") return "";   // utan konto: ingen varning i starten, Hem påminner om att spara loggarna senare
   return `<div class="card note-card"><b>Inloggad som ${esc(account.email)}.</b> <span class="muted">${cloud.status === "cloud" ? "Kontot har inget sparat upplägg än. Välj ett här, så sparas det på kontot."
     : cloud.status === "error" ? "Kunde inte hämta från kontot. Ladda om sidan." : "Hämtar från kontot…"}</span></div>`;
 }
 
 // I starten väljs Motion som ett eget val (onbKinds), inte bland gymprogrammen
-const progTiles = (sel, gymOnly) => `<div class="progtiles">${Object.entries(PROGRAMS).filter(([id]) => id !== "eget" && !(gymOnly && id === "aktiviteter")).map(([id, pr]) =>
+// I starten visas tre vanliga program först och resten bakom "Visa fler", så att valet inte blir för stort
+let progMore = false;
+let goalMore = false;   // i starten: kön, ålder, längd, vikt och vardag visas först när man vill
+document.addEventListener("click", ev => { const b = ev.target.closest && ev.target.closest("[data-goalmore]"); if (!b) return; ev.stopImmediatePropagation(); goalMore = !goalMore; render(); }, true);
+const PROG_FIRST = 3;
+const progTiles = (sel, gymOnly, few) => { const all = Object.entries(PROGRAMS).filter(([id]) => id !== "eget" && !(gymOnly && id === "aktiviteter"));
+  const showAll = !few || progMore || all.findIndex(([id]) => id === sel) >= PROG_FIRST, list = showAll ? all : all.slice(0, PROG_FIRST);
+  return `<div class="progtiles">${list.map(([id, pr]) =>
   `<button class="progtile ${sel === id ? "on" : ""}" data-prog="${id}" aria-pressed="${sel === id}"><b>${pr.name}</b><span>${pr.best} pass</span></button>`).join("")}</div>
-  <button class="progtile own ${sel === "eget" ? "on" : ""}" data-prog="eget" aria-pressed="${sel === "eget"}"><span class="plusic">${icon("plus", 18)}</span>
+  ${showAll ? "" : `<button class="ghost wide progmore" data-progmore>Visa fler program (${all.length - PROG_FIRST})${icon("down", 16)}</button>`}`; };
+document.addEventListener("click", ev => { const b = ev.target.closest && ev.target.closest("[data-progmore]"); if (!b) return; ev.stopImmediatePropagation(); progMore = true; render(); }, true);
+const progTilesOwn = (sel) => `<button class="progtile own ${sel === "eget" ? "on" : ""}" data-prog="eget" aria-pressed="${sel === "eget"}"><span class="plusic">${icon("plus", 18)}</span>
     <span class="grow col"><b>Eget schema</b><span class="muted small">Döp passen och välj övningar själv</span></span></button>`;
 
 function daysPicker() {
@@ -171,7 +180,7 @@ function onbView() {
   if (onb === 1) return `${stepTop(1, 'data-onb="0"', "Tillbaka")}${accountNote()}
     <h1>Hur vill du träna?</h1><div class="muted lead">Du kan blanda och ändra när du vill.</div>
     ${onbKinds()}
-    ${draftKind() === "motion" || draft.free ? "" : `<div class="klabel sechead">Välj gymprogram</div><div class="muted small" style="margin:-4px 4px 8px">Övningarna är redan ifyllda.</div>${progTiles(draft.program, true)}`}
+    ${draftKind() === "motion" || draft.free ? "" : `<div class="klabel sechead">Välj gymprogram</div><div class="muted small" style="margin:-4px 4px 8px">Övningarna är redan ifyllda.</div>${progTiles(draft.program, true, true)}${progTilesOwn(draft.program)}`}
     <div class="stepcta"><button class="primary wide bigbtn" data-onb="2">Nästa</button></div>`;
   if (onb === 2 && draft.free) return `${stepTop(2, 'data-onb="1"', "Program")}
     <h1>Hur ofta?</h1><div class="muted lead">Hur många gånger i veckan vill du träna? Allt du loggar räknas: ${draft.motionOnly ? "promenad, löpning, padel …" : "gympass, löpning, padel …"}</div>
@@ -192,11 +201,14 @@ function onbView() {
     <div class="stepcta"><button class="primary wide bigbtn" data-onb="3" ${draftOk() ? "" : "disabled"}>Nästa</button></div>`;
   const p = S.profile, m = macros();
   return `${stepTop(3, 'data-onb="2"', "Pass och dagar")}
-    <h1>Ditt mål</h1><div class="muted lead">Dra i linjalerna. Inget måste vara exakt, och allt går att ändra sen.</div>
+    <h1>Ditt mål</h1><div class="muted lead">Välj vad du vill. Kalorimålet räknas fram, och allt går att ändra sen.</div>
     <div class="klabel sechead">Vad vill du?</div>
     <div class="gtiles">${Object.entries(GOALS).map(([k, v]) => `<button data-goalpick="${k}" class="gtile ${p.goal === k ? "on" : ""}" aria-pressed="${p.goal === k}">
       <span class="gic">${{ cut: "↓", keep: "=", bulk: "↑" }[k]}</span><b>${v[0].split(" (")[0]}</b><small>${v[1] > 0 ? `+${v[1]} kcal` : v[1] < 0 ? `−${-v[1]} kcal` : "Som nu"}</small></button>`).join("")}</div>
-    <div class="goalfields">
+    <div class="card goalres"><span class="grow"><span class="klabel accent">Per dag</span><b class="goalnum">${tnum(kcalGoal())} <small>kcal</small></b></span><span class="gprot"><b>${m.protein} g</b><small>protein</small></span></div>
+    <button class="goalmore ${goalMore ? "on" : ""}" data-goalmore aria-expanded="${goalMore}"><span class="grow col"><b>Gör kalorimålet exakt</b>
+      <span class="muted small">${goalMore ? "Valfritt. Utan egna värden används en vanlig vuxen." : `Valfritt · nu ${p.sex === "f" ? "kvinna" : "man"}, ${p.age} år, ${p.height} cm, ${fmtNum(p.weight)} kg`}</span></span>${icon(goalMore ? "up" : "down", 18)}</button>
+    ${goalMore ? `<div class="goalfields">
     <div class="klabel sechead">Kön</div>
     <div class="seg two vsex">${[["m", "Man"], ["f", "Kvinna"]].map(([k, l]) => `<button data-vsex="${k}" class="${p.sex === k ? "on" : ""}" aria-pressed="${p.sex === k}">${l}</button>`).join("")}</div>
     <div class="klabel sechead">Ålder</div>${ruler("age")}
@@ -204,8 +216,7 @@ function onbView() {
     <div class="klabel sechead">Vikt</div>${ruler("weight")}
     <div class="klabel sechead">Hur aktiv är din vardag?</div>
     <div class="vact" role="radiogroup" aria-label="Aktivitet">${ACTIVITY.map(([v, l]) => { const [name, sub] = l.split(" ("), on = +p.activity === v;
-      return `<button class="vactrow ${on ? "on" : ""}" data-vact="${v}" role="radio" aria-checked="${on}"><span class="grow"><b>${name}</b>${sub ? `<small>${sub.replace(")", "")}</small>` : ""}</span><span class="okrad" aria-hidden="true"></span></button>`; }).join("")}</div></div>
-    <div class="card goalres"><span class="grow"><span class="klabel accent">Per dag</span><b class="goalnum">${tnum(kcalGoal())} <small>kcal</small></b></span><span class="gprot"><b>${m.protein} g</b><small>protein</small></span></div>
+      return `<button class="vactrow ${on ? "on" : ""}" data-vact="${v}" role="radio" aria-checked="${on}"><span class="grow"><b>${name}</b>${sub ? `<small>${sub.replace(")", "")}</small>` : ""}</span><span class="okrad" aria-hidden="true"></span></button>`; }).join("")}</div></div>` : ""}
     <div class="stepcta"><span class="muted small">Allt går att ändra sen.</span><button class="primary wide bigbtn" data-savesetup ${draftOk() ? "" : "disabled"}>Klart, till Hem</button></div>`;
 }
 
@@ -229,7 +240,7 @@ function upplaggView() {
       <section class="card progcard" aria-label="Ditt program">
         <span class="grow col"><b class="progname">${esc(pr.name)}</b><span class="muted small">${esc(pr.info)}</span></span>
         <button class="linkbtn2" data-progtoggle aria-expanded="${progOpen}">${progOpen ? "Stäng" : "Byt"}${icon(progOpen ? "up" : "down", 14)}</button></section>
-      ${progOpen ? `<div class="progpick">${progTiles(draft.program, true)}</div>` : ""}` : ""}
+      ${progOpen ? `<div class="progpick">${progTiles(draft.program, true)}${progTilesOwn(draft.program)}</div>` : ""}` : ""}
     ${k === "motion" ? `${head("Upplägg")}${motionPlan()}` : ""}
     ${draft.free ? `${head("Mål")}${goal(k === "motion" ? "Logga motion när du har tränat. Allt räknas mot målet." : "Logga gympass och motion fritt. Allt räknas mot målet.")}`
     : `${head("Veckan")}
