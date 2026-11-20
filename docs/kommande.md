@@ -133,6 +133,7 @@ Senast uppdaterad: 2026-11-06. Status bygger på dokumenterade publiceringar och
 | 129 | Vänner: profilen öppnas från namn i flöde, topplista och utmaningar; pass per vecka (12 veckor) på profilen; kör supabase/profiler.sql igen | Vänner | Liten | Klar |
 | 130 | Historik: Styrka visar från → till per övning, och övningar gjorda en gång samlas på en rad | Historik | Liten | Klar |
 | 131 | Rekordsida (bästa set per övning, nås från Nya PB) och enklare start: ingen kontovarning, tre program först, kroppsvärden valfria, tydligare tom svit | Appen | Medel | Klar |
+| 132 | Hem: månaden i siffror första veckan i ny månad, med egen sida och bild att dela | Hem | Medel | Klar |
 
 ## Detaljer och acceptanskriterier
 
