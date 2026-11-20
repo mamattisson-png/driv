@@ -60,6 +60,16 @@ async function loadFriendStats(id) {
   render();
 }
 
+// Pass per vecka de senaste 12 veckorna: för en själv ur den egna loggen, för en vän från Supabase
+function profWeeks(me, st) {
+  const ws = weekStart(TODAY);
+  const weeks = me ? Array.from({ length: 12 }, (_, i) => { const w = shift(ws, -7 * (11 - i)); return { week: w, n: weekSummary(w).passes }; })
+    : st && Array.isArray(st.weeks12) ? st.weeks12 : null;
+  if (!weeks || !weeks.some(w => +w.n) || typeof barChart !== "function") return "";
+  const chart = barChart({ vals: weeks.map((w, i) => ({ v: +w.n, label: i === 0 || i === weeks.length - 1 ? `v.${weekNo(w.week)}` : "",
+    tip: `Vecka ${weekNo(w.week)}: ${w.n} pass`, cls: i === weeks.length - 1 ? "pb" : "" })), aria: "Pass per vecka, 12 veckor", fmt: v => String(Math.round(v)) });
+  return `<div class="klabel pfk">Pass per vecka</div><section class="card pfweeks">${chart}</section>`;
+}
 function profileView() {
   const me = profView === "me", f = me ? null : social.friends.find(x => String(x.id) === String(profView));
   if (!me && !f) { profView = null; return friendsView(); }
@@ -90,6 +100,7 @@ function profileView() {
     <div class="pfgrid">${tile(`Pass i ${monthName.toLowerCase()}`, st.month)}${tile(me ? "Veckor i rad med målet" : "Veckor i rad med pass", st.weeks)}
       ${tile("Pass totalt", st.total)}${tile("Vanligaste passet", st.top ? esc(st.top) : "–")}</div>
     ${fallback ? `<div class="muted small pfnote">Mer statistik visas när profilerna är på i kontot.</div>` : ""}
+    ${profWeeks(me, st)}
     <div class="klabel pfk">Senaste passen</div>
     ${recent ? `<section class="card pflist">${recent}</section>` : `<div class="muted small">Inga pass än.</div>`}
     ${me ? `<div class="muted small pfnote">Vänner ser bilden, statistiken och vilka pass du gjort, aldrig vikter, mat eller kroppsvikt. Styrs av "Visa mina pass för vänner".</div>`

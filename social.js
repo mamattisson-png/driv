@@ -75,8 +75,16 @@ function feedAgo(a) {
   return feedWhen(a.day);
 }
 // En väns pass med Peppa, eller "Peppat" när man redan peppat
+// Profilen för ett namn eller id: en vän, eller "me". Används så att namn och bilder går att trycka på överallt.
+function profKey(name, uid, me) {
+  if (me) return "me";
+  const f = social.friends.find(x => (uid != null && String(x.id) === String(uid))) || social.friends.find(x => x.name === name);
+  return f ? String(f.id) : "";
+}
 function feedEvent(a) {
-  return `<div class="fevent">${avatar(a.name)}<div class="grow"><span><b>${esc(a.name)}</b> körde ${esc(a.pass)}</span><span class="muted small">${feedAgo(a)}</span></div>
+  const k = profKey(a.name, a.uid, a.mine);
+  const who = k ? `<button class="pwho" data-profile="${esc(k)}" aria-label="Visa ${esc(a.name)}s profil">${avatar(a.name)}</button>` : avatar(a.name);
+  return `<div class="fevent">${who}<div class="grow"><span>${k ? `<button class="pname" data-profile="${esc(k)}">${esc(a.name)}</button>` : `<b>${esc(a.name)}</b>`} körde ${esc(a.pass)}</span><span class="muted small">${feedAgo(a)}</span></div>
     ${a.kudoed ? `<span class="peppat">Peppat</span>` : `<button class="peppa" data-kudos="${a.id}" aria-pressed="false" aria-label="Peppa ${esc(a.name)}">Peppa</button>`}</div>`;
 }
 // Peppningar på ens eget pass. Vem som peppat delas inte, bara hur många.
@@ -176,9 +184,9 @@ function weekTop() {
   rows.sort((a, b) => b.n - a.n || a.name.localeCompare(b.name, "sv"));
   rows.forEach((r, i) => { r.place = i && rows[i - 1].n === r.n ? rows[i - 1].place : i + 1; });
   const mi = rows.findIndex(r => r.me);
-  const row = r => `<div class="trow ${r.me ? "me" : ""}"><span class="tplace">${r.place}</span>${avatar(r.name, "sm")}<span class="grow tname">${r.me ? "Du" : esc(r.name)}</span>
+  const row = r => `<button class="trow ${r.me ? "me" : ""}" data-profile="${esc(profKey(r.name, null, r.me))}" aria-label="Visa ${r.me ? "din" : `${esc(r.name)}s`} profil"><span class="tplace">${r.place}</span>${avatar(r.name, "sm")}<span class="grow tname">${r.me ? "Du" : esc(r.name)}</span>
     ${month ? `<span class="tbar" aria-hidden="true"><i style="width:${Math.round(100 * r.n / Math.max(1, rows[0].n))}%"></i></span>`
-      : `<span class="tdots" aria-hidden="true">${Array.from({ length: 7 }, (_, k) => `<i class="${k < r.n ? "on" : ""}"></i>`).join("")}</span>`}<b class="tnum">${r.n}</b></div>`;
+      : `<span class="tdots" aria-hidden="true">${Array.from({ length: 7 }, (_, k) => `<i class="${k < r.n ? "on" : ""}"></i>`).join("")}</span>`}<b class="tnum">${r.n}</b></button>`;
   const list = friendsTopAll ? rows.map(row).join("")
     : rows.slice(0, 3).map(row).join("") + (mi > 3 ? `<div class="tgap" aria-hidden="true">···</div>` : "") + (mi >= 3 ? row(rows[mi]) : "");
   const seg = social.month ? `<div class="tseg2" role="tablist" aria-label="Period">${[["vecka", "Vecka"], ["manad", cap(MONTH_SV[+TODAY.slice(5, 7) - 1])]].map(([k, l]) =>
@@ -209,7 +217,7 @@ function challengesView() {
   const list = social.challenges.map(c => {
     const P = (c.people || []).slice().sort((a, b) => (c.kind === "forst" && (a.reached || "z") !== (b.reached || "z") ? ((a.reached || "z") < (b.reached || "z") ? -1 : 1) : 0) || +b.n - +a.n || b.me - a.me);
     const max = c.kind === "forst" ? +c.goal : Math.max(1, ...P.map(p => +p.n)), [cls, txt] = chStatus(c);
-    const bar = p => `<div class="chrow ${p.me ? "me" : ""}"><span class="chname">${p.me ? "Du" : esc(p.name)}</span><span class="chbar"><i style="width:${Math.min(100, Math.round(100 * +p.n / max))}%"></i></span><b>${+p.n}</b></div>`;
+    const bar = p => `<div class="chrow ${p.me ? "me" : ""}">${(k => k ? `<button class="chname" data-profile="${esc(k)}">${p.me ? "Du" : esc(p.name)}</button>` : `<span class="chname">${p.me ? "Du" : esc(p.name)}</span>`)(profKey(p.name, null, p.me))}<span class="chbar"><i style="width:${Math.min(100, Math.round(100 * +p.n / max))}%"></i></span><b>${+p.n}</b></div>`;
     const others = P.length - 1;
     return `<div class="chcard"><div class="row between"><span class="col"><b>${c.kind === "forst" ? `Först till ${c.goal} pass` : "Flest pass"}</b>
         <span class="muted small">${shortDate(c.start_day)}–${shortDate(c.end_day)}${others > 1 ? ` · ${others + 1} deltagare` : ""}</span></span>

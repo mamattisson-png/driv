@@ -72,7 +72,9 @@ begin
         'kudos', (select count(*) from driv_kudos k where k.activity_id = r.id),
         'kudoed', exists (select 1 from driv_kudos k where k.activity_id = r.id and k.user_id = auth.uid())) order by day desc, created_at desc), '[]'::json)
       from (select * from driv_activity where user_id = p_user order by day desc, created_at desc limit 5) r),
-    'since', (select created_at::date from driv_profiles where user_id = p_user));
+    'since', (select created_at::date from driv_profiles where user_id = p_user),
+    'weeks12', (select json_agg(json_build_object('week', w, 'n', (select count(*) from driv_activity a where a.user_id = p_user and a.day >= w and a.day < w + 7)) order by w)
+      from (select date_trunc('week', current_date)::date - 7 * g as w from generate_series(0, 11) g) s));
 end $$;
 
 revoke execute on function public.driv_photo_save, public.driv_profile_stats from public, anon;

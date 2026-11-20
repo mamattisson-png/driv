@@ -80,3 +80,22 @@ def test_utmaningar_och_manadens_topplista(page):
     assert call["p_start"] == page.evaluate("weekStart(TODAY)")
     # Ta bort kräver två tryck
     page.evaluate("socialRpc = async (n, a) => { __calls.push([n, a]); return null; }; friendsSheet = null; render()")
+
+
+def test_profil_oppnas_fran_namn_och_visar_veckor(page):
+    from test_app import SB_CONFIG
+    page.context.route("**/config.js", lambda r: r.fulfill(body=SB_CONFIG, content_type="application/javascript"))
+    start(page)
+    page.evaluate(STUB.replace("S.tourAsked", """account.step = 'in';
+      socialRpc = async (n, a) => { __calls.push([n, a]); return n === 'driv_profile_stats' ? { month: 4, total: 20, weeks: 3, top: 'Legs', since: '2026-03-01',
+        weeks12: Array.from({ length: 12 }, (_, i) => ({ week: shift(weekStart(TODAY), -7 * (11 - i)), n: i % 3 })), recent: [] } : null; };
+      S.tourAsked"""))
+    # Namnet i flödet öppnar vännens profil, med pass per vecka
+    page.click(".fevent .pname")
+    assert page.evaluate("profView") == "u2"
+    page.wait_for_selector(".pfweeks")
+    assert page.locator(".pfweeks .ch-b").count() == 12
+    # Raden i topplistan öppnar också profilen
+    page.evaluate("profView = null; render()")
+    page.click('.ftop .trow[data-profile="u2"]')
+    assert page.evaluate("profView") == "u2"
