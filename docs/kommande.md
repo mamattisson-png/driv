@@ -131,6 +131,7 @@ Senast uppdaterad: 2026-11-06. Status bygger på dokumenterade publiceringar och
 | 127 | Inloggning: knapparna för Google, Microsoft och Facebook visas bara när de är påslagna i Supabase (ingen felsida) | Konto | Liten | Klar |
 | 128 | Inloggning: Googles egen knapp, Google visar Driv i stället för Supabase-adressen (utan vit kant i mörkt läge) | Konto | Liten | Klar |
 | 129 | Vänner: profilen öppnas från namn i flöde, topplista och utmaningar; pass per vecka (12 veckor) på profilen; kör supabase/profiler.sql igen | Vänner | Liten | Klar |
+| 130 | Historik: Styrka visar från → till per övning, och övningar gjorda en gång samlas på en rad | Historik | Liten | Klar |
 
 ## Detaljer och acceptanskriterier
 
