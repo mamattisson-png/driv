@@ -2975,3 +2975,16 @@ def test_isbrickan_forklarar_frysningen(page):
     assert "räddar en frysning sviten" in page.inner_text(".sv-info")
     page.click("[data-iceinfo]")
     assert page.locator(".sv-info").count() == 0
+
+
+def test_styrka_visar_fran_och_till(page):
+    start(page)
+    page.evaluate("""() => { const d = S.plan.days[0];
+      const mk = (k, sets) => { S.log[shift(TODAY, -k)] = { workouts: [{ dayId: d.id, done: true, sets }], dailies: {}, food: [] }; };
+      mk(9, { bankpress: [{ kg: 60, reps: 6, ok: true }] }); mk(2, { bankpress: [{ kg: 62.5, reps: 6, ok: true }], dips: [{ kg: 0, reps: 8, ok: true }] });
+      save(); tab = 'historik'; histView = 'utveckling'; render(); }""")
+    row = page.inner_text('.hstr[data-chart="bankpress"]')
+    assert "60 kg × 6" in row and "62,5 kg × 6" in row and "+2,5 kg" in row and "2 gånger" in row
+    # En gång gjord: ingen egen rad, utan samlad med en förklaring
+    assert page.locator('.hstr[data-chart="dips"]').count() == 0
+    assert "Dips" in page.inner_text(".hstr-once") and "Kör dem igen" in page.inner_text(".hstr-once")

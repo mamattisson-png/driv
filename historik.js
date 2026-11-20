@@ -258,15 +258,22 @@ function progressView() {
   const tile = (l, v, sub) => `<div class="hstat"><span class="klabel">${l}</span><b>${v}</b><span class="muted small">${sub}</span></div>`;
   const stats = `<div class="hstats">${tile("Pass", p.passes, histPer === "all" ? "totalt" : "perioden")}${tile("Snitt", fmtNum(p.passes / weeks), "pass/vecka")}${tile("Nya PB", p.pbs, histPer === "all" ? "totalt" : "perioden")}</div>`;
   const bars = Math.min(26, Math.max(4, weeks));
-  // Styrka: de som ökat mest under perioden först, övriga under Visa alla
-  const str = p.ex.slice().sort((a, b) => (b.times > 1) - (a.times > 1) || (b.unit === "kg") - (a.unit === "kg") || b.gain - a.gain || b.last.localeCompare(a.last));
+  // Styrka: övningar gjorda minst två gånger, med var man började och var man är nu. De som ökat mest först.
+  // Övningar gjorda en gång samlas på en rad: där finns inget att jämföra med än.
+  const str = p.ex.filter(e => e.times > 1).sort((a, b) => (b.unit === "kg") - (a.unit === "kg") || b.gain - a.gain || b.last.localeCompare(a.last));
+  const once = p.ex.filter(e => e.times <= 1).sort((a, b) => b.last.localeCompare(a.last));
   const shown = strAll ? str : str.slice(0, 5);
-  const rows = shown.map(e => `<button class="hstr" data-chart="${e.id}"><span class="grow"><b>${esc(EX[e.id].name)}</b><span class="muted small">${fmtSet(e.best, e.id)}${e.times > 1 ? "" : " · loggad en gång"}</span></span>
-      ${spark(e)}<span class="hstr-g">${gain(e) || `<span class="delta same">±0</span>`}</span></button>`).join("");
+  const delta = e => e.gain > 0 ? deltaBadge(e.gain, e.unit) : e.gain < 0 ? deltaBadge(e.gain, e.unit) : `<span class="delta same">Samma</span>`;
+  const rows = shown.map(e => `<button class="hstr" data-chart="${e.id}" aria-label="${esc(EX[e.id].name)}: visa utvecklingen"><span class="grow col"><b>${esc(EX[e.id].name)}</b>
+      <span class="hstr-ft">${fmtSet(e.first, e.id)} <span aria-hidden="true">→</span><span class="sr"> till </span> <b>${fmtSet(e.best, e.id)}</b></span>
+      <span class="muted small">${e.times} gånger sedan ${shortDate(e.firstDate)}</span></span>
+      <span class="hstr-g">${delta(e)}</span>${icon("right", 16)}</button>`).join("");
+  const onceRow = once.length ? `<div class="hstr-once"><span class="muted small"><b>Gjort en gång:</b> ${once.slice(0, 6).map(e => esc(EX[e.id].name)).join(", ")}${once.length > 6 ? ` och ${once.length - 6} till` : ""}.
+      Kör dem igen så syns utvecklingen här.</span></div>` : "";
   return `${chips}${winsHtml}${stats}
     <section class="hblock"><div class="row between hsec2"><h2>Pass per vecka</h2><span class="muted small">mål ${S.plan.count}</span></div>${weekBars(bars)}</section>
-    ${rows ? `<section class="hblock"><div class="row between hsec2"><h2>Styrka</h2><span class="muted small">ökning under perioden</span></div>${rows}
-      ${str.length > 5 ? `<button class="ghost wide" data-hstrall aria-expanded="${strAll}">${strAll ? "Visa färre" : `Visa alla ${str.length} övningar`}${icon(strAll ? "up" : "down", 16)}</button>` : ""}</section>`
+    ${rows || onceRow ? `<section class="hblock"><div class="hsec2"><h2>Styrka</h2><span class="muted small">Bästa set första gången → bästa set nu, under perioden. Tryck för hela kurvan.</span></div>${rows}
+      ${str.length > 5 ? `<button class="ghost wide" data-hstrall aria-expanded="${strAll}">${strAll ? "Visa färre" : `Visa alla ${str.length} övningar`}${icon(strAll ? "up" : "down", 16)}</button>` : ""}${onceRow}</section>`
       : `<div class="muted hnone">Inga övningar loggade under perioden.</div>`}
     ${actSummary()}
     ${weightSection(w, wFirst, wLast)}`;
