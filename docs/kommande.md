@@ -129,7 +129,7 @@ Senast uppdaterad: 2026-11-06. Status bygger på dokumenterade publiceringar och
 | 125 | Hem: tryck på isbrickan under flamman för en förklaring av frysningen | Hem | Liten | Klar |
 | 126 | Anonym statistik och felrapporter (utan id), sidan Statistik för admin, går att stänga av; kräver supabase/statistik.sql | Appen | Medel | Klar |
 | 127 | Inloggning: knapparna för Google, Microsoft och Facebook visas bara när de är påslagna i Supabase (ingen felsida) | Konto | Liten | Klar |
-| 128 | Inloggning: Googles egen knapp, Google visar Driv i stället för Supabase-adressen | Konto | Liten | Klar |
+| 128 | Inloggning: Googles egen knapp, Google visar Driv i stället för Supabase-adressen (utan vit kant i mörkt läge) | Konto | Liten | Klar |
 
 ## Detaljer och acceptanskriterier
 
