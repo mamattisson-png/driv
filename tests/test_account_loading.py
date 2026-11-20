@@ -60,8 +60,13 @@ def test_google_button_and_disabled_provider_message(page):
     from conftest import open_app
     open_app(page)
     page.evaluate("""history.replaceState(null, '', location.pathname + '?error=server_error&error_description=Unsupported+provider%3A+provider+is+not+enabled');
-      oauthError(); document.getElementById('app').innerHTML = loginView()""")
+      oauthError(); account.providers = { google: true, azure: true, facebook: true }; document.getElementById('app').innerHTML = loginView()""")
     assert page.locator("[data-oauth]").count() == 3
+    # Bara påslagna inloggningssätt visas; utan något påslaget försvinner raden helt
+    page.evaluate("account.providers = { google: true, azure: false, facebook: false }; document.getElementById('app').innerHTML = loginView()")
+    assert page.locator("[data-oauth]").count() == 1
+    page.evaluate("account.providers = { email: true }; document.getElementById('app').innerHTML = loginView()")
+    assert page.locator("[data-oauth]").count() == 0 and page.locator(".l3or").count() == 0
     assert "inte påslagen" in page.evaluate("account.msg")
     assert page.evaluate("location.search") == ""
 

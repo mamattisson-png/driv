@@ -152,6 +152,19 @@ async function connectSupabase() {
 // Inloggning med Google, Microsoft eller Facebook: Supabase skickar en dit och tillbaka hit, där sessionen läses ur adressen.
 // Samma e-post som tidigare ger samma konto. Varje tjänst slås på i Supabase (Authentication → Providers), se docs/inloggning.md.
 const OAUTH = { google: "Google", azure: "Microsoft", facebook: "Facebook" };
+// Vilka inloggningssätt som är påslagna i Supabase. Bara de visas som knappar, så att ingen hamnar
+// på Supabases felsida "provider is not enabled". Okänt (null) tills svaret kommit: då visas inga.
+async function loadProviders() {
+  if (!sbEnabled) return;
+  try {
+    const r = await fetch(`${sbConf.supabaseUrl.replace(/\/$/, "")}/auth/v1/settings`, { headers: { apikey: sbConf.supabaseAnonKey } });
+    if (!r.ok) return;
+    const d = await r.json();
+    account.providers = d.external || {};
+    if (typeof render === "function") render();
+  } catch (e) { /* utan nät: bara e-post */ }
+}
+if (sbEnabled) setTimeout(loadProviders, 0);
 async function signInWithProvider(provider) {
   account.busy = true; account.msg = ""; render();
   try { sessionStorage.setItem("driv-oauth", provider); } catch (e) { /* privat läge */ }

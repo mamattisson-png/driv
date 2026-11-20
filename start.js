@@ -67,6 +67,9 @@ function loginView() {
   }
   const create = welcomeLogin === "create";
   const prov = (id, logo, name) => `<button class="lprov2" data-oauth="${id}" ${a.busy ? "disabled" : ""} aria-label="Fortsätt med ${name}">${logo}<span>${name}</span></button>`;
+  // Bara inloggningssätt som är påslagna i Supabase
+  const on = a.providers || {}, provs = [["google", GOOGLE_G, "Google"], ["azure", MS_LOGO, "Microsoft"], ["facebook", FB_LOGO_C, "Facebook"]]
+    .filter(([id]) => on[id]).map(x => prov(...x)).join("");
   return `<div class="login loginv3"><div class="welcome-glow" aria-hidden="true"></div>
     <button class="backbtn" data-welcomelogin="">${icon("left", 18)}Tillbaka</button>
     <div class="l3hero"><img class="l3logo" src="icons/icon-192-v2.png" alt="">
@@ -76,8 +79,8 @@ function loginView() {
       <button class="l3go" data-sendcode ${a.busy ? "disabled" : ""} aria-label="Skicka kod">${icon("right", 20)}</button></div>
     <div class="muted small l3hint">Vi mejlar en kod, inget lösenord. E-posten används bara för att logga in.</div>
     ${msg}
-    <div class="ordivider l3or"><span>eller</span></div>
-    <div class="l3prov">${prov("google", GOOGLE_G, "Google")}${prov("azure", MS_LOGO, "Microsoft")}${prov("facebook", FB_LOGO_C, "Facebook")}</div>
+    ${provs ? `<div class="ordivider l3or"><span>eller</span></div>
+    <div class="l3prov">${provs}</div>` : ""}
     <div class="l3foot muted small">${create ? `Har du ett konto? <button class="link" data-welcomelogin="login">Logga in</button>`
       : `Ny här? <button class="link" data-welcomelogin="create">Skapa konto</button>`}
       <span class="l3dot">·</span><a href="integritet.html" target="_blank" rel="noopener">Dina uppgifter</a></div>
