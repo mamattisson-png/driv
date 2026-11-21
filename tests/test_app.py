@@ -2220,13 +2220,13 @@ def test_appguiden_gar_igenom_alla_flikar(page):
         page.click("[data-tournext]")
     assert {"idag", "pass", "dailys", "kost", "historik"} <= set(tabs)
     assert page.evaluate("tour") is None and page.locator(".tour").count() == 0
-    # Kan avslutas när som helst, och startas igen från Inställningar
-    page.click("[data-tourstart]")
-    page.click("[data-tourend] >> nth=0")
-    assert page.evaluate("tour") is None
+    # Hem har ingen egen guideknapp; guiden startas igen från Inställningar och kan avslutas när som helst
+    assert page.locator(".homehead [data-tourstart]").count() == 0
     go(page, "profil")
     page.click(".prow [data-tourstart]")
-    assert page.evaluate("tour") == 0 and not page.errors
+    assert page.evaluate("tour") == 0
+    page.click("[data-tourend] >> nth=0")
+    assert page.evaluate("tour") is None and not page.errors
 
 
 def test_nollstall_allt_borjar_pa_valkomstsidan(page):
@@ -3027,3 +3027,18 @@ def test_manaden_i_siffror(page):
     page.evaluate("tab = 'idag'; render()")
     page.click(".mcard-x")
     assert page.locator(".mcard").count() == 0 and page.evaluate("S.monthSeen") == "2026-11"
+
+
+def test_hem_veckans_pass_klara_visar_lugn_rad(page):
+    import datetime
+    page.clock.install(time=datetime.datetime(2026, 11, 21, 10, 0))
+    start(page)
+    page.evaluate("""() => { const d = S.plan.days;
+      ['2026-11-16', '2026-11-18', '2026-11-20'].forEach((x, i) => S.log[x] = { workouts: [{ dayId: d[i].id, done: true, sets: {} }], dailies: {}, food: [] });
+      save(); tab = 'idag'; render(); }""")
+    assert page.locator(".h3-passcard").count() == 0
+    row = page.inner_text(".h3-card.done")
+    assert "Veckans 3 pass klara" in row and "Extra pass?" in row
+    # Raden öppnar passet, där det går att köra extra
+    page.click(".h3-card.done")
+    assert page.evaluate("tab") == "pass" and not page.errors

@@ -116,7 +116,7 @@ function traningView() {
       ${completedPassDate(sel) === TODAY ? `<button class="linkbtn2 tp-fix" data-trfix="${sel.id}">${icon("edit", 14)}Korrigera dagens pass</button>` : ""}</section>`;
   const wd = isFixed() ? S.plan.weekdays.map(x => WD[x].toLowerCase()).join(", ") : "";
   const schema = `<section class="tschema"><span class="grow"><span class="klabel">Träningsschema</span>
-      <b>${esc(PROGRAMS[S.plan.program || "ppl"].name)}</b><span class="muted small"> · ${S.plan.count} pass${wd ? ` · ${wd}` : ""}</span></span>
+      <b>${esc(PROGRAMS[S.plan.program || "ppl"].name)}</b><span class="muted small">&nbsp;· ${S.plan.count} pass${wd ? ` · ${wd}` : ""}</span></span>
     <button class="linkbtn2" data-tab="upplagg">Ändra schema${icon("right", 14)}</button></section>`;
   const acts = actsOn(TODAY);
   const row = (ic, title, sub, attrs, end = "right") => `<button class="h3-row" ${attrs}><span class="h3-ic">${icon(ic, 18)}</span><span class="grow"><b>${title}</b><small>${sub}</small></span>${icon(end, 18)}</button>`;

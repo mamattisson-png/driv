@@ -1249,7 +1249,10 @@ const VIEWS = {
     const ws = weekStart(TODAY), weighed = weekDates(ws).some(x => x <= TODAY && weights()[x] > 0), avg = weekAvgWeight(ws);
     const others = typeof social !== "undefined" && account.step === "in" && social.loaded ? social.feed.filter(a => !a.mine) : [];
     // Dagens tre saker: det som återstår först (numrerat), det som är klart krymper till en rad med bock
-    const passCard = n => done ? `<button class="h3-card h3-head done" data-seepass="${d.id}">${no(n, true)}<span class="grow"><b>${esc(d.name)} klart</b><small>${passInfo}</small></span>${icon("right", 18)}</button>`
+    // Veckomålet nått och inget pass idag: en lugn rad med bock i stället för en stor startknapp
+    const weekDone = !done && !started && !t.rest && !t.free && S.plan.count > 0 && passes >= S.plan.count && d.ex.length > 0;
+    const passCard = n => weekDone ? `<button class="h3-card h3-head done" data-seepass="${d.id}">${no(n, true)}<span class="grow"><b>Veckans ${S.plan.count} pass klara</b><small>Extra pass? Nästa är ${esc(d.name)} · ~${mins} min</small></span>${icon("right", 18)}</button>`
+      : done ? `<button class="h3-card h3-head done" data-seepass="${d.id}">${no(n, true)}<span class="grow"><b>${esc(d.name)} klart</b><small>${passInfo}</small></span>${icon("right", 18)}</button>`
       : `<section class="h3-card h3-passcard ${done ? "done" : ""}"><button class="h3-head" data-seepass="${d.id}" aria-label="${passLab}: ${esc(d.name)}">${no(n, done)}
         <span class="grow"><span class="klabel ${done ? "oktext" : "accent"}">${passLab}</span><b class="h3-pass">${esc(t.rest ? "Vila" : freeIdle ? "Inget loggat än" : d.name)}</b><small>${passInfo}</small></span>${icon("right", 18)}</button>
         ${passBtn}</section>`;
@@ -1258,13 +1261,12 @@ const VIEWS = {
         ${foodOk ? "" : `<span class="h3-bar"><i style="width:${Math.min(100, Math.round(100 * e.kcal / Math.max(1, m.kcal)))}%"></i></span>`}</span>${icon("right", 18)}</button>`;
     const dailyCard = n => `<button class="h3-card h3-head ${dailysOk ? "done" : ""}" data-tab="dailys">${no(n, dailysOk)}<span class="grow"><b>${dailysOk ? "Dailys klara" : "Gör dina dailys"}</b>
         <small>${total ? `${completed} av ${total} idag` : "Lägg till det du vill göra varje dag"}</small></span>${icon("right", 18)}</button>`;
-    const items = [[passCard, done || !!t.rest], [foodCard, foodOk], [dailyCard, dailysOk]];
+    const items = [[passCard, done || !!t.rest || weekDone], [foodCard, foodOk], [dailyCard, dailysOk]];
     let nr = 0;
     const homeCards = [...items.filter(x => !x[1]), ...items.filter(x => x[1])].map(([f, ok]) => f(ok ? 0 : ++nr)).join("");
     return `<div class="home3">
       <header class="homehead"><div class="brand"><img src="icons/icon-192-v2.png" alt=""><div class="ordbild"><span class="wordmark">DRIV</span><span class="slogan">Ditt mål. <em>Ditt driv.</em></span></div></div>
-        <span class="row h3-hbtns"><button class="gear avbtn infobtn" data-tourstart aria-label="Visa appguiden">${icon("info", 20)}</button>
-        <button class="gear avbtn frbtn" data-tab="vanner" aria-label="${others.length ? `Vänner · ${esc(others[0].name)} har tränat` : "Vänner"}">${icon("vanner", 20)}${others.length ? '<i class="frdot" aria-hidden="true"></i>' : ""}</button>
+        <span class="row h3-hbtns"><button class="gear avbtn frbtn" data-tab="vanner" aria-label="${others.length ? `Vänner · ${esc(others[0].name)} har tränat` : "Vänner"}">${icon("vanner", 20)}${others.length ? '<i class="frdot" aria-hidden="true"></i>' : ""}</button>
         <button class="gear avbtn setbtn" data-tab="profil" aria-label="Inställningar">${GEAR_SVG}</button></span></header>
       ${S.tourAsked !== false ? "" : `<section class="tour-offer"><span class="h3-ic">${icon("info", 20)}</span><span class="grow"><b>Ny i Driv?</b><small>En kort rundtur visar var allt finns.</small></span>
         <button class="small primary" data-tourstart>Visa</button><button class="small ghost" data-tourskip>Inte nu</button></section>`}
@@ -1328,7 +1330,7 @@ const VIEWS = {
         <span class="grow col"><b>${esc(name)}</b><span class="muted small">Visa profil</span></span>${icon("right", 18)}</button>
       ${group("Träning", `<div class="prow"><div class="prow-line"><button class="prow-head" data-tab="upplagg"><span class="pic">${icon("upplagg", 20)}</span><span class="grow"><b>Träningsschema</b>
           <span class="muted small">${esc(PROGRAMS[S.plan.program || "ppl"].name)} · ${S.plan.count} pass i veckan</span></span><span class="chev">${icon("right", 18)}</span></button></div></div>
-        ${profRow("vila", "timer", "Vilotimer", rs.on ? `På · ${rs.compound} / ${rs.iso} sek` : "Av", `
+        ${profRow("vila", "timer", "Vilotimer", rs.on ? `På · ${rs.compound} s basövningar, ${rs.iso} s övriga` : "Av", `
           <label class="card psw"><span class="grow">Starta en vilotimer när jag bockar av ett set</span><input type="checkbox" class="switch" data-resttoggle ${rs.on ? "checked" : ""}></label>
           <div class="grid2" style="margin-top:10px">
             <label class="field">Basövningar (sek)<input type="number" inputmode="numeric" id="restcompound" value="${rs.compound}"></label>
@@ -1339,7 +1341,7 @@ const VIEWS = {
           <div class="muted small" style="margin-top:6px">Förbrända kcal är en uppskattning efter aktivitet, tid och din vikt. Den blir lätt för hög, därför är det avstängt från början.</div>`)}`)}
       ${group("Kost och kropp", `<div class="prow" id="p-varden"><div class="prow-line"><button class="prow-head" data-tab="varden"><span class="pic">${icon("profil", 20)}</span><span class="grow"><b>Dina värden</b>
           <span class="muted small">${S.profileSet === false ? "Standardvärden · ställ in dina" : `${p.age} år · ${p.height} cm · ${fmtNum(p.weight)} kg · BMI ${fmtNum(Math.round(bmiOf(p) * 10) / 10)}`}</span></span><span class="chev">${icon("right", 18)}</span></button></div></div>
-        ${profRow("kalori", "kost", "Kalorimål", `${tnum(m.kcal)} kcal · ${GOALS[p.goal][0].split(" (")[0]}`, `<section class="card pbig"><b>${tnum(m.kcal)}</b><span>kcal om dagen · Protein ${m.protein} g · Fett ${m.fat} g · Kolhydrater ${m.carbs} g</span></section>
+        ${profRow("kalori", "kost", "Kalorimål", `${tnum(m.kcal)} kcal · ${{ cut: "Gå ner i vikt", keep: "Behåll vikten", bulk: "Bygg muskler" }[p.goal] || ""}`, `<section class="card pbig"><b>${tnum(m.kcal)}</b><span>kcal om dagen · Protein ${m.protein} g · Fett ${m.fat} g · Kolhydrater ${m.carbs} g</span></section>
           <section class="card"><label class="field">Mål<select data-prof="goal">${Object.entries(GOALS).map(([k, v]) => `<option value="${k}" ${p.goal === k ? "selected" : ""}>${v[0]}</option>`).join("")}</select></label>
           <button class="link small" data-tab="varden" style="margin-top:8px">Kön, ålder, längd, vikt och aktivitet ställer du in under Dina värden</button>
           <div class="muted" style="margin-top:10px">Underhåll (TDEE): ${tdee(p)} kcal · Mål: ${m.kcal} kcal</div>
