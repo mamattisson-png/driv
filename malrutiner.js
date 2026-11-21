@@ -5,28 +5,40 @@
 // Rutinen blir en vanlig rutin som går att ändra. Övningarna är vanliga övningar ur biblioteket.
 // Laddas före app.js.
 
-// spec: "övning@setxreps" som exEntry
+// spec: "övning@setxreps" som exEntry. Varje rutin följer råd från fysioterapeuter i vården (NHS, 1177)
+// eller forskning (McGill), och src visar källan i appen. Mål utan sådana råd finns inte med.
 const GOAL_ROUTINES = [
-  { id: "mage", name: "Starkare mage", icon: "trana", why: "Stärker de djupa magmusklerna som håller bålen stadig och avlastar ryggen.",
-    ex: ["plankan@3x30 s", "dead_bug@3x10/sida", "omvand_crunch@3x12", "sidoplanka@3x20 s/sida", "bird_dog@2x8/sida"] },
-  { id: "landrygg", name: "Stel ländrygg", icon: "utseende", care: true, why: "Mjukar upp länd och höfter och stärker det som avlastar ryggen. Gör lugnt, utan smärta.",
-    ex: ["katt_ko@2x10", "kna_mot_brost@2x30 s/sida", "strx_supine_wipers@2x8/sida", "barnets_position@2x45 s", "hoftbojare_stretch@2x30 s/sida", "bird_dog@2x8/sida"] },
-  { id: "hofter", name: "Stela höfter", icon: "utseende", why: "Rörlighet i höften åt alla håll. Bra för den som sitter mycket.",
-    ex: ["strx_ninety_switch@2x8", "strx_quadruped_hip_circle@2x6/ben", "hoftbojare_stretch@2x30 s/sida", "figur_fyra@2x30 s/sida", "grodan@2x45 s"] },
-  { id: "nacke", name: "Nacke och axlar", icon: "utseende", care: true, why: "För kontorsdagar: lösare nacke och axlar, och öppnare bröst.",
-    ex: ["strx_shoulder_rolls@2x8/riktning", "strx_neck_sidebend@2x6/sida", "strx_neck_nod@2x8", "strx_wall_slide@2x8", "brost_dorr@2x30 s/sida", "trad_nalen@2x30 s/sida"] },
-  { id: "hallning", name: "Bättre hållning", icon: "profil", why: "Stärker ryggens baksida och öppnar bröstet, så att det blir lättare att stå rakt.",
-    ex: ["strx_floor_angels@2x8", "superman@3x10", "strx_open_book@2x6/sida", "strx_chest_towel@2x30 s", "bird_dog@2x8/sida"] },
-  { id: "rumpa", name: "Starkare rumpa", icon: "trana", why: "Sätet stöttar höfter, knän och rygg. Utan vikter, på golvet.",
-    ex: ["glute_bridge@3x15", "stx_clamshell@2x15/sida", "sidliggande_benlyft@2x12/sida", "enbens_bridge@2x10/ben", "figur_fyra@1x30 s/sida"] },
-  { id: "baksida", name: "Stela baksida lår", icon: "utseende", why: "Mjukare baksida lår gör det lättare att böja sig och lyfta rätt.",
-    ex: ["strx_supine_knee_extension@2x10/ben", "liggande_hamstring@2x30 s/ben", "strx_hamstring_heel_chair@2x30 s/ben", "nedatgaende_hund@2x30 s", "sittande_framatfallning@2x30 s"] },
-  { id: "morgon", name: "Morgonrörlighet", icon: "sol", why: "Fem minuter som väcker hela kroppen innan dagen börjar.",
-    ex: ["katt_ko@1x10", "varldens_basta@1x5/sida", "nedatgaende_hund@1x30 s", "strx_quadruped_rotation@1x8/sida", "djup_knaboj@1x45 s"] },
-  { id: "forelop", name: "Före löpning", icon: "aktivitet", why: "Rörlig uppvärmning för höfter och ben, så att första kilometern känns lättare.",
-    ex: ["strx_leg_swing_front@1x10/ben", "strx_leg_swing_side@1x10/ben", "strx_hamstring_scoops@1x8/ben", "varldens_basta@1x5/sida", "strx_quadruped_hip_circle@1x6/ben"] },
-  { id: "efterlop", name: "Efter löpning", icon: "aktivitet", why: "Lugn stretch för vader, lår och höfter när du har sprungit.",
-    ex: ["vadstretch@2x30 s/sida", "framsida_lar_stretch@2x30 s/sida", "liggande_hamstring@2x30 s/ben", "hoftbojare_stretch@2x30 s/sida", "figur_fyra@2x30 s/sida"] },
+  { id: "mage", name: "Starkare mage", icon: "trana", why: "Ryggforskaren Stuart McGills tre bålövningar: de stärker magen och bålen utan att belasta ländryggen.",
+    ex: ["crunches@3x6", "sidoplanka@3x10 s/sida", "bird_dog@3x6/sida"],
+    tip: "Curl-up enligt McGill: ena benet rakt, händerna under svanken, lyft bara huvud och skuldror en liten bit och håll några sekunder.",
+    src: [["Harvard Health: Three moves for better spine health", "https://www.health.harvard.edu/pain/three-moves-for-better-spine-health"]] },
+  { id: "landrygg", name: "Stel ländrygg", icon: "utseende", care: true, why: "Lugna rörelser som fysioterapeuter i den brittiska vården ger vid stel och öm ländrygg.",
+    ex: ["strg_pelvic_tilt@2x10", "strg_supine_twist@2x8/sida", "kna_mot_brost@2x20 s/sida", "glute_bridge@2x10", "katt_ko@2x10"],
+    src: [["NHS: Back mobility exercises (Cambridge University Hospitals)", "https://www.cuh.nhs.uk/patient-information/back-mobility-exercises/"],
+      ["NHS: Low back pain, exercises (Guy's and St Thomas')", "https://guysandstthomas.nhs.uk/health-information/low-back-pain/physiotherapy-and-exercises"],
+      ["1177: Ont i ryggen", "https://www.1177.se/sjukdomar--besvar/skelett-leder-och-muskler/rygg-och-nacke/ont-i-ryggen/"]] },
+  { id: "nacke", name: "Nacke och axlar", icon: "utseende", care: true, why: "Små, lugna nackrörelser som vården rekommenderar vid stel nacke, gärna ett par gånger om dagen.",
+    ex: ["strg_chin_tuck@2x10", "strx_neck_turn@2x6/sida", "strx_neck_sidebend@2x6/sida", "strx_shoulder_rolls@2x8/riktning"],
+    src: [["NHS: Neck pain (Berkshire Healthcare)", "https://www.berkshirehealthcare.nhs.uk/advice/neck-pain"]] },
+  { id: "hallning", name: "Bättre hållning", icon: "profil", why: "Övningar för hållningen från den brittiska vården: hakindrag, rörlig bröstrygg och öppnare bröst.",
+    ex: ["strg_chin_tuck@2x10", "strx_open_book@2x6/sida", "brost_dorr@2x20 s/sida", "trad_nalen@2x20 s/sida"],
+    src: [["NHS: Exercises to improve your posture (University Hospital Southampton)", "https://www.uhs.nhs.uk/Media/UHS-website-2019/Patientinformation/Respiratory/Exercises-to-improve-your-posture-562-PIL.pdf"]] },
+  { id: "rumpa", name: "Starkare rumpa", icon: "trana", why: "De tre övningar för sätet som vården ger för starkare höfter. Utan vikter, på golvet.",
+    ex: ["glute_bridge@3x10", "stx_clamshell@3x10/sida", "sidliggande_benlyft@3x10/sida"],
+    src: [["NHS: Strengthening exercises for hip pain (Leicester)", "https://www.uhleicester.nhs.uk/wp-content/uploads/2025/06/1103_052024-Strengthening-exercises-and-advice-for-hip-pain.pdf"]] },
+  { id: "hofter", name: "Stela höfter", icon: "utseende", why: "Lugn stretch för höftens fram- och baksida. Bra för den som sitter mycket.",
+    ex: ["hoftbojare_stretch@2x20 s/sida", "figur_fyra@2x20 s/sida", "kna_mot_brost@2x20 s/sida"],
+    src: [["NHS: How to stretch after exercising", "https://www.nhs.uk/live-well/exercise/how-to-stretch-after-exercising/"]] },
+  { id: "baksida", name: "Stela baksida lår", icon: "utseende", why: "Lugn stretch för baksida lår med rak rygg, så att sträckningen hamnar i låret och inte i ländryggen.",
+    ex: ["liggande_hamstring@2x20 s/ben", "strx_hamstring_heel_chair@2x20 s/ben", "strx_supine_knee_extension@2x8/ben"],
+    src: [["NHS: How to stretch after exercising", "https://www.nhs.uk/live-well/exercise/how-to-stretch-after-exercising/"]] },
+  { id: "forelop", name: "Före löpning", icon: "aktivitet", why: "Rörlig uppvärmning. Vården råder att värma upp minst sex minuter och att vänta med stilla stretch tills efteråt.",
+    ex: ["strx_leg_swing_front@1x10/ben", "strx_leg_swing_side@1x10/ben", "strx_hamstring_scoops@1x8/ben", "varldens_basta@1x5/sida", "strx_quadruped_hip_circle@1x6/ben"],
+    tip: "Börja med några minuter rask promenad eller lugn jogg.",
+    src: [["NHS: How to warm up before exercising", "https://www.nhs.uk/live-well/exercise/how-to-warm-up-before-exercising/"]] },
+  { id: "efterlop", name: "Efter löpning", icon: "aktivitet", why: "Stretch för vader, lår och säte när du har sprungit. Håll varje stretch i 15–20 sekunder.",
+    ex: ["vadstretch@2x20 s/sida", "framsida_lar_stretch@2x20 s/sida", "liggande_hamstring@2x20 s/ben", "figur_fyra@2x20 s/sida"],
+    src: [["NHS: How to stretch after exercising", "https://www.nhs.uk/live-well/exercise/how-to-stretch-after-exercising/"]] },
 ];
 const goalEx = g => g.ex.map(spec => EX[spec.split("@")[0]] ? exEntry(spec) : null).filter(Boolean);
 // Ungefärlig tid: sekunder per set (hållningar räknas som skrivet, reps som 3 s styck) plus 15 s mellan set
@@ -53,7 +65,9 @@ function goalView() {
     <p class="muted gr-why">${esc(g.why)}</p>
     <div class="gr-meta"><span>${list.length} övningar</span><span>~${goalMinutes(g)} min</span></div>
     <section class="up-list">${list.map(e => `<div class="up-li gr-row">${thumb(e.id, "dl-f")}<span class="grow col"><b>${esc(EX[e.id].name)}</b><small class="muted">${e.sets} × ${esc(String(e.reps).replace(/-/g, "–"))}</small></span></div>`).join("")}</section>
-    ${g.care ? `<p class="muted small gr-care">Gör rörelserna lugnt och utan smärta. Har du ont som inte går över, prata med vårdpersonal.</p>` : ""}
+    ${g.tip ? `<p class="muted small gr-tip">${esc(g.tip)}</p>` : ""}
+    <p class="muted small gr-care">${g.care ? "Gör rörelserna lugnt och utan smärta. Blir det inte bättre inom två till tre veckor, eller har du domningar, feber eller svårt att kissa, kontakta vården (1177)." : "Gör rörelserna lugnt och sluta om det gör ont."}</p>
+    <div class="gr-src"><span class="klabel">Bygger på</span>${g.src.map(([n, u]) => `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(n)}</a>`).join("")}</div>
     <button class="primary wide bigbtn gr-add" data-goaladd="${g.id}">${have ? "Lägg till en gång till" : "Lägg till som rutin"}</button>
     <p class="muted small gr-note">Rutinen hamnar under Rutiner i Upplägg. Där väljer du vilka dagar den gäller.</p></div>`;
 }

@@ -281,8 +281,11 @@ def test_rutin_efter_mal(page):
     page.click("[data-goallist]")
     assert page.locator("[data-goalroutine]").count() == page.evaluate("GOAL_ROUTINES.length")
     page.click('[data-goalroutine="landrygg"]')
-    assert "Stel ländrygg" in page.inner_text("h1") and "vårdpersonal" in page.inner_text("#app")
+    assert "Stel ländrygg" in page.inner_text("h1") and "1177" in page.inner_text("#app")
+    # Varje rutin visar sin källa som länk
+    assert page.evaluate("GOAL_ROUTINES.every(g => g.src.length && g.src.every(([n, u]) => n && u.startsWith('https://')))")
+    assert page.locator(".gr-src a").count() == 3
     page.click("[data-goaladd]")
     r = page.evaluate("S.dailyRoutines[0]")
-    assert r["name"] == "Stel ländrygg" and r["goal"] == "landrygg" and len(r["ex"]) == 6
+    assert r["name"] == "Stel ländrygg" and r["goal"] == "landrygg" and len(r["ex"]) == 5
     assert page.evaluate("rutOpen") == r["id"]
