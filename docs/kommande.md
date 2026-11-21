@@ -134,6 +134,7 @@ Senast uppdaterad: 2026-11-06. Status bygger på dokumenterade publiceringar och
 | 130 | Historik: Styrka visar från → till per övning, och övningar gjorda en gång samlas på en rad | Historik | Liten | Klar |
 | 131 | Rekordsida (bästa set per övning, nås från Nya PB) och enklare start: ingen kontovarning, tre program först, kroppsvärden valfria, tydligare tom svit | Appen | Medel | Klar |
 | 132 | Hem: månaden i siffror första veckan i ny månad, med egen sida och bild att dela | Hem | Medel | Klar |
+| 133 | Dailys: rutiner efter mål (mage, ländrygg, nacke, hållning, rumpa, höfter, baksida lår, före och efter löpning), byggda på råd från NHS, 1177 och McGill med källan som länk | Dailys | Medel | Klar |
 
 ## Detaljer och acceptanskriterier
 
