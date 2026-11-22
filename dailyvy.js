@@ -190,11 +190,11 @@ function uppView() {
     <section class="up-wlist">${dayRows}</section>
     ${rot ? "" : `<button class="linkbtn2 up-fillb" data-plfill="turn">Fyll veckan med rutinerna i tur och ordning</button>`}`;
   return `<div class="dlx up"><button class="backbtn" data-rutback>${icon("left", 18)}Dailys</button><h1>Upplägg</h1>
-    ${upHead("Varje dag", "Det här gör du alla dagar, vilken rutin dagen än har.")}
+    ${upHead("Varje dag", "Övningar och kosttillskott som du gör alla dagar.")}
     <section class="up-ev">
       <button class="up-evr" data-rutopen="daily"><span class="up-k">Övningar</span><span class="grow">${every.length ? `<b>${esc(listNames(every, e => EX[e.id].name))}</b>` : `<b class="up-add">+ Lägg till</b>`}</span>${every.length ? figs(every) : ""}${icon("right", 18)}</button>
       <button class="up-evr" data-rutopen="supp"><span class="up-k">Kosttillskott</span><span class="grow">${a.length ? `<b>${esc(listNames(a, x => x.dose ? `${x.name} ${x.dose}` : x.name))}</b>` : `<b class="up-add">+ Lägg till</b>`}</span>${icon("right", 18)}</button></section>
-    ${upHead("Rutiner", "Grupper av övningar som du växlar mellan, till exempel Mage A och Mage B. Valfritt.")}
+    ${upHead("Rutiner – vissa dagar", "En rutin är några övningar som du bara gör vissa dagar, till exempel mage på måndagar och rörlighet på tisdagar. Det under Varje dag är med ändå. Valfritt.")}
     <section class="up-list rutlist">${rows}${rutRename === "new" ? `<div class="up-li">${nameForm}</div>` : `<button class="up-li up-new" data-rutnew>+ Ny rutin</button>`}
       <button class="up-li up-goal" data-goallist>${icon("idea", 18)}<span class="grow col"><b>Välj efter mål</b><small>Mage, ländrygg, höfter, hållning …</small></span>${icon("right", 18)}</button></section>
     ${upHead("Veckan", L.length ? "Vilken rutin du gör vilken dag." : "", !L.length)}
@@ -202,7 +202,7 @@ function uppView() {
         <button role="radio" data-uppmode="week" class="${m !== "rotate" ? "on" : ""}" aria-checked="${m !== "rotate"}">Fasta veckodagar</button>
         <button role="radio" data-uppmode="rotate" class="${m === "rotate" ? "on" : ""}" aria-checked="${m === "rotate"}">I tur och ordning</button></div>
       ${week}`
-      : `<div class="up-empty">Skapa en rutin först, till exempel Mage A. Sen lägger du ut den på veckans dagar.</div>`}</div>`;
+      : `<div class="up-empty">Skapa en rutin först, till exempel Mage. Sen väljer du här vilka dagar den gäller.</div>`}</div>`;
 }
 
 // En rutin, Varje dag eller Kosttillskott
