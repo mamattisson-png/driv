@@ -119,7 +119,19 @@ function dlDayView() {
 
 // ---------- Vecka ----------
 // En rad per dag: rutinen och hur mycket som blev gjort. Ett tryck fäller ut dagens övningar, som går att bocka av i efterhand.
-let wkOpen = null;   // datumet som är utfällt
+// Dagar som varit och har något kvar är utfällda från början, så att det räcker med ett tryck på pricken.
+// Trycker man på en dag sparas valet här (datum → utfälld eller inte).
+let wkOpen = null;
+function wkDayStat(d) {
+  const ex = dailyList(d), a = S.supplements || [], L = S.log[d];
+  const tot = ex.length + a.length, got = ex.filter(e => dailyDone(d, e.id)).length + a.filter(x => L && L.dailies && L.dailies["supp:" + x.id]).length;
+  return { tot, got, all: tot > 0 && got === tot };
+}
+function wkIsOpen(d) {
+  if (wkOpen && d in wkOpen) return wkOpen[d];
+  const st = wkDayStat(d);
+  return d < TODAY && st.tot > 0 && !st.all;
+}
 function dlWeekView() {
   const cur = weekStart(TODAY), ws = dlWeek && dlWeek < cur ? dlWeek : cur, dates = weekDates(ws), a = S.supplements || [];
   const suppOk = (d, x) => !!(S.log[d] && S.log[d].dailies && S.log[d].dailies["supp:" + x.id]);
@@ -130,14 +142,14 @@ function dlWeekView() {
   let full = 0, past = 0;
   const rows = dates.map((d, i) => {
     const r = routineOn(d), ex = dailyList(d), col = r ? rutColor(r) : "var(--text)";
-    const tot = ex.length + a.length, got = ex.filter(e => dailyDone(d, e.id)).length + a.filter(x => suppOk(d, x)).length;
-    const future = d > TODAY, all = tot > 0 && got === tot, open = wkOpen === d;
+    const { tot, got, all } = wkDayStat(d), future = d > TODAY, open = wkIsOpen(d);
     if (!future && tot) { past++; if (all) full++; }
     const sub = !tot ? "Inga dailys" : future ? `Planerat · ${tot} ${tot === 1 ? "sak" : "saker"}` : all ? "Allt klart" : `${got} av ${tot} klara`;
     const ring = !tot ? "" : all ? `<span class="wk-ok">${icon("check", 16)}</span>` : future ? "" : `<span class="wk-ring">${setRing(got, tot)}</span>`;
     const items = open ? `<div class="wk-items">${ex.map(e => { const inR = r && r.ex.some(x => x.id === e.id);
         return `<div class="wk-it"><span class="wk-f" aria-hidden="true">${figure(e.id)}</span><span class="grow">${esc(EX[e.id].name)}</span>${mark(d, dailyDone(d, e.id), inR ? col : "var(--text)", e.id, EX[e.id].name)}</div>`; }).join("")}
-      ${a.map(x => `<div class="wk-it"><span class="wk-f wk-pill" aria-hidden="true"></span><span class="grow">${esc(x.name)} <small class="muted">tillskott</small></span>${mark(d, suppOk(d, x), "var(--ok)", "supp:" + x.id, x.name)}</div>`).join("")}</div>` : "";
+      ${a.map(x => `<div class="wk-it"><span class="wk-f wk-pill" aria-hidden="true"></span><span class="grow">${esc(x.name)} <small class="muted">tillskott</small></span>${mark(d, suppOk(d, x), "var(--ok)", "supp:" + x.id, x.name)}</div>`).join("")}
+      ${!future && !all ? `<button class="small ghost wk-all" data-wkall="${d}">${icon("check", 14)}Allt gjort</button>` : ""}</div>` : "";
     return `<div class="wk-day2 ${d === TODAY ? "t" : ""} ${open ? "open" : ""} ${future ? "fut" : ""}">
       <button class="wk-row" data-wkopen="${d}" aria-expanded="${open}" ${tot ? "" : "disabled"}>
         <span class="wk-dt"><small>${WD[i].slice(0, 3)}</small><b>${+d.slice(-2)}</b></span>
@@ -148,7 +160,7 @@ function dlWeekView() {
       <button class="iconbtn small ghost" data-dlweek="7" ${ws === cur ? "disabled" : ""} aria-label="Veckan efter">${icon("right", 18)}</button></div>
     ${hasDailies() || a.length ? `${past ? `<div class="muted small wk-sum">${full} av ${past} ${past === 1 ? "dag" : "dagar"} med allt klart</div>` : ""}
     <section class="wk-list">${rows}</section>
-    <div class="muted small wk-hint">Tryck på en dag för att se övningarna och bocka av i efterhand.</div>`
+    <div class="muted small wk-hint">Dagar med något kvar är utfällda. Tryck på pricken för att bocka av i efterhand.</div>`
     : `<section class="wk-list"><div class="wk-none muted small">Inga dailys än. Ställ in dem under Upplägg.</div></section>`}`;
 }
 
@@ -242,7 +254,7 @@ function dailysPage() {
 }
 
 document.addEventListener("click", ev => {
-  const t = ev.target.closest && ev.target.closest("[data-dledit2],[data-dlahead]:not([data-openpick]),[data-dldrop],[data-dllist],[data-dlweek],[data-wkck],[data-wkopen],[data-upinfo],[data-dlview],[data-plsel],[data-plday],[data-plfill],[data-uppmode],[data-uxopen],[data-uxsets]");
+  const t = ev.target.closest && ev.target.closest("[data-dledit2],[data-dlahead]:not([data-openpick]),[data-dldrop],[data-dllist],[data-dlweek],[data-wkck],[data-wkopen],[data-wkall],[data-upinfo],[data-dlview],[data-plsel],[data-plday],[data-plfill],[data-uppmode],[data-uxopen],[data-uxsets]");
   if (!t) return;
   const ds = t.dataset;
   ev.stopImmediatePropagation();
@@ -258,7 +270,15 @@ document.addEventListener("click", ev => {
   }
   else if (ds.dllist !== undefined) dlShowList = !dlShowList;
   else if (ds.dlweek) { const cur = weekStart(TODAY), n = shift(dlWeek || cur, +ds.dlweek); dlWeek = n >= cur ? null : n; wkOpen = null; }
-  else if (ds.wkopen) wkOpen = wkOpen === ds.wkopen ? null : ds.wkopen;
+  else if (ds.wkopen) wkOpen = { ...(wkOpen || {}), [ds.wkopen]: !wkIsOpen(ds.wkopen) };
+  else if (ds.wkall) {
+    // Hela dagen gjord med ett tryck; dagen minns vilken rutin den hade
+    const d = ds.wkall, L = day(d), r = routineOn(d);
+    if (r && !L.dailyRoutine && dailyRoutines().length) L.dailyRoutine = r.id;
+    for (const e of dailyList(d)) if (!dailyDone(d, e.id)) L.dailies[e.id] = true;
+    for (const x of S.supplements || []) L.dailies["supp:" + x.id] = true;
+    save(); toast(`${cap(dateLabel(d))}: allt gjort`);
+  }
   else if (ds.wkck) {
     // Bocka av eller ångra en dag i efterhand; dagen minns vilken rutin den hade
     const L = day(ds.wkck), id = ds.wkid, r = routineOn(ds.wkck);

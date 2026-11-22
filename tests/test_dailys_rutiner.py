@@ -159,28 +159,30 @@ def test_upplagg_every_day_supplements_and_colors(page):
 
 
 def test_week_check_missed_day_afterwards(page):
-    """Vecka: en missad övning eller ett kosttillskott bockas av i efterhand; kommande dagar går inte att trycka på."""
+    """Vecka: dagar med något kvar är utfällda, så en missad övning bockas av med ett tryck; kommande dagar går inte att trycka på."""
     page.clock.install(time=datetime.datetime(2026, 11, 11, 12, 0))   # onsdag
     start(page)
     page.evaluate("""S.daily = [exEntry('plankan')]; S.supplements = [{id: 's1', name: 'Kreatin'}]; save()""")
     go(page, 'dailys')
     page.click('[data-dlview=vecka]')
-    # Dagarna är ihopfällda; ett tryck visar dagens övningar
-    assert page.locator('[data-wkck]').count() == 0
-    page.click('[data-wkopen="2026-11-09"]')
+    # Måndag och tisdag har något kvar och är utfällda; idag och kommande dagar är ihopfällda
+    assert page.locator('.wk-day2.open').count() == 2
     page.click('[data-wkck="2026-11-09"][data-wkid="plankan"]')
-    page.click('[data-wkopen="2026-11-10"]')
     page.click('[data-wkck="2026-11-10"][data-wkid="supp:s1"]')
     assert page.evaluate("dailyDone('2026-11-09', 'plankan')") is True
     assert page.evaluate("S.log['2026-11-10'].dailies['supp:s1']") is True
-    page.click('[data-wkopen="2026-11-10"]')
-    page.click('[data-wkopen="2026-11-09"]')
     page.click('[data-wkck="2026-11-09"][data-wkid="plankan"]')
     assert page.evaluate("dailyDone('2026-11-09', 'plankan')") is False
-    # Raden räknar det som är klart; kommande dagar visas men går inte att bocka av
     assert "1 av 2 klara" in page.inner_text('.wk-day2 >> nth=1')
+    # Allt gjort bockar av hela dagen, och dagen fälls ihop
+    page.click('[data-wkall="2026-11-09"]')
+    assert page.evaluate("dailyDone('2026-11-09', 'plankan') && S.log['2026-11-09'].dailies['supp:s1']") is True
+    assert "Allt klart" in page.inner_text('.wk-day2 >> nth=0') and page.locator('.wk-day2.open').count() == 1
+    # En dag kan fällas ut och ihop för hand
+    page.click('[data-wkopen="2026-11-09"]')
+    assert page.locator('.wk-day2.open').count() == 2 and page.locator('[data-wkall="2026-11-09"]').count() == 0
     page.click('[data-wkopen="2026-11-12"]')
-    assert page.locator('[data-wkck="2026-11-12"]').count() == 0 and page.locator('.wk-day2.open .wk-it').count() == 2
+    assert page.locator('[data-wkck="2026-11-12"]').count() == 0 and page.locator('.wk-day2.open .wk-it').count() >= 2
 
 
 def test_week_navigation_back_and_forth(page):
@@ -192,7 +194,6 @@ def test_week_navigation_back_and_forth(page):
     assert page.locator('[data-dlweek="7"]').is_disabled()
     page.click('[data-dlweek="-7"]')
     assert page.evaluate("dlWeek") == '2026-11-02'
-    page.click('[data-wkopen="2026-11-04"]')
     page.click('[data-wkck="2026-11-04"][data-wkid="plankan"]')
     assert page.evaluate("dailyDone('2026-11-04', 'plankan')") is True
     page.click('[data-dlweek="7"]')
