@@ -108,7 +108,9 @@ def test_week_planner(page):
     # Veckotabellen visar Rörlighet bara på sina dagar
     page.click('[data-rutback]')
     page.click('[data-dlview=vecka]')
-    assert page.locator('.wk-r', has_text='Cykelcrunch').locator('.wk-d').count() == 2
+    # Veckan: en rad per dag med dagens rutin, och Rörlighet bara på sina dagar
+    assert page.locator('.wk-day2').count() == 7
+    assert page.locator('.wk-day2', has_text='Rörlighet').count() == 2
 
 
 def test_week_edit_routine_and_today_switch_only_today(page):
@@ -163,13 +165,22 @@ def test_week_check_missed_day_afterwards(page):
     page.evaluate("""S.daily = [exEntry('plankan')]; S.supplements = [{id: 's1', name: 'Kreatin'}]; save()""")
     go(page, 'dailys')
     page.click('[data-dlview=vecka]')
+    # Dagarna är ihopfällda; ett tryck visar dagens övningar
+    assert page.locator('[data-wkck]').count() == 0
+    page.click('[data-wkopen="2026-11-09"]')
     page.click('[data-wkck="2026-11-09"][data-wkid="plankan"]')
+    page.click('[data-wkopen="2026-11-10"]')
     page.click('[data-wkck="2026-11-10"][data-wkid="supp:s1"]')
     assert page.evaluate("dailyDone('2026-11-09', 'plankan')") is True
     assert page.evaluate("S.log['2026-11-10'].dailies['supp:s1']") is True
+    page.click('[data-wkopen="2026-11-10"]')
+    page.click('[data-wkopen="2026-11-09"]')
     page.click('[data-wkck="2026-11-09"][data-wkid="plankan"]')
     assert page.evaluate("dailyDone('2026-11-09', 'plankan')") is False
-    assert page.locator('[data-wkck="2026-11-12"]').count() == 0
+    # Raden räknar det som är klart; kommande dagar visas men går inte att bocka av
+    assert "1 av 2 klara" in page.inner_text('.wk-day2 >> nth=1')
+    page.click('[data-wkopen="2026-11-12"]')
+    assert page.locator('[data-wkck="2026-11-12"]').count() == 0 and page.locator('.wk-day2.open .wk-it').count() == 2
 
 
 def test_week_navigation_back_and_forth(page):
@@ -181,6 +192,7 @@ def test_week_navigation_back_and_forth(page):
     assert page.locator('[data-dlweek="7"]').is_disabled()
     page.click('[data-dlweek="-7"]')
     assert page.evaluate("dlWeek") == '2026-11-02'
+    page.click('[data-wkopen="2026-11-04"]')
     page.click('[data-wkck="2026-11-04"][data-wkid="plankan"]')
     assert page.evaluate("dailyDone('2026-11-04', 'plankan')") is True
     page.click('[data-dlweek="7"]')

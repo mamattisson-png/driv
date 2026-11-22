@@ -1275,6 +1275,7 @@ def test_historik_andra_en_tidigare_dag(page):
     assert "Igår" in page.inner_text(".sheet h2")
     page.click('.sheet [data-hdailys="2026-10-21"]')
     assert page.evaluate("[tab, dlView, dlWeek]") == ["dailys", "vecka", "2026-10-19"]
+    assert page.locator('.wk-day2.open').count() == 1   # dagen är utfälld
     page.click('[data-wkck="2026-10-21"][data-wkid="plankan"]')
     go(page, "historik")
     page.click('[data-histday="2026-10-21"]')
