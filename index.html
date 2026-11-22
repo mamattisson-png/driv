@@ -2669,23 +2669,12 @@ button.acttile { min-height: 64px; cursor: pointer; }
 .up-mode { margin: 0 0 10px; }
 .up-lead { margin: -4px 4px 10px; line-height: 1.4; }
 .up-lead.dim { opacity: .45; }
-.up-wlist { background: var(--card); border: 1px solid var(--line); border-radius: 20px; padding: 4px; }
-.up-wday { border-radius: 16px; }
-.up-wday + .up-wday { border-top: 1px solid var(--line); }
-.up-wday.t { background: rgba(255, 138, 71, .07); border-top-color: transparent; }
-.up-wday.t + .up-wday { border-top-color: transparent; }
-.up-wrow { width: 100%; display: flex; align-items: center; gap: 12px; min-height: 50px; padding: 6px 12px; border: 0; background: none; color: var(--text); font: inherit; text-align: left; }
-.up-wrow svg { color: var(--muted); flex: none; }
-.up-wd { width: 64px; flex: none; color: var(--muted); font-size: 13.5px; }
-.up-wday.t .up-wd { color: var(--accent-text); font-weight: 600; }
-.up-wr { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 15px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.up-wr i { width: 9px; height: 9px; border-radius: 5px; flex: none; }
-.up-wr .muted { font-weight: 400; }
-.up-wpick { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 12px 12px 88px; }
-.up-wpick button { display: flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 12px; border-radius: 18px; border: 1px solid var(--line-strong); background: none; color: var(--text); font: inherit; font-size: 13.5px; }
-.up-wpick button.on { background: var(--text); color: var(--bg); border-color: var(--text); }
-.up-wpick i { width: 8px; height: 8px; border-radius: 4px; }
-.up-fillb { display: block; margin: 12px auto 0; }
+.up-ml { margin: 22px 4px 8px; }
+.up-rc { display: flex; flex-direction: column; min-width: 0; }
+.up-rd { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 5px; padding: 0 4px 12px 26px; }
+.up-dc { height: 32px; min-height: 0; padding: 0; border-radius: 10px; border: 1px solid var(--line-strong); background: none; color: var(--muted); font: 600 12px "Lexend", sans-serif; display: grid; place-items: center; }
+.up-dc.t { border-color: var(--text); }
+.up-dc.on { background: var(--rc); border-color: var(--rc); color: #0d0e10; }
 .up-note { margin: 0 2px 12px; }
 .up-empty { padding: 18px; border-radius: 20px; border: 1.5px dashed var(--line-strong); color: var(--muted); font-size: 14px; text-align: center; }
 .up-dh { display: flex; align-items: center; gap: 12px; margin: 6px 0 0; }

@@ -90,20 +90,17 @@ def test_week_planner(page):
     prepare(page, "alternate")   # 9 november 2026 är en måndag
     page.click('.dl-upp')
     assert page.evaluate("S.dailyWeek") == ['ra', 'rb', 'ra', 'rb', 'ra', 'rb', 'ra']
-    # Veckan är en lista med dagarna; ett tryck på en dag visar rutinerna att välja bland
-    assert "Måndag" in page.inner_text('.up-wday >> nth=0') and "Mage A" in page.inner_text('.up-wday >> nth=0')
-    page.click('[data-plopen="4"]')
+    # Varje rutin visar sina veckodagar; ett tryck på en dag ger dagen den rutinen, ett tryck till tar bort den
+    assert page.locator('.rutrow').nth(0).locator('.up-dc.on').count() == 4
     page.click('[data-plset="4"][data-plid=rc]')
-    page.click('[data-plopen="6"]')
-    page.click('[data-plset="6"][data-plid=""]')
-    assert "Bara Varje dag" in page.inner_text('.up-wday >> nth=6')
+    page.click('[data-plset="6"][data-plid=ra]')
     assert page.evaluate("S.dailyWeek") == ['ra', 'rb', 'ra', 'rb', 'rc', 'rb', '']
+    assert page.locator('.rutrow').nth(0).locator('.up-dc.on').count() == 2 and page.locator('.rutrow').nth(2).locator('.up-dc.on').count() == 1
+    assert "Söndag: ingen rutin" in page.inner_text('.up-note')
     assert page.evaluate("[4, 11].map(i => routinePlanned(shift(TODAY, i)).name)") == ['Rörlighet', 'Rörlighet']
     assert page.evaluate("routinePlanned(shift(TODAY, 6))") is None
-    # Vila tar bara bort rutinen: Varje dag är kvar
+    # Ingen rutin tar bara bort rutinen: Varje dag är kvar
     assert page.evaluate("dailyList(shift(TODAY, 6)).map(e => e.id)") == ['promenad']
-    page.click('[data-plfill=turn]')
-    assert page.evaluate("S.dailyWeek") == ['ra', 'rb', 'rc', 'ra', 'rb', 'rc', 'ra']
     # Turordning fortsätter in i nästa vecka
     page.click('[data-uppmode=rotate]')
     assert page.evaluate("S.dailyMode") == 'rotate'
