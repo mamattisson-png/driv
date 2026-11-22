@@ -90,10 +90,13 @@ def test_week_planner(page):
     prepare(page, "alternate")   # 9 november 2026 är en måndag
     page.click('.dl-upp')
     assert page.evaluate("S.dailyWeek") == ['ra', 'rb', 'ra', 'rb', 'ra', 'rb', 'ra']
-    page.click('[data-plsel=rc]')
-    page.click('[data-plday="4"]')
-    page.click('[data-plsel=""]')
-    page.click('[data-plday="6"]')
+    # Veckan är en lista med dagarna; ett tryck på en dag visar rutinerna att välja bland
+    assert "Måndag" in page.inner_text('.up-wday >> nth=0') and "Mage A" in page.inner_text('.up-wday >> nth=0')
+    page.click('[data-plopen="4"]')
+    page.click('[data-plset="4"][data-plid=rc]')
+    page.click('[data-plopen="6"]')
+    page.click('[data-plset="6"][data-plid=""]')
+    assert "Bara Varje dag" in page.inner_text('.up-wday >> nth=6')
     assert page.evaluate("S.dailyWeek") == ['ra', 'rb', 'ra', 'rb', 'rc', 'rb', '']
     assert page.evaluate("[4, 11].map(i => routinePlanned(shift(TODAY, i)).name)") == ['Rörlighet', 'Rörlighet']
     assert page.evaluate("routinePlanned(shift(TODAY, 6))") is None

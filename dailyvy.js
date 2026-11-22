@@ -11,9 +11,7 @@ let dlShowList = false;
 let dlEditing = false;   // Dag: läget där övningar läggs till och tas bort
 let dlAhead = false;     // i det läget: ändringen gäller även framåt (annars bara idag)   // när dagen är klar visas en sammanfattning; listan bara när man vill ändra
 let dlWeek = null;    // måndagen i veckan som visas under Vecka (null = den här veckan)
-let plSel = null;     // rutinen man lägger ut på veckans dagar ("" är vila)
 let uxOpen = null;    // övningen som är utfälld på en rutins sida (index)
-let upInfo = null;    // steget vars förklaring (i) är utfälld
 
 const RUT_COLORS = ["#ff8a47", "#5aa7f0", "#4cc583", "#b49cff", "#f0c04c", "#ec6a8e"];
 // Varje rutin behåller sin färg även när ordningen ändras: den får första lediga färgen och sparar den
@@ -165,14 +163,9 @@ function dlWeekView() {
 }
 
 // ---------- Upplägg ----------
-const UP_INFO = {
-  1: "Övningar och kosttillskott som du gör varje dag, oavsett vilken rutin dagen har. De behöver inte planeras.",
-  2: "En rutin är en grupp övningar som hör ihop, till exempel Mage A eller Rörlighet. Har du flera rutiner kan olika dagar få olika övningar. Vilken dag som får vilken rutin väljer du i steg 3.",
-  3: "Fasta dagar: varje veckodag har sin rutin, likadant varje vecka. Turordning: rutinerna kommer en per dag i ordning och fortsätter in i nästa vecka. Vila betyder ingen rutin den dagen, men Varje dag är fortfarande med.",
-};
-const upStep = (n, title, sub, dim) => `<div class="up-st ${dim ? "dim" : ""}"><span class="up-n">${n}</span>${title}
-  <button class="up-i ${upInfo === n ? "on" : ""}" data-upinfo="${n}" aria-expanded="${upInfo === n}" aria-label="Mer om ${title}">i</button>${sub ? `<small>${sub}</small>` : ""}</div>
-  ${upInfo === n ? `<div class="up-info">${UP_INFO[n]}</div>` : ""}`;
+// Rubrik med en rad förklaring som alltid syns
+const upHead = (title, text, dim) => `<div class="up-st ${dim ? "dim" : ""}">${title}</div>${text ? `<p class="muted small up-lead ${dim ? "dim" : ""}">${text}</p>` : ""}`;
+let plOpen = null;    // veckodagen (0–6) vars rutinval är utfällt under Veckan
 const figs = list => `<span class="up-fg">${list.filter(e => EX[e.id]).slice(0, 3).map(e => `<span>${figure(e.id)}</span>`).join("")}</span>`;
 
 function uppView() {
@@ -182,31 +175,33 @@ function uppView() {
   const nameForm = `<form class="rutname" data-rutform="new"><input name="n" maxlength="40" required placeholder="T.ex. Mage A" aria-label="Rutinens namn"><button class="small primary" type="submit">Spara</button><button class="small ghost" type="button" data-rutcancel>Avbryt</button></form>`;
   const rows = L.map((r, i) => `<div class="up-li rutrow" data-rutidx="${i}">${m === "rotate" && L.length > 1 ? `<span class="rutgrip" data-rutdrag="${i}" aria-label="Dra för att flytta ${esc(r.name)}">${icon("list", 18)}</span>` : ""}
       <button class="up-lib" data-rutopen="${esc(r.id)}"><i style="background:${rutColor(r)}"></i><b>${esc(r.name)}</b><small>${r.ex.length} ${r.ex.length === 1 ? "övning" : "övningar"}</small>${icon("right", 18)}</button></div>`).join("");
-  if (plSel === null || (plSel && !L.some(r => r.id === plSel))) plSel = L.length ? L[0].id : "";
-  const dates = weekDates(weekStart(TODAY)), wk = weekNow();
-  const tile = (id, i, btn) => { const r = routineById(id);
-    return `<${btn ? `button data-plday="${i}"` : "span"} class="up-dy ${dates[i] === TODAY ? "t" : ""}" aria-label="${cap(WD_LONG[i])}: ${r ? esc(r.name) : "vila"}"><small>${WD[i].slice(0, 3)}</small>
-      <span class="up-s ${r ? "" : "v"}" style="${r ? `--rc:${rutColor(r)}` : ""}">${r ? esc(rutLetter(r)) : "Vila"}</span></${btn ? "button" : "span"}>`; };
-  const week = m === "rotate"
-    ? `<div class="muted small up-note">En rutin per dag i ordningen i steg 2. Fortsätter in i nästa vecka. Dra i ≡ för att ändra ordningen.</div>
-       <div class="up-days">${dates.map((d, i) => tile((routinePlanned(d) || {}).id || "", i, false)).join("")}</div>`
-    : `<div class="up-pick">${L.map(r => `<button class="${plSel === r.id ? "on" : ""}" data-plsel="${esc(r.id)}" aria-pressed="${plSel === r.id}"><i style="background:${rutColor(r)}"></i>${esc(rutLetter(r))}</button>`).join("")}
-         <button class="${plSel === "" ? "on" : ""}" data-plsel="" aria-pressed="${plSel === ""}">Vila</button></div>
-       <div class="up-days">${wk.map((id, i) => tile(id, i, true)).join("")}</div>
-       <div class="up-fill"><span class="muted small">Fyll i:</span><button class="linkbtn2" data-plfill="turn">Turordning</button><button class="linkbtn2" data-plfill="same">Samma alla dagar</button></div>`;
+  const dates = weekDates(weekStart(TODAY)), wk = weekNow(), rot = m === "rotate";
+  // Veckan som en lista: dag och rutinens namn. Med fasta dagar fäller ett tryck ut valen för dagen.
+  const dayRows = dates.map((d, i) => {
+    const id = rot ? (routinePlanned(d) || {}).id || "" : wk[i], r = routineById(id), open = !rot && plOpen === i;
+    const label = `<span class="up-wd">${cap(WD_LONG[i])}</span><span class="grow up-wr">${r ? `<i style="background:${rutColor(r)}"></i>${esc(r.name)}` : `<span class="muted">Bara Varje dag</span>`}</span>`;
+    return `<div class="up-wday ${d === TODAY ? "t" : ""} ${open ? "open" : ""}">${rot ? `<div class="up-wrow">${label}</div>`
+      : `<button class="up-wrow" data-plopen="${i}" aria-expanded="${open}">${label}${icon(open ? "close" : "right", 16)}</button>`}
+      ${open ? `<div class="up-wpick">${L.map(x => `<button class="${id === x.id ? "on" : ""}" data-plset="${i}" data-plid="${esc(x.id)}"><i style="background:${rutColor(x)}"></i>${esc(x.name)}</button>`).join("")}
+        <button class="${id ? "" : "on"}" data-plset="${i}" data-plid="">Ingen rutin</button></div>` : ""}</div>`;
+  }).join("");
+  const week = `${rot ? `<p class="muted small up-note">Rutinerna kommer en om dagen i ordningen ovan och fortsätter in i nästa vecka.${L.length > 1 ? " Dra i ≡ för att ändra ordningen." : ""}</p>`
+      : `<p class="muted small up-note">Samma rutin på samma veckodag varje vecka. Tryck på en dag för att byta.</p>`}
+    <section class="up-wlist">${dayRows}</section>
+    ${rot ? "" : `<button class="linkbtn2 up-fillb" data-plfill="turn">Fyll veckan med rutinerna i tur och ordning</button>`}`;
   return `<div class="dlx up"><button class="backbtn" data-rutback>${icon("left", 18)}Dailys</button><h1>Upplägg</h1>
-    ${upStep(1, "Varje dag", "alltid med, planeras inte")}
+    ${upHead("Varje dag", "Det här gör du alla dagar, vilken rutin dagen än har.")}
     <section class="up-ev">
       <button class="up-evr" data-rutopen="daily"><span class="up-k">Övningar</span><span class="grow">${every.length ? `<b>${esc(listNames(every, e => EX[e.id].name))}</b>` : `<b class="up-add">+ Lägg till</b>`}</span>${every.length ? figs(every) : ""}${icon("right", 18)}</button>
       <button class="up-evr" data-rutopen="supp"><span class="up-k">Kosttillskott</span><span class="grow">${a.length ? `<b>${esc(listNames(a, x => x.dose ? `${x.name} ${x.dose}` : x.name))}</b>` : `<b class="up-add">+ Lägg till</b>`}</span>${icon("right", 18)}</button></section>
-    ${upStep(2, "Rutiner", L.length ? "olika övningar olika dagar" : "valfritt")}
+    ${upHead("Rutiner", "Grupper av övningar som du växlar mellan, till exempel Mage A och Mage B. Valfritt.")}
     <section class="up-list rutlist">${rows}${rutRename === "new" ? `<div class="up-li">${nameForm}</div>` : `<button class="up-li up-new" data-rutnew>+ Ny rutin</button>`}
       <button class="up-li up-goal" data-goallist>${icon("idea", 18)}<span class="grow col"><b>Välj efter mål</b><small>Mage, ländrygg, höfter, hållning …</small></span>${icon("right", 18)}</button></section>
-    ${upStep(3, "Veckan", L.length ? "vilken rutin när" : "", !L.length)}
+    ${upHead("Veckan", L.length ? "Vilken rutin du gör vilken dag." : "", !L.length)}
     ${L.length ? `<div class="seg two up-mode" role="radiogroup" aria-label="Hur rutinerna läggs ut">
-        <button role="radio" data-uppmode="week" class="${m !== "rotate" ? "on" : ""}" aria-checked="${m !== "rotate"}">Fasta dagar</button>
-        <button role="radio" data-uppmode="rotate" class="${m === "rotate" ? "on" : ""}" aria-checked="${m === "rotate"}">Turordning</button></div>
-      <section class="up-wk">${week}</section>`
+        <button role="radio" data-uppmode="week" class="${m !== "rotate" ? "on" : ""}" aria-checked="${m !== "rotate"}">Fasta veckodagar</button>
+        <button role="radio" data-uppmode="rotate" class="${m === "rotate" ? "on" : ""}" aria-checked="${m === "rotate"}">I tur och ordning</button></div>
+      ${week}`
       : `<div class="up-empty">Skapa en rutin först, till exempel Mage A. Sen lägger du ut den på veckans dagar.</div>`}</div>`;
 }
 
@@ -254,7 +249,7 @@ function dailysPage() {
 }
 
 document.addEventListener("click", ev => {
-  const t = ev.target.closest && ev.target.closest("[data-dledit2],[data-dlahead]:not([data-openpick]),[data-dldrop],[data-dllist],[data-dlweek],[data-wkck],[data-wkopen],[data-wkall],[data-upinfo],[data-dlview],[data-plsel],[data-plday],[data-plfill],[data-uppmode],[data-uxopen],[data-uxsets]");
+  const t = ev.target.closest && ev.target.closest("[data-dledit2],[data-dlahead]:not([data-openpick]),[data-dldrop],[data-dllist],[data-dlweek],[data-wkck],[data-wkopen],[data-wkall],[data-dlview],[data-plopen],[data-plset],[data-plfill],[data-uppmode],[data-uxopen],[data-uxsets]");
   if (!t) return;
   const ds = t.dataset;
   ev.stopImmediatePropagation();
@@ -286,13 +281,12 @@ document.addEventListener("click", ev => {
     L.dailies[id] = id.startsWith("supp:") ? !L.dailies[id] : !dailyDone(ds.wkck, id);
     save();
   }
-  else if (ds.upinfo) upInfo = upInfo === +ds.upinfo ? null : +ds.upinfo;
   else if (ds.dlview) { dlView = ds.dlview; dlWeek = null; rutPage = false; rutOpen = null; }
-  else if (ds.plsel !== undefined) plSel = ds.plsel;
-  else if (ds.plday !== undefined) { const w = weekNow(); w[+ds.plday] = plSel; saveWeek(w); save(); }
+  else if (ds.plopen !== undefined) plOpen = plOpen === +ds.plopen ? null : +ds.plopen;
+  else if (ds.plset !== undefined) { const w = weekNow(); w[+ds.plset] = ds.plid; saveWeek(w); plOpen = null; save(); }
   else if (ds.plfill) {
     const L = dailyRoutines().map(r => r.id);
-    if (L.length) { saveWeek(Array.from({ length: 7 }, (_, i) => ds.plfill === "same" ? (plSel || L[0]) : L[i % L.length])); save(); }
+    if (L.length) { saveWeek(Array.from({ length: 7 }, (_, i) => L[i % L.length])); save(); }
   }
   else if (ds.uppmode === "week") { if (rutMode() !== "week") { saveWeek(weekNow()); save(); } }
   else if (ds.uppmode === "rotate") {

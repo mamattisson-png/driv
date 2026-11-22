@@ -2644,15 +2644,8 @@ button.acttile { min-height: 64px; cursor: pointer; }
 .dl-upp { width: 48px; flex: none; border-radius: 14px; border: 0; background: var(--card); color: var(--text); display: grid; place-items: center; padding: 0; }
 .up h1 { margin: 4px 0 0; }
 .up-sub { margin: 4px 4px 14px; }
-.up-st { display: flex; align-items: center; gap: 10px; margin: 26px 4px 10px; font-weight: 600; font-size: 15px; }
+.up-st { display: flex; align-items: center; gap: 10px; margin: 26px 4px 8px; font-weight: 700; font-size: 17px; }
 .up-st.dim { opacity: .45; }
-.up-i { width: 22px; height: 22px; min-height: 0; padding: 0; border-radius: 11px; border: 1.5px solid var(--line-strong); background: none; color: var(--muted); font: italic 700 12px Georgia, serif; display: grid; place-items: center; flex: none; }
-.up-i.on { background: var(--text); color: var(--bg); border-color: var(--text); }
-.up-i { position: relative; }
-.up-i::after { content: ""; position: absolute; inset: -11px; }   /* tryckyta 44 px */
-.up-info { margin: -2px 4px 12px; padding: 12px 14px; border-radius: 14px; background: var(--card-2); color: var(--text); font-size: 14px; line-height: 1.45; }
-.up-n { width: 24px; height: 24px; border-radius: 12px; background: var(--text); color: var(--bg); display: grid; place-items: center; font: 700 12px "Lexend", sans-serif; flex: none; }
-.up-st small { margin-left: auto; color: var(--muted); font-weight: 400; font-size: 13px; }
 .up-ev { position: relative; border-radius: 18px; background: var(--card); border: 1px solid var(--line); overflow: hidden; padding: 0 16px; }
 .up-ev::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: linear-gradient(#ff8a47, #f0c04c, #4cc583, #5aa7f0, #b49cff); }
 .up-evr { display: flex; align-items: center; gap: 12px; width: 100%; padding: 14px 0; border: 0; background: none; color: var(--text); font: inherit; text-align: left; min-height: 0; }
@@ -2674,18 +2667,25 @@ button.acttile { min-height: 64px; cursor: pointer; }
 .up-new { min-height: 56px; padding: 0 16px; border: 0; color: var(--accent-text); font: inherit; font-weight: 600; text-align: left; }
 .up-li .rutname { flex: 1; padding: 10px 4px; }
 .up-mode { margin: 0 0 10px; }
-.up-wk { padding: 14px; border-radius: 20px; background: var(--card); border: 1px solid var(--line); }
-.up-pick { display: flex; gap: 6px; margin-bottom: 14px; }
-.up-pick button { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; min-height: 40px; padding: 0; border: 0; border-radius: 12px; background: var(--card-2); color: var(--muted); font: inherit; font-size: 13px; font-weight: 600; }
-.up-pick button.on { background: var(--text); color: var(--bg); }
-.up-pick i { width: 10px; height: 10px; border-radius: 5px; }
-.up-days { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
-.up-dy { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 0; border: 0; background: none; color: var(--text); font: inherit; min-height: 0; }
-.up-dy small { font: 600 11.5px "Lexend", sans-serif; color: var(--muted); }
-.up-dy.t small { color: var(--text); }
-.up-s { width: 100%; height: 52px; border-radius: 12px; display: grid; place-items: center; font: 700 15px "Unbounded", sans-serif; color: var(--rc); background: color-mix(in srgb, var(--rc) 18%, transparent); }
-.up-s.v { background: transparent; border: 1.5px dashed var(--line-strong); color: var(--muted); font: 500 11px "Lexend", sans-serif; }
-.up-fill { display: flex; align-items: center; gap: 14px; margin-top: 12px; }
+.up-lead { margin: -4px 4px 10px; line-height: 1.4; }
+.up-lead.dim { opacity: .45; }
+.up-wlist { background: var(--card); border: 1px solid var(--line); border-radius: 20px; padding: 4px; }
+.up-wday { border-radius: 16px; }
+.up-wday + .up-wday { border-top: 1px solid var(--line); }
+.up-wday.t { background: rgba(255, 138, 71, .07); border-top-color: transparent; }
+.up-wday.t + .up-wday { border-top-color: transparent; }
+.up-wrow { width: 100%; display: flex; align-items: center; gap: 12px; min-height: 50px; padding: 6px 12px; border: 0; background: none; color: var(--text); font: inherit; text-align: left; }
+.up-wrow svg { color: var(--muted); flex: none; }
+.up-wd { width: 64px; flex: none; color: var(--muted); font-size: 13.5px; }
+.up-wday.t .up-wd { color: var(--accent-text); font-weight: 600; }
+.up-wr { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 15px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.up-wr i { width: 9px; height: 9px; border-radius: 5px; flex: none; }
+.up-wr .muted { font-weight: 400; }
+.up-wpick { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 12px 12px 88px; }
+.up-wpick button { display: flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 12px; border-radius: 18px; border: 1px solid var(--line-strong); background: none; color: var(--text); font: inherit; font-size: 13.5px; }
+.up-wpick button.on { background: var(--text); color: var(--bg); border-color: var(--text); }
+.up-wpick i { width: 8px; height: 8px; border-radius: 4px; }
+.up-fillb { display: block; margin: 12px auto 0; }
 .up-note { margin: 0 2px 12px; }
 .up-empty { padding: 18px; border-radius: 20px; border: 1.5px dashed var(--line-strong); color: var(--muted); font-size: 14px; text-align: center; }
 .up-dh { display: flex; align-items: center; gap: 12px; margin: 6px 0 0; }

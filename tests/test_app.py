@@ -2944,9 +2944,9 @@ def test_ovningsnamn_bryts_inte_mitt_i_ordet(page):
     assert lines and all(ws == "nowrap" for _, ws in lines)
     first = page.evaluate("[...document.querySelectorAll('.fsteps [data-focusgo=\"0\"] .nm .l')].map(e => e.textContent).join(' ')")
     assert first == page.evaluate("EX[S.plan.days[0].ex[0].id].name")
-    # i-knapparna i Upplägg har en tryckyta på minst 44 px
+    # Upplägg förklarar varje del med en rad text i stället för i-knappar
     page.evaluate("focus = null; tab = 'dailys'; rutPage = true; rutOpen = null; render()")
-    assert page.evaluate("getComputedStyle(document.querySelector('.up-i'), '::after').inset") == "-11px"
+    assert page.locator(".up-i").count() == 0 and page.locator(".up-lead").count() >= 2
 
 
 def test_progression_platå_och_backa(page):
