@@ -317,7 +317,7 @@ document.addEventListener("click", ev => {
   if (ds.weekex !== undefined) weekExOpen = !weekExOpen;
   else if (ds.hsub !== undefined) histSub = ds.hsub || null;
   // Dailys och vikt ändras på sina egna ställen: Dailys → Vecka för den veckan, och sidan Vikt för den dagen
-  else if (ds.hdailys) { histDay = null; histSub = null; tab = "dailys"; dlView = "vecka"; dlWeek = weekStart(ds.hdailys); wkOpen = ds.hdailys; rutPage = false; rutOpen = null; window.scrollTo(0, 0); }
+  else if (ds.hdailys) { histDay = null; histSub = null; tab = "dailys"; dlSel = ds.hdailys === TODAY ? null : ds.hdailys; rutPage = false; rutOpen = null; window.scrollTo(0, 0); }
   else if (ds.hvikt) { histDay = null; histSub = null; vikBack = "historik"; tab = "vagning"; wDate = ds.hvikt; wDraft = null; window.scrollTo(0, 0); }
   else if (ds.hper) histPer = ds.hper;
   else if (ds.hstrall !== undefined) strAll = !strAll;

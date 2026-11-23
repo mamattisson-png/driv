@@ -1270,12 +1270,11 @@ def test_historik_andra_en_tidigare_dag(page):
     go(page, "historik")
     assert page.locator('[data-histday="2026-10-20"].pass').count() == 1 and page.locator(".cday.pass").count() == 1
     assert page.locator('[data-histday="2026-10-23"]').is_disabled()
-    # Igår: dagen visar dailys och vikt; de ändras på sina egna ställen (Dailys → Vecka och sidan Vikt)
+    # Igår: dagen visar dailys och vikt; de ändras på sina egna ställen (Dailys och sidan Vikt)
     page.click('[data-histday="2026-10-21"]')
     assert "Igår" in page.inner_text(".sheet h2")
     page.click('.sheet [data-hdailys="2026-10-21"]')
-    assert page.evaluate("[tab, dlView, dlWeek]") == ["dailys", "vecka", "2026-10-19"]
-    assert page.locator('.wk-day2.open').count() == 1   # dagen är utfälld
+    assert page.evaluate("[tab, dlSel]") == ["dailys", "2026-10-21"]   # dagen visas direkt
     page.click('[data-wkck="2026-10-21"][data-wkid="plankan"]')
     go(page, "historik")
     page.click('[data-histday="2026-10-21"]')
@@ -2944,9 +2943,9 @@ def test_ovningsnamn_bryts_inte_mitt_i_ordet(page):
     assert lines and all(ws == "nowrap" for _, ws in lines)
     first = page.evaluate("[...document.querySelectorAll('.fsteps [data-focusgo=\"0\"] .nm .l')].map(e => e.textContent).join(' ')")
     assert first == page.evaluate("EX[S.plan.days[0].ex[0].id].name")
-    # i-knapparna i Upplägg har en tryckyta på minst 44 px
-    page.evaluate("focus = null; tab = 'dailys'; rutPage = true; rutOpen = null; render()")
-    assert page.evaluate("getComputedStyle(document.querySelector('.up-i'), '::after').inset") == "-11px"
+    # Dagknapparna i en extra grupp är minst 44 px höga
+    page.evaluate("focus = null; tab = 'dailys'; S.dailyRoutines = [{id: 'ra', name: 'Mage', ex: []}]; rutPage = true; rutOpen = 'ra'; render()")
+    assert page.evaluate("document.querySelector('.up-dc').getBoundingClientRect().height") >= 44
 
 
 def test_progression_platå_och_backa(page):

@@ -106,17 +106,16 @@ def pick(page, day_id=None):
 
 
 def open_daily_add(page):
-    """Dailys: övningar läggs till under Upplägg → Varje dag → Lägg till övning."""
-    page.click(".dl-upp")
-    page.click('[data-rutopen="daily"]')
+    """Dailys: övningar läggs till under Mina dailys → Varje dag → Lägg till övning."""
+    page.click("[data-rutpage] >> nth=0")
     page.click('[data-openpick="daily"]')
 
 
 def back_to_day(page):
-    """Från en sida i Upplägg tillbaka till Dag."""
+    """Från Mina dailys tillbaka till Dailys, på dagens datum."""
     while page.locator("[data-rutback]").count():
         page.click("[data-rutback]")
-    page.click("[data-dlview=dag]")
+    page.evaluate("dlSel = null; render()")
 
 
 def tick(page, ex, scope=""):

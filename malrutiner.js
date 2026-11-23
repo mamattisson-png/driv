@@ -1,7 +1,7 @@
 "use strict";
 // ---------- Rutiner efter mål ----------
 // Färdiga dailys-rutiner som utgår från vad man vill: starkare mage, stel ländrygg, stela höfter osv.
-// Man väljer ett mål i Upplägg (steg 2 Rutiner), ser övningarna och lägger till rutinen med ett tryck.
+// Man väljer ett mål i Mina dailys, ser övningarna och lägger till dem som extra för vissa dagar.
 // Rutinen blir en vanlig rutin som går att ändra. Övningarna är vanliga övningar ur biblioteket.
 // Laddas före app.js.
 
@@ -53,30 +53,30 @@ function goalMinutes(g) {
 
 let goalPick = null;   // null, "list" eller ett måls id
 function goalView() {
-  const back = `<button class="backbtn" data-goalpick-back>${icon("left", 18)}${goalPick === "list" ? "Upplägg" : "Mål"}</button>`;
+  const back = `<button class="backbtn" data-goalpick-back>${icon("left", 18)}${goalPick === "list" ? "Mina dailys" : "Mål"}</button>`;
   if (goalPick === "list") return `<div class="dlx up">${back}<h1>Vad vill du bli bättre på?</h1>
-    <div class="muted up-sub">Välj ett mål så får du en färdig rutin. Den går att ändra efteråt.</div>
+    <div class="muted up-sub">Välj ett mål så får du färdiga övningar. De går att ändra efteråt.</div>
     <div class="gr-grid">${GOAL_ROUTINES.map(g => `<button class="gr-tile" data-goalroutine="${g.id}"><span class="gr-figs">${goalEx(g).slice(0, 2).map(e => `<span>${figure(e.id)}</span>`).join("")}</span>
       <b>${esc(g.name)}</b><small>${goalEx(g).length} övningar · ~${goalMinutes(g)} min</small></button>`).join("")}</div></div>`;
   const g = GOAL_ROUTINES.find(x => x.id === goalPick);
   if (!g) { goalPick = null; return uppView(); }
   const list = goalEx(g), have = dailyRoutines().some(r => r.goal === g.id);
-  return `<div class="dlx up">${back}<span class="klabel">Rutin efter mål</span><h1>${esc(g.name)}</h1>
+  return `<div class="dlx up">${back}<span class="klabel">Förslag efter mål</span><h1>${esc(g.name)}</h1>
     <p class="muted gr-why">${esc(g.why)}</p>
     <div class="gr-meta"><span>${list.length} övningar</span><span>~${goalMinutes(g)} min</span></div>
     <section class="up-list">${list.map(e => `<div class="up-li gr-row">${thumb(e.id, "dl-f")}<span class="grow col"><b>${esc(EX[e.id].name)}</b><small class="muted">${e.sets} × ${esc(String(e.reps).replace(/-/g, "–"))}</small></span></div>`).join("")}</section>
     ${g.tip ? `<p class="muted small gr-tip">${esc(g.tip)}</p>` : ""}
     <p class="muted small gr-care">${g.care ? "Gör rörelserna lugnt och utan smärta. Blir det inte bättre inom två till tre veckor, eller har du domningar, feber eller svårt att kissa, kontakta vården (1177)." : "Gör rörelserna lugnt och sluta om det gör ont."}</p>
     <div class="gr-src"><span class="klabel">Bygger på</span>${g.src.map(([n, u]) => `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(n)}</a>`).join("")}</div>
-    <button class="primary wide bigbtn gr-add" data-goaladd="${g.id}">${have ? "Lägg till en gång till" : "Lägg till som rutin"}</button>
-    <p class="muted small gr-note">Rutinen hamnar under Rutiner i Upplägg. Där väljer du vilka dagar den gäller.</p></div>`;
+    <button class="primary wide bigbtn gr-add" data-goaladd="${g.id}">${have ? "Lägg till en gång till" : "Lägg till"}</button>
+    <p class="muted small gr-note">Övningarna läggs till som extra i Mina dailys. Sedan väljer du vilka dagar.</p></div>`;
 }
 function addGoalRoutine(id) {
   const g = GOAL_ROUTINES.find(x => x.id === id);
   if (!g) return;
   const L = S.dailyRoutines || (S.dailyRoutines = []), r = { id: "r" + Date.now().toString(36), name: g.name.slice(0, 40), ex: goalEx(g), goal: g.id };
   L.push(r);
-  if (L.length === 1) S.dailyAnchor = { date: TODAY, id: r.id };   // första rutinen blir dagens
+  if (L.length === 1) { S.dailyMode = "week"; S.dailyWeek = Array(7).fill(""); }   // dagarna väljs på gruppens sida
   goalPick = null; rutOpen = r.id; save(); render(); window.scrollTo(0, 0);
   toast(`${g.name} är tillagd`);
 }

@@ -1140,7 +1140,7 @@ function dailiesCard(inPass, banded) {
     ${exRows("daily", S.daily, true)}
     </div>`;
   if (!n) return `<div class="card"><h2>Dailys</h2><div class="muted">Det du vill göra varje dag, till exempel plankan eller hängande benlyft.</div>
-    <div class="muted small" style="margin-top:8px">Ställ in dem under Dailys → Upplägg.</div></div>`;
+    <div class="muted small" style="margin-top:8px">Ställ in dem under Dailys → Ändra mina dailys.</div></div>`;
   const done = list.filter(e => dailyDone(date, e.id)).length, st = streakOf(allDailiesDone);
   const rows = list.map(e => {
     const id = e.id, ok = dailyDone(date, id), its = streakOf(d => dailyDone(d, id)), v = L.dailies[id] || {};
