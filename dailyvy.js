@@ -159,10 +159,20 @@ function uppView() {
   if (typeof goalPick !== "undefined" && goalPick) return goalView();
   if (rutOpen) return uppDetail();
   const L = dailyRoutines(), every = S.daily || (S.daily = []), a = S.supplements || [];
-  const nameForm = `<form class="rutname" data-rutform="new"><input name="n" maxlength="40" required placeholder="Namn, till exempel Mage" aria-label="Namn"><button class="small primary" type="submit">Spara</button><button class="small ghost" type="button" data-rutcancel>Avbryt</button></form>`;
-  const addExtra = rutRename === "new" ? `<div class="up-nf">${nameForm}</div>` : `<button class="up-new2" data-rutnew>${icon("plus", 16)}Lägg till extra för vissa dagar</button>`;
-  const extras = L.map(r => `<button class="up-xc" data-rutopen="${esc(r.id)}"><span class="up-xt"><i style="background:${rutColor(r)}"></i><b class="grow">${esc(extraDays(r))}</b>${icon("right", 16)}</span>
-      <small>${esc(r.name)}: ${esc(r.ex.length ? r.ex.filter(e => EX[e.id]).map(e => EX[e.id].name).join(", ") : "inga övningar än")}</small></button>`).join("");
+  const rot = rutMode() === "rotate", today = routineOn(TODAY), tom = routinePlanned(shift(TODAY, 1));
+  const addExtra = `<button class="up-new2" data-rutnew>${icon("plus", 16)}Lägg till extra för vissa dagar</button>`;
+  const exText = r => esc(r.ex.length ? r.ex.filter(e => EX[e.id]).map(e => EX[e.id].name).join(", ") : "inga övningar än");
+  // Fasta veckodagar: dagarna i ord. I tur och ordning: namnet, och dra i ≡ för ordningen.
+  const extras = rot
+    ? `<div class="rutlist">${L.map((r, i) => `<div class="rutrow up-xr" data-rutidx="${i}">${L.length > 1 ? `<span class="rutgrip" data-rutdrag="${i}" aria-label="Dra för att flytta ${esc(r.name)}">${icon("list", 18)}</span>` : ""}
+        <button class="up-xc" data-rutopen="${esc(r.id)}"><span class="up-xt"><i style="background:${rutColor(r)}"></i><b class="grow">${i + 1}. ${esc(r.name)}</b>${r === today ? `<span class="up-now">Idag</span>` : r === tom ? `<span class="up-now n">I morgon</span>` : ""}${icon("right", 16)}</span>
+        <small>${exText(r)}</small></button></div>`).join("")}</div>`
+    : L.map(r => `<button class="up-xc" data-rutopen="${esc(r.id)}"><span class="up-xt"><i style="background:${rutColor(r)}"></i><b class="grow">${esc(extraDays(r))}</b>${icon("right", 16)}</span>
+      <small>${esc(r.name)}: ${exText(r)}</small></button>`).join("");
+  const mode = L.length > 1 ? `<div class="seg two up-mode2" role="radiogroup" aria-label="Hur dagarna väljs">
+      <button role="radio" data-uppmode="week" class="${rot ? "" : "on"}" aria-checked="${!rot}">Fasta veckodagar</button>
+      <button role="radio" data-uppmode="rotate" class="${rot ? "on" : ""}" aria-checked="${rot}">I tur och ordning</button></div>
+    <p class="muted small up-note">${rot ? "En grupp om dagen i den här ordningen, sedan börjar den om. Dra i ≡ för att ändra ordningen." : "Varje grupp har sina veckodagar, samma varje vecka."}</p>` : "";
   return `<div class="dlx up"><button class="backbtn" data-rutback>${icon("left", 18)}Dailys</button><h1>Mina dailys</h1>
     <div class="klabel up-kl">Varje dag</div>
     <section class="up-card"><div class="uxlist">${uxRows("daily", every)}</div>
@@ -171,8 +181,7 @@ function uppView() {
     <section class="up-card">${a.map((x, i) => supplementEditing === i ? "" : `<div class="up-sr"><button class="grow up-srb" data-suppedit="${i}"><b>${esc(x.name)}</b>${x.dose ? ` <small>${esc(x.dose)}</small>` : ""}</button>
         <button class="ux-x" data-suppdel="${i}" aria-label="Ta bort ${esc(x.name)}">${icon("close", 16)}</button></div>`).join("")}
       ${supplementEditing === null ? `<button class="up-addx" data-suppadd>${icon("plus", 16)}Lägg till</button>` : supplementForm()}</section>
-    ${L.length ? `<div class="klabel up-kl">Extra vissa dagar</div>${extras}${addExtra}
-      ${rutMode() === "rotate" ? `<p class="muted small up-note">De extra grupperna turas om, en om dagen. <button class="linkbtn2" data-uppmode="week">Välj fasta veckodagar i stället</button></p>` : ""}
+    ${L.length ? `<div class="klabel up-kl">Extra vissa dagar</div>${mode}${extras}${addExtra}
       <button class="up-goal2" data-goallist>${icon("idea", 18)}<span class="grow"><b>Färdiga förslag efter mål</b><small>Mage, ländrygg, höfter, hållning …</small></span>${icon("right", 18)}</button>`
     : `<section class="up-opt"><b>Schema <span class="up-tag2">valfritt</span></b>
         <p class="muted small">Vill du göra extra övningar vissa dagar, till exempel mage på måndagar? Lägg till dem här. Varje dag är alltid med.</p>
@@ -184,22 +193,22 @@ function uppDetail() {
   const r = routineById(rutOpen);
   if (!r) { rutOpen = null; return uppView(); }
   const target = "rut:" + r.id, days = daysOf(r), rot = rutMode() === "rotate", wk = weekNow();
-  const nameForm = `<form class="rutname" data-rutform="${esc(r.id)}"><input name="n" maxlength="40" required value="${esc(r.name)}" aria-label="Namn"><button class="small primary" type="submit">Spara</button><button class="small ghost" type="button" data-rutcancel>Avbryt</button></form>`;
   const delText = rutDelArm === r.id ? "Tryck igen för att ta bort" : "Ta bort";
   const chips = weekDates(weekStart(TODAY)).map((d, i) => { const on = wk[i] === r.id;
     return `<button class="up-dc ${on ? "on" : ""}" style="--rc:${rutColor(r)}" data-plset="${i}" data-plid="${esc(r.id)}" aria-pressed="${on}" aria-label="${cap(WD_LONG[i])}">${WD[i].slice(0, 2)}</button>`; }).join("");
   return `<div class="dlx up"><button class="backbtn" data-rutback>${icon("left", 18)}Mina dailys</button>
-    <div class="up-dh">${rutRename === r.id ? nameForm : `<h1>${esc(r.name)}</h1>`}
-      <button class="up-more" data-rutmenu="${esc(r.id)}" aria-label="Fler val för ${esc(r.name)}">⋯</button></div>
-    ${rutMenu === r.id ? `<div class="rutmenu"><button class="small" data-rutren="${esc(r.id)}">Byt namn</button><button class="small" data-rutcopy="${esc(r.id)}">Kopiera</button>
+    <div class="up-dh"><input class="up-name" data-rutname="${esc(r.id)}" maxlength="40" value="${esc(r.name)}" placeholder="Namn, till exempel Mage" aria-label="Namn">
+      <button class="up-more" data-rutmenu="${esc(r.id)}" aria-label="Fler val">⋯</button></div>
+    ${rutMenu === r.id ? `<div class="rutmenu"><button class="small" data-rutcopy="${esc(r.id)}">Kopiera</button>
       <button class="small ${rutDelArm === r.id ? "dangerbtn" : ""}" data-rutdel="${esc(r.id)}">${delText}</button></div>` : ""}
     <div class="klabel up-kl">Vilka dagar?</div>
-    ${rot ? `<p class="muted small up-note">Grupperna turas om, en om dagen. <button class="linkbtn2" data-uppmode="week">Välj fasta veckodagar i stället</button></p>`
+    ${rot ? `<p class="muted small up-note">Grupperna turas om, en om dagen. Ordningen ändrar du i Mina dailys.</p>`
       : `<div class="up-rd" role="group" aria-label="Dagar">${chips}</div>
     <p class="muted small up-note">${days.length ? `Görs ${days.length === 7 ? "alla dagar" : `på ${andList(days.map(x => x + "ar"))}`}, utöver Varje dag.` : "Tryck på dagarna då du vill göra de här övningarna."}</p>`}
     <div class="klabel up-kl">Övningar</div>
     <section class="up-card"><div class="uxlist">${uxRows(target, r.ex) || `<div class="muted small up-none">Inga övningar än.</div>`}</div>
-      <button class="up-addx" data-openpick="${target}">${icon("plus", 16)}Lägg till övning</button></section></div>`;
+      <button class="up-addx" data-openpick="${target}">${icon("plus", 16)}Lägg till övning</button></section>
+    <button class="primary wide bigbtn up-save" data-rutsave>Spara</button></div>`;
 }
 
 function dailysPage() {
@@ -233,6 +242,11 @@ document.addEventListener("click", ev => {
   }
   else if (ds.plset !== undefined) { const w = weekNow(), i = +ds.plset; w[i] = w[i] === ds.plid ? "" : ds.plid; saveWeek(w); save(); }
   else if (ds.uppmode === "week") { if (rutMode() !== "week") { saveWeek(weekNow()); save(); } }
+  else if (ds.uppmode === "rotate") {
+    // Turordningen räknas från dagens grupp
+    const cur = routineOn(TODAY) || dailyRoutines()[0];
+    S.dailyMode = "rotate"; if (cur) S.dailyAnchor = { date: TODAY, id: cur.id }; save();
+  }
   else if (ds.uxopen !== undefined) uxOpen = uxOpen === +ds.uxopen ? null : +ds.uxopen;
   else if (ds.uxsets) { const e = exList(ds.t)[+ds.idx]; e.sets = Math.max(1, Math.min(10, (+e.sets || 1) + +ds.uxsets)); save(); }
   render();
