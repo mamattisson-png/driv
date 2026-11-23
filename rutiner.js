@@ -64,7 +64,11 @@ let rutDelArm = null;    // rutinen som ska tas bort (tryck igen)
 // När man lämnar en grupp: en tom ny grupp tas bort, en grupp utan namn får ett. Ger namnet, eller null om den togs bort.
 function leaveGroup(r) {
   const L = dailyRoutines();
-  if (!r.name.trim() && !r.ex.length && !weekNow().includes(r.id)) { L.splice(L.indexOf(r), 1); save(); return null; }
+  if (!r.name.trim() && !r.ex.length && !(rutMode() === "week" && weekNow().includes(r.id))) {
+    L.splice(L.indexOf(r), 1);
+    if (S.dailyAnchor && S.dailyAnchor.id === r.id) S.dailyAnchor = L.length ? { date: TODAY, id: L[0].id } : null;
+    save(); return null;
+  }
   if (!r.name.trim()) { r.name = `Extra ${L.indexOf(r) + 1}`; save(); }
   return r.name;
 }
@@ -144,10 +148,13 @@ document.addEventListener("click", ev => {
     }
   }
   else if (ds.rutnew !== undefined) {
-    // Ny grupp öppnas direkt; namnet skrivs överst på dess sida
+    // Ny grupp öppnas direkt; namnet skrivs överst på dess sida. Den första frågar först hur de ska läggas upp.
     const L = S.dailyRoutines || (S.dailyRoutines = []), r = { id: "r" + Date.now().toString(36), name: "", ex: [] };
     L.push(r); rutOpen = r.id; rutMenu = null; uxOpen = null;
-    if (L.length === 1) { S.dailyMode = "week"; S.dailyWeek = Array(7).fill(""); }
+    if (L.length === 1) {
+      S.dailyWeek = Array(7).fill("");
+      if (ds.rutnew === "rotate") { S.dailyMode = "rotate"; S.dailyAnchor = { date: TODAY, id: r.id }; } else S.dailyMode = "week";
+    }
     save(); render(); window.scrollTo(0, 0);
     const f = document.querySelector(".up-name"); if (f) f.focus();
     return;

@@ -160,7 +160,7 @@ function uppView() {
   if (rutOpen) return uppDetail();
   const L = dailyRoutines(), every = S.daily || (S.daily = []), a = S.supplements || [];
   const rot = rutMode() === "rotate", today = routineOn(TODAY), tom = routinePlanned(shift(TODAY, 1));
-  const addExtra = `<button class="up-new2" data-rutnew>${icon("plus", 16)}Lägg till extra för vissa dagar</button>`;
+  const addExtra = `<button class="up-new2" data-rutnew>${icon("plus", 16)}Lägg till en grupp till</button>`;
   const exText = r => esc(r.ex.length ? r.ex.filter(e => EX[e.id]).map(e => EX[e.id].name).join(", ") : "inga övningar än");
   // Fasta veckodagar: dagarna i ord. I tur och ordning: namnet, och dra i ≡ för ordningen.
   const extras = rot
@@ -169,10 +169,12 @@ function uppView() {
         <small>${exText(r)}</small></button></div>`).join("")}</div>`
     : L.map(r => `<button class="up-xc" data-rutopen="${esc(r.id)}"><span class="up-xt"><i style="background:${rutColor(r)}"></i><b class="grow">${esc(extraDays(r))}</b>${icon("right", 16)}</span>
       <small>${esc(r.name)}: ${exText(r)}</small></button>`).join("");
-  const mode = L.length > 1 ? `<div class="seg two up-mode2" role="radiogroup" aria-label="Hur dagarna väljs">
-      <button role="radio" data-uppmode="week" class="${rot ? "" : "on"}" aria-checked="${!rot}">Fasta veckodagar</button>
-      <button role="radio" data-uppmode="rotate" class="${rot ? "on" : ""}" aria-checked="${rot}">I tur och ordning</button></div>
-    <p class="muted small up-note">${rot ? "En grupp om dagen i den här ordningen, sedan börjar den om. Dra i ≡ för att ändra ordningen." : "Varje grupp har sina veckodagar, samma varje vecka."}</p>` : "";
+  const savedDays = (S.dailyWeek || []).some(Boolean);
+  const mode = `<div class="seg two up-mode2" role="radiogroup" aria-label="Hur dina extra läggs upp">
+      <button role="radio" data-uppmode="week" class="${rot ? "" : "on"}" aria-checked="${!rot}">Vissa veckodagar</button>
+      <button role="radio" data-uppmode="rotate" class="${rot ? "on" : ""}" aria-checked="${rot}">Turas om</button></div>
+    <p class="muted small up-note">${rot ? `En grupp om dagen i den här ordningen, sedan börjar den om.${L.length > 1 ? " Dra i ≡ för att ändra ordningen." : ""}${savedDays ? " Dina veckodagar används inte nu, men finns kvar om du byter tillbaka." : ""}`
+      : "Varje grupp har sina veckodagar, samma varje vecka."}</p>`;
   return `<div class="dlx up"><button class="backbtn" data-rutback>${icon("left", 18)}Dailys</button><h1>Mina dailys</h1>
     <div class="klabel up-kl">Varje dag</div>
     <section class="up-card"><div class="uxlist">${uxRows("daily", every)}</div>
@@ -181,13 +183,20 @@ function uppView() {
     <section class="up-card">${a.map((x, i) => supplementEditing === i ? "" : `<div class="up-sr"><button class="grow up-srb" data-suppedit="${i}"><b>${esc(x.name)}</b>${x.dose ? ` <small>${esc(x.dose)}</small>` : ""}</button>
         <button class="ux-x" data-suppdel="${i}" aria-label="Ta bort ${esc(x.name)}">${icon("close", 16)}</button></div>`).join("")}
       ${supplementEditing === null ? `<button class="up-addx" data-suppadd>${icon("plus", 16)}Lägg till</button>` : supplementForm()}</section>
-    ${L.length ? `<div class="klabel up-kl">Extra vissa dagar</div>${mode}${extras}${addExtra}
+    ${L.length ? `<div class="klabel up-kl">${rot ? "Extra som turas om" : "Extra vissa dagar"}</div>${mode}${extras}${addExtra}
       <button class="up-goal2" data-goallist>${icon("idea", 18)}<span class="grow"><b>Färdiga förslag efter mål</b><small>Mage, ländrygg, höfter, hållning …</small></span>${icon("right", 18)}</button>`
     : `<section class="up-opt"><b>Schema <span class="up-tag2">valfritt</span></b>
-        <p class="muted small">Vill du göra extra övningar vissa dagar, till exempel mage på måndagar? Lägg till dem här. Varje dag är alltid med.</p>
-        ${addExtra}<button class="linkbtn2 up-golink" data-goallist>Eller välj ett färdigt förslag efter mål</button></section>`}</div>`;
+        <p class="muted small">Vill du göra extra övningar utöver Varje dag? Hur vill du lägga upp dem?</p>
+        <button class="up-q" data-rutnew="week"><b>Vissa veckodagar</b><small>Till exempel mage på måndag och torsdag</small>${icon("right", 16)}</button>
+        <button class="up-q" data-rutnew="rotate"><b>Turas om</b><small>En grupp om dagen, i ordning, sedan börjar den om</small>${icon("right", 16)}</button>
+        <button class="linkbtn2 up-golink" data-goallist>Eller välj ett färdigt förslag efter mål</button></section>`}</div>`;
 }
 
+// Turordning: när gruppen kommer nästa gång ("idag", "i morgon", "på onsdag")
+function nextTurn(r) {
+  for (let i = 0; i < 14; i++) { const d = shift(TODAY, i); if (routinePlanned(d) === r) return i === 0 ? "idag" : i === 1 ? "i morgon" : `på ${WD_LONG[weekdayOf(d)]}`; }
+  return "";
+}
 // En extra grupp: vilka dagar, och övningarna
 function uppDetail() {
   const r = routineById(rutOpen);
@@ -201,8 +210,9 @@ function uppDetail() {
       <button class="up-more" data-rutmenu="${esc(r.id)}" aria-label="Fler val">⋯</button></div>
     ${rutMenu === r.id ? `<div class="rutmenu"><button class="small" data-rutcopy="${esc(r.id)}">Kopiera</button>
       <button class="small ${rutDelArm === r.id ? "dangerbtn" : ""}" data-rutdel="${esc(r.id)}">${delText}</button></div>` : ""}
-    <div class="klabel up-kl">Vilka dagar?</div>
-    ${rot ? `<p class="muted small up-note">Grupperna turas om, en om dagen. Ordningen ändrar du i Mina dailys.</p>`
+    <div class="klabel up-kl">${rot ? "När?" : "Vilka dagar?"}</div>
+    ${rot ? `<p class="up-pos"><b>Nummer ${dailyRoutines().indexOf(r) + 1} av ${dailyRoutines().length}</b> i turordningen${nextTurn(r) ? ` · nästa gång ${nextTurn(r)}` : ""}</p>
+      <p class="muted small up-note">Grupperna turas om, en om dagen. Ordningen ändrar du i Mina dailys.</p>`
       : `<div class="up-rd" role="group" aria-label="Dagar">${chips}</div>
     <p class="muted small up-note">${days.length ? `Görs ${days.length === 7 ? "alla dagar" : `på ${andList(days.map(x => x + "ar"))}`}, utöver Varje dag.` : "Tryck på dagarna då du vill göra de här övningarna."}</p>`}
     <div class="klabel up-kl">Övningar</div>
@@ -241,7 +251,9 @@ document.addEventListener("click", ev => {
     save(); toast(`${cap(dateLabel(d))}: allt gjort`);
   }
   else if (ds.plset !== undefined) { const w = weekNow(), i = +ds.plset; w[i] = w[i] === ds.plid ? "" : ds.plid; saveWeek(w); save(); }
-  else if (ds.uppmode === "week") { if (rutMode() !== "week") { saveWeek(weekNow()); save(); } }
+  else if (ds.uppmode === "week") {
+    if (rutMode() !== "week") { if ((S.dailyWeek || []).some(Boolean)) S.dailyMode = "week"; else saveWeek(weekNow()); save(); }
+  }
   else if (ds.uppmode === "rotate") {
     // Turordningen räknas från dagens grupp
     const cur = routineOn(TODAY) || dailyRoutines()[0];

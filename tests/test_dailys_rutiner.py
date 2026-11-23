@@ -178,12 +178,39 @@ def test_utan_extra_visas_schema_som_val(page):
     assert page.locator('.dl-xh').count() == 0
     page.click('.dl-mine')
     assert 'valfritt' in page.inner_text('.up-opt')
-    page.click('.up-opt [data-rutnew]')
+    # Frågan kommer först: vissa veckodagar eller turas om
+    page.click('.up-opt [data-rutnew="week"]')
     page.fill('.up-name', 'Mage')
     # Första extra gruppen: fasta veckodagar, inga dagar än
     assert page.evaluate("[S.dailyMode, S.dailyWeek]") == ['week', ['', '', '', '', '', '', '']]
     page.click('[data-plset="0"]')
     assert page.evaluate("routinePlanned(TODAY).name") == 'Mage'
+    # Byter man till turas om finns veckodagarna kvar och kommer tillbaka
+    page.click('[data-rutsave]')
+    page.click('[data-uppmode=rotate]')
+    assert 'finns kvar' in page.inner_text('.up-note')
+    page.click('[data-uppmode=week]')
+    assert page.evaluate("S.dailyMode") == 'week'
+    assert page.evaluate("routinePlanned(TODAY).name") == 'Mage'
+
+
+def test_forsta_extra_turas_om(page):
+    page.clock.install(time=datetime.datetime(2026, 11, 9, 12, 0))
+    start(page)
+    page.evaluate("S.daily = [exEntry('plankan')]; S.dailyRoutines = []; save()")
+    go(page, 'dailys')
+    page.click('.dl-mine')
+    page.click('.up-opt [data-rutnew="rotate"]')
+    assert page.evaluate("S.dailyMode") == 'rotate'
+    # Gruppens sida visar plats i ordningen i stället för dagar
+    assert page.locator('.up-dc').count() == 0 and 'Nummer 1 av 1' in page.inner_text('.up-pos')
+    page.fill('.up-name', 'Mage')
+    page.click('[data-rutsave]')
+    page.click('[data-rutnew]')
+    page.fill('.up-name', 'Rörlighet')
+    assert 'Nummer 2 av 2' in page.inner_text('.up-pos') and 'i morgon' in page.inner_text('.up-pos')
+    page.click('[data-rutsave]')
+    assert page.evaluate("[0, 1, 2].map(i => routinePlanned(shift(TODAY, i)).name)") == ['Mage', 'Rörlighet', 'Mage']
 
 
 def test_week_check_missed_day_afterwards(page):
