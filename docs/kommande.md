@@ -138,6 +138,7 @@ Senast uppdaterad: 2026-11-06. Status bygger på dokumenterade publiceringar och
 | 134 | Polering: lugn rad på Hem när veckans pass är klara, guiden startas från ett ställe, tydligare texter för vilotimer, kalorimål och måltidsförslag | Appen | Liten | Klar |
 | 135 | Dailys Vecka: en rad per dag med rutin och hur mycket som blev gjort; dagen fälls ut för att bocka av i efterhand | Dailys | Medel | Klar |
 | 136 | Dailys: en sida med veckan överst för att bocka av, och Mina dailys där Varje dag är grunden och extra för vissa dagar är ett val | Dailys | Stor | Klar |
+| 137 | Mina dailys: ny extra öppnas direkt med namn överst och Spara, frågan om vissa veckodagar eller turas om kommer först, och turordningen visar plats och nästa gång | Dailys | Medel | Klar |
 
 ## Detaljer och acceptanskriterier
 
