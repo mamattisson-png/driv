@@ -69,7 +69,7 @@ def test_manage_routines_create_rename_delete(page):
     # Ny grupp öppnas direkt; namnet skrivs överst och Spara går tillbaka
     n = page.evaluate("S.dailyRoutines.length")
     page.click('[data-rutnew]')
-    assert page.evaluate("S.dailyRoutines.length") == n + 1 and page.locator('.up-name').input_value() == ''
+    assert page.evaluate("S.dailyRoutines.length") == n and page.locator('.up-name').input_value() == ''   # utkast
     assert 'Tryck på dagarna' in page.inner_text('.up-note') and page.locator('.up-dc.on').count() == 0
     page.fill('.up-name', 'Kvällsrutin')
     page.click('[data-rutsave]')
@@ -184,9 +184,9 @@ def test_utan_extra_visas_schema_som_val(page):
     # Första extra gruppen: fasta veckodagar, inga dagar än
     assert page.evaluate("[S.dailyMode, S.dailyWeek]") == ['week', ['', '', '', '', '', '', '']]
     page.click('[data-plset="0"]')
+    page.click('[data-rutsave]')
     assert page.evaluate("routinePlanned(TODAY).name") == 'Mage'
     # Byter man till turas om finns veckodagarna kvar och kommer tillbaka
-    page.click('[data-rutsave]')
     page.click('[data-uppmode=rotate]')
     assert 'finns kvar' in page.inner_text('.up-note')
     page.click('[data-uppmode=week]')
@@ -338,7 +338,18 @@ def test_rutin_efter_mal(page):
     # Varje rutin visar sin källa som länk
     assert page.evaluate("GOAL_ROUTINES.every(g => g.src.length && g.src.every(([n, u]) => n && u.startsWith('https://')))")
     assert page.locator(".gr-src a").count() == 3
+    # Lägg till öppnar förslaget som utkast: inget läggs till förrän man trycker Spara
     page.click("[data-goaladd]")
+    assert page.evaluate("S.dailyRoutines.length") == 0 and page.locator('.up-name').input_value() == 'Stel ländrygg'
+    page.click('[data-rutback]')
+    assert page.evaluate("S.dailyRoutines.length") == 0 and page.evaluate("rutDraft") is None
+    page.click("[data-goallist]")
+    page.click('[data-goalroutine="landrygg"]')
+    page.click("[data-goaladd]")
+    page.click('[data-plset="2"]')
+    page.click('[data-rutsave]')
     r = page.evaluate("S.dailyRoutines[0]")
     assert r["name"] == "Stel ländrygg" and r["goal"] == "landrygg" and len(r["ex"]) == 5
-    assert page.evaluate("rutOpen") == r["id"]
+    assert page.evaluate("S.dailyWeek[2]") == r["id"]
+    # Spara går tillbaka till listan, där gruppen syns
+    assert page.evaluate("rutOpen") is None and page.locator(f'[data-rutopen="{r["id"]}"].up-flash').count() == 1

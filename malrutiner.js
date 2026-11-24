@@ -69,16 +69,16 @@ function goalView() {
     <p class="muted small gr-care">${g.care ? "Gör rörelserna lugnt och utan smärta. Blir det inte bättre inom två till tre veckor, eller har du domningar, feber eller svårt att kissa, kontakta vården (1177)." : "Gör rörelserna lugnt och sluta om det gör ont."}</p>
     <div class="gr-src"><span class="klabel">Bygger på</span>${g.src.map(([n, u]) => `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(n)}</a>`).join("")}</div>
     <button class="primary wide bigbtn gr-add" data-goaladd="${g.id}">${have ? "Lägg till en gång till" : "Lägg till"}</button>
-    <p class="muted small gr-note">Övningarna läggs till som extra i Mina dailys. Sedan väljer du vilka dagar.</p></div>`;
+    <p class="muted small gr-note">På nästa sida väljer du dagar och ändrar om du vill. Inget läggs till förrän du trycker Spara.</p></div>`;
 }
 function addGoalRoutine(id) {
   const g = GOAL_ROUTINES.find(x => x.id === id);
   if (!g) return;
-  const L = S.dailyRoutines || (S.dailyRoutines = []), r = { id: "r" + Date.now().toString(36), name: g.name.slice(0, 40), ex: goalEx(g), goal: g.id };
-  L.push(r);
-  if (L.length === 1) { S.dailyMode = "week"; S.dailyWeek = Array(7).fill(""); }   // dagarna väljs på gruppens sida
+  // Förslaget öppnas som ett utkast; det läggs till först när man trycker Spara
+  const r = { id: "r" + Date.now().toString(36), name: g.name.slice(0, 40), ex: goalEx(g), goal: g.id };
+  discardDraft(); rutDraft = r;
+  if (!dailyRoutines().length) { S.dailyMode = "week"; S.dailyWeek = Array(7).fill(""); }   // dagarna väljs på gruppens sida
   goalPick = null; rutOpen = r.id; save(); render(); window.scrollTo(0, 0);
-  toast(`${g.name} är tillagd`);
 }
 document.addEventListener("click", ev => {
   const t = ev.target.closest && ev.target.closest("[data-goallist],[data-goalroutine],[data-goaladd],[data-goalpick-back],[data-tab]");

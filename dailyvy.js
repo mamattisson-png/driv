@@ -194,6 +194,9 @@ function uppView() {
 
 // Turordning: när gruppen kommer nästa gång ("idag", "i morgon", "på onsdag")
 function nextTurn(r) {
+  const when = i => i === 0 ? "idag" : i === 1 ? "i morgon" : `på ${WD_LONG[weekdayOf(shift(TODAY, i))]}`;
+  // Ett utkast hamnar sist i ordningen: räkna från dagens grupp
+  if (r === rutDraft) { const L = dailyRoutines(), t = L.indexOf(routineOn(TODAY)), n = L.length; return t < 0 ? when(0) : when(((n - t) % (n + 1) + n + 1) % (n + 1)); }
   for (let i = 0; i < 14; i++) { const d = shift(TODAY, i); if (routinePlanned(d) === r) return i === 0 ? "idag" : i === 1 ? "i morgon" : `på ${WD_LONG[weekdayOf(d)]}`; }
   return "";
 }
@@ -207,11 +210,11 @@ function uppDetail() {
     return `<button class="up-dc ${on ? "on" : ""}" style="--rc:${rutColor(r)}" data-plset="${i}" data-plid="${esc(r.id)}" aria-pressed="${on}" aria-label="${cap(WD_LONG[i])}">${WD[i].slice(0, 2)}</button>`; }).join("");
   return `<div class="dlx up"><button class="backbtn" data-rutback>${icon("left", 18)}Mina dailys</button>
     <div class="up-dh"><input class="up-name" data-rutname="${esc(r.id)}" maxlength="40" value="${esc(r.name)}" placeholder="Namn, till exempel Mage" aria-label="Namn">
-      <button class="up-more" data-rutmenu="${esc(r.id)}" aria-label="Fler val">⋯</button></div>
+      ${r === rutDraft ? "" : `<button class="up-more" data-rutmenu="${esc(r.id)}" aria-label="Fler val">⋯</button>`}</div>
     ${rutMenu === r.id ? `<div class="rutmenu"><button class="small" data-rutcopy="${esc(r.id)}">Kopiera</button>
       <button class="small ${rutDelArm === r.id ? "dangerbtn" : ""}" data-rutdel="${esc(r.id)}">${delText}</button></div>` : ""}
     <div class="klabel up-kl">${rot ? "När?" : "Vilka dagar?"}</div>
-    ${rot ? `<p class="up-pos"><b>Nummer ${dailyRoutines().indexOf(r) + 1} av ${dailyRoutines().length}</b> i turordningen${nextTurn(r) ? ` · nästa gång ${nextTurn(r)}` : ""}</p>
+    ${rot ? `<p class="up-pos"><b>Nummer ${r === rutDraft ? dailyRoutines().length + 1 : dailyRoutines().indexOf(r) + 1} av ${dailyRoutines().length + (r === rutDraft ? 1 : 0)}</b> i turordningen${nextTurn(r) ? ` · nästa gång ${nextTurn(r)}` : ""}</p>
       <p class="muted small up-note">Grupperna turas om, en om dagen. Ordningen ändrar du i Mina dailys.</p>`
       : `<div class="up-rd" role="group" aria-label="Dagar">${chips}</div>
     <p class="muted small up-note">${days.length ? `Görs ${days.length === 7 ? "alla dagar" : `på ${andList(days.map(x => x + "ar"))}`}, utöver Varje dag.` : "Tryck på dagarna då du vill göra de här övningarna."}</p>`}
