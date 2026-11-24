@@ -205,14 +205,18 @@ function uppDetail() {
   const r = routineById(rutOpen);
   if (!r) { rutOpen = null; return uppView(); }
   const target = "rut:" + r.id, days = daysOf(r), rot = rutMode() === "rotate", wk = weekNow();
+  // Ett förslag efter mål: samma sida, med bakgrund och källor, och Lägg till i stället för Spara
+  const g = r === rutDraft && r.goal && typeof GOAL_ROUTINES !== "undefined" ? GOAL_ROUTINES.find(x => x.id === r.goal) : null;
   const delText = rutDelArm === r.id ? "Tryck igen för att ta bort" : "Ta bort";
   const chips = weekDates(weekStart(TODAY)).map((d, i) => { const on = wk[i] === r.id;
     return `<button class="up-dc ${on ? "on" : ""}" style="--rc:${rutColor(r)}" data-plset="${i}" data-plid="${esc(r.id)}" aria-pressed="${on}" aria-label="${cap(WD_LONG[i])}">${WD[i].slice(0, 2)}</button>`; }).join("");
-  return `<div class="dlx up"><button class="backbtn" data-rutback>${icon("left", 18)}Mina dailys</button>
+  return `<div class="dlx up"><button class="backbtn" data-rutback>${icon("left", 18)}${g ? "Mål" : "Mina dailys"}</button>
+    ${g ? `<span class="klabel">Förslag efter mål</span>` : ""}
     <div class="up-dh"><input class="up-name" data-rutname="${esc(r.id)}" maxlength="40" value="${esc(r.name)}" placeholder="Namn, till exempel Mage" aria-label="Namn">
       ${r === rutDraft ? "" : `<button class="up-more" data-rutmenu="${esc(r.id)}" aria-label="Fler val">⋯</button>`}</div>
     ${rutMenu === r.id ? `<div class="rutmenu"><button class="small" data-rutcopy="${esc(r.id)}">Kopiera</button>
       <button class="small ${rutDelArm === r.id ? "dangerbtn" : ""}" data-rutdel="${esc(r.id)}">${delText}</button></div>` : ""}
+    ${g ? goalInfo(g, r.ex) : ""}
     <div class="klabel up-kl">${rot ? "När?" : "Vilka dagar?"}</div>
     ${rot ? `<p class="up-pos"><b>Nummer ${r === rutDraft ? dailyRoutines().length + 1 : dailyRoutines().indexOf(r) + 1} av ${dailyRoutines().length + (r === rutDraft ? 1 : 0)}</b> i turordningen${nextTurn(r) ? ` · nästa gång ${nextTurn(r)}` : ""}</p>
       <p class="muted small up-note">Grupperna turas om, en om dagen. Ordningen ändrar du i Mina dailys.</p>`
@@ -221,7 +225,8 @@ function uppDetail() {
     <div class="klabel up-kl">Övningar</div>
     <section class="up-card"><div class="uxlist">${uxRows(target, r.ex) || `<div class="muted small up-none">Inga övningar än.</div>`}</div>
       <button class="up-addx" data-openpick="${target}">${icon("plus", 16)}Lägg till övning</button></section>
-    <button class="primary wide bigbtn up-save" data-rutsave>Spara</button></div>`;
+    ${g ? goalFoot(g) : ""}
+    <button class="primary wide bigbtn up-save" data-rutsave>${r === rutDraft && r.goal ? "Lägg till" : "Spara"}</button></div>`;
 }
 
 function dailysPage() {

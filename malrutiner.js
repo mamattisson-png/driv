@@ -42,9 +42,20 @@ const GOAL_ROUTINES = [
 ];
 const goalEx = g => g.ex.map(spec => EX[spec.split("@")[0]] ? exEntry(spec) : null).filter(Boolean);
 // Ungefärlig tid: sekunder per set (hållningar räknas som skrivet, reps som 3 s styck) plus 15 s mellan set
-function goalMinutes(g) {
+// Förslagets bakgrund: varför, tips, försiktighet och källor (visas på gruppens sida när den kommer från ett mål)
+function goalInfo(g, list) {
+  return `<p class="muted gr-why">${esc(g.why)}</p>
+    <div class="gr-meta"><span>${list.length} övningar</span><span>~${exMinutes(list)} min</span></div>`;
+}
+function goalFoot(g) {
+  return `${g.tip ? `<p class="muted small gr-tip">${esc(g.tip)}</p>` : ""}
+    <p class="muted small gr-care">${g.care ? "Gör rörelserna lugnt och utan smärta. Blir det inte bättre inom två till tre veckor, eller har du domningar, feber eller svårt att kissa, kontakta vården (1177)." : "Gör rörelserna lugnt och sluta om det gör ont."}</p>
+    <div class="gr-src"><span class="klabel">Bygger på</span>${g.src.map(([n, u]) => `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(n)}</a>`).join("")}</div>`;
+}
+const goalMinutes = g => exMinutes(goalEx(g));
+function exMinutes(list) {
   let s = 0;
-  for (const e of goalEx(g)) {
+  for (const e of list) {
     const r = String(e.reps), sec = (r.match(/(\d+)\s*s/) || [])[1], reps = +(r.match(/\d+/) || [10])[0], per = /sida|ben|arm|riktning/.test(r) ? 2 : 1;
     s += (+e.sets || 1) * ((sec ? +sec : reps * 3) * per + 15);
   }
@@ -55,21 +66,10 @@ let goalPick = null;   // null, "list" eller ett måls id
 function goalView() {
   const back = `<button class="backbtn" data-goalpick-back>${icon("left", 18)}${goalPick === "list" ? "Mina dailys" : "Mål"}</button>`;
   if (goalPick === "list") return `<div class="dlx up">${back}<h1>Vad vill du bli bättre på?</h1>
-    <div class="muted up-sub">Välj ett mål så får du färdiga övningar. De går att ändra efteråt.</div>
+    <div class="muted up-sub">Välj ett mål så får du färdiga övningar. Du kan ändra dem innan du lägger till.</div>
     <div class="gr-grid">${GOAL_ROUTINES.map(g => `<button class="gr-tile" data-goalroutine="${g.id}"><span class="gr-figs">${goalEx(g).slice(0, 2).map(e => `<span>${figure(e.id)}</span>`).join("")}</span>
       <b>${esc(g.name)}</b><small>${goalEx(g).length} övningar · ~${goalMinutes(g)} min</small></button>`).join("")}</div></div>`;
-  const g = GOAL_ROUTINES.find(x => x.id === goalPick);
-  if (!g) { goalPick = null; return uppView(); }
-  const list = goalEx(g), have = dailyRoutines().some(r => r.goal === g.id);
-  return `<div class="dlx up">${back}<span class="klabel">Förslag efter mål</span><h1>${esc(g.name)}</h1>
-    <p class="muted gr-why">${esc(g.why)}</p>
-    <div class="gr-meta"><span>${list.length} övningar</span><span>~${goalMinutes(g)} min</span></div>
-    <section class="up-list">${list.map(e => `<div class="up-li gr-row">${thumb(e.id, "dl-f")}<span class="grow col"><b>${esc(EX[e.id].name)}</b><small class="muted">${e.sets} × ${esc(String(e.reps).replace(/-/g, "–"))}</small></span></div>`).join("")}</section>
-    ${g.tip ? `<p class="muted small gr-tip">${esc(g.tip)}</p>` : ""}
-    <p class="muted small gr-care">${g.care ? "Gör rörelserna lugnt och utan smärta. Blir det inte bättre inom två till tre veckor, eller har du domningar, feber eller svårt att kissa, kontakta vården (1177)." : "Gör rörelserna lugnt och sluta om det gör ont."}</p>
-    <div class="gr-src"><span class="klabel">Bygger på</span>${g.src.map(([n, u]) => `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(n)}</a>`).join("")}</div>
-    <button class="primary wide bigbtn gr-add" data-goaladd="${g.id}">${have ? "Lägg till en gång till" : "Lägg till"}</button>
-    <p class="muted small gr-note">På nästa sida väljer du dagar och ändrar om du vill. Inget läggs till förrän du trycker Spara.</p></div>`;
+  goalPick = null; return uppView();
 }
 function addGoalRoutine(id) {
   const g = GOAL_ROUTINES.find(x => x.id === id);
@@ -81,14 +81,13 @@ function addGoalRoutine(id) {
   goalPick = null; rutOpen = r.id; save(); render(); window.scrollTo(0, 0);
 }
 document.addEventListener("click", ev => {
-  const t = ev.target.closest && ev.target.closest("[data-goallist],[data-goalroutine],[data-goaladd],[data-goalpick-back],[data-tab]");
+  const t = ev.target.closest && ev.target.closest("[data-goallist],[data-goalroutine],[data-goalpick-back],[data-tab]");
   if (!t) return;
   if (t.dataset.tab !== undefined) { goalPick = null; return; }   // byter flik: målvalet stängs
   ev.stopImmediatePropagation();
   const ds = t.dataset;
   if (ds.goallist !== undefined) goalPick = "list";
-  else if (ds.goalroutine) goalPick = ds.goalroutine;
-  else if (ds.goaladd) { addGoalRoutine(ds.goaladd); return; }
+  else if (ds.goalroutine) { addGoalRoutine(ds.goalroutine); return; }
   else if (ds.goalpickBack !== undefined) goalPick = goalPick === "list" ? null : "list";
   render(); window.scrollTo(0, 0);
 }, true);

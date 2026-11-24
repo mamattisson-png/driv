@@ -127,7 +127,7 @@ document.addEventListener("click", ev => {
   else if (ds.rutpage !== undefined) { rutSheet = false; rutPage = true; rutOpen = null; uxOpen = null; dailyEditing = false; uppMigrate(); save(); window.scrollTo(0, 0); }
   else if (ds.rutsave !== undefined) {
     // Spara: ett utkast blir en riktig grupp. Tillbaka till listan, där gruppen syns.
-    const r = routineById(rutOpen);
+    const r = routineById(rutOpen), wasDraft = r && r === rutDraft;
     if (r) {
       if (r === rutDraft) {
         const L = S.dailyRoutines || (S.dailyRoutines = []);
@@ -139,12 +139,13 @@ document.addEventListener("click", ev => {
     rutOpen = null; rutMenu = rutRename = null; uxOpen = null; save(); render();
     const el = r && document.querySelector(`[data-rutopen="${r.id}"]`);
     if (el) { el.scrollIntoView({ block: "center" }); el.classList.add("up-flash"); }
-    if (r) toast(`${r.name} är sparad`);
+    if (r) toast(`${r.name} är ${wasDraft ? "tillagd" : "sparad"}`);
     return;
   }
   else if (ds.rutback !== undefined) {
     // Från en grupp tillbaka till Mina dailys (ett utkast försvinner), därifrån till Dailys
-    if (rutOpen) { const r = routineById(rutOpen); if (r) leaveGroup(r); rutOpen = null; }
+    // Ett förslag efter mål går tillbaka till målen
+    if (rutOpen) { const r = routineById(rutOpen); if (r && r === rutDraft && r.goal && typeof goalPick !== "undefined") goalPick = "list"; if (r) leaveGroup(r); rutOpen = null; }
     else rutPage = false;
     rutMenu = rutRename = null; uxOpen = null; supplementEditing = null; window.scrollTo(0, 0);
   }

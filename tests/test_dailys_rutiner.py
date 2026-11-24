@@ -333,23 +333,21 @@ def test_rutin_efter_mal(page):
     page.evaluate("S.dailyRoutines = []; save(); tab = 'dailys'; rutPage = true; rutOpen = null; render()")
     page.click("[data-goallist]")
     assert page.locator("[data-goalroutine]").count() == page.evaluate("GOAL_ROUTINES.length")
+    # Målet öppnas direkt som förslag att ändra; inget läggs till förrän man trycker Lägg till
     page.click('[data-goalroutine="landrygg"]')
-    assert "Stel ländrygg" in page.inner_text("h1") and "1177" in page.inner_text("#app")
-    # Varje rutin visar sin källa som länk
-    assert page.evaluate("GOAL_ROUTINES.every(g => g.src.length && g.src.every(([n, u]) => n && u.startsWith('https://')))")
-    assert page.locator(".gr-src a").count() == 3
-    # Lägg till öppnar förslaget som utkast: inget läggs till förrän man trycker Spara
-    page.click("[data-goaladd]")
     assert page.evaluate("S.dailyRoutines.length") == 0 and page.locator('.up-name').input_value() == 'Stel ländrygg'
+    assert "1177" in page.inner_text("#app") and page.locator(".gr-src a").count() == 3
+    assert page.evaluate("GOAL_ROUTINES.every(g => g.src.length && g.src.every(([n, u]) => n && u.startsWith('https://')))")
+    # Tillbaka går till målen och lägger inte till något
     page.click('[data-rutback]')
-    assert page.evaluate("S.dailyRoutines.length") == 0 and page.evaluate("rutDraft") is None
-    page.click("[data-goallist]")
+    assert page.evaluate("[S.dailyRoutines.length, goalPick, rutDraft]") == [0, 'list', None]
     page.click('[data-goalroutine="landrygg"]')
-    page.click("[data-goaladd]")
+    page.click('[data-xdel^="rut:"][data-idx="4"]')   # ta bort en övning direkt
     page.click('[data-plset="2"]')
+    assert page.inner_text('[data-rutsave]') == 'Lägg till'
     page.click('[data-rutsave]')
     r = page.evaluate("S.dailyRoutines[0]")
-    assert r["name"] == "Stel ländrygg" and r["goal"] == "landrygg" and len(r["ex"]) == 5
+    assert r["name"] == "Stel ländrygg" and r["goal"] == "landrygg" and len(r["ex"]) == 4
     assert page.evaluate("S.dailyWeek[2]") == r["id"]
-    # Spara går tillbaka till listan, där gruppen syns
-    assert page.evaluate("rutOpen") is None and page.locator(f'[data-rutopen="{r["id"]}"].up-flash').count() == 1
+    # Lägg till går tillbaka till listan, där gruppen syns
+    assert page.evaluate("[rutOpen, goalPick]") == [None, None] and page.locator(f'[data-rutopen="{r["id"]}"].up-flash').count() == 1
