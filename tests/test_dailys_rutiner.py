@@ -335,14 +335,17 @@ def test_rutin_efter_mal(page):
     assert page.locator("[data-goalroutine]").count() == page.evaluate("GOAL_ROUTINES.length")
     # Målet öppnas direkt som förslag att ändra; inget läggs till förrän man trycker Lägg till
     page.click('[data-goalroutine="landrygg"]')
-    assert page.evaluate("S.dailyRoutines.length") == 0 and page.locator('.up-name').input_value() == 'Stel ländrygg'
+    assert page.evaluate("S.dailyRoutines.length") == 0 and page.inner_text('.up-dh h1') == 'Stel ländrygg'
     assert "1177" in page.inner_text("#app") and page.locator(".gr-src a").count() == 3
     assert page.evaluate("GOAL_ROUTINES.every(g => g.src.length && g.src.every(([n, u]) => n && u.startsWith('https://')))")
     # Tillbaka går till målen och lägger inte till något
     page.click('[data-rutback]')
     assert page.evaluate("[S.dailyRoutines.length, goalPick, rutDraft]") == [0, 'list', None]
     page.click('[data-goalroutine="landrygg"]')
-    page.click('[data-xdel^="rut:"][data-idx="4"]')   # ta bort en övning direkt
+    # Förslaget visas lugnt; Redigera öppnar ändringarna
+    assert page.locator('[data-xdel], .up-name, [data-openpick]').count() == 0
+    page.click('[data-gredit]')
+    page.click('[data-xdel^="rut:"][data-idx="4"]')
     page.click('[data-plset="2"]')
     assert page.inner_text('[data-rutsave]') == 'Lägg till'
     page.click('[data-rutsave]')

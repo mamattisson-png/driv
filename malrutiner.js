@@ -76,7 +76,7 @@ function addGoalRoutine(id) {
   if (!g) return;
   // Förslaget öppnas som ett utkast; det läggs till först när man trycker Spara
   const r = { id: "r" + Date.now().toString(36), name: g.name.slice(0, 40), ex: goalEx(g), goal: g.id };
-  discardDraft(); rutDraft = r;
+  discardDraft(); rutDraft = r; grEdit = false;
   if (!dailyRoutines().length) { S.dailyMode = "week"; S.dailyWeek = Array(7).fill(""); }   // dagarna väljs på gruppens sida
   goalPick = null; rutOpen = r.id; save(); render(); window.scrollTo(0, 0);
 }

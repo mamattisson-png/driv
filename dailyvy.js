@@ -8,6 +8,7 @@ let dsPopped = null;   // dagen vars stora bock redan har hoppat in
 
 let dlSel = null;     // dagen som visas (null = idag)
 let dlShowList = false;
+let grEdit = false;   // förslag efter mål: ändra övningarna och namnet
 let uxOpen = null;    // övningen som är utfälld (index) i Varje dag eller i en extra grupp
 
 const RUT_COLORS = ["#ff8a47", "#5aa7f0", "#4cc583", "#b49cff", "#f0c04c", "#ec6a8e"];
@@ -137,9 +138,11 @@ function dlOtherDay(d) {
 
 // ---------- Mina dailys ----------
 // Övningarna i Varje dag eller en extra grupp: tryck för set och reps, dra i ≡ för ordningen
-function uxRows(target, list) {
+function uxRows(target, list, still) {
   return list.map((e, i) => {
     if (!EX[e.id]) return "";
+    // Bara visning (ett förslag innan man trycker Redigera)
+    if (still) return `<div class="ux"><div class="ux-r"><span class="ux-main"><span class="ux-f">${figure(e.id)}</span><span class="grow"><b>${esc(EX[e.id].name)}</b><small>${e.sets} × ${esc(e.reps || "")}</small></span></span></div></div>`;
     const open = uxOpen === i;
     return `<div class="ux ${open ? "open" : ""}" data-uxidx="${i}"><div class="ux-r">${list.length > 1 ? `<span class="ux-grip" data-uxdrag="${i}" data-t="${target}" aria-label="Dra för att flytta ${esc(EX[e.id].name)}">${icon("list", 18)}</span>` : ""}
         <button class="ux-main" data-uxopen="${i}" aria-expanded="${open}"><span class="ux-f">${figure(e.id)}</span><span class="grow"><b>${esc(EX[e.id].name)}</b><small>${e.sets} × ${esc(e.reps || "")}</small></span></button>
@@ -207,12 +210,13 @@ function uppDetail() {
   const target = "rut:" + r.id, days = daysOf(r), rot = rutMode() === "rotate", wk = weekNow();
   // Ett förslag efter mål: samma sida, med bakgrund och källor, och Lägg till i stället för Spara
   const g = r === rutDraft && r.goal && typeof GOAL_ROUTINES !== "undefined" ? GOAL_ROUTINES.find(x => x.id === r.goal) : null;
+  const still = g && !grEdit;   // förslaget visas lugnt tills man trycker Redigera
   const delText = rutDelArm === r.id ? "Tryck igen för att ta bort" : "Ta bort";
   const chips = weekDates(weekStart(TODAY)).map((d, i) => { const on = wk[i] === r.id;
     return `<button class="up-dc ${on ? "on" : ""}" style="--rc:${rutColor(r)}" data-plset="${i}" data-plid="${esc(r.id)}" aria-pressed="${on}" aria-label="${cap(WD_LONG[i])}">${WD[i].slice(0, 2)}</button>`; }).join("");
   return `<div class="dlx up"><button class="backbtn" data-rutback>${icon("left", 18)}${g ? "Mål" : "Mina dailys"}</button>
     ${g ? `<span class="klabel">Förslag efter mål</span>` : ""}
-    <div class="up-dh"><input class="up-name" data-rutname="${esc(r.id)}" maxlength="40" value="${esc(r.name)}" placeholder="Namn, till exempel Mage" aria-label="Namn">
+    <div class="up-dh">${still ? `<h1>${esc(r.name)}</h1>` : `<input class="up-name" data-rutname="${esc(r.id)}" maxlength="40" value="${esc(r.name)}" placeholder="Namn, till exempel Mage" aria-label="Namn">`}
       ${r === rutDraft ? "" : `<button class="up-more" data-rutmenu="${esc(r.id)}" aria-label="Fler val">⋯</button>`}</div>
     ${rutMenu === r.id ? `<div class="rutmenu"><button class="small" data-rutcopy="${esc(r.id)}">Kopiera</button>
       <button class="small ${rutDelArm === r.id ? "dangerbtn" : ""}" data-rutdel="${esc(r.id)}">${delText}</button></div>` : ""}
@@ -222,9 +226,9 @@ function uppDetail() {
       <p class="muted small up-note">Grupperna turas om, en om dagen. Ordningen ändrar du i Mina dailys.</p>`
       : `<div class="up-rd" role="group" aria-label="Dagar">${chips}</div>
     <p class="muted small up-note">${days.length ? `Görs ${days.length === 7 ? "alla dagar" : `på ${andList(days.map(x => x + "ar"))}`}, utöver Varje dag.` : "Tryck på dagarna då du vill göra de här övningarna."}</p>`}
-    <div class="klabel up-kl">Övningar</div>
-    <section class="up-card"><div class="uxlist">${uxRows(target, r.ex) || `<div class="muted small up-none">Inga övningar än.</div>`}</div>
-      <button class="up-addx" data-openpick="${target}">${icon("plus", 16)}Lägg till övning</button></section>
+    <div class="up-kh"><span class="klabel up-kl">Övningar</span>${g ? `<button class="small ghost up-edit" data-gredit aria-pressed="${!still}">${still ? `${icon("edit", 14)}Redigera` : "Klar"}</button>` : ""}</div>
+    <section class="up-card"><div class="uxlist">${uxRows(target, r.ex, still) || `<div class="muted small up-none">Inga övningar än.</div>`}</div>
+      ${still ? "" : `<button class="up-addx" data-openpick="${target}">${icon("plus", 16)}Lägg till övning</button>`}</section>
     ${g ? goalFoot(g) : ""}
     <button class="primary wide bigbtn up-save" data-rutsave>${r === rutDraft && r.goal ? "Lägg till" : "Spara"}</button></div>`;
 }
@@ -237,11 +241,12 @@ function dailysPage() {
 }
 
 document.addEventListener("click", ev => {
-  const t = ev.target.closest && ev.target.closest("[data-dllist],[data-dlweek],[data-dlsel],[data-wkck],[data-wkall],[data-plset],[data-uppmode],[data-uxopen],[data-uxsets]");
+  const t = ev.target.closest && ev.target.closest("[data-dllist],[data-gredit],[data-dlweek],[data-dlsel],[data-wkck],[data-wkall],[data-plset],[data-uppmode],[data-uxopen],[data-uxsets]");
   if (!t) return;
   const ds = t.dataset;
   ev.stopImmediatePropagation();
   if (ds.dllist !== undefined) dlShowList = !dlShowList;
+  else if (ds.gredit !== undefined) { grEdit = !grEdit; uxOpen = null; }
   else if (ds.dlsel) dlSel = ds.dlsel === TODAY ? null : ds.dlsel;
   else if (ds.dlweek) { const n = shift(dlSel || TODAY, +ds.dlweek); dlSel = n >= TODAY ? null : n; }
   else if (ds.wkck) {
