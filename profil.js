@@ -171,14 +171,17 @@ function myProfilePage() {
   // Rekord: de övningar med störst framsteg
   const recs = prog.ex.filter(e => e.unit === "kg" && +e.best.kg > 0).sort((a, b) => b.gain - a.gain || b.best.kg - a.best.kg).slice(0, 3);
   return `<div class="mepage2"><div class="mebar"><button class="backbtn" data-tab="${meBack}">${icon("left", 18)}${back}</button></div>
-    <div class="me2">${p ? `<button class="me2pic" data-pfphoto aria-label="Byt bild">${myAvatar(name, "av me2av")}</button>` : myAvatar(name, "av me2av")}<span class="grow"><b>${esc(name)}</b>
-      <small>${p ? (since ? `Medlem sedan ${since}` : "Medlem") : sbEnabled ? "Utan konto · sparas i telefonen" : "Sparas i telefonen"}</small></span></div>
-    <section class="mesec menums"><div><b>${st.total}</b><span>Pass</span></div><div><b>${st.weeks}</b><span>Veckor i rad</span></div><div><b>${prog.pbs}</b><span>Rekord</span></div></section>
-    <section class="mesec"><div class="meh"><b>Den här veckan</b><span>${wsum} av ${S.plan.count} pass</span></div><div class="meweek">${week}</div></section>
-    <section class="mesec"><div class="meh"><b>Pass per vecka</b><span>12 veckor</span></div>
+    <section class="mehero">
+      <div class="me2">${p ? `<button class="me2pic" data-pfphoto aria-label="Byt bild">${myAvatar(name, "av me2av")}</button>` : myAvatar(name, "av me2av")}<span class="grow"><b>${esc(name)}</b>
+        <small>${p ? (since ? `Medlem sedan ${since}` : "Medlem") : sbEnabled ? "Utan konto · sparas i telefonen" : "Sparas i telefonen"}</small></span></div>
+      <div class="menums"><div class="mn-a"><b>${st.total}</b><span>Pass</span></div><div class="mn-b"><b>${st.weeks}</b><span>Veckor i rad</span></div><div class="mn-c"><b>${prog.pbs}</b><span>Rekord</span></div></div></section>
+    <div class="mezone"><span class="mz-ic">${icon("trana", 16)}</span>Din träning</div>
+    <section class="mesec mc-week"><div class="meh"><b>Den här veckan</b><span>${wsum} av ${typeof weekGoal === "function" ? weekGoal(ws) : S.plan.count} pass</span></div><div class="meweek">${week}</div></section>
+    <section class="mesec mc-bars"><div class="meh"><b>Pass per vecka</b><span>12 veckor</span></div>
       <svg class="mebars" viewBox="0 0 300 60" preserveAspectRatio="none" aria-label="Pass per vecka de senaste tolv veckorna">${bars}</svg></section>
-    ${recs.length ? `<section class="mesec"><div class="meh"><b>Rekord</b><button class="linkbtn2 small" data-tab="historik" data-mehist>Alla</button></div>
-      <div class="merecs">${recs.map(e => `<div><span>${esc(EX[e.id] ? EX[e.id].name : e.id)}</span><span><b>${fmtNum(+e.best.kg)} kg</b>${e.gain > 0 ? `<em>+${fmtNum(e.gain)}</em>` : ""}</span></div>`).join("")}</div></section>` : ""}
+    ${recs.length ? `<div class="mezone mz-rec"><span class="mz-ic">${icon("trend", 16)}</span>Rekord<button class="linkbtn2 small" data-tab="historik" data-mehist>Alla</button></div>
+      <section class="merecs">${recs.map(e => `<div><span class="grow">${esc(EX[e.id] ? EX[e.id].name : e.id)}</span><b>${fmtNum(+e.best.kg)} kg</b>${e.gain > 0 ? `<em>+${fmtNum(e.gain)}</em>` : ""}</div>`).join("")}</section>` : ""}
+    <div class="mediv"><span>Profil och konto</span></div>
     ${meSettings(name)}</div>`;
 }
 let pfNameEdit = false;   // namnraden är en skrivruta
@@ -198,13 +201,15 @@ function meSettings(name) {
       ${p ? row("Delning med vänner", p.sharing ? "På" : "Av", 'data-tab="vanner" data-fsheet-open="dela"') : ""}</div>
     ${p ? `<input type="file" id="pfphotoinput" accept="image/*" hidden>` : ""}
     <div class="melbl">Data</div><div class="megrp">
-      ${row("Exportera", "", "data-export")}${row("Importera", "", "data-import")}
-      ${row(confirmReset ? "Tryck igen för att radera allt" : "Nollställ allt", "", "data-reset", "red")}</div>
+      ${row("Exportera", "", "data-export")}${row("Importera", "", "data-import")}</div>
     ${importMsg ? `<div class="muted small pfmsg">${esc(importMsg)}</div>` : ""}
     <input type="file" id="importfile" accept="application/json" class="hidden">
-    ${sbEnabled ? `<div class="melbl">Konto</div><div class="megrp">${inAcct ? `${row(esc(account.email), "Inloggad", "disabled", "plain")}${row("Logga ut", "", "data-signout", "plain")}${row(account.confirmDelete ? "Tryck igen för att radera kontot" : "Radera konto", "", "data-delacct", "red")}`
-      : row("Logga in eller skapa konto", "", "data-melogin")}</div>
-      ${account.confirmDelete ? `<div class="muted small pfmsg">Kontot, molnkopian, vänner och delade pass raderas. En lokal säkerhetskopia ligger kvar på den här enheten.</div>` : ""}` : ""}
+    ${sbEnabled ? `<div class="melbl">Konto</div><div class="megrp">${inAcct ? `${row(esc(account.email), "Inloggad", "disabled", "plain")}${row("Logga ut", "", "data-signout", "plain")}`
+      : row("Logga in eller skapa konto", "", "data-melogin")}</div>` : ""}
+    <div class="melbl mdanger-l">Radera</div><div class="megrp mdanger">
+      ${row(confirmReset ? "Tryck igen för att radera allt" : "Nollställ allt", "", "data-reset", "red")}
+      ${sbEnabled && inAcct ? row(account.confirmDelete ? "Tryck igen för att radera kontot" : "Radera konto", "", "data-delacct", "red") : ""}</div>
+    ${account.confirmDelete ? `<div class="muted small pfmsg">Kontot, molnkopian, vänner och delade pass raderas. En lokal säkerhetskopia ligger kvar på den här enheten.</div>` : ""}
     ${typeof installHelp === "function" ? installHelp() : ""}`;
 }
 document.addEventListener("click", ev => {
