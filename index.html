@@ -2632,6 +2632,18 @@ button.acttile { min-height: 64px; cursor: pointer; }
 .dlx.up .up-kh .klabel.up-kl { margin: 0; }
 .up-edit { display: flex; align-items: center; gap: 6px; margin: 0 0 -6px; }
 .ux-r > span.ux-main { cursor: default; }
+.pz-card { display: flex; align-items: center; gap: 12px; margin: 12px 0; padding: 14px 16px; border-radius: 20px; background: rgba(90, 167, 240, .12); border: 1px solid rgba(90, 167, 240, .35); }
+.pz-card .grow { display: flex; flex-direction: column; gap: 3px; } .pz-card b { font-size: 15px; } .pz-card small { color: var(--muted); font-size: 13px; line-height: 1.4; }
+.pz-card .small { flex: none; }
+.pz-ic { width: 40px; height: 40px; border-radius: 20px; flex: none; display: grid; place-items: center; background: rgba(90, 167, 240, .2); color: #5aa7f0; }
+.sv-d.pz i { color: #5aa7f0; }
+.dl-sr.pz { color: #5aa7f0; }
+.pz-why { display: flex; gap: 8px; margin-bottom: 12px; }
+.pz-why button { flex: 1; min-height: 44px; border-radius: 14px; border: 1px solid var(--line-strong); background: none; color: var(--text); font: inherit; font-weight: 600; }
+.pz-why button.on { background: var(--text); color: var(--bg); border-color: var(--text); }
+.pz-dates { margin-bottom: 10px; }
+.pz-now { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
+.pz-note { margin-top: 10px; text-align: center; }
 .up-goal2 { display: flex; align-items: center; gap: 12px; width: 100%; margin-top: 8px; padding: 14px 16px; border: 0; border-radius: 20px; background: rgba(255, 138, 71, .12); color: var(--text); font: inherit; text-align: left; }
 .up-goal2 .grow { display: flex; flex-direction: column; gap: 2px; } .up-goal2 small { color: var(--muted); font-size: 13px; } .up-goal2 > svg:first-child { color: var(--accent-text); }
 .up-opt { margin-top: 26px; padding: 18px; border-radius: 22px; border: 1.5px dashed var(--line-strong); }
@@ -2907,6 +2919,7 @@ button.hstatbtn .muted { display: inline-flex; align-items: center; gap: 2px; co
 <script src="rutiner.js"></script>
 <script src="dailyvy.js"></script>
 <script src="malrutiner.js"></script>
+<script src="paus.js"></script>
 <script src="varden.js"></script>
 <script src="grafer.js"></script>
 <script src="app.js"></script>

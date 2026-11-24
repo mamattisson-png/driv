@@ -24,6 +24,7 @@ const ICON_PATHS = {
   edit: '<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/>',
   barcode: '<path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3M8 9v6M11 9v6M14 9v6M17 9v6"/>',
   timer: '<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9.5 3h5"/>',
+  paus: '<circle cx="12" cy="12" r="9"/><path d="M10 9v6M14 9v6"/>',
   trend: '<path d="M4 17l6-6 4 4 6-7"/><path d="M15 8h5v5"/>',
   bell: '<path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/>',
   vikt: '<path d="M5 20h14l-2-12H7zM9 8a3 3 0 0 1 6 0M12 11v3"/>',

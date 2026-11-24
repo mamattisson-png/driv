@@ -126,7 +126,7 @@ function weekSection() {
   const tile = (label, v, unit, sub) => `<div class="wtile"><span class="klabel">${label}</span><span class="wnum">${v} <span class="muted small">${unit}</span></span>${sub}</div>`;
   const wNow = weekAvgWeight(ws), wPrev = weekAvgWeight(prevWs);
   const tiles = [
-    tile("Pass", cur.passes, `av ${S.plan.count}`, diff(cur.passes, prev.passes, true)),
+    tile("Pass", cur.passes, `av ${typeof weekGoal === "function" ? weekGoal(weekStart(TODAY)) : S.plan.count}`, diff(cur.passes, prev.passes, true)),
     hasDailies() ? tile("Dailys", cur.dailies, "av 7 dagar", diff(cur.dailies, prev.dailies, true)) : "",
     tile("Kalorier", cur.kcal ? tnum(cur.kcal) : "–", "snitt", cur.kcal && prev.kcal ? diff(cur.kcal, prev.kcal, null) : `<span class="muted small">mål ${tnum(macros().kcal)}</span>`),
     S.hideWeight ? "" : tile("Vikt", wNow != null ? fmtNum(wNow) : "–", "kg", wNow != null && wPrev != null ? diff(wNow, wPrev, null, " kg") : `<span class="muted small">${wNow != null ? "Första vägningen" : "Ingen vägning"}</span>`),
@@ -189,9 +189,12 @@ function spark(e) {
 // veckor i rad bryter den ändå. Månaden räknas efter veckans måndag.
 function streakInfo() {
   let ws = weekStart(TODAY), n = 0, frozen = [], lastFrozen = false;
-  const ok = w => weekSummary(w).passes >= S.plan.count, usedIn = m => frozen.some(f => f.slice(0, 7) === m);
+  // Pausade dagar krymper veckans mål; en helt pausad vecka hoppas över (räknas inte, bryter inte)
+  const goalOf = w => typeof weekGoal === "function" ? weekGoal(w) : S.plan.count;
+  const ok = w => goalOf(w) > 0 && weekSummary(w).passes >= goalOf(w), usedIn = m => frozen.some(f => f.slice(0, 7) === m);
   if (!ok(ws)) ws = shift(ws, -7);
   for (let i = 0; i < 260; i++) {
+    if (goalOf(ws) === 0) { ws = shift(ws, -7); continue; }
     if (ok(ws)) { n++; lastFrozen = false; }
     else if (!lastFrozen && !usedIn(ws.slice(0, 7)) && ok(shift(ws, -7))) { frozen.push(ws); lastFrozen = true; }
     else break;

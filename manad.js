@@ -37,8 +37,10 @@ function monthStats(key) {
   const prevKey = (() => { const [y, m] = key.split("-").map(Number), d = new Date(y, m - 2, 1); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`; })();
   const prev = monthDays(prevKey).reduce((a, d) => a + workoutsOn(d).filter(w => w.done).length, 0);
   // Veckor (måndag) som började i månaden och nådde målet
-  const goalWeeks = days.filter(d => weekdayOf(d) === 0 && d < weekStart(TODAY)).filter(d => weekSummary(d).passes >= S.plan.count).length;
-  const weeksIn = days.filter(d => weekdayOf(d) === 0 && d < weekStart(TODAY)).length;
+  // Helt pausade veckor räknas inte; delvis pausade har ett mindre mål
+  const goalOf = d => typeof weekGoal === "function" ? weekGoal(d) : S.plan.count;
+  const goalWeeks = days.filter(d => weekdayOf(d) === 0 && d < weekStart(TODAY) && goalOf(d) > 0).filter(d => weekSummary(d).passes >= goalOf(d)).length;
+  const weeksIn = days.filter(d => weekdayOf(d) === 0 && d < weekStart(TODAY) && goalOf(d) > 0).length;
   // Bästa rekordet: störst ökning i kg, annars senaste
   pbList.sort((a, b) => (+b.top.kg || 0) - (+a.top.kg || 0));
   return { key, passes, trained, vol, pbs, best: pbList[0] || null, top: top ? { name: top[0], n: top[1] } : null, prev, goalWeeks, weeksIn, dailyDays };

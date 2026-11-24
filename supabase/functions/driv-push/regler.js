@@ -4,6 +4,8 @@ export const shift = (d, n) => { const x = new Date(d + "T12:00:00Z"); x.setUTCD
 // Samma regler som appen: ett pass är gjort när det sparats eller har avbockade set
 export function dailyMessage(s, log, date, wd) {
   if (!s || !s.plan) return null;
+  // Paus (sjuk, semester): inga påminnelser
+  if ((s.pauses || []).some((p) => p.from <= date && (!p.to || date <= p.to))) return null;
   const today = log[date] || { workouts: [], dailies: {} };
   const did = (w) => w.done || Object.values(w.sets || {}).some((a) => (a || []).some((x) => x && x.ok));
   const trained = (today.workouts || []).some(did);

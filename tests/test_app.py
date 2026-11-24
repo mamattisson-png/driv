@@ -1433,11 +1433,13 @@ def test_notislogiken_i_edge_function(page):
       const c = dailyMessage(s, log, '2026-10-22', 3);
       const fixed = { plan: { mode: 'fixed', count: 2, weekdays: [0, 3], days: [{ name: 'Push' }, { name: 'Pull' }] }, daily: [] };
       const d = dailyMessage(fixed, {}, '2026-10-22', 3), e = dailyMessage(fixed, {}, '2026-10-21', 2);
-      return [a, b, c, d, e]; }""")
+      const paused = dailyMessage({ ...fixed, pauses: [{ from: '2026-10-20', to: null, why: 'sjuk' }] }, {}, '2026-10-22', 3);
+      return [a, b, c, d, e, paused]; }""")
     assert res[0] == {"title": "Dags att träna 💪", "body": "1 av 3 pass den här veckan. 1 av 2 dailys kvar idag."}
     assert res[1] == {"title": "Dailys kvar ✓", "body": "1 av 2 dailys kvar idag."}
     assert res[2] is None
     assert res[3]["body"] == "Pull står på schemat idag." and res[4] is None
+    assert res[5] is None   # pausad: ingen påminnelse
 
 
 def test_vanner_utan_funktioner_i_supabase(page):
@@ -3042,3 +3044,58 @@ def test_hem_veckans_pass_klara_visar_lugn_rad(page):
     # Raden öppnar passet, där det går att köra extra
     page.click(".h3-card.done")
     assert page.evaluate("tab") == "pass" and not page.errors
+
+
+def test_paus_vid_sjukdom_och_semester(page):
+    import datetime
+    page.clock.install(time=datetime.datetime(2026, 11, 25, 10, 0))   # onsdag
+    start(page)
+    # Tre veckor med målet nått, sedan två veckor utan pass
+    page.evaluate("""() => { const d = S.plan.days[0];
+      for (const w of ['2026-10-19', '2026-10-26', '2026-11-02']) for (let i = 0; i < 3; i++)
+        S.log[shift(w, i * 2)] = { workouts: [{ dayId: d.id, done: true, sets: {} }], dailies: {}, food: [] };
+      S.daily = [exEntry('plankan')]; ['2026-11-20', '2026-11-21'].forEach(x => S.log[x] = { workouts: [], dailies: { plankan: true }, food: [] });
+      save(); render(); }""")
+    assert page.evaluate("weekStreak()") == 0   # två missade veckor bryter sviten trots frysningen
+    # Pausa från 9 november, tills vidare: inställningen ligger under Inställningar → Paus
+    go(page, "profil")
+    page.click('[data-psec="paus"]')
+    page.click('[data-pauswhy="sjuk"]')
+    page.fill('[data-pausfrom]', '2026-11-09'); page.dispatch_event('[data-pausfrom]', 'change')
+    page.check('[data-pausopenend]')
+    page.click('[data-pausstart]')
+    assert page.evaluate("S.pauses.length") == 1 and page.evaluate("activePause().why") == "sjuk"
+    # Pausade veckor bryter inte sviten, och veckans mål är 0 när hela veckan är pausad
+    assert page.evaluate("weekStreak()") == 3 and page.evaluate("weekGoal('2026-11-23')") == 0
+    # Dailys-sviten hoppar över pausade dagar
+    assert page.evaluate("streakOf(allDailiesDone)") == 2
+    # Hem visar pausen i stället för pass och dailys, med en länk till inställningen
+    go(page, "idag")
+    assert "Krya på dig" in page.inner_text(".h3-greet") and page.locator(".pz-card").count() == 1
+    assert page.locator(".h3-passcard, [data-focusstart]").count() == 0
+    go(page, "dailys")
+    assert page.locator(".pz-card").count() == 1 and page.locator(".dl-sr.pz").count() >= 1
+    # Avsluta: pausen slutar igår, idag räknas igen
+    page.click(".pz-card [data-pausopen]")
+    page.click("[data-pausend]")
+    assert page.evaluate("S.pauses[0].to") == "2026-11-24" and page.evaluate("activePause()") is None
+    assert page.evaluate("weekGoal('2026-11-23')") == 2   # två av sju dagar pausade: målet krymper från 3 till 2
+    go(page, "idag")
+    assert page.locator(".pz-card").count() == 0 and not page.errors
+
+
+def test_paus_planerad_semester(page):
+    import datetime
+    page.clock.install(time=datetime.datetime(2026, 11, 25, 10, 0))
+    start(page)
+    go(page, "profil")
+    page.click('[data-psec="paus"]')
+    page.click('[data-pauswhy="semester"]')
+    page.fill('[data-pausfrom]', '2026-12-20'); page.dispatch_event('[data-pausfrom]', 'change')
+    page.fill('[data-pausto]', '2027-01-03'); page.dispatch_event('[data-pausto]', 'change')
+    page.click('[data-pausstart]')
+    assert page.evaluate("[activePause(), pauseOn('2026-12-24').why, pauseOn('2027-01-04')]") == [None, "semester", None]
+    assert "Semester från 20 december" in page.evaluate("pauseSummary()")
+    # En planerad paus kan tas bort
+    page.click("[data-pausend]")
+    assert page.evaluate("S.pauses.length") == 0

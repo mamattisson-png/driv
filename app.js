@@ -827,8 +827,10 @@ function tickDailySet(id) {
 const allDailiesDone = date => { const L = dailyList(date); return L.length > 0 && L.every(e => dailyDone(date, e.id)); };
 // Antal dagar i rad som test(datum) gäller, räknat från idag eller igår
 function streakOf(test) {
+  const paused = d => typeof pauseOn === "function" && !!pauseOn(d);
   let n = 0, d = test(TODAY) ? TODAY : shift(TODAY, -1);
-  while (test(d)) { n++; d = shift(d, -1); }
+  // Pausade dagar hoppas över: de räknas inte, men bryter inte sviten
+  for (let i = 0; i < 3650 && (test(d) || paused(d)); i++) { if (!paused(d) || test(d)) n++; d = shift(d, -1); }
   return n;
 }
 function weekSummary(ws) {
@@ -907,13 +909,13 @@ function streakStrip() {
   const iceText = iceInfo ? `<p class="sv-info">${SNOW}<span><b>Frysning.</b> Missar du veckans mål räddar en frysning sviten, så att den inte bryts. Du får en per månad, och den används av sig själv.
     ${si.left ? "Du har en kvar den här månaden." : "Månadens frysning är redan använd, nästa kommer den 1:a."} Två missade veckor i rad bryter sviten ändå.</span></p>` : "";
   const days = weekDates(ws).map((d, i) => {
-    const trained = workoutsOn(d).some(w => w.done) || actsOn(d).length > 0;
-    return `<span class="sv-d ${d === TODAY ? "t" : ""} ${d > TODAY ? "f" : ""}"><small>${WD[i][0]}</small><i class="${trained ? "on" : ""}">${trained ? icon("trana", 16) : +d.slice(-2)}</i></span>`;
+    const trained = workoutsOn(d).some(w => w.done) || actsOn(d).length > 0, pz = !trained && typeof pauseOn === "function" && pauseOn(d);
+    return `<span class="sv-d ${d === TODAY ? "t" : ""} ${d > TODAY ? "f" : ""} ${pz ? "pz" : ""}"><small>${WD[i][0]}</small><i class="${trained ? "on" : ""}">${trained ? icon("trana", 16) : pz ? icon("paus", 16) : +d.slice(-2)}</i></span>`;
   }).join("");
   return `<section class="sv" aria-label="Din svit: ${st} ${st === 1 ? "vecka" : "veckor"} i rad">
     <div class="sv-f"><svg viewBox="0 0 24 24" width="46" height="46" aria-hidden="true"><path d="M12.5 1.5c.6 3.2 4 5.3 5.2 8.6 1.6 4.4-.9 11.4-5.7 11.4S4.6 18.2 5 14.2c.3-2.6 1.8-4.2 2.9-5.3.1 1.7.8 2.8 1.6 3.3-.3-4.3 1.2-7.6 3-10.7Z" fill="var(--accent-strong)"/><text x="12" y="18.2" text-anchor="middle" class="sv-n">${st}</text></svg><small>${st === 1 ? "Vecka" : "Veckor"}</small>${ice}</div>
     <div class="sv-days">${days}${savedLast ? `<p class="sv-saved">${SNOW}Förra veckan frystes, sviten lever</p>` : ""}</div>${iceText}
-    ${st === 0 ? `<p class="sv-start">Kör ${S.plan.count} ${S.plan.count === 1 ? "pass" : "pass"} den här veckan så tänds flamman.</p>` : ""}</section>`;
+    ${st === 0 && weekGoal(ws) > 0 ? `<p class="sv-start">Kör ${weekGoal(ws)} pass den här veckan så tänds flamman.</p>` : ""}</section>`;
 }
 
 // ---------- Rendering ----------
@@ -1228,7 +1230,9 @@ const VIEWS = {
     const foodOk = m.kcal > 0 && e.kcal >= m.kcal;
     const hr = new Date().getHours();
     const passes = weekSummary(weekStart(TODAY)).passes;
-    const greeting = homeGreeting(hr, { done, dailysOk, started, rest: !!t.rest, passes, goal: S.plan.count, foodOk });
+    const pz = activePause();
+    const greeting = pz && !done && !started ? (pz.why === "sjuk" ? "Krya på dig" : pz.why === "semester" ? "Trevlig ledighet" : "Pausad")
+      : homeGreeting(hr, { done, dailysOk, started, rest: !!t.rest, passes, goal: weekGoal(weekStart(TODAY)), foodOk });
     // Samma etiketter som på Träna: Nästa pass (flexibelt) eller Dagens pass (fasta dagar), Pågående och Genomfört
     const freeIdle = t.free && !done && !started;   // inget schema och inget loggat idag
     const passLab = t.rest ? "Vilodag" : done ? "Genomfört idag" : started ? "Pågående pass" : freeIdle ? "Träning idag" : passLabel(t);
@@ -1250,7 +1254,7 @@ const VIEWS = {
     const others = typeof social !== "undefined" && account.step === "in" && social.loaded ? social.feed.filter(a => !a.mine) : [];
     // Dagens tre saker: det som återstår först (numrerat), det som är klart krymper till en rad med bock
     // Veckomålet nått och inget pass idag: en lugn rad med bock i stället för en stor startknapp
-    const weekDone = !done && !started && !t.rest && !t.free && S.plan.count > 0 && passes >= S.plan.count && d.ex.length > 0;
+    const wg = weekGoal(weekStart(TODAY)), weekDone = !done && !started && !t.rest && !t.free && wg > 0 && passes >= wg && d.ex.length > 0;
     const passCard = n => weekDone ? `<button class="h3-card h3-head done" data-seepass="${d.id}">${no(n, true)}<span class="grow"><b>Veckans ${S.plan.count} pass klara</b><small>Extra pass? Nästa är ${esc(d.name)} · ~${mins} min</small></span>${icon("right", 18)}</button>`
       : done ? `<button class="h3-card h3-head done" data-seepass="${d.id}">${no(n, true)}<span class="grow"><b>${esc(d.name)} klart</b><small>${passInfo}</small></span>${icon("right", 18)}</button>`
       : `<section class="h3-card h3-passcard ${done ? "done" : ""}"><button class="h3-head" data-seepass="${d.id}" aria-label="${passLab}: ${esc(d.name)}">${no(n, done)}
@@ -1261,7 +1265,8 @@ const VIEWS = {
         ${foodOk ? "" : `<span class="h3-bar"><i style="width:${Math.min(100, Math.round(100 * e.kcal / Math.max(1, m.kcal)))}%"></i></span>`}</span>${icon("right", 18)}</button>`;
     const dailyCard = n => `<button class="h3-card h3-head ${dailysOk ? "done" : ""}" data-tab="dailys">${no(n, dailysOk)}<span class="grow"><b>${dailysOk ? "Dailys klara" : "Gör dina dailys"}</b>
         <small>${total ? `${completed} av ${total} idag` : "Lägg till det du vill göra varje dag"}</small></span>${icon("right", 18)}</button>`;
-    const items = [[passCard, done || !!t.rest || weekDone], [foodCard, foodOk], [dailyCard, dailysOk]];
+    // Under en paus: pausens kort i stället för passet och dailys (de går fortfarande att nå från flikarna)
+    const items = pz && !done && !started ? [[foodCard, foodOk]] : [[passCard, done || !!t.rest || weekDone], [foodCard, foodOk], [dailyCard, dailysOk]];
     let nr = 0;
     const homeCards = [...items.filter(x => !x[1]), ...items.filter(x => x[1])].map(([f, ok]) => f(ok ? 0 : ++nr)).join("");
     return `<div class="home3">
@@ -1271,7 +1276,7 @@ const VIEWS = {
       ${S.tourAsked !== false ? "" : `<section class="tour-offer"><span class="h3-ic">${icon("info", 20)}</span><span class="grow"><b>Ny i Driv?</b><small>En kort rundtur visar var allt finns.</small></span>
         <button class="small primary" data-tourstart>Visa</button><button class="small ghost" data-tourskip>Inte nu</button></section>`}
       <div class="muted h3-date">${date}</div><h1 class="h3-greet">${greeting}</h1>
-      ${streakStrip()}
+      ${streakStrip()}${pz && !done && !started ? pauseCard("h3") : ""}
       ${typeof monthCard === "function" ? monthCard() : ""}
       ${typeof friendsNudge === "function" ? friendsNudge() : ""}${accountNudge()}${installNudge()}
       ${homeCards}
@@ -1330,6 +1335,7 @@ const VIEWS = {
         <span class="grow col"><b>${esc(name)}</b><span class="muted small">Visa profil</span></span>${icon("right", 18)}</button>
       ${group("Träning", `<div class="prow"><div class="prow-line"><button class="prow-head" data-tab="upplagg"><span class="pic">${icon("upplagg", 20)}</span><span class="grow"><b>Träningsschema</b>
           <span class="muted small">${esc(PROGRAMS[S.plan.program || "ppl"].name)} · ${S.plan.count} pass i veckan</span></span><span class="chev">${icon("right", 18)}</span></button></div></div>
+        ${profRow("paus", "paus", "Paus", pauseSummary(), pauseBody())}
         ${profRow("vila", "timer", "Vilotimer", rs.on ? `På · ${rs.compound} s basövningar, ${rs.iso} s övriga` : "Av", `
           <label class="card psw"><span class="grow">Starta en vilotimer när jag bockar av ett set</span><input type="checkbox" class="switch" data-resttoggle ${rs.on ? "checked" : ""}></label>
           <div class="grid2" style="margin-top:10px">
@@ -1427,6 +1433,7 @@ const profName = () => (social.profile && social.profile.name) || S.name || (acc
 // annars är reglaget (extra) själva raden, som Utseende och Figur.
 let PROF_PAGES = {};
 const PROF_INTRO = {
+  paus: "Sjuk, på semester eller behöver vila? Under en paus bryts inte sviten, veckans mål krymper och påminnelserna tystnar.",
   vila: "Efter varje set räknar en timer ned vilan. Basövningar behöver längre vila än isolering och mage.",
   aktiviteter: "Padel, löpning, vandring och annat som du loggar med tid.",
   kalori: "Räknas fram från dig och ditt mål. Ändra det som inte stämmer.",

@@ -115,7 +115,7 @@ function wkDayStat(d) {
 function dlStrip() {
   const sel = dlSel || TODAY, ws = weekStart(sel), cur = weekStart(TODAY);
   const days = weekDates(ws).map((d, i) => { const st = wkDayStat(d), fut = d > TODAY;
-    const ring = !st.tot || fut ? `<span class="dl-sr e"></span>` : st.all ? `<span class="dl-sr ok">${icon("check", 12)}</span>` : `<span class="dl-sr">${setRing(st.got, st.tot)}</span>`;
+    const ring = pauseOn(d) && !st.all ? `<span class="dl-sr pz">${icon("paus", 14)}</span>` : !st.tot || fut ? `<span class="dl-sr e"></span>` : st.all ? `<span class="dl-sr ok">${icon("check", 12)}</span>` : `<span class="dl-sr">${setRing(st.got, st.tot)}</span>`;
     return `<button class="dl-sd ${d === sel ? "on" : ""} ${d === TODAY ? "t" : ""}" data-dlsel="${d}" aria-pressed="${d === sel}" aria-label="${cap(dateLabel(d))}${st.tot && !fut ? `: ${st.got} av ${st.tot} klara` : ""}">
       <small>${WD[i].slice(0, 3)}</small><b>${+d.slice(-2)}</b>${ring}</button>`; }).join("");
   return `<div class="dl-strip"><button class="iconbtn small ghost dl-sw" data-dlweek="-7" aria-label="Veckan före">${icon("left", 16)}</button>
@@ -235,7 +235,7 @@ function uppDetail() {
 
 function dailysPage() {
   const sel = dlSel && dlSel !== TODAY ? dlSel : null, any = hasDailies() || (S.supplements || []).length;
-  return `<div class="dlx"><h1>Dailys</h1>${any ? dlStrip() : ""}${sel ? dlOtherDay(sel) : dlDayView()}
+  return `<div class="dlx"><h1>Dailys</h1>${any ? dlStrip() : ""}${any && !sel ? pauseCard("dl") : ""}${sel ? dlOtherDay(sel) : dlDayView()}
     ${any ? `<button class="ghost wide dl-mine" data-rutpage>${icon("edit", 16)}Ändra mina dailys</button>` : ""}
     ${rutinSheet()}</div>`;
 }
