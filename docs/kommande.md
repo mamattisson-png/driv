@@ -140,6 +140,7 @@ Senast uppdaterad: 2026-11-06. Status bygger på dokumenterade publiceringar och
 | 136 | Dailys: en sida med veckan överst för att bocka av, och Mina dailys där Varje dag är grunden och extra för vissa dagar är ett val | Dailys | Stor | Klar |
 | 137 | Mina dailys: ny extra öppnas direkt med namn överst och Spara, frågan om vissa veckodagar eller turas om kommer först, och turordningen visar plats och nästa gång | Dailys | Medel | Klar |
 | 138 | Mina dailys: nya grupper läggs till först vid Spara, förslag efter mål öppnas direkt med Redigera-knapp, och Spara eller Lägg till går tillbaka till gruppen i listan | Dailys | Medel | Klar |
+| 139 | Paus vid sjukdom, semester eller annat (Inställningar → Paus): sviten bryts inte, veckans mål krymper, dailys-sviten hoppar över pausade dagar och påminnelserna tystnar | Appen | Medel | Klar |
 
 ## Detaljer och acceptanskriterier
 
