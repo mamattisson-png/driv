@@ -58,8 +58,9 @@ function dlDayView() {
     const ck = tot > 1 && !isRun(e.id) && !ok
       ? `<button class="dl-ck sets ${part ? "part" : ""}" data-dcheck="${e.id}" aria-label="${esc(x.name)}: set ${got + 1} av ${tot} klart">${setRing(got, tot)}${part ? `<b>${got}/${tot}</b>` : ""}</button>`
       : `<button class="dl-ck ${ok ? "on" : ""}" data-dcheck="${e.id}" aria-pressed="${ok}" aria-label="${esc(x.name)} klar">${icon("check", 20)}</button>`;
-    return `<div class="dl-row ${ok ? "ok" : ""}">${thumb(e.id, "dl-f")}<span class="grow dl-name"><b>${esc(x.name)}</b><small>${e.sets} × ${esc(e.reps || "")}${part ? ` · ${got} av ${tot} set klara` : ""}</small></span>
-      ${!ok && !isRun(e.id) ? `<button class="dl-play ${e === next ? "" : "alt"}" data-dclockstart="${e.id}" aria-label="${part ? "Fortsätt" : "Starta"} ${esc(x.name)}">${icon("play", 18)}</button>` : ""}
+    const info = `<b>${esc(x.name)}</b><small>${!ok && !isRun(e.id) ? `<span class="dl-go ${e === next ? "nx" : ""}">${icon("play", 11)}</span>` : ""}${e.sets} × ${esc(e.reps || "")}${part ? ` · ${got} av ${tot} set klara` : ""}</small>`;
+    return `<div class="dl-row ${ok ? "ok" : ""}">${thumb(e.id, "dl-f")}${!ok && !isRun(e.id)
+      ? `<button class="grow dl-name dl-start" data-dclockstart="${e.id}" aria-label="${part ? "Fortsätt" : "Starta"} ${esc(x.name)} med timer">${info}</button>` : `<span class="grow dl-name">${info}</span>`}
       ${ck}</div>`;
   };
   const pills = a.map(x => {
@@ -71,7 +72,7 @@ function dlDayView() {
   const aDone = a.filter(x => S.log[date] && S.log[date].dailies["supp:" + x.id]).length;
   const allOk = ex.length + a.length > 0 && n === ex.length && aDone === a.length;
   const st0 = streakOf(allDailiesDone);
-  const head = dlHero(`${when}`, n + aDone, ex.length + a.length, st0 > 1 ? `<small class="dl-hs">${icon("flame", 13)}${st0} dagar i rad</small>` : "");
+  const head = dlHero(`${when}`, n + aDone, ex.length + a.length, st0 > 1 ? `<small class="dl-hs">${icon("flame", 12)}${st0} dagar i rad</small>` : "");
   const list = `${ex.length ? dlGroups(date, ex, rut, row, "dl-rows") : `<div class="dl-empty"><b>Inga dailys än</b><span class="muted small">Lägg till det du vill göra varje dag, till exempel plankan eller en promenad.</span>
       <button class="primary" data-rutpage>Lägg till dina dailys</button></div>`}
     ${a.length ? suppGroup(pills, aDone, a.length) : ""}`;
@@ -104,19 +105,18 @@ function dlGroups(date, ex, rut, row, cls) {
   const extra = rut ? ex.filter(e => !every.has(e.id) && rut.ex.some(x => x.id === e.id)) : [];
   const base = ex.filter(e => !extra.includes(e));
   const byt = dailyRoutines().length > 1 && date === logDate() ? `<button class="linkbtn2 dl-byt" data-rutsheet="1">Byt</button>` : "";
-  const cnt = list => `${list.filter(e => dailyDone(date, e.id)).length} av ${list.length}`;
-  return `${base.length ? `<section class="dl-grp g-every"><div class="dl-gh"><span class="dl-gi">${icon("check", 15)}</span><b class="grow">Varje dag</b><span class="dl-gc">${cnt(base)}</span></div>
-      <div class="${cls}">${base.map(row).join("")}</div></section>` : ""}
-    ${extra.length ? `<section class="dl-grp g-extra" style="--gc:${rutColor(rut)}"><div class="dl-gh dl-xh"><span class="dl-gi">${icon("plus", 15)}</span><b class="grow">Extra${date === TODAY ? " idag" : ""}: ${esc(rut.name)}</b>${byt}<span class="dl-gc">${cnt(extra)}</span></div>
+  return `${base.length ? `<section class="dl-grp"><div class="dl-gh"><b class="grow">Varje dag</b></div><div class="${cls}">${base.map(row).join("")}</div></section>` : ""}
+    ${extra.length ? `<section class="dl-grp g-extra" style="--gc:${rutColor(rut)}"><div class="dl-gh dl-xh"><i></i><b class="grow">Extra${date === TODAY ? " idag" : ""}: ${esc(rut.name)}</b>${byt}</div>
       <div class="${cls}">${extra.map(row).join("")}</div></section>` : ""}`;
 }
 // Kosttillskotten som ett eget avsnitt
-const suppGroup = (pills, got, tot) => `<section class="dl-grp g-supp"><div class="dl-gh"><span class="dl-gi">${icon("kost", 15)}</span><b class="grow">Kosttillskott</b><span class="dl-gc">${got} av ${tot}</span></div><div class="dl-pills">${pills}</div></section>`;
+const suppGroup = (pills, got, tot) => `<section class="dl-grp g-supp"><div class="dl-gh"><b class="grow">Kosttillskott</b></div><div class="dl-pills">${pills}</div></section>`;
 // Överst: en ring som fylls med dagens framsteg
 function dlHero(label, got, tot, extra = "") {
-  const r = 26, c = 2 * Math.PI * r, f = tot ? got / tot : 0;
-  return `<div class="dl-h dl-hero"><span class="dl-hr"><svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="${r}" class="bg"/><circle cx="32" cy="32" r="${r}" class="fg" stroke-dasharray="${(c * f).toFixed(1)} ${c.toFixed(1)}"/></svg><b>${got}</b></span>
-    <span class="grow"><span class="dl-k">${label}</span><b class="dl-hb">${got === tot && tot ? "Allt klart" : `${got} av ${tot} klara`}</b>${extra}</span></div>`;
+  const pct = tot ? Math.round(100 * got / tot) : 0;
+  return `<div class="dl-h dl-hero"><div class="dl-ht"><span class="dl-k">${label}</span>${extra}</div>
+    <div class="dl-hn"><b>${got === tot && tot ? "Allt klart" : `${got} av ${tot}`}</b>${got === tot && tot ? "" : `<span class="muted"> klara</span>`}</div>
+    <span class="dl-pr" role="progressbar" aria-valuenow="${got}" aria-valuemax="${tot}"><i style="width:${pct}%"></i></span></div>`;
 }
 function wkDayStat(d) {
   const ex = dailyList(d), a = S.supplements || [], L = S.log[d];
@@ -127,7 +127,7 @@ function wkDayStat(d) {
 function dlStrip() {
   const sel = dlSel || TODAY, ws = weekStart(sel), cur = weekStart(TODAY);
   const days = weekDates(ws).map((d, i) => { const st = wkDayStat(d), fut = d > TODAY;
-    const ring = pauseOn(d) && !st.all ? `<span class="dl-sr pz">${icon("paus", 14)}</span>` : !st.tot || fut ? `<span class="dl-sr e"></span>` : st.all ? `<span class="dl-sr ok">${icon("check", 12)}</span>` : `<span class="dl-sr">${setRing(st.got, st.tot)}</span>`;
+    const ring = pauseOn(d) && !st.all ? `<span class="dl-sr pz">${icon("paus", 12)}</span>` : `<span class="dl-dot ${!st.tot || fut ? "" : st.all ? "ok" : st.got ? "part" : "miss"}"></span>`;
     return `<button class="dl-sd ${d === sel ? "on" : ""} ${d === TODAY ? "t" : ""}" data-dlsel="${d}" aria-pressed="${d === sel}" aria-label="${cap(dateLabel(d))}${st.tot && !fut ? `: ${st.got} av ${st.tot} klara` : ""}">
       <small>${WD[i].slice(0, 3)}</small><b>${+d.slice(-2)}</b>${ring}</button>`; }).join("");
   return `<div class="dl-strip"><button class="iconbtn small ghost dl-sw" data-dlweek="-7" aria-label="Veckan före">${icon("left", 16)}</button>
