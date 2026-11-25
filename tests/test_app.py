@@ -1548,7 +1548,8 @@ def test_stretch_som_daily(page):
     assert page.evaluate("tab") == "dailys" and page.evaluate("libCtx") is None
     assert "Duvan" in page.inner_text("#app")
     back_to_day(page)
-    assert "2 × 45 s/sida" in page.inner_text("#app")
+    page.click('[data-dlfocus="duvan"]')
+    assert "2 × 45 s/sida" in page.inner_text(".fz-card")
     tick(page, 'duvan')
     assert page.evaluate("dailyDone(TODAY, 'duvan')") is True
     # Stretch hålls en tid: i ett pass syns bara sekunder, ingen vikt
@@ -3074,7 +3075,7 @@ def test_paus_vid_sjukdom_och_semester(page):
     assert "Krya på dig" in page.inner_text(".h3-greet") and page.locator(".pz-card").count() == 1
     assert page.locator(".h3-passcard, [data-focusstart]").count() == 0
     go(page, "dailys")
-    assert page.locator(".pz-card").count() == 1 and page.locator(".dl-sr.pz").count() >= 1
+    assert page.locator(".pz-card").count() == 1 and page.locator(".dl-sd.pz").count() >= 1
     # Avsluta: pausen slutar igår, idag räknas igen
     page.click(".pz-card [data-pausopen]")
     page.click("[data-pausend]")

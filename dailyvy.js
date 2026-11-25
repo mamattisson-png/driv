@@ -7,6 +7,8 @@ let dsPopped = null;   // dagen vars stora bock redan har hoppat in
 // Laddas efter rutiner.js och före app.js.
 
 let dlSel = null;     // dagen som visas (null = idag)
+// Idag visas en övning i taget. dlFocus är den man tryckt fram; annars nästa som inte är klar.
+let dlFocus = null, dlFocusKeep = false, dlShown = null;
 let dlShowList = false;
 let grEdit = false;   // förslag efter mål: ändra övningarna och namnet
 let uxOpen = null;    // övningen som är utfälld (index) i Varje dag eller i en extra grupp
@@ -71,9 +73,32 @@ function dlDayView() {
   const aDone = a.filter(x => S.log[date] && S.log[date].dailies["supp:" + x.id]).length;
   const allOk = ex.length + a.length > 0 && n === ex.length && aDone === a.length;
   const head = `<div class="dl-h"><div class="grow"><span class="dl-k">${when} · ${n + aDone} av ${ex.length + a.length} klara</span></div></div>`;
-  const list = `${ex.length ? dlGroups(date, ex, rut, row, "dl-rows") : `<div class="dl-empty"><b>Inga dailys än</b><span class="muted small">Lägg till det du vill göra varje dag, till exempel plankan eller en promenad.</span>
-      <button class="primary" data-rutpage>Lägg till dina dailys</button></div>`}
+  const list = `${ex.length ? dlGroups(date, ex, rut, row, "dl-rows") : ""}
     ${a.length ? `<div class="klabel dl-sec">Kosttillskott</div><div class="dl-pills">${pills}</div>` : ""}`;
+  if (!ex.length && !a.length) return `<div class="dl-empty"><b>Inga dailys än</b><span class="muted small">Lägg till det du vill göra varje dag, till exempel plankan eller en promenad.</span>
+      <button class="primary" data-rutpage>Lägg till dina dailys</button></div>`;
+  // Flytet: ett stort kort med övningen som står på tur, och vägen dit som små bilder under
+  const every = new Set((S.daily || []).map(e => e.id)), isX = e => rut && !every.has(e.id) && rut.ex.some(x => x.id === e.id);
+  const cur = ex.find(e => e.id === dlFocus && (dlFocusKeep || !dailyDone(date, e.id))) || next;
+  let card = "";
+  if (cur) {
+    const x = EX[cur.id], ok = dailyDone(date, cur.id), tot = Math.max(1, +cur.sets || 1), got = ok ? tot : Math.min(tot - 1, dailySetsDone(date, cur.id));
+    const anim = dlShown !== cur.id ? "fz-in" : ""; setTimeout(() => { dlShown = cur.id; }, 0);
+    card = `<section class="fz-card ${anim} ${ok ? "done" : ""}" ${isX(cur) ? `style="--gc:${rutColor(rut)}"` : ""}>
+      ${isX(cur) ? `<span class="fz-tag">Extra idag · ${esc(rut.name)}</span>` : ""}
+      <button class="fz-fig" data-info="${cur.id}" aria-label="Visa ${esc(x.name)}">${figure(cur.id)}</button>
+      <h2 class="fz-name">${esc(x.name)}</h2>
+      <p class="fz-meta">${cur.sets} × ${esc(cur.reps || "")}${tot > 1 && !ok ? ` · set ${got + 1} av ${tot}` : ok ? " · klar" : ""}</p>
+      ${tot > 1 ? `<div class="fz-sets" aria-hidden="true">${Array.from({ length: tot }, (_, i) => `<i class="${i < got ? "on" : ""}"></i>`).join("")}</div>` : ""}
+      <div class="fz-acts">${ok ? `<button class="fz-btn g" data-dcheck="${cur.id}" aria-pressed="true">Ångra</button>`
+        : `${!isRun(cur.id) ? `<button class="fz-btn g" data-dclockstart="${cur.id}">${icon("timer", 18)}Timer</button>` : ""}
+          <button class="fz-btn p" data-dcheck="${cur.id}" aria-label="${esc(x.name)}: ${tot > 1 && got < tot - 1 ? `set ${got + 1} av ${tot} klart` : "klar"}">${tot > 1 && got < tot - 1 ? "Set klart" : "Klar"}</button>`}</div></section>`;
+  } else if (ex.length) card = `<section class="fz-card fz-rest"><b>Övningarna är klara</b><span class="muted small">Kvar: kosttillskotten nedanför.</span></section>`;
+  const road = ex.length ? `<div class="fz-road">${ex.map(e => { const ok = dailyDone(date, e.id);
+      return `<button class="fz-th ${ok ? "ok" : ""} ${cur && e.id === cur.id ? "now" : ""} ${isX(e) ? "x" : ""}" ${isX(e) ? `style="--gc:${rutColor(rut)}"` : ""} data-dlfocus="${e.id}" aria-label="${esc(EX[e.id].name)}${ok ? ", klar" : ""}">
+        <span class="fz-tf">${figure(e.id)}${ok ? `<i>${icon("check", 12)}</i>` : ""}</span><small>${esc(EX[e.id].name.split(" ")[0])}</small></button>`; }).join("")}</div>` : "";
+  const supp = a.length ? `<div class="fz-supp">${a.map(x => { const ok = !!(S.log[date] && S.log[date].dailies["supp:" + x.id]);
+      return `<button class="fz-sp ${ok ? "on" : ""}" data-suppcheck="${esc(x.id)}" aria-pressed="${ok}">${ok ? icon("check", 14) : ""}${esc(x.name)}${x.dose ? ` <small>${esc(x.dose)}</small>` : ""}</button>`; }).join("")}</div>` : "";
   if (allOk) {
     const st = streakOf(allDailiesDone), ws = weekStart(date);
     const greet = date !== TODAY ? "Dagen var klar" : st >= 7 ? "Grymt, en hel vecka i rad!" : st >= 3 ? "Bra jobbat, du är i farten!" : "Bra jobbat idag!";
@@ -94,7 +119,8 @@ function dlDayView() {
       <button class="ds-more" data-dllist aria-expanded="${dlShowList}">${dlShowList ? "Dölj" : "Visa eller ändra"} dagens dailys${icon(dlShowList ? "up" : "down", 16)}</button></div>
       ${dlShowList ? `<div class="dl-allok">${list}</div>` : ""}`;
   }
-  return `<div>${ex.length + a.length ? head : ""}${list}</div>`;
+  const byt = dailyRoutines().length > 1 ? `<button class="linkbtn2 dl-byt" data-rutsheet="1">Byt extra</button>` : "";
+  return `<div class="fz">${head}${card}${road}${supp}${byt ? `<div class="fz-byt">${byt}</div>` : ""}</div>`;
 }
 
 // Varje dag först, sedan dagens extra under en egen rubrik (bara när dagen har något extra)
@@ -115,9 +141,9 @@ function wkDayStat(d) {
 function dlStrip() {
   const sel = dlSel || TODAY, ws = weekStart(sel), cur = weekStart(TODAY);
   const days = weekDates(ws).map((d, i) => { const st = wkDayStat(d), fut = d > TODAY;
-    const ring = pauseOn(d) && !st.all ? `<span class="dl-sr pz">${icon("paus", 14)}</span>` : !st.tot || fut ? `<span class="dl-sr e"></span>` : st.all ? `<span class="dl-sr ok">${icon("check", 12)}</span>` : `<span class="dl-sr">${setRing(st.got, st.tot)}</span>`;
-    return `<button class="dl-sd ${d === sel ? "on" : ""} ${d === TODAY ? "t" : ""}" data-dlsel="${d}" aria-pressed="${d === sel}" aria-label="${cap(dateLabel(d))}${st.tot && !fut ? `: ${st.got} av ${st.tot} klara` : ""}">
-      <small>${WD[i].slice(0, 3)}</small><b>${+d.slice(-2)}</b>${ring}</button>`; }).join("");
+    const cls = pauseOn(d) && !st.all ? "pz" : st.all && !fut ? "ok" : st.got && !fut ? "part" : "";
+    return `<button class="dl-sd ${d === sel ? "on" : ""} ${d === TODAY ? "t" : ""} ${cls}" data-dlsel="${d}" aria-pressed="${d === sel}" aria-label="${cap(dateLabel(d))}${st.tot && !fut ? `: ${st.got} av ${st.tot} klara` : ""}">
+      <small>${WD[i][0]}</small><b>${cls === "ok" ? icon("check", 14) : cls === "pz" ? icon("paus", 14) : +d.slice(-2)}</b></button>`; }).join("");
   return `<div class="dl-strip"><button class="iconbtn small ghost dl-sw" data-dlweek="-7" aria-label="Veckan före">${icon("left", 16)}</button>
     <div class="dl-sdays">${days}</div>
     <button class="iconbtn small ghost dl-sw" data-dlweek="7" ${ws >= cur ? "disabled" : ""} aria-label="Veckan efter">${icon("right", 16)}</button></div>`;
@@ -241,11 +267,12 @@ function dailysPage() {
 }
 
 document.addEventListener("click", ev => {
-  const t = ev.target.closest && ev.target.closest("[data-dllist],[data-gredit],[data-dlweek],[data-dlsel],[data-wkck],[data-wkall],[data-plset],[data-uppmode],[data-uxopen],[data-uxsets]");
+  const t = ev.target.closest && ev.target.closest("[data-dllist],[data-dlfocus],[data-gredit],[data-dlweek],[data-dlsel],[data-wkck],[data-wkall],[data-plset],[data-uppmode],[data-uxopen],[data-uxsets]");
   if (!t) return;
   const ds = t.dataset;
   ev.stopImmediatePropagation();
   if (ds.dllist !== undefined) dlShowList = !dlShowList;
+  else if (ds.dlfocus) { dlFocus = ds.dlfocus; dlFocusKeep = true; }
   else if (ds.gredit !== undefined) { grEdit = !grEdit; uxOpen = null; }
   else if (ds.dlsel) dlSel = ds.dlsel === TODAY ? null : ds.dlsel;
   else if (ds.dlweek) { const n = shift(dlSel || TODAY, +ds.dlweek); dlSel = n >= TODAY ? null : n; }
@@ -276,6 +303,10 @@ document.addEventListener("click", ev => {
   else if (ds.uxsets) { const e = exList(ds.t)[+ds.idx]; e.sets = Math.max(1, Math.min(10, (+e.sets || 1) + +ds.uxsets)); save(); }
   render();
 }, true);
+
+// En bock i kortet: när övningen blir klar glider nästa in
+document.addEventListener("click", ev => { if (ev.target.closest && ev.target.closest(".fz-card [data-dcheck]")) dlFocusKeep = false; }, true);
+document.addEventListener("click", ev => { if (ev.target.closest && ev.target.closest("[data-tab],[data-dlsel],[data-dlweek]")) { dlFocus = null; dlFocusKeep = false; } }, true);
 
 // Dra i ≡ för att ändra ordningen på övningarna; de andra raderna glider undan
 (() => {

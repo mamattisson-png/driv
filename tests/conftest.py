@@ -124,4 +124,7 @@ def tick(page, ex, scope=""):
     for _ in range(10):
         if page.evaluate("id => dailyDone(logDate(), id)", ex):
             return
+        # Dailys visar en övning i taget: välj den i raden under kortet först
+        if not page.locator(sel).count() and page.locator(f'[data-dlfocus="{ex}"]').count():
+            page.click(f'[data-dlfocus="{ex}"]')
         page.click(sel)

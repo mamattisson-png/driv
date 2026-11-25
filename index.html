@@ -2612,6 +2612,50 @@ button.acttile { min-height: 64px; cursor: pointer; }
 .dl-xh i { width: 9px; height: 9px; border-radius: 5px; flex: none; }
 .dl-xh .linkbtn2 { flex: none; }
 .dl-all { display: flex; align-items: center; gap: 6px; flex: none; }
+.dl-strip { padding: 10px 2px; }
+.dl-sd { gap: 6px; padding: 4px 0; background: none !important; }
+.dl-sd small { font: 600 11px "Lexend", sans-serif; }
+.dl-sd b { width: 34px; height: 34px; border-radius: 11px; display: grid; place-items: center; font: 600 13px "Lexend", sans-serif; color: var(--text); background: var(--card-2); }
+.dl-sd.part b { background: linear-gradient(0deg, rgba(76, 197, 131, .45) 50%, var(--card-2) 50%); }
+.dl-sd.ok b { background: var(--ok); color: #0d0e10; }
+.dl-sd.pz b { color: #5aa7f0; }
+.dl-sd.on b { box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--text); }
+.dl-sd.on small, .dl-sd.t small { color: var(--text); }
+.fz .dl-h { margin: 16px 4px 10px; }
+.fz-card { position: relative; display: flex; flex-direction: column; align-items: center; text-align: center; padding: 18px; border-radius: 30px; background: var(--card); border: 1px solid var(--line); }
+.fz-card[style] { border-color: color-mix(in srgb, var(--gc) 55%, transparent); }
+.fz-in { animation: fzin .38s cubic-bezier(.2, .8, .2, 1); }
+@keyframes fzin { from { transform: translateX(28px); } to { transform: none; } }
+.fz { overflow-x: clip; }
+.fz-tag { align-self: center; padding: 4px 10px; border-radius: 8px; background: color-mix(in srgb, var(--gc) 22%, transparent); color: var(--text); font-size: 12px; font-weight: 600; margin-bottom: 6px; }
+.fz-fig { width: 100%; height: 190px; min-height: 0; padding: 0; border: 0; background: none; display: grid; place-items: center; }
+.fz-fig svg { height: 184px; width: auto; }
+.fz-name { font: 700 23px/1.15 "Unbounded", sans-serif; margin: 6px 0 4px; }
+.fz-meta { color: var(--muted); font-size: 14px; margin: 0 0 14px; }
+.fz-sets { display: flex; gap: 6px; margin-bottom: 18px; }
+.fz-sets i { width: 46px; height: 8px; border-radius: 4px; background: var(--line-strong); transition: background .3s; }
+.fz-sets i.on { background: var(--ok); }
+.fz-acts { display: flex; gap: 10px; width: 100%; }
+.fz-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; height: 56px; min-height: 0; border: 0; border-radius: 18px; font: 700 16px "Lexend", sans-serif; }
+.fz-btn.p { background: var(--ok); color: #0d0e10; flex: 1.4; }
+.fz-btn.g { background: var(--card-2); color: var(--text); }
+.fz-card.done .fz-fig { opacity: .55; }
+.fz-rest { gap: 4px; padding: 22px; }
+.fz-road { display: flex; gap: 8px; margin: 14px -4px 0; padding: 2px 4px 4px; overflow-x: auto; scrollbar-width: none; }
+.fz-th { flex: none; width: 70px; display: flex; flex-direction: column; align-items: center; gap: 4px; min-height: 0; padding: 0; border: 0; background: none; color: var(--muted); font: 500 11px "Lexend", sans-serif; }
+.fz-tf { position: relative; width: 62px; height: 62px; border-radius: 18px; background: var(--card); border: 1px solid var(--line); display: grid; place-items: center; overflow: hidden; }
+.fz-tf svg { height: 54px; width: auto; }
+.fz-tf i { position: absolute; right: 4px; bottom: 4px; width: 18px; height: 18px; border-radius: 6px; display: grid; place-items: center; background: var(--ok); color: #0d0e10; }
+.fz-th.ok .fz-tf { background: rgba(76, 197, 131, .14); border-color: transparent; }
+.fz-th.ok .fz-tf svg { opacity: .55; }
+.fz-th.x .fz-tf { border-color: color-mix(in srgb, var(--gc) 60%, transparent); }
+.fz-th.now { color: var(--text); }
+.fz-th.now .fz-tf { border: 2px solid var(--text); }
+.fz-supp { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+.fz-sp { display: flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 16px; border: 0; border-radius: 14px; background: var(--card); color: var(--text); font: 600 14px "Lexend", sans-serif; }
+.fz-sp small { color: var(--muted); font-weight: 500; }
+.fz-sp.on { background: #2c7a52; color: #fff; } .fz-sp.on small { color: #d4efdf; }
+.fz-byt { text-align: center; margin-top: 12px; }
 .dl-mine { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 22px; }
 .up-card { display: flex; flex-direction: column; gap: 8px; }
 .ux-x { width: 40px; height: 40px; min-height: 0; padding: 0; flex: none; border: 0; border-radius: 20px; background: none; color: var(--muted); display: grid; place-items: center; }

@@ -32,7 +32,7 @@ def test_without_routines_dailys_work_as_before(page):
 def test_alternate_and_rotation(page):
     prepare(page, "alternate")
     # Varje dag först, sedan dagens extra under en egen rubrik
-    assert 'Extra idag: Mage A' in page.inner_text('.dl-xh')
+    assert page.evaluate("routineOn(TODAY).name") == 'Mage A' and page.locator('.fz-th.x').count() == 2
     names = page.evaluate("[1, 2, 3].map(i => routinePlanned(shift(TODAY, i)).name)")
     assert names == ['Mage B', 'Mage A', 'Mage B']
     page.evaluate("S.dailyMode = 'rotate'")
@@ -46,7 +46,7 @@ def test_switch_for_today_keeps_checks_and_continues_rotation(page):
     tick(page, 'plankan')
     page.click('.dl-byt')
     page.click('[data-rutpick=rb]')
-    assert 'Mage B' in page.inner_text('.dl-xh')
+    assert page.evaluate("routineOn(TODAY).name") == 'Mage B' and page.locator('.fz-th.x').count() == 2
     assert page.evaluate("dailyDone(TODAY, 'plankan')")
     assert page.evaluate("routinePlanned(shift(TODAY, 1)).name") == 'Rörlighet'
     # Gårdagens rutin räknas inte om när man byter idag
@@ -143,7 +143,7 @@ def test_week_edit_routine_and_today_switch_only_today(page):
     # Byt extra i Dailys gäller bara idag
     page.click('.dl-byt')
     page.click('[data-rutpick=rb]')
-    assert 'Mage B' in page.inner_text('.dl-xh')
+    assert page.evaluate("routineOn(TODAY).name") == 'Mage B' and page.locator('.fz-th.x').count() == 2
     assert page.evaluate("S.dailyWeek[0]") == 'ra' and page.evaluate("routinePlanned(shift(TODAY, 7)).name") == 'Mage A'
     # Dailys bockar bara av; allt ändras under Mina dailys
     assert page.locator('.dlx [data-openpick], .dlx [data-suppadd], .dlx [data-suppedit], .dlx [data-rutopen], .dl-editbtn').count() == 0
@@ -233,7 +233,7 @@ def test_week_check_missed_day_afterwards(page):
     # Allt gjort bockar av hela dagen
     page.click('[data-wkall="2026-11-09"]')
     assert page.evaluate("dailyDone('2026-11-09', 'plankan') && S.log['2026-11-09'].dailies['supp:s1']") is True
-    assert page.locator('[data-dlsel="2026-11-09"] .dl-sr.ok').count() == 1
+    assert page.locator('[data-dlsel="2026-11-09"].ok').count() == 1
     # Kommande dagar visas men går inte att bocka av
     page.click('[data-dlsel="2026-11-12"]')
     assert page.locator('[data-wkck]').count() == 0 and "planerat" in page.inner_text('.dl-h')
@@ -311,7 +311,8 @@ def test_set_i_dailys(page):
     page.evaluate("S.supplements = []; S.daily = [{id:'plankan',sets:3,reps:'45 s'}]; save()")
     go(page, 'dailys')
     page.click('[data-dcheck=plankan]')
-    assert "1/3" in page.inner_text('[data-dcheck=plankan]') and "1 av 3 set klara" in page.inner_text('.dl-row')
+    # Kortet visar seten som streck och vilket set som står på tur
+    assert page.locator('.fz-sets i.on').count() == 1 and "set 2 av 3" in page.inner_text('.fz-meta')
     assert not page.evaluate("dailyDone(TODAY, 'plankan')")
     page.click('[data-dcheck=plankan]'); page.click('[data-dcheck=plankan]')
     assert page.evaluate("dailyDone(TODAY, 'plankan')") and page.evaluate("day().dailies['set:plankan']") is None
@@ -321,7 +322,8 @@ def test_dailys_kan_startas_i_valfri_ordning(page):
     start(page)
     page.evaluate("S.supplements = []; S.daily = [{id:'plankan',sets:3,reps:'45 s'}, {id:'russian_twist',sets:3,reps:'20'}]; save()")
     go(page, 'dailys')
-    assert page.locator('[data-dclockstart]').count() == 2
+    # Raden under kortet väljer övning; timern startar för den som visas
+    page.click('[data-dlfocus=russian_twist]')
     page.click('[data-dclockstart=russian_twist]')
     assert page.evaluate("dailyClock.id") == 'russian_twist'
 
