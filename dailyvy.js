@@ -70,10 +70,11 @@ function dlDayView() {
   // Listan går att fälla ut för att ångra eller ändra.
   const aDone = a.filter(x => S.log[date] && S.log[date].dailies["supp:" + x.id]).length;
   const allOk = ex.length + a.length > 0 && n === ex.length && aDone === a.length;
-  const head = `<div class="dl-h"><div class="grow"><span class="dl-k">${when} · ${n + aDone} av ${ex.length + a.length} klara</span></div></div>`;
+  const st0 = streakOf(allDailiesDone);
+  const head = dlHero(`${when}`, n + aDone, ex.length + a.length, st0 > 1 ? `<small class="dl-hs">${icon("flame", 13)}${st0} dagar i rad</small>` : "");
   const list = `${ex.length ? dlGroups(date, ex, rut, row, "dl-rows") : `<div class="dl-empty"><b>Inga dailys än</b><span class="muted small">Lägg till det du vill göra varje dag, till exempel plankan eller en promenad.</span>
       <button class="primary" data-rutpage>Lägg till dina dailys</button></div>`}
-    ${a.length ? `<div class="klabel dl-sec">Kosttillskott</div><div class="dl-pills">${pills}</div>` : ""}`;
+    ${a.length ? suppGroup(pills, aDone, a.length) : ""}`;
   if (allOk) {
     const st = streakOf(allDailiesDone), ws = weekStart(date);
     const greet = date !== TODAY ? "Dagen var klar" : st >= 7 ? "Grymt, en hel vecka i rad!" : st >= 3 ? "Bra jobbat, du är i farten!" : "Bra jobbat idag!";
@@ -103,8 +104,19 @@ function dlGroups(date, ex, rut, row, cls) {
   const extra = rut ? ex.filter(e => !every.has(e.id) && rut.ex.some(x => x.id === e.id)) : [];
   const base = ex.filter(e => !extra.includes(e));
   const byt = dailyRoutines().length > 1 && date === logDate() ? `<button class="linkbtn2 dl-byt" data-rutsheet="1">Byt</button>` : "";
-  return `${base.length ? `<div class="${cls}">${base.map(row).join("")}</div>` : ""}
-    ${extra.length ? `<div class="dl-xh"><i style="background:${rutColor(rut)}"></i><span class="grow">Extra${date === TODAY ? " idag" : ""}: ${esc(rut.name)}</span>${byt}</div><div class="${cls}">${extra.map(row).join("")}</div>` : ""}`;
+  const cnt = list => `${list.filter(e => dailyDone(date, e.id)).length} av ${list.length}`;
+  return `${base.length ? `<section class="dl-grp g-every"><div class="dl-gh"><span class="dl-gi">${icon("check", 15)}</span><b class="grow">Varje dag</b><span class="dl-gc">${cnt(base)}</span></div>
+      <div class="${cls}">${base.map(row).join("")}</div></section>` : ""}
+    ${extra.length ? `<section class="dl-grp g-extra" style="--gc:${rutColor(rut)}"><div class="dl-gh dl-xh"><span class="dl-gi">${icon("plus", 15)}</span><b class="grow">Extra${date === TODAY ? " idag" : ""}: ${esc(rut.name)}</b>${byt}<span class="dl-gc">${cnt(extra)}</span></div>
+      <div class="${cls}">${extra.map(row).join("")}</div></section>` : ""}`;
+}
+// Kosttillskotten som ett eget avsnitt
+const suppGroup = (pills, got, tot) => `<section class="dl-grp g-supp"><div class="dl-gh"><span class="dl-gi">${icon("kost", 15)}</span><b class="grow">Kosttillskott</b><span class="dl-gc">${got} av ${tot}</span></div><div class="dl-pills">${pills}</div></section>`;
+// Överst: en ring som fylls med dagens framsteg
+function dlHero(label, got, tot, extra = "") {
+  const r = 26, c = 2 * Math.PI * r, f = tot ? got / tot : 0;
+  return `<div class="dl-h dl-hero"><span class="dl-hr"><svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="${r}" class="bg"/><circle cx="32" cy="32" r="${r}" class="fg" stroke-dasharray="${(c * f).toFixed(1)} ${c.toFixed(1)}"/></svg><b>${got}</b></span>
+    <span class="grow"><span class="dl-k">${label}</span><b class="dl-hb">${got === tot && tot ? "Allt klart" : `${got} av ${tot} klara`}</b>${extra}</span></div>`;
 }
 function wkDayStat(d) {
   const ex = dailyList(d), a = S.supplements || [], L = S.log[d];
@@ -130,10 +142,10 @@ function dlOtherDay(d) {
   const row = e => `<div class="dl-row ${dailyDone(d, e.id) ? "ok" : ""}">${thumb(e.id, "dl-f")}<span class="grow dl-name"><b>${esc(EX[e.id].name)}</b><small>${e.sets} × ${esc(e.reps || "")}</small></span>${ck(dailyDone(d, e.id), e.id, EX[e.id].name)}</div>`;
   const pills = a.map(x => fut ? `<span class="dl-pill"><span class="dl-pc"></span>${esc(x.name)}</span>`
     : `<button class="dl-pill ${suppOk(x) ? "on" : ""}" data-wkck="${d}" data-wkid="supp:${esc(x.id)}" aria-pressed="${suppOk(x)}"><span class="dl-pc">${suppOk(x) ? icon("check", 14) : ""}</span>${esc(x.name)}</button>`).join("");
-  return `<div class="dl-h"><div class="grow"><span class="dl-k">${cap(dateLabel(d))} · ${fut ? "planerat" : `${st.got} av ${st.tot} klara`}</span></div>
-      ${!fut && st.tot && !st.all ? `<button class="small ghost dl-all" data-wkall="${d}">${icon("check", 14)}Allt gjort</button>` : ""}</div>
+  return `${fut ? `<div class="dl-h"><div class="grow"><span class="dl-k">${cap(dateLabel(d))} · planerat</span></div></div>`
+      : dlHero(cap(dateLabel(d)), st.got, st.tot, !st.all && st.tot ? `<button class="small ghost dl-all" data-wkall="${d}">${icon("check", 14)}Allt gjort</button>` : "")}
     ${ex.length ? dlGroups(d, ex, rut, row, "dl-rows") : `<p class="muted small">Inga dailys den dagen.</p>`}
-    ${a.length ? `<div class="klabel dl-sec">Kosttillskott</div><div class="dl-pills">${pills}</div>` : ""}`;
+    ${a.length ? suppGroup(pills, a.filter(suppOk).length, a.length) : ""}`;
 }
 
 // ---------- Mina dailys ----------
