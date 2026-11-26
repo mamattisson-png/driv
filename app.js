@@ -638,7 +638,7 @@ async function remindIfDue() {
   const r = S.reminder;
   if (!r || !r.notify || !("Notification" in window) || Notification.permission !== "granted") return;
   const now = new Date(), [hh, mm] = r.time.split(":").map(Number);
-  if (now.getHours() * 60 + now.getMinutes() < hh * 60 + mm || r.lastNotified === TODAY || !dailiesLeft()) return;
+  if (!dailysOn() || now.getHours() * 60 + now.getMinutes() < hh * 60 + mm || r.lastNotified === TODAY || !dailiesLeft()) return;
   r.lastNotified = TODAY;
   save();
   const body = `${dailiesLeft()} av ${dailyList(TODAY).length} dailys kvar idag.`;
@@ -921,6 +921,9 @@ function streakStrip() {
 // ---------- Rendering ----------
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 // Fyra flikar; Profil nås via kugghjulet uppe till höger
+// Dailys kan stängas av helt under Inställningar: då försvinner fliken, kortet på Hem och påminnelserna
+const dailysOn = () => !S.noDailys;
+const navTabs = () => TABS.filter(([id]) => id !== "dailys" || dailysOn());
 const TABS = [["idag", "hem", "Hem"], ["pass", "trana", "Träna"], ["dailys", "check", "Dailys"], ["kost", "kost", "Kost"], ["historik", "historik", "Historik"]];
 let tab = S.setupDone ? "idag" : "upplagg";
 let profBack = "idag";   // fliken man kom från, dit tillbaka-pilen i Profil går
@@ -987,7 +990,8 @@ function render() {
   nav.classList.toggle("hidden", tab === "upplagg" || !!passDone || !!actSheet);
   document.body.classList.toggle("onboard", tab === "upplagg" && !S.setupDone);
   document.body.classList.toggle("infocus", inFocus);
-  nav.innerHTML = TABS.map(([id, ic, lbl]) =>
+  if (!dailysOn() && tab === "dailys") tab = "idag";
+  nav.innerHTML = navTabs().map(([id, ic, lbl]) =>
     `<button data-tab="${id}" class="${tab === id || (tab === "recept" && id === "kost") ? "on" : ""} ${id === "pass" && focus && !editDate ? "live" : ""}" ${tab === id ? 'aria-current="page"' : ""}>${icon(ic, 22)}${lbl}${id === "pass" && focus && !editDate ? `<i class="navdot" aria-label="Pass pågår"></i>` : ""}</button>`).join("");
   const banner = editDate && (tab === "kost" || (tab === "pass" && focus && !editing))
     ? `<div class="editbar">Du ändrar <b>${dateLabel(editDate)}</b><button class="small" data-editdone>Klar</button></div>` : "";
@@ -1226,7 +1230,7 @@ const VIEWS = {
     const done = !!(w && w.done), started = !done && (t.active || !!actRunning(d) || (w && d.ex.some(x => ((w.sets[x.id]) || []).some(z => z && z.ok))));
     const dailyEx = dailyList(logDate()), supp = S.supplements || [];
     const completed = dailyEx.filter(x => dailyDone(logDate(), x.id)).length + supp.filter(x => day().dailies["supp:" + x.id]).length;
-    const total = dailyEx.length + supp.length, dailysOk = total > 0 && completed === total;
+    const total = dailyEx.length + supp.length, dailysOk = !dailysOn() || (total > 0 && completed === total);
     const foodOk = m.kcal > 0 && e.kcal >= m.kcal;
     const hr = new Date().getHours();
     const passes = weekSummary(weekStart(TODAY)).passes;
@@ -1266,7 +1270,7 @@ const VIEWS = {
     const dailyCard = n => `<button class="h3-card h3-head ${dailysOk ? "done" : ""}" data-tab="dailys">${no(n, dailysOk)}<span class="grow"><b>${dailysOk ? "Dailys klara" : "Gör dina dailys"}</b>
         <small>${total ? `${completed} av ${total} idag` : "Lägg till det du vill göra varje dag"}</small></span>${icon("right", 18)}</button>`;
     // Under en paus: pausens kort i stället för passet och dailys (de går fortfarande att nå från flikarna)
-    const items = pz && !done && !started ? [[foodCard, foodOk]] : [[passCard, done || !!t.rest || weekDone], [foodCard, foodOk], [dailyCard, dailysOk]];
+    const items = pz && !done && !started ? [[foodCard, foodOk]] : [[passCard, done || !!t.rest || weekDone], [foodCard, foodOk], ...(dailysOn() ? [[dailyCard, dailysOk]] : [])];
     let nr = 0;
     const homeCards = [...items.filter(x => !x[1]), ...items.filter(x => x[1])].map(([f, ok]) => f(ok ? 0 : ++nr)).join("");
     return `<div class="home3">
@@ -1335,6 +1339,7 @@ const VIEWS = {
         <span class="grow col"><b>${esc(name)}</b><span class="muted small">Visa profil</span></span>${icon("right", 18)}</button>
       ${group("Träning", `<div class="prow"><div class="prow-line"><button class="prow-head" data-tab="upplagg"><span class="pic">${icon("upplagg", 20)}</span><span class="grow"><b>Träningsschema</b>
           <span class="muted small">${esc(PROGRAMS[S.plan.program || "ppl"].name)} · ${S.plan.count} pass i veckan</span></span><span class="chev">${icon("right", 18)}</span></button></div></div>
+        ${profRow("dailysav", "check", "Dailys", dailysOn() ? "Övningar och kosttillskott varje dag" : "Avstängt", null, `<input type="checkbox" class="switch" data-dailysav aria-label="Dailys på" ${dailysOn() ? "checked" : ""}>`)}
         ${profRow("paus", "paus", "Paus", pauseSummary(), pauseBody())}
         ${profRow("vila", "timer", "Vilotimer", rs.on ? `På · ${rs.compound} s basövningar, ${rs.iso} s övriga` : "Av", `
           <label class="card psw"><span class="grow">Starta en vilotimer när jag bockar av ett set</span><input type="checkbox" class="switch" data-resttoggle ${rs.on ? "checked" : ""}></label>
@@ -1359,7 +1364,7 @@ const VIEWS = {
       ${group(sbEnabled ? "Vänner och notiser" : "Notiser", `${sbEnabled ? `<div class="prow" id="p-vanner"><div class="prow-line"><button class="prow-head" data-tab="vanner"><span class="pic">${icon("vanner", 20)}</span><span class="grow"><b>Vänner</b>
           <span class="muted small">${friends}</span></span><span class="chev">${icon("right", 18)}</span></button></div></div>` : ""}
         ${profRow("notiser", "bell", "Notiser", pushSummary(), pushBody(), pushSwitch)}
-        ${hasDailies() ? profRow("paminnelse", "kalender", "Påminnelse i kalendern", r ? `För dina dailys · kl. ${esc(r.time)}` : "För dina dailys · ingen vald", reminderCard()) : ""}`)}
+        ${hasDailies() && dailysOn() ? profRow("paminnelse", "kalender", "Påminnelse i kalendern", r ? `För dina dailys · kl. ${esc(r.time)}` : "För dina dailys · ingen vald", reminderCard()) : ""}`)}
       ${group("Appen", `${profRow("utseende", "utseende", "Utseende", "", null, themeSeg)}
         ${profRow("figur", "profil", "Figur", "I kroppskartan", null, figSeg)}
         ${profRow("guide", "info", "Appguide", "En kort rundtur genom flikarna", null, `<button class="small" data-tourstart>Starta</button>`)}
@@ -2268,6 +2273,7 @@ document.addEventListener("click", ev => {
     return;
   }
   else if (ds.resttoggle !== undefined) S.rest = Object.assign({}, restSettings(), { on: t.checked });
+  else if (ds.dailysav !== undefined) { S.noDailys = !t.checked; toast(t.checked ? "Dailys är på" : "Dailys är avstängt"); }
   else if (ds.sendcode !== undefined) { sendLoginCode(); return; }
   else if (ds.oauth) { signInWithProvider(ds.oauth); return; }
   else if (ds.fbsend !== undefined) { sendFeedback(); return; }

@@ -127,7 +127,7 @@ function weekSection() {
   const wNow = weekAvgWeight(ws), wPrev = weekAvgWeight(prevWs);
   const tiles = [
     tile("Pass", cur.passes, `av ${typeof weekGoal === "function" ? weekGoal(weekStart(TODAY)) : S.plan.count}`, diff(cur.passes, prev.passes, true)),
-    hasDailies() ? tile("Dailys", cur.dailies, "av 7 dagar", diff(cur.dailies, prev.dailies, true)) : "",
+    hasDailies() && dailysOn() ? tile("Dailys", cur.dailies, "av 7 dagar", diff(cur.dailies, prev.dailies, true)) : "",
     tile("Kalorier", cur.kcal ? tnum(cur.kcal) : "–", "snitt", cur.kcal && prev.kcal ? diff(cur.kcal, prev.kcal, null) : `<span class="muted small">mål ${tnum(macros().kcal)}</span>`),
     S.hideWeight ? "" : tile("Vikt", wNow != null ? fmtNum(wNow) : "–", "kg", wNow != null && wPrev != null ? diff(wNow, wPrev, null, " kg") : `<span class="muted small">${wNow != null ? "Första vägningen" : "Ingen vägning"}</span>`),
     cur.km || prev.km ? tile("Löpning", fmtNum(cur.km), "km", diff(cur.km, prev.km, true, " km")) : "",

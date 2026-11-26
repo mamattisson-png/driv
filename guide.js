@@ -6,7 +6,7 @@
 // Laddas före app.js; render() i app.js ritar rutan och placerar den efter varje ritning.
 
 const day0 = () => (todaysPass().d || S.plan.days[0]).id;
-const TOUR = [
+const TOUR_ALL = [
   { tab: "idag", sel: '#nav [data-tab="idag"]', title: "Hem", text: "Dagens översikt: passet, maten och dina dailys i tur och ordning." },
   { tab: "pass", sel: '#nav [data-tab="pass"]', title: "Träna", text: "Starta passet, se veckans pass och sök övningar genom att trycka på kroppen." },
   { tab: "dailys", sel: '#nav [data-tab="dailys"]', title: "Dailys", text: "Det du vill göra varje dag: övningar med timer och kosttillskott att bocka av." },
@@ -19,6 +19,9 @@ const TOUR = [
   { tab: "pass", prep: () => startFocus(day0()), sel: "[data-fdopen]", title: "Dailys under passet", text: "Hinner du inte med dailys separat? Öppna dem här och bocka av mellan seten." },
   { tab: "idag", sel: ".homehead .setbtn", title: "Klart!", text: "Guiden startar du igen under Inställningar, bakom kugghjulet." },
 ];
+// Stegen om Dailys hoppas över när Dailys är avstängt
+let TOUR = TOUR_ALL;
+const tourSteps = () => (TOUR = TOUR_ALL.filter(s => typeof dailysOn !== "function" || dailysOn() || !(s.tab === "dailys" || /fdopen/.test(s.sel))));
 let tour = null;   // index i TOUR medan guiden visas
 
 // Gör vyn ren innan ett steg visas, så att rätt element finns, och förbered det steget behöver
@@ -66,7 +69,7 @@ document.addEventListener("click", ev => {
   const ds = t.dataset;
   if (ds.tourstart !== undefined || ds.tourskip !== undefined) { S.tourAsked = true; save(); }
   if (ds.tourskip !== undefined) { render(); return; }
-  if (ds.tourstart !== undefined) tour = 0;
+  if (ds.tourstart !== undefined) { tourSteps(); tour = 0; }
   else if (ds.tourprev !== undefined) tour = Math.max(0, tour - 1);
   else if (ds.tournext !== undefined) tour = tour + 1 < TOUR.length ? tour + 1 : null;
   else tour = null;

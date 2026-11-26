@@ -3100,3 +3100,25 @@ def test_paus_planerad_semester(page):
     # En planerad paus kan tas bort
     page.click("[data-pausend]")
     assert page.evaluate("S.pauses.length") == 0
+
+
+def test_dailys_kan_stangas_av(page):
+    start(page)
+    page.evaluate("S.daily = [exEntry('plankan')]; save()")
+    go(page, "profil")
+    assert page.locator('#nav [data-tab="dailys"]').count() == 1
+    page.uncheck('[data-dailysav]')
+    assert page.evaluate("S.noDailys") is True
+    # Fliken, kortet på Hem och dailys under passet försvinner
+    assert page.locator('#nav [data-tab="dailys"]').count() == 0
+    go(page, "idag")
+    assert page.locator('.h3-card[data-tab="dailys"]').count() == 0
+    page.evaluate("tab = 'dailys'; render()")
+    assert page.evaluate("tab") == "idag"
+    # Guiden hoppar över stegen om Dailys
+    page.evaluate("tourSteps()")
+    assert not page.evaluate("TOUR.some(s => s.tab === 'dailys' || /fdopen/.test(s.sel))")
+    # Påslaget igen: allt finns kvar
+    go(page, "profil")
+    page.check('[data-dailysav]')
+    assert page.locator('#nav [data-tab="dailys"]').count() == 1 and page.evaluate("S.daily[0].id") == "plankan" and not page.errors

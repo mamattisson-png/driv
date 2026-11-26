@@ -325,7 +325,7 @@ function focusView() {
   const tools = `<div class="ftools">
     <button class="chipbtn" data-setcount="-1" data-ex="${ex.id}" ${ex.sets > 1 ? "" : "disabled"} aria-label="Ett set färre">− Set</button>
     <button class="chipbtn" data-setcount="1" data-ex="${ex.id}" aria-label="Ett set till">+ Set</button>
-    ${dList.length ? `<button class="chipbtn" data-fdopen aria-label="Dailys, ${dDone} av ${dList.length} klara">Dailys ${dDone}/${dList.length}</button>` : ""}
+    ${dList.length && dailysOn() ? `<button class="chipbtn" data-fdopen aria-label="Dailys, ${dDone} av ${dList.length} klara">Dailys ${dDone}/${dList.length}</button>` : ""}
     <button class="chipbtn ${focusMore ? "on" : ""}" data-fmore aria-expanded="${focusMore}">${icon("more", 16)}Mer</button></div>`;
   const moreRow = (ic, title, sub, attrs) => `<button class="h3-row fmrow" ${attrs}><span class="h3-ic">${icon(ic, 18)}</span><span class="grow"><b>${title}</b>${sub ? `<small>${sub}</small>` : ""}</span></button>`;
   const moreSheet = focusMore ? `<div class="overlay" data-fmoreclose><div class="sheet fmoresheet" role="dialog" aria-label="Fler val">
