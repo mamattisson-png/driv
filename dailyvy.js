@@ -138,12 +138,17 @@ function wkDayStat(d) {
   return { tot, got, all: tot > 0 && got === tot };
 }
 // Veckan överst: en ring per dag, tryck för att visa dagen
+// Dagar med en extra grupp får en prick i gruppens färg under rutan
+function xd(d) {
+  const r = dailyRoutines().length && routineOn(d);
+  return `<i class="dl-xd" ${r ? `style="background:${rutColor(r)}" title="${esc(r.name)}"` : ""}></i>`;
+}
 function dlStrip() {
   const sel = dlSel || TODAY, ws = weekStart(sel), cur = weekStart(TODAY);
   const days = weekDates(ws).map((d, i) => { const st = wkDayStat(d), fut = d > TODAY;
     const cls = pauseOn(d) && !st.all ? "pz" : st.all && !fut ? "ok" : st.got && !fut ? "part" : "";
-    return `<button class="dl-sd ${d === sel ? "on" : ""} ${d === TODAY ? "t" : ""} ${cls}" data-dlsel="${d}" aria-pressed="${d === sel}" aria-label="${cap(dateLabel(d))}${st.tot && !fut ? `: ${st.got} av ${st.tot} klara` : ""}">
-      <small>${WD[i][0]}</small><b>${cls === "ok" ? icon("check", 14) : cls === "pz" ? icon("paus", 14) : +d.slice(-2)}</b></button>`; }).join("");
+    return `<button class="dl-sd ${d === sel ? "on" : ""} ${d === TODAY ? "t" : ""} ${cls}" data-dlsel="${d}" aria-pressed="${d === sel}" aria-label="${cap(dateLabel(d))}${dailyRoutines().length && routineOn(d) ? `, extra ${esc(routineOn(d).name)}` : ""}${st.tot && !fut ? `: ${st.got} av ${st.tot} klara` : ""}">
+      <small>${WD[i][0]}</small><b>${cls === "ok" ? icon("check", 14) : cls === "pz" ? icon("paus", 14) : +d.slice(-2)}</b>${xd(d)}</button>`; }).join("");
   return `<div class="dl-strip"><button class="iconbtn small ghost dl-sw" data-dlweek="-7" aria-label="Veckan före">${icon("left", 16)}</button>
     <div class="dl-sdays">${days}</div>
     <button class="iconbtn small ghost dl-sw" data-dlweek="7" ${ws >= cur ? "disabled" : ""} aria-label="Veckan efter">${icon("right", 16)}</button></div>`;
