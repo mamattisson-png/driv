@@ -2359,7 +2359,7 @@ button.acttile { min-height: 64px; cursor: pointer; }
 .rutopen { display: flex; flex-direction: column; gap: 1px; min-width: 0; min-height: 50px; justify-content: center; padding: 0; border: 0; background: none; color: var(--text); text-align: left; font: inherit; }
 .rutopen small { color: var(--muted); font-size: 13px; }
 .rutdots { width: 40px; height: 40px; flex: none; padding: 0; border: 0; background: none; color: var(--muted); font-size: 20px; letter-spacing: 1px; }
-.rutmenu { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 0 12px 40px; }
+.rutmenu { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; padding: 0; margin: 10px 0 4px; }
 .rutex { padding: 0 6px 10px; }
 .rutex .subex .thumb, .dl-edit .subex .thumb { width: 48px; height: 48px; flex: none; }
 .subex > .col { flex: none; gap: 2px; }
@@ -2700,6 +2700,18 @@ button.acttile { min-height: 64px; cursor: pointer; }
 .pz-dates { margin-bottom: 10px; }
 .pz-now { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
 .pz-note { margin-top: 10px; text-align: center; }
+.dlx.up .klabel.up-kl2 { display: block; margin: 18px 4px 8px; font-size: 11px; }
+.up-week { border-radius: 20px; background: var(--card); border: 1px solid var(--line); padding: 2px 6px; }
+.up-wr2 { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 44px; padding: 0 10px; border: 0; background: none; color: var(--text); font: inherit; text-align: left; }
+.up-wr2 + .up-wr2 { border-top: 1px solid var(--line); }
+.up-wr2 svg { color: var(--muted); flex: none; }
+.up-wd2 { width: 36px; flex: none; color: var(--muted); font-size: 13px; }
+.up-wr2.t .up-wd2 { color: var(--accent-text); font-weight: 700; }
+.up-wn { flex: 1; display: flex; align-items: center; gap: 8px; font-size: 14.5px; font-weight: 600; min-width: 0; }
+.up-wn.muted { font-weight: 400; }
+.up-wn i { width: 9px; height: 9px; border-radius: 5px; flex: none; }
+.up-xd { flex: none; color: var(--muted); font-size: 12.5px; font-weight: 500; }
+.up-xd.none { color: var(--warn, #e0a23c); }
 .up-goal2 { display: flex; align-items: center; gap: 12px; width: 100%; margin-top: 8px; padding: 14px 16px; border: 0; border-radius: 20px; background: rgba(255, 138, 71, .12); color: var(--text); font: inherit; text-align: left; }
 .up-goal2 .grow { display: flex; flex-direction: column; gap: 2px; } .up-goal2 small { color: var(--muted); font-size: 13px; } .up-goal2 > svg:first-child { color: var(--accent-text); }
 .up-opt { margin-top: 26px; padding: 18px; border-radius: 22px; border: 1.5px dashed var(--line-strong); }

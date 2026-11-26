@@ -201,8 +201,13 @@ function uppView() {
     ? `<div class="rutlist">${L.map((r, i) => `<div class="rutrow up-xr" data-rutidx="${i}">${L.length > 1 ? `<span class="rutgrip" data-rutdrag="${i}" aria-label="Dra för att flytta ${esc(r.name)}">${icon("list", 18)}</span>` : ""}
         <button class="up-xc" data-rutopen="${esc(r.id)}"><span class="up-xt"><i style="background:${rutColor(r)}"></i><b class="grow">${i + 1}. ${esc(r.name)}</b>${r === today ? `<span class="up-now">Idag</span>` : r === tom ? `<span class="up-now n">I morgon</span>` : ""}${icon("right", 16)}</span>
         <small>${exText(r)}</small></button></div>`).join("")}</div>`
-    : L.map(r => `<button class="up-xc" data-rutopen="${esc(r.id)}"><span class="up-xt"><i style="background:${rutColor(r)}"></i><b class="grow">${esc(extraDays(r))}</b>${icon("right", 16)}</span>
-      <small>${esc(r.name)}: ${exText(r)}</small></button>`).join("");
+    : L.map(r => `<button class="up-xc" data-rutopen="${esc(r.id)}"><span class="up-xt"><i style="background:${rutColor(r)}"></i><b class="grow">${esc(r.name)}</b><span class="up-xd ${daysOf(r).length ? "" : "none"}">${esc(extraDays(r))}</span>${icon("right", 16)}</span>
+      <small>${exText(r)}</small></button>`).join("");
+  // Veckan på en gång: vilken extra varje dag har (tryck på en dag för att öppna gruppen)
+  const dates = weekDates(weekStart(TODAY));
+  const weekView = `<section class="up-week" aria-label="Veckan">${dates.map((d, i) => { const r = routinePlanned(d);
+      return `<${r ? `button data-rutopen="${esc(r.id)}"` : "div"} class="up-wr2 ${d === TODAY ? "t" : ""}"><span class="up-wd2">${WD[i].slice(0, 3)}</span>
+        ${r ? `<span class="up-wn"><i style="background:${rutColor(r)}"></i>${esc(r.name)}</span>${icon("right", 14)}` : `<span class="up-wn muted">Bara Varje dag</span>`}</${r ? "button" : "div"}>`; }).join("")}</section>`;
   const savedDays = (S.dailyWeek || []).some(Boolean);
   const mode = `<div class="seg two up-mode2" role="radiogroup" aria-label="Hur dina extra läggs upp">
       <button role="radio" data-uppmode="week" class="${rot ? "" : "on"}" aria-checked="${!rot}">Vissa veckodagar</button>
@@ -217,7 +222,9 @@ function uppView() {
     <section class="up-card">${a.map((x, i) => supplementEditing === i ? "" : `<div class="up-sr"><button class="grow up-srb" data-suppedit="${i}"><b>${esc(x.name)}</b>${x.dose ? ` <small>${esc(x.dose)}</small>` : ""}</button>
         <button class="ux-x" data-suppdel="${i}" aria-label="Ta bort ${esc(x.name)}">${icon("close", 16)}</button></div>`).join("")}
       ${supplementEditing === null ? `<button class="up-addx" data-suppadd>${icon("plus", 16)}Lägg till</button>` : supplementForm()}</section>
-    ${L.length ? `<div class="klabel up-kl">${rot ? "Extra som turas om" : "Extra vissa dagar"}</div>${mode}${extras}${addExtra}
+    ${L.length ? `<div class="klabel up-kl">${rot ? "Extra som turas om" : "Extra vissa dagar"}</div>${mode}
+      <div class="klabel up-kl2">Den här veckan</div>${weekView}
+      <div class="klabel up-kl2">${rot ? "Ordningen" : "Grupperna"}</div>${extras}${addExtra}
       <button class="up-goal2" data-goallist>${icon("idea", 18)}<span class="grow"><b>Färdiga förslag efter mål</b><small>Mage, ländrygg, höfter, hållning …</small></span>${icon("right", 18)}</button>`
     : `<section class="up-opt"><b>Schema <span class="up-tag2">valfritt</span></b>
         <p class="muted small">Vill du göra extra övningar utöver Varje dag? Hur vill du lägga upp dem?</p>

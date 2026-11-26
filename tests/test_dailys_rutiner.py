@@ -80,7 +80,7 @@ def test_manage_routines_create_rename_delete(page):
     page.click('[data-rutback]')
     assert page.evaluate("S.dailyRoutines.length") == n + 1
     # Namnet ändras direkt i fältet
-    page.click('[data-rutopen=ra]')
+    page.click('.up-xc[data-rutopen=ra]')
     page.fill('.up-name', 'Morgonmage')
     assert page.evaluate("routineById('ra').name") == 'Morgonmage'
     page.click('[data-rutmenu=ra]')
@@ -96,19 +96,21 @@ def test_week_planner(page):
     prepare(page, "alternate")   # 9 november 2026 är en måndag
     page.click('.dl-mine')
     assert page.evaluate("S.dailyWeek") == ['ra', 'rb', 'ra', 'rb', 'ra', 'rb', 'ra']
-    assert 'Måndag, onsdag, fredag och söndag' in page.inner_text('[data-rutopen=ra]')
-    assert 'Inga dagar valda' in page.inner_text('[data-rutopen=rc]')
+    assert 'Måndag, onsdag, fredag och söndag' in page.inner_text('.up-xc[data-rutopen=ra]')
+    assert 'Inga dagar valda' in page.inner_text('.up-xc[data-rutopen=rc]')
+    # Veckan på en gång: en rad per dag med dagens extra
+    assert page.locator('.up-week .up-wr2').count() == 7 and 'Mage A' in page.inner_text('.up-week .up-wr2 >> nth=0')
     # Fredag till Rörlighet, söndag utan extra
-    page.click('[data-rutopen=rc]')
+    page.click('.up-xc[data-rutopen=rc]')
     page.click('[data-plset="4"]')
     assert 'Görs på fredagar, utöver Varje dag.' in page.inner_text('.up-note')
     page.click('[data-rutback]')
-    page.click('[data-rutopen=ra]')
+    page.click('.up-xc[data-rutopen=ra]')
     assert page.locator('.up-dc.on').count() == 3   # måndag, onsdag och söndag
     page.click('[data-plset="6"]')
     page.click('[data-rutback]')
     assert page.evaluate("S.dailyWeek") == ['ra', 'rb', 'ra', 'rb', 'rc', 'rb', '']
-    assert 'Måndag och onsdag' in page.inner_text('[data-rutopen=ra]') and 'Fredag' in page.inner_text('[data-rutopen=rc]')
+    assert 'Måndag och onsdag' in page.inner_text('.up-xc[data-rutopen=ra]') and 'Fredag' in page.inner_text('.up-xc[data-rutopen=rc]')
     assert page.evaluate("[4, 11].map(i => routinePlanned(shift(TODAY, i)).name)") == ['Rörlighet', 'Rörlighet']
     assert page.evaluate("routinePlanned(shift(TODAY, 6))") is None
     # Utan extra är Varje dag kvar
@@ -122,8 +124,8 @@ def test_week_planner(page):
     page.click('[data-uppmode=rotate]')
     assert page.evaluate("S.dailyMode") == 'rotate'
     assert page.evaluate("[0, 1, 2, 3].map(i => routinePlanned(shift(TODAY, i)).id)") == ['ra', 'rb', 'rc', 'ra']
-    assert '1. Mage A' in page.inner_text('[data-rutopen=ra]') and 'Idag' in page.inner_text('[data-rutopen=ra]')
-    assert 'I morgon' in page.inner_text('[data-rutopen=rb]') and page.locator('.rutgrip').count() == 3
+    assert '1. Mage A' in page.inner_text('.up-xc[data-rutopen=ra]') and 'Idag' in page.inner_text('.up-xc[data-rutopen=ra]')
+    assert 'I morgon' in page.inner_text('.up-xc[data-rutopen=rb]') and page.locator('.rutgrip').count() == 3
     page.click('[data-uppmode=week]')
     assert page.evaluate("S.dailyMode") == 'week'
 
@@ -131,7 +133,7 @@ def test_week_planner(page):
 def test_week_edit_routine_and_today_switch_only_today(page):
     prepare(page, "alternate")
     page.click('.dl-mine')
-    page.click('[data-rutopen=ra]')
+    page.click('.up-xc[data-rutopen=ra]')
     assert page.locator('.up-name').input_value() == 'Mage A'
     # Övningen fälls ut: set med − och +; krysset tar bort
     page.click('[data-uxopen="0"]')
