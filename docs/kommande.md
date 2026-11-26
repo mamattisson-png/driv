@@ -143,6 +143,7 @@ Senast uppdaterad: 2026-11-06. Status bygger på dokumenterade publiceringar och
 | 139 | Paus vid sjukdom, semester eller annat (Inställningar → Paus): sviten bryts inte, veckans mål krymper, dailys-sviten hoppar över pausade dagar och påminnelserna tystnar | Appen | Medel | Klar |
 | 140 | Profilsidan: färgad toppruta med siffrorna, zoner med egna former och färger för träning och rekord, och radera-valen i en egen grupp | Profil | Liten | Klar |
 | 141 | Dailys: en övning i taget i ett stort kort som glider vidare, vägen som små bilder, veckan som rutor med prick i extra-gruppens färg | Dailys | Medel | Klar |
+| 142 | Dailys kan stängas av under Inställningar → Träning: fliken, kortet på Hem, dailys under passet och påminnelserna försvinner, och allt finns kvar om man slår på igen | Appen | Liten | Klar |
 
 ## Detaljer och acceptanskriterier
 
