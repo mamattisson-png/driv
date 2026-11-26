@@ -142,6 +142,7 @@ Senast uppdaterad: 2026-11-06. Status bygger på dokumenterade publiceringar och
 | 138 | Mina dailys: nya grupper läggs till först vid Spara, förslag efter mål öppnas direkt med Redigera-knapp, och Spara eller Lägg till går tillbaka till gruppen i listan | Dailys | Medel | Klar |
 | 139 | Paus vid sjukdom, semester eller annat (Inställningar → Paus): sviten bryts inte, veckans mål krymper, dailys-sviten hoppar över pausade dagar och påminnelserna tystnar | Appen | Medel | Klar |
 | 140 | Profilsidan: färgad toppruta med siffrorna, zoner med egna former och färger för träning och rekord, och radera-valen i en egen grupp | Profil | Liten | Klar |
+| 141 | Dailys: en övning i taget i ett stort kort som glider vidare, vägen som små bilder, veckan som rutor med prick i extra-gruppens färg | Dailys | Medel | Klar |
 
 ## Detaljer och acceptanskriterier
 
