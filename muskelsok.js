@@ -37,10 +37,13 @@ const STRETCH_TO_MUSKEL = { neck: "nacke", chest: "brost", shoulders: "axlar", b
 const stretchMuscles = id => [...new Set((EX[id].stretchTargets || []).map(t => STRETCH_TO_MUSKEL[t]).filter(Boolean))];
 
 // Var man tränar: filtret i övningsbiblioteket. null = allt.
-const GEAR_SETS = { alla: ["Gym", null], hemma: ["Hemma", ["db", "kb", "bw"]], bw: ["Inga vikter", ["bw"]], maskin: ["Maskiner", ["cable", "machine"]] };
+// Inget valt = alla övningar. Ett tryck slår på ett filter, ett tryck till slår av det.
+const GEAR_SETS = { hemma: ["Hemma", ["db", "kb", "bw"], "med hantlar, kettlebell eller kroppsvikt"], bw: ["Inga vikter", ["bw"], "utan vikter"],
+  maskin: ["Maskiner", ["cable", "machine"], "med kabel eller maskiner"] };
 const fitsGear = (id, set) => { const g = GEAR_SETS[set] && GEAR_SETS[set][1]; if (!g) return true; const x = gearOf(id); return g.includes(x || "bw"); };
-const gearChips = (cur, attr) => `<div class="gearchips" role="radiogroup" aria-label="Utrustning">${Object.entries(GEAR_SETS).map(([k, [n]]) =>
-  `<button role="radio" class="${cur === k ? "on" : ""}" aria-checked="${cur === k}" ${attr}="${k}">${n}</button>`).join("")}</div>`;
+const gearChips = (cur, attr) => `<div class="gearchips" role="group" aria-label="Filtrera på utrustning">${Object.entries(GEAR_SETS).map(([k, [n]]) =>
+  `<button class="${cur === k ? "on" : ""}" aria-pressed="${cur === k}" ${attr}="${k}">${n}</button>`).join("")}</div>
+  ${GEAR_SETS[cur] ? `<p class="gear-note">Visar bara övningar ${GEAR_SETS[cur][2]}. <button class="linkbtn2" ${attr}="${cur}">Visa alla</button></p>` : ""}`;
 let msk = { mode: "ex", sel: "brost", view: "f", q: "", limit: 30, back: "pass", cat: "alla", gear: "alla" };
 let mskDetail = null;   // stretchövningen vars sida är öppen
 
@@ -80,7 +83,7 @@ function openLibrary(ctx) {
   const d = ctx.kind === "workout" ? (ctx.target.startsWith("draft:") ? draft.days[+ctx.target.slice(6)] : dayById(ctx.target)) : null;
   const typeCat = d && TYPES[d.type] ? "t:" + d.type : null;
   msk = { ...msk, mode: orig && EX[orig.id].cat === "stretch" ? "st" : "ex", sel: null, view: "f", q: "", limit: 30,
-    cat: d && d.own ? "alla" : typeCat || "alla", gear: (d && d.gearSet) || S.libGear || "alla" };
+    cat: d && d.own ? "alla" : typeCat || "alla", gear: (d && d.gearSet) || "" };
   mskDetail = null;
   window.scrollTo(0, 0);
 }
@@ -111,7 +114,7 @@ function muscleView() {
   const rows = list.slice(0, msk.limit).map(id => `<div class="h3-row sg-row msk-row ${have.includes(id) ? "have" : ""}"><button class="sg-open" ${browse ? `data-mskdetail="${id}"` : `data-info="${id}"`} aria-label="Visa ${esc(EX[id].name)}">
       <span class="thumb exl">${figure(id)}</span><span class="grow"><b>${esc(EX[id].name)}</b><small>${EX[id].sets} × ${esc(EX[id].reps)} · ${esc(EX[id].muscles || "")}</small></span></button>${action(id)}</div>`).join("");
   const filters = `<div class="pfilters msk-filters">${st ? "" : `<label class="pfilter ${typeOf(cat) ? "on" : ""}"><span class="sr">Passtyp</span><select data-mskcat aria-label="Passtyp">
-      <option value="alla">Alla passtyper</option>${schemaTypes().map(t => `<option value="t:${t}" ${typeOf(cat) === t ? "selected" : ""}>${esc(TYPES[t].label)}</option>`).join("")}</select>${icon("down", 16)}</label>`}</div>${st ? "" : gearChips(GEAR_SETS[gear] ? gear : "alla", "data-mskgearset")}`;
+      <option value="alla">Alla passtyper</option>${schemaTypes().map(t => `<option value="t:${t}" ${typeOf(cat) === t ? "selected" : ""}>${esc(TYPES[t].label)}</option>`).join("")}</select>${icon("down", 16)}</label>`}</div>${st ? "" : gearChips(gear, "data-mskgearset")}`;
   // Komponerar man ett eget pass: en fast knapp längst ned med hur många övningar passet har
   const n = ctx.compose ? exList(ctx.target).length : 0;
   const done = ctx.compose ? `<div class="msk-done"><button class="primary wide bigbtn" data-libdone>${n ? `Klar · ${n} ${n === 1 ? "övning" : "övningar"}` : "Klar"}</button></div>` : "";
@@ -168,9 +171,9 @@ document.addEventListener("click", ev => {
   const b = ev.target.closest && ev.target.closest("[data-mskgearset]");
   if (!b) return;
   ev.stopImmediatePropagation();
-  msk.gear = b.dataset.mskgearset; msk.limit = 30;
+  msk.gear = msk.gear === b.dataset.mskgearset ? "" : b.dataset.mskgearset; msk.limit = 30;
   const d = libCtx && libCtx.kind === "workout" && !String(libCtx.target).startsWith("draft:") ? dayById(libCtx.target) : null;
-  if (d && d.own) d.gearSet = msk.gear; else S.libGear = msk.gear;
+  if (d && d.own) d.gearSet = msk.gear;   // ett eget pass minns sitt filter
   save(); render();
 }, true);
 // Menyn lämnar alltid biblioteket, även till fliken man kom från

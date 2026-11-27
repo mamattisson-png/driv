@@ -1634,7 +1634,7 @@ def test_valj_ovning_efter_kroppsdel_och_utrustning(page):
     # Passtyp och utrustning filtrerar tillsammans
     page.fill("#mskq", "")
     page.select_option("[data-mskcat]", "t:push")
-    page.click('[data-mskgearset="hemma"]')
+    page.click('.gearchips [data-mskgearset="hemma"]')
     assert shown() and all(page.evaluate(f"EX['{i}'].cat === 'push' && ['db', 'kb', 'bw'].includes(gearOf('{i}') || 'bw')") for i in shown())
     # Instruktionen öppnas från listan och har en väg tillbaka
     page.click(".msk-row [data-info] >> nth=0")
@@ -3143,10 +3143,11 @@ def test_egna_pass_filter_och_kort_pass(page):
     page.click('[data-trsheet="tpls"]')
     page.click('[data-tplnew]')
     page.fill('#tplnewname', 'Hemma')
-    page.click('[data-tplgear="bw"]')
     page.click('[data-tplcreate]')
-    assert page.evaluate("tpls().at(-1).name") == 'Hemma' and page.evaluate("tpls().at(-1).gearSet") == 'bw'
-    assert page.locator('.gearchips [data-mskgearset="bw"].on').count() == 1
+    # Inget filter från början; Inga vikter slås på med ett tryck och minns av passet
+    assert page.evaluate("tpls().at(-1).name") == 'Hemma' and page.locator('.gearchips .on').count() == 0
+    page.click('.gearchips [data-mskgearset="bw"]')
+    assert page.evaluate("tpls().at(-1).gearSet") == 'bw' and "utan vikter" in page.inner_text('.gear-note')
     shown = page.evaluate("[...document.querySelectorAll('[data-libpick]')].map(b => b.dataset.libpick)")
     assert shown and all(page.evaluate(f"gearOf('{x}')") in ("bw", None) for x in shown)
     # Biblioteket står kvar: flera övningar i rad, och Klar visar passet
@@ -3157,7 +3158,10 @@ def test_egna_pass_filter_och_kort_pass(page):
     assert page.evaluate("[libCtx, chosenDay === tpls().at(-1).id, passOpen]") == [None, True, True]
     # Filtret finns också när man ändrar sitt vanliga pass, och minns valet
     page.evaluate(f"openLibrary({{kind: 'workout', target: '{d}'}}); render()")
-    page.click('[data-mskgearset="hemma"]')
+    assert page.locator('.gearchips .on').count() == 0
+    page.click('.gearchips [data-mskgearset="hemma"]')
     shown = page.evaluate("[...document.querySelectorAll('[data-libpick]')].map(b => b.dataset.libpick)")
     assert all(page.evaluate(f"gearOf('{x}')") in ("bw", "db", "kb", None) for x in shown)
-    assert page.evaluate("S.libGear") == 'hemma' and not page.errors
+    # Ett tryck till slår av filtret
+    page.click('.gearchips [data-mskgearset="hemma"]')
+    assert page.locator('.gearchips .on').count() == 0 and page.locator('.gear-note').count() == 0 and not page.errors

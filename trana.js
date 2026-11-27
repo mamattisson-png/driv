@@ -188,30 +188,28 @@ let tplNew = null;   // { name, gear } medan ett eget pass skapas
 function tplSheet() {
   const L = tpls();
   const form = tplNew ? `<section class="card tplnew"><label class="field">Namn<input id="tplnewname" maxlength="30" value="${esc(tplNew.name)}" placeholder="Till exempel Jobbet"></label>
-      <span class="klabel">Var ska passet köras?</span>${gearChips(tplNew.gear, "data-tplgear")}
       <div class="row sheetbtns"><button class="grow" data-tplnewcancel>Avbryt</button><button class="grow primary" data-tplcreate>Skapa och välj övningar</button></div></section>`
     : `<button class="primary wide" data-tplnew>${icon("plus", 16)}Skapa eget pass</button>`;
   return `<div class="overlay" data-trsheet=""><div class="sheet tplsheet" role="dialog" aria-label="Egna pass">
     <div class="row between"><div><span class="klabel">Utanför schemat</span><h2 class="sheeth">Egna pass</h2></div>
       <button class="small ghost iconbtn" data-trsheet="" aria-label="Stäng">${icon("close", 18)}</button></div>
     ${L.length ? `<section class="h3-list">${L.map(p => `<div class="h3-row tplrow"><button class="grow tplopen" data-tplopen="${p.id}"><b>${esc(p.name)}</b>
-        <small>${p.gearSet && GEAR_SETS[p.gearSet] ? `${GEAR_SETS[p.gearSet][0]} · ` : ""}${p.ex.length} ${p.ex.length === 1 ? "övning" : "övningar"}${p.ex.length ? ` · ${esc(p.ex.slice(0, 3).map(e => EX[e.id] ? EX[e.id].name : e.id).join(", "))}${p.ex.length > 3 ? " …" : ""}` : ""}</small></button>
+        <small>${GEAR_SETS[p.gearSet] ? `${GEAR_SETS[p.gearSet][0]} · ` : ""}${p.ex.length} ${p.ex.length === 1 ? "övning" : "övningar"}${p.ex.length ? ` · ${esc(p.ex.slice(0, 3).map(e => EX[e.id] ? EX[e.id].name : e.id).join(", "))}${p.ex.length > 3 ? " …" : ""}` : ""}</small></button>
       ${p.ex.length ? `<button class="small primary" data-focusstart="${p.id}" aria-label="Starta ${esc(p.name)}">${icon("play", 14)}Starta</button>` : ""}</div>`).join("")}</section>` : `<p class="muted small">Pass utanför schemat, till exempel ett för jobbets gym eller ett utan vikter hemma.</p>`}
     ${form}
     <div class="muted small">Du kan också spara ett avslutat pass som eget pass.</div></div></div>`;
 }
 document.addEventListener("click", ev => {
-  const t = ev.target.closest && ev.target.closest("[data-tplnew],[data-tplnewcancel],[data-tplgear],[data-tplcreate]");
+  const t = ev.target.closest && ev.target.closest("[data-tplnew],[data-tplnewcancel],[data-tplcreate]");
   if (!t) return;
   ev.stopImmediatePropagation();
   const ds = t.dataset, f = document.getElementById("tplnewname");
   if (tplNew && f) tplNew.name = f.value;
-  if (ds.tplnew !== undefined) tplNew = { name: "", gear: "alla" };
+  if (ds.tplnew !== undefined) tplNew = { name: "" };
   else if (ds.tplnewcancel !== undefined) tplNew = null;
-  else if (ds.tplgear) tplNew.gear = ds.tplgear;
   else if (ds.tplcreate !== undefined) {
     const name = (tplNew.name || "").trim().slice(0, 30) || `Eget pass ${tpls().length + 1}`, id = "tpl-" + Date.now().toString(36);
-    tpls().push({ id, type: "full", name, named: true, own: true, gearSet: tplNew.gear, ex: [] });
+    tpls().push({ id, type: "full", name, named: true, own: true, ex: [] });
     tplNew = null; trSheet = null; save();
     openLibrary({ kind: "workout", target: id, compose: true }); render(); return;
   }
