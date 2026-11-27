@@ -145,6 +145,7 @@ Senast uppdaterad: 2026-11-06. Status bygger på dokumenterade publiceringar och
 | 141 | Dailys: en övning i taget i ett stort kort som glider vidare, vägen som små bilder, veckan som rutor med prick i extra-gruppens färg | Dailys | Medel | Klar |
 | 142 | Dailys kan stängas av under Inställningar → Träning: fliken, kortet på Hem, dailys under passet och påminnelserna försvinner, och allt finns kvar om man slår på igen | Appen | Liten | Klar |
 | 143 | Mina dailys: veckan på en gång med dagens extra grupp per dag, grupper med namnet först och dagarna till höger, och menyn Kopiera/Ta bort utan överlapp | Dailys | Liten | Klar |
+| 144 | Egna pass (Träna → Egna pass) med val av var passet körs, filter i övningsbiblioteket (Gym, Hemma, Inga vikter, Maskiner) överallt där övningar väljs, och Kort pass på dagens pass | Träna | Medel | Klar |
 
 ## Detaljer och acceptanskriterier
 
