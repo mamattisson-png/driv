@@ -13,7 +13,7 @@ def test_ny_ovning_kan_valjas_och_loggas(page,exercise,area,gear):
     pick(page, page.evaluate("S.plan.days[0].id"))
     page.click('[data-edit]');page.click('[data-openpick]')
     page.select_option('[data-mskcat]','alla')
-    page.select_option('[data-mskgear]',gear)
+    page.click(f'[data-mskgearset="{ {"db": "hemma", "machine": "maskin", "bw": "bw"}[gear] }"]')
     page.fill('#mskq',page.evaluate('id=>EX[id].name',exercise))
     page.click(f'[data-libpick="{exercise}"]')
     page.evaluate('editing=false; render()')

@@ -36,6 +36,11 @@ const STRETCH_TO_MUSKEL = { neck: "nacke", chest: "brost", shoulders: "axlar", b
   calves: "vader", ankles: "vader", shins: "vader", feet: "vader", thoracic_back: "overrygg", upper_back: "overrygg", lats: "lats", lower_back: "landrygg" };
 const stretchMuscles = id => [...new Set((EX[id].stretchTargets || []).map(t => STRETCH_TO_MUSKEL[t]).filter(Boolean))];
 
+// Var man tränar: filtret i övningsbiblioteket. null = allt.
+const GEAR_SETS = { alla: ["Gym", null], hemma: ["Hemma", ["db", "kb", "bw"]], bw: ["Inga vikter", ["bw"]], maskin: ["Maskiner", ["cable", "machine"]] };
+const fitsGear = (id, set) => { const g = GEAR_SETS[set] && GEAR_SETS[set][1]; if (!g) return true; const x = gearOf(id); return g.includes(x || "bw"); };
+const gearChips = (cur, attr) => `<div class="gearchips" role="radiogroup" aria-label="Utrustning">${Object.entries(GEAR_SETS).map(([k, [n]]) =>
+  `<button role="radio" class="${cur === k ? "on" : ""}" aria-checked="${cur === k}" ${attr}="${k}">${n}</button>`).join("")}</div>`;
 let msk = { mode: "ex", sel: "brost", view: "f", q: "", limit: 30, back: "pass", cat: "alla", gear: "alla" };
 let mskDetail = null;   // stretchövningen vars sida är öppen
 
@@ -75,7 +80,7 @@ function openLibrary(ctx) {
   const d = ctx.kind === "workout" ? (ctx.target.startsWith("draft:") ? draft.days[+ctx.target.slice(6)] : dayById(ctx.target)) : null;
   const typeCat = d && TYPES[d.type] ? "t:" + d.type : null;
   msk = { ...msk, mode: orig && EX[orig.id].cat === "stretch" ? "st" : "ex", sel: null, view: "f", q: "", limit: 30,
-    cat: typeCat || "alla", gear: "alla" };
+    cat: d && d.own ? "alla" : typeCat || "alla", gear: (d && d.gearSet) || S.libGear || "alla" };
   mskDetail = null;
   window.scrollTo(0, 0);
 }
@@ -93,7 +98,7 @@ function muscleView() {
   const score = q ? Object.fromEntries(pool.map(id => [id, exSearchScore(id, msk.q)])) : null;
   const list = pool.filter(id => (!replacing || id !== replacing.id) && (!q || score[id] > 0)
     && (q || !msk.sel || (st ? stretchMuscles(id).includes(msk.sel) : trainsMuscle(id, msk.sel)))
-    && (st || catMatches(id, cat)) && (gear === "alla" || gearGroup(id) === gear));
+    && (st || catMatches(id, cat)) && (st || fitsGear(id, gear)));
   if (q) list.sort((a, b) => score[b] - score[a]);
   const title = q ? "Sökresultat" : msk.sel ? MUSKEL_NAMN[msk.sel] : st ? "Alla stretchövningar" : typeOf(cat) ? `Övningar för ${TYPES[typeOf(cat)].label.toLowerCase()}` : "Alla övningar";
   const heading = replacing ? `Byt ut ${esc(EX[replacing.id].name)}` : ctx.kind === "daily" ? "Lägg till daily" : ctx.kind === "workout" ? `Lägg till i ${esc(libTargetName(ctx.target))}` : "Övningar";
@@ -106,9 +111,7 @@ function muscleView() {
   const rows = list.slice(0, msk.limit).map(id => `<div class="h3-row sg-row msk-row ${have.includes(id) ? "have" : ""}"><button class="sg-open" ${browse ? `data-mskdetail="${id}"` : `data-info="${id}"`} aria-label="Visa ${esc(EX[id].name)}">
       <span class="thumb exl">${figure(id)}</span><span class="grow"><b>${esc(EX[id].name)}</b><small>${EX[id].sets} × ${esc(EX[id].reps)} · ${esc(EX[id].muscles || "")}</small></span></button>${action(id)}</div>`).join("");
   const filters = `<div class="pfilters msk-filters">${st ? "" : `<label class="pfilter ${typeOf(cat) ? "on" : ""}"><span class="sr">Passtyp</span><select data-mskcat aria-label="Passtyp">
-      <option value="alla">Alla passtyper</option>${schemaTypes().map(t => `<option value="t:${t}" ${typeOf(cat) === t ? "selected" : ""}>${esc(TYPES[t].label)}</option>`).join("")}</select>${icon("down", 16)}</label>`}
-    <label class="pfilter ${gear !== "alla" ? "on" : ""}"><span class="sr">Utrustning</span><select data-mskgear aria-label="Utrustning">
-      <option value="alla">All utrustning</option>${Object.entries(GEAR_FILTER).map(([k, n]) => `<option value="${k}" ${gear === k ? "selected" : ""}>${n}</option>`).join("")}</select>${icon("down", 16)}</label></div>`;
+      <option value="alla">Alla passtyper</option>${schemaTypes().map(t => `<option value="t:${t}" ${typeOf(cat) === t ? "selected" : ""}>${esc(TYPES[t].label)}</option>`).join("")}</select>${icon("down", 16)}</label>`}</div>${st ? "" : gearChips(GEAR_SETS[gear] ? gear : "alla", "data-mskgearset")}`;
   return `<div class="msk ${st ? "st" : ""} ${browse ? "" : "msk-ctx"}">${back}
     <h1>${heading}</h1>
     ${ctx.today != null ? `<div class="tseg pswapwhen" role="radiogroup" aria-label="Hur länge">${[[true, "Bara i dag"], [false, "Även framåt"]].map(([v, n]) =>
@@ -157,6 +160,16 @@ function stretchPage(id) {
       : `<button class="primary grow bigbtn" data-sgadd="${id}">${icon("plus", 18)}Lägg till i Dailys eller ett pass</button>`}</div></div>`;
 }
 
+// Utrustning: valet minns, och ett eget pass minns sitt eget
+document.addEventListener("click", ev => {
+  const b = ev.target.closest && ev.target.closest("[data-mskgearset]");
+  if (!b) return;
+  ev.stopImmediatePropagation();
+  msk.gear = b.dataset.mskgearset; msk.limit = 30;
+  const d = libCtx && libCtx.kind === "workout" && !String(libCtx.target).startsWith("draft:") ? dayById(libCtx.target) : null;
+  if (d && d.own) d.gearSet = msk.gear; else S.libGear = msk.gear;
+  save(); render();
+}, true);
 // Menyn lämnar alltid biblioteket, även till fliken man kom från
 document.addEventListener("click", ev => { if (libCtx && ev.target.closest && ev.target.closest("#nav [data-tab]")) libCtx = null; }, true);
 document.addEventListener("change", ev => {

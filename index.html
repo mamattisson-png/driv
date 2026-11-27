@@ -2712,24 +2712,16 @@ button.acttile { min-height: 64px; cursor: pointer; }
 .up-wn i { width: 9px; height: 9px; border-radius: 5px; flex: none; }
 .up-xd { flex: none; color: var(--muted); font-size: 12.5px; font-weight: 500; }
 .up-xd.none { color: var(--warn, #e0a23c); }
-.pl-bar { margin: 10px 0 4px; }
-.pl-q { display: block; color: var(--muted); font-size: 12.5px; margin-bottom: 6px; }
-.pl-chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .pl-chip { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 12px; border-radius: 12px; border: 1px solid var(--line-strong); background: none; color: var(--text); font: 600 13.5px "Lexend", sans-serif; }
-.pl-chip.on { background: var(--text); color: var(--bg); border-color: var(--text); }
 .pl-short { color: var(--accent-text); border-color: color-mix(in srgb, var(--accent) 50%, transparent); }
 .pl-short.on { background: var(--accent-strong); color: var(--on-accent); border-color: var(--accent-strong); }
-.pl-add { display: flex; align-items: center; justify-content: center; gap: 8px; }
-.pl-note { margin: 8px 0 0; }
-.tp-ex li { flex-wrap: wrap; }
-.tp-swap { flex-basis: 100%; padding-left: 34px; color: var(--accent-text); font-size: 12px; }
-.pl-card { margin-bottom: 10px; }
-.pl-name { flex: 1; min-width: 0; font-weight: 600; }
-.pl-gear { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
-.pl-g { min-height: 34px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--line-strong); background: none; color: var(--muted); font: 600 13px "Lexend", sans-serif; display: inline-flex; align-items: center; }
-.pl-g.on { background: var(--ok-soft); border-color: var(--ok); color: var(--text); }
-.pl-g.fixed { opacity: .7; }
-.pl-help { margin-top: 10px; }
+.pl-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 10px 0 4px; }
+.pl-note { margin: 0; flex: 1; min-width: 160px; }
+.gearchips { display: flex; gap: 6px; flex-wrap: wrap; margin: 8px 0 4px; }
+.gearchips button { min-height: 36px; padding: 0 14px; border-radius: 12px; border: 1px solid var(--line-strong); background: none; color: var(--text); font: 600 13.5px "Lexend", sans-serif; }
+.gearchips button.on { background: var(--text); color: var(--bg); border-color: var(--text); }
+.tplnew { display: flex; flex-direction: column; gap: 8px; margin: 10px 0; }
+.tplsheet .primary.wide { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 10px 0; }
 .up-goal2 { display: flex; align-items: center; gap: 12px; width: 100%; margin-top: 8px; padding: 14px 16px; border: 0; border-radius: 20px; background: rgba(255, 138, 71, .12); color: var(--text); font: inherit; text-align: left; }
 .up-goal2 .grow { display: flex; flex-direction: column; gap: 2px; } .up-goal2 small { color: var(--muted); font-size: 13px; } .up-goal2 > svg:first-child { color: var(--accent-text); }
 .up-opt { margin-top: 26px; padding: 18px; border-radius: 22px; border: 1.5px dashed var(--line-strong); }
@@ -3006,7 +2998,7 @@ button.hstatbtn .muted { display: inline-flex; align-items: center; gap: 2px; co
 <script src="dailyvy.js"></script>
 <script src="malrutiner.js"></script>
 <script src="paus.js"></script>
-<script src="plats.js"></script>
+<script src="kortpass.js"></script>
 <script src="varden.js"></script>
 <script src="grafer.js"></script>
 <script src="app.js"></script>

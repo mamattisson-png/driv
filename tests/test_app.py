@@ -1634,8 +1634,8 @@ def test_valj_ovning_efter_kroppsdel_och_utrustning(page):
     # Passtyp och utrustning filtrerar tillsammans
     page.fill("#mskq", "")
     page.select_option("[data-mskcat]", "t:push")
-    page.select_option("[data-mskgear]", "db")
-    assert shown() and all(page.evaluate(f"EX['{i}'].cat === 'push' && gearGroup('{i}') === 'db'") for i in shown())
+    page.click('[data-mskgearset="hemma"]')
+    assert shown() and all(page.evaluate(f"EX['{i}'].cat === 'push' && ['db', 'kb', 'bw'].includes(gearOf('{i}') || 'bw')") for i in shown())
     # Instruktionen öppnas från listan och har en väg tillbaka
     page.click(".msk-row [data-info] >> nth=0")
     link = page.locator(".mwlink")
@@ -2609,7 +2609,7 @@ def test_passmall_byt_namn_och_ta_bort(page):
     assert page.evaluate("tpls().length") == 1
     page.click('[data-tpldel="tpl-a"]')
     assert page.evaluate("tpls().length") == 0
-    assert page.locator('[data-trsheet="tpls"]').count() == 0
+    assert "Skapa pass" in page.inner_text('[data-trsheet="tpls"]')   # Egna pass finns kvar för att skapa nya
 
 
 def test_historik_dagen_visar_passet_med_set_pb_och_jamforelse(page):
@@ -3124,29 +3124,36 @@ def test_dailys_kan_stangas_av(page):
     assert page.locator('#nav [data-tab="dailys"]').count() == 1 and page.evaluate("S.daily[0].id") == "plankan" and not page.errors
 
 
-def test_plats_och_kort_pass(page):
+def test_egna_pass_filter_och_kort_pass(page):
     start(page)
-    page.evaluate("S.places = [{id:'gym',name:'Gymmet',gear:['bar','db','kb','cable','machine','bw']},{id:'hemma',name:'Hemma',gear:['bw']}]; save()")
     go(page, "pass")
     d = page.evaluate("todaysPass().d.id")
     before = page.evaluate(f"JSON.stringify(dayById('{d}').ex)")
-    # Hemma: allt blir kroppsvikt, med samma antal övningar
-    page.click('[data-place="hemma"]')
-    ex = page.evaluate(f"dayById('{d}').ex.map(e => e.id)")
-    assert all(page.evaluate(f"gearOf('{x}')") in ("bw", None) for x in ex)
-    assert "i stället för" in page.inner_text(".tp-ex")
-    # Kort pass: basövningarna, två set var
+    # Kort pass: basövningarna, två set var; av igen ger passet som innan
     page.click('[data-pshort]')
     assert all(s <= 2 for s in page.evaluate(f"dayById('{d}').ex.map(e => +e.sets)"))
     assert not any(page.evaluate(f"dayById('{d}').ex.map(e => ISOLATION.has(e.id))"))
-    # Tillbaka till gymmet och vanligt pass: mallen är som innan
-    page.click('[data-place="gym"]'); page.click('[data-pshort]')
+    page.click('[data-pshort]')
     assert page.evaluate(f"JSON.stringify(dayById('{d}').ex)") == before
-    # Sparat pass återställer mallen
-    page.click('[data-place="hemma"]')
+    # Sparat eller avbrutet pass återställer mallen
+    page.click('[data-pshort]')
     page.evaluate(f"const w = workoutFor(dayById('{d}')); restoreSwaps(dayById('{d}'), w)")
     assert page.evaluate(f"JSON.stringify(dayById('{d}').ex)") == before
-    # Inställningar: en ny plats med egen utrustning
-    go(page, "profil"); page.click('[data-psec="platser"]')
-    page.click("[data-pladd]")
-    assert page.evaluate("S.places.length") == 3 and page.evaluate("S.places[2].gear.includes('bw')") and not page.errors
+    # Eget pass för hemma utan vikter: biblioteket öppnas med filtret valt
+    page.click('[data-trsheet="tpls"]')
+    page.click('[data-tplnew]')
+    page.fill('#tplnewname', 'Hemma')
+    page.click('[data-tplgear="bw"]')
+    page.click('[data-tplcreate]')
+    assert page.evaluate("tpls().at(-1).name") == 'Hemma' and page.evaluate("tpls().at(-1).gearSet") == 'bw'
+    assert page.locator('.gearchips [data-mskgearset="bw"].on').count() == 1
+    shown = page.evaluate("[...document.querySelectorAll('[data-libpick]')].map(b => b.dataset.libpick)")
+    assert shown and all(page.evaluate(f"gearOf('{x}')") in ("bw", None) for x in shown)
+    page.click(f'[data-libpick="{shown[0]}"]')
+    assert page.evaluate("tpls().at(-1).ex.length") == 1
+    # Filtret finns också när man ändrar sitt vanliga pass, och minns valet
+    page.evaluate(f"openLibrary({{kind: 'workout', target: '{d}'}}); render()")
+    page.click('[data-mskgearset="hemma"]')
+    shown = page.evaluate("[...document.querySelectorAll('[data-libpick]')].map(b => b.dataset.libpick)")
+    assert all(page.evaluate(f"gearOf('{x}')") in ("bw", "db", "kb", None) for x in shown)
+    assert page.evaluate("S.libGear") == 'hemma' and not page.errors

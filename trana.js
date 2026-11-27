@@ -104,13 +104,13 @@ function traningView() {
     const ring = started ? ` style="--p:${Math.round(100 * Math.min(1, nOk / Math.max(1, +e.sets || 1)))}%"` : "";
     const cls = [done ? "done" : "", started ? "started" : "", g ? "ss" : "", g && k === g[0] ? "ss-first" : "", g && k === g[1] ? "ss-last" : ""].filter(Boolean).join(" ");
     return `<li class="${cls}"><span class="tp-n"${ring}>${num}</span><span class="grow">${esc(EX[e.id] ? EX[e.id].name : e.id)}</span>
-      <span class="tp-sr">${started ? `<b>${nOk}</b>/` : ""}${e.sets} × ${reps}</span>${swappedFrom(w, e.id) ? `<small class="tp-swap">i stället för ${esc(swappedFrom(w, e.id))}</small>` : ""}</li>`; };
+      <span class="tp-sr">${started ? `<b>${nOk}</b>/` : ""}${e.sets} × ${reps}</span></li>`; };
   const sOk = !!completedPassDate(sel), sNext = sel === d && !t.rest && !sOk, sGoing = sel === d && started;
   const sets = sel.ex.reduce((a, e) => a + (+e.sets || 0), 0);
   const list = isActDay(sel) ? actPassCard(sel, sOk ? `<span class="pst ok">${icon("check", 12)}Klar</span>` : actRunning(sel) ? `<span class="pst accent">Pågår</span>` : status(sel, si), sOk, sNext) : `<section class="tpass ${sOk ? "ok" : sNext ? "next" : ""}" aria-label="${esc(sel.name)}">
       <span class="row between tp-top">${sOk ? `<span class="pst ok">${icon("check", 12)}Klar</span>` : status(sel, si)}<span class="muted small">${sel.ex.length} ${sel.ex.length === 1 ? "övning" : "övningar"}${sets ? ` · ~${Math.max(5, Math.round(sets * 2.5 / 5) * 5)} min` : ""}</span></span>
       <button class="tp-namebtn" data-pick="${sel.id}"><span class="tp-name">${esc(sel.name)}</span><span class="muted small tp-mus">${esc(passMuscles(sel))}</span></button>
-      ${sel === d && !sOk && !sGoing && !isActDay(sel) && sel.ex.length ? placeBar(sel, workoutOn(logDate(), sel.id)) : ""}
+      ${sel === d && !sOk && !sGoing && !isActDay(sel) && sel.ex.length > 2 ? shortBar(sel, workoutOn(logDate(), sel.id)) : ""}
       ${sel.ex.length ? `<ol class="tp-ex">${sel.ex.map((e, k) => exLine(sel, e, k)).join("")}</ol>` : `<span class="muted small">Inga övningar än</span>`}
       <div class="tp-acts">${sel.ex.length ? `<button class="${sOk ? "" : "primary"} grow" data-focusstart="${sel.id}">${icon("play", 16)}${sGoing ? "Fortsätt" : sOk ? "Kör igen" : "Starta"} ${esc(sel.name)}</button>` : ""}
         <button class="${sel.ex.length ? "" : "primary grow"}" data-editpass="${sel.id}">${icon("edit", 16)}${sel.ex.length ? "Ändra" : "Lägg till övningar"}</button></div>
@@ -130,7 +130,7 @@ function traningView() {
     <section class="h3-list">${acts.map((a, i) => row("aktivitet", esc(a.name), esc([actLine(a), `${actKcal(a)} kcal`, actCounts(a) ? "+1 pass" : ""].filter(Boolean).join(" · ")), `data-actedit="${i}" data-actdate="${TODAY}"`, "edit")).join("")}</section>` : ""}
     <div class="klabel h3-sec">Mer</div>
     <section class="h3-list">
-      ${tpls().length ? row("trana", "Passmallar", esc(tpls().map(p => p.name).join(", ")), 'data-trsheet="tpls"') : ""}
+      ${row("trana", "Egna pass", tpls().length ? esc(tpls().map(p => p.name).join(", ")) : "Skapa pass för jobbet, hemma eller resan", 'data-trsheet="tpls"')}
       ${row("search", "Övningar", `${Object.keys(EX).length} övningar och stretch · sök och läs instruktioner`, "data-exlib")}
       ${row("aktivitet", "Logga annan träning", "Utanför schemat · padel, löpning, EMS …", `data-actnew="" data-actdate="${TODAY}"`, "plus")}
     </section>
@@ -184,17 +184,40 @@ document.addEventListener("click", ev => {
 });
 
 // Sparade passmallar: tryck på en mall för att se och ändra den, eller starta direkt
+let tplNew = null;   // { name, gear } medan ett eget pass skapas
 function tplSheet() {
   const L = tpls();
-  if (!L.length) { trSheet = null; return ""; }
-  return `<div class="overlay" data-trsheet=""><div class="sheet tplsheet" role="dialog" aria-label="Passmallar">
-    <div class="row between"><div><span class="klabel">Utanför schemat</span><h2 class="sheeth">Passmallar</h2></div>
+  const form = tplNew ? `<section class="card tplnew"><label class="field">Namn<input id="tplnewname" maxlength="30" value="${esc(tplNew.name)}" placeholder="Till exempel Jobbet"></label>
+      <span class="klabel">Var ska passet köras?</span>${gearChips(tplNew.gear, "data-tplgear")}
+      <div class="row sheetbtns"><button class="grow" data-tplnewcancel>Avbryt</button><button class="grow primary" data-tplcreate>Skapa och välj övningar</button></div></section>`
+    : `<button class="primary wide" data-tplnew>${icon("plus", 16)}Skapa eget pass</button>`;
+  return `<div class="overlay" data-trsheet=""><div class="sheet tplsheet" role="dialog" aria-label="Egna pass">
+    <div class="row between"><div><span class="klabel">Utanför schemat</span><h2 class="sheeth">Egna pass</h2></div>
       <button class="small ghost iconbtn" data-trsheet="" aria-label="Stäng">${icon("close", 18)}</button></div>
-    <section class="h3-list">${L.map(p => `<div class="h3-row tplrow"><button class="grow tplopen" data-tplopen="${p.id}"><b>${esc(p.name)}</b>
-        <small>${p.ex.length} ${p.ex.length === 1 ? "övning" : "övningar"} · ${esc(p.ex.slice(0, 3).map(e => EX[e.id] ? EX[e.id].name : e.id).join(", "))}${p.ex.length > 3 ? " …" : ""}</small></button>
-      <button class="small primary" data-focusstart="${p.id}" aria-label="Starta ${esc(p.name)}">${icon("play", 14)}Starta</button></div>`).join("")}</section>
-    <div class="muted small">Spara fler mallar när du avslutat ett pass.</div></div></div>`;
+    ${L.length ? `<section class="h3-list">${L.map(p => `<div class="h3-row tplrow"><button class="grow tplopen" data-tplopen="${p.id}"><b>${esc(p.name)}</b>
+        <small>${p.gearSet && GEAR_SETS[p.gearSet] ? `${GEAR_SETS[p.gearSet][0]} · ` : ""}${p.ex.length} ${p.ex.length === 1 ? "övning" : "övningar"}${p.ex.length ? ` · ${esc(p.ex.slice(0, 3).map(e => EX[e.id] ? EX[e.id].name : e.id).join(", "))}${p.ex.length > 3 ? " …" : ""}` : ""}</small></button>
+      ${p.ex.length ? `<button class="small primary" data-focusstart="${p.id}" aria-label="Starta ${esc(p.name)}">${icon("play", 14)}Starta</button>` : ""}</div>`).join("")}</section>` : `<p class="muted small">Pass utanför schemat, till exempel ett för jobbets gym eller ett utan vikter hemma.</p>`}
+    ${form}
+    <div class="muted small">Du kan också spara ett avslutat pass som eget pass.</div></div></div>`;
 }
+document.addEventListener("click", ev => {
+  const t = ev.target.closest && ev.target.closest("[data-tplnew],[data-tplnewcancel],[data-tplgear],[data-tplcreate]");
+  if (!t) return;
+  ev.stopImmediatePropagation();
+  const ds = t.dataset, f = document.getElementById("tplnewname");
+  if (tplNew && f) tplNew.name = f.value;
+  if (ds.tplnew !== undefined) tplNew = { name: "", gear: "alla" };
+  else if (ds.tplnewcancel !== undefined) tplNew = null;
+  else if (ds.tplgear) tplNew.gear = ds.tplgear;
+  else if (ds.tplcreate !== undefined) {
+    const name = (tplNew.name || "").trim().slice(0, 30) || `Eget pass ${tpls().length + 1}`, id = "tpl-" + Date.now().toString(36);
+    tpls().push({ id, type: "full", name, named: true, own: true, gearSet: tplNew.gear, ex: [] });
+    tplNew = null; trSheet = null; save();
+    openLibrary({ kind: "workout", target: id }); render(); return;
+  }
+  render();
+  if (ds.tplnew !== undefined) { const n = document.getElementById("tplnewname"); if (n) n.focus(); }
+}, true);
 function dailysSheet() {
   const dl = dailyList(logDate()), n = dl.length, done = dl.filter(e => dailyDone(logDate(), e.id)).length;
   return `<div class="overlay" data-trsheet=""><div class="sheet dsheet" role="dialog" aria-label="Dailys">
