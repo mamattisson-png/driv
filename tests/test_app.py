@@ -2579,7 +2579,7 @@ def test_spara_pass_som_passmall(page):
     page.click("[data-tplname]")
     page.fill("#tplname", "Jobbet")
     page.click("[data-tplsave]")
-    assert "Sparad som passmall" in page.inner_text(".passdone")
+    assert "Sparad som eget pass" in page.inner_text(".passdone")
     t = page.evaluate("tpls()[0]")
     assert t["name"] == "Jobbet" and len(t["ex"]) == n
     # Schemat är orört
@@ -2603,7 +2603,7 @@ def test_passmall_byt_namn_och_ta_bort(page):
     go(page, "pass")
     page.click('[data-trsheet="tpls"]')
     page.click('[data-tplopen="tpl-a"]')
-    assert "PASSMALL" in page.inner_text("#app").upper() and page.inner_text("h1.passname").upper() == "HEMMA"
+    assert "EGET PASS" in page.inner_text("#app").upper() and page.inner_text("h1.passname").upper() == "HEMMA"
     # Ta bort kräver två tryck
     page.click('[data-tpldel="tpl-a"]')
     assert page.evaluate("tpls().length") == 1
@@ -3149,8 +3149,12 @@ def test_egna_pass_filter_och_kort_pass(page):
     assert page.locator('.gearchips [data-mskgearset="bw"].on').count() == 1
     shown = page.evaluate("[...document.querySelectorAll('[data-libpick]')].map(b => b.dataset.libpick)")
     assert shown and all(page.evaluate(f"gearOf('{x}')") in ("bw", None) for x in shown)
+    # Biblioteket står kvar: flera övningar i rad, och Klar visar passet
     page.click(f'[data-libpick="{shown[0]}"]')
-    assert page.evaluate("tpls().at(-1).ex.length") == 1
+    page.click(f'[data-libpick="{shown[1]}"]')
+    assert page.evaluate("tpls().at(-1).ex.length") == 2 and "Klar · 2 övningar" in page.inner_text('[data-libdone]')
+    page.click('[data-libdone]')
+    assert page.evaluate("[libCtx, chosenDay === tpls().at(-1).id, passOpen]") == [None, True, True]
     # Filtret finns också när man ändrar sitt vanliga pass, och minns valet
     page.evaluate(f"openLibrary({{kind: 'workout', target: '{d}'}}); render()")
     page.click('[data-mskgearset="hemma"]')

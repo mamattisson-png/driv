@@ -213,7 +213,7 @@ document.addEventListener("click", ev => {
     const name = (tplNew.name || "").trim().slice(0, 30) || `Eget pass ${tpls().length + 1}`, id = "tpl-" + Date.now().toString(36);
     tpls().push({ id, type: "full", name, named: true, own: true, gearSet: tplNew.gear, ex: [] });
     tplNew = null; trSheet = null; save();
-    openLibrary({ kind: "workout", target: id }); render(); return;
+    openLibrary({ kind: "workout", target: id, compose: true }); render(); return;
   }
   render();
   if (ds.tplnew !== undefined) { const n = document.getElementById("tplnewname"); if (n) n.focus(); }
@@ -252,7 +252,7 @@ function passetView(d) {
   const w = workoutOn(logDate(), d.id), i = S.plan.days.indexOf(d);
   const done = d.ex.filter(x => exDone(w, x)).length, logged = w && Object.values(w.sets).some(a => a.some(hasData));
   const sets = d.ex.reduce((a, x) => a + (+x.sets || 0), 0);
-  const tpl = isTpl(d), when = tpl ? "Passmall" : isFixed() ? cap(WD_LONG[S.plan.weekdays[i]]) : `Pass ${i + 1} av ${S.plan.days.length}`;
+  const tpl = isTpl(d), when = tpl ? "Eget pass" : isFixed() ? cap(WD_LONG[S.plan.weekdays[i]]) : `Pass ${i + 1} av ${S.plan.days.length}`;
   const bottom = !d.ex.length ? ""
     : w && w.done ? `<div class="card done-card"><b>${icon("check", 16)}Bra jobbat, passet är sparat!</b>
         <div class="muted small">Det räknas in i veckans pass och jämförelsen med förra veckan.</div>

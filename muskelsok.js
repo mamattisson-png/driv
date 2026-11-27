@@ -112,7 +112,10 @@ function muscleView() {
       <span class="thumb exl">${figure(id)}</span><span class="grow"><b>${esc(EX[id].name)}</b><small>${EX[id].sets} × ${esc(EX[id].reps)} · ${esc(EX[id].muscles || "")}</small></span></button>${action(id)}</div>`).join("");
   const filters = `<div class="pfilters msk-filters">${st ? "" : `<label class="pfilter ${typeOf(cat) ? "on" : ""}"><span class="sr">Passtyp</span><select data-mskcat aria-label="Passtyp">
       <option value="alla">Alla passtyper</option>${schemaTypes().map(t => `<option value="t:${t}" ${typeOf(cat) === t ? "selected" : ""}>${esc(TYPES[t].label)}</option>`).join("")}</select>${icon("down", 16)}</label>`}</div>${st ? "" : gearChips(GEAR_SETS[gear] ? gear : "alla", "data-mskgearset")}`;
-  return `<div class="msk ${st ? "st" : ""} ${browse ? "" : "msk-ctx"}">${back}
+  // Komponerar man ett eget pass: en fast knapp längst ned med hur många övningar passet har
+  const n = ctx.compose ? exList(ctx.target).length : 0;
+  const done = ctx.compose ? `<div class="msk-done"><button class="primary wide bigbtn" data-libdone>${n ? `Klar · ${n} ${n === 1 ? "övning" : "övningar"}` : "Klar"}</button></div>` : "";
+  return `${done}<div class="msk ${st ? "st" : ""} ${browse ? "" : "msk-ctx"} ${ctx.compose ? "composing" : ""}">${back}
     <h1>${heading}</h1>
     ${ctx.today != null ? `<div class="tseg pswapwhen" role="radiogroup" aria-label="Hur länge">${[[true, "Bara i dag"], [false, "Även framåt"]].map(([v, n]) =>
       `<button role="radio" data-libtoday="${v}" class="${ctx.today === v ? "on" : ""}" aria-checked="${ctx.today === v}">${n}</button>`).join("")}</div>` : ""}
@@ -185,7 +188,7 @@ document.addEventListener("input", ev => {
   const f = $("mskq"); if (f) { f.focus(); f.setSelectionRange(pos, pos); }
 });
 document.addEventListener("click", ev => {
-  const t = ev.target.closest && ev.target.closest("[data-mus],[data-libpick],[data-libclose],[data-libtoday],[data-mskmode],[data-mskview],[data-mskmore],[data-mskdetail],[data-exlib],[data-tab=stretchguide]");
+  const t = ev.target.closest && ev.target.closest("[data-mus],[data-libpick],[data-libclose],[data-libdone],[data-libtoday],[data-mskmode],[data-mskview],[data-mskmore],[data-mskdetail],[data-exlib],[data-tab=stretchguide]");
   if (!t) return;
   const ds = t.dataset;
   if (ds.tab === "stretchguide") { msk.mode = "st"; msk.back = "idag"; msk.q = ""; mskDetail = null; return; }   // själva bytet görs av app.js
@@ -195,6 +198,8 @@ document.addEventListener("click", ev => {
     // Lägg till (eller byt) med den vanliga logiken, och tillbaka dit man kom ifrån
     const c = libCtx, name = EX[ds.libpick].name;
     addExercise(c.target, ds.libpick, c.replace, c.today);
+    // Ett nytt eget pass: biblioteket står kvar så att man kan välja flera, och Klar visar passet
+    if (c.compose) { save(); render(); toast(`${name} tillagd`); return; }
     // Fritt gympass (inget schema): första övningen startar passet
     if (c.startFree) { libCtx = null; startFocus(c.target); save(); render(); window.scrollTo(0, 0); return; }
     // Tillagd mitt i ett pass: gå direkt till den nya övningen
@@ -203,7 +208,11 @@ document.addEventListener("click", ev => {
     toast(c.replace != null ? `Bytt till ${name}` : String(c.target).startsWith("dag:") ? `${name} tillagd ${c.today ? "bara idag" : "även framåt"}` : `${name} tillagd i ${c.today ? "dagens pass" : libTargetName(c.target)}`);
     return;
   }
-  else if (ds.libclose !== undefined) libCtx = null;
+  else if (ds.libclose !== undefined || ds.libdone !== undefined) {
+    // Klar (eller tillbaka) när ett eget pass komponeras: till passet man just byggt
+    if (libCtx && libCtx.compose) { chosenDay = libCtx.target; passOpen = true; tab = "pass"; }
+    libCtx = null; window.scrollTo(0, 0);
+  }
   else if (ds.libtoday) libCtx.today = ds.libtoday === "true";
   else if (ds.mus !== undefined) {
     msk.sel = ds.mus || null; msk.q = ""; msk.limit = 30;

@@ -737,7 +737,7 @@ function nextInRotation() {
 }
 const suggestedDay = () => S.plan.free || !S.plan.days.length ? freeDay() : isFixed() ? (scheduledDay(TODAY) || nextScheduled(TODAY).day) : nextInRotation();
 // Text i rubrikbandet bredvid etiketten: passets nummer, och namnet om det inte redan står på etiketten
-const passBand = d => isTpl(d) ? `Passmall · <span class="nocaps">${esc(d.name)}</span>` : `Pass ${S.plan.days.indexOf(d) + 1}${norm(d.name) === norm(TYPES[d.type].label) ? "" : ` · <span class="nocaps">${esc(d.name)}</span>`}`;
+const passBand = d => isTpl(d) ? `Eget pass · <span class="nocaps">${esc(d.name)}</span>` : `Pass ${S.plan.days.indexOf(d) + 1}${norm(d.name) === norm(TYPES[d.type].label) ? "" : ` · <span class="nocaps">${esc(d.name)}</span>`}`;
 
 // ---------- Kalorier ----------
 // Mifflin–St Jeor
@@ -1762,12 +1762,12 @@ function confetti() {
 // Efter passet: ett diskret val att spara det som passmall, med eget namn
 function tplOffer(d) {
   if (isTpl(d) || !passDone.ex || !passDone.ex.length) return "";
-  if (passDone.tplSaved) return `<div class="pdtpl saved">${icon("check", 16)}<span>Sparad som passmall: <b>${esc(passDone.tplSaved)}</b></span></div>`;
-  if (passDone.tplNaming) return `<section class="card pdtpl naming" aria-label="Spara som passmall">
-      <label class="klabel" for="tplname">Namn på mallen</label>
+  if (passDone.tplSaved) return `<div class="pdtpl saved">${icon("check", 16)}<span>Sparad som eget pass: <b>${esc(passDone.tplSaved)}</b></span></div>`;
+  if (passDone.tplNaming) return `<section class="card pdtpl naming" aria-label="Spara som eget pass">
+      <label class="klabel" for="tplname">Namn på passet</label>
       <input id="tplname" type="text" maxlength="40" placeholder="T.ex. Jobbet, Gymmet, Hemma" value="${esc(d.name)}" autocomplete="off">
-      <div class="row sheetbtns"><button class="grow" data-tplcancel>Avbryt</button><button class="grow primary" data-tplsave>Spara mall</button></div></section>`;
-  return `<button class="ghost wide pdtplbtn" data-tplname>${icon("plus", 16)}Spara som passmall</button>`;
+      <div class="row sheetbtns"><button class="grow" data-tplcancel>Avbryt</button><button class="grow primary" data-tplsave>Spara</button></div></section>`;
+  return `<button class="ghost wide pdtplbtn" data-tplname>${icon("plus", 16)}Spara som eget pass</button>`;
 }
 function saveTpl(name) {
   const src = dayById(passDone.dayId), id = "tpl-" + Date.now().toString(36);
@@ -2139,7 +2139,7 @@ document.addEventListener("click", ev => {
   if (ds.askai !== undefined) { askClaude(); return; }
   if (ds.tplname !== undefined && passDone) { passDone.tplNaming = true; render(); const f = $("tplname"); if (f) { f.focus(); f.select(); } return; }
   if (ds.tplcancel !== undefined && passDone) { passDone.tplNaming = false; render(); return; }
-  if (ds.tplsave !== undefined && passDone) { const f = $("tplname"); saveTpl((f && f.value.trim()) || dayById(passDone.dayId).name); save(); render(); toast("Passmallen är sparad"); return; }
+  if (ds.tplsave !== undefined && passDone) { const f = $("tplname"); saveTpl((f && f.value.trim()) || dayById(passDone.dayId).name); save(); render(); toast("Sparat som eget pass"); return; }
   if (ds.passdoneclose !== undefined) { passDone = null; tab = "idag"; render(); window.scrollTo(0, 0); return; }
   if (ds.tab) {
     if (ds.tab === "vanner" && tab !== "vanner") vannerBack = tab;

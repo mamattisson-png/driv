@@ -2717,6 +2717,9 @@ button.acttile { min-height: 64px; cursor: pointer; }
 .pl-short.on { background: var(--accent-strong); color: var(--on-accent); border-color: var(--accent-strong); }
 .pl-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 10px 0 4px; }
 .pl-note { margin: 0; flex: 1; min-width: 160px; }
+.msk-done { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(96px + env(safe-area-inset-bottom)); width: min(420px, calc(100% - 32px)); z-index: 6; }
+.msk-done .bigbtn { box-shadow: 0 10px 30px rgba(0, 0, 0, .45); }
+.msk.composing { padding-bottom: 90px; }
 .gearchips { display: flex; gap: 6px; flex-wrap: wrap; margin: 8px 0 4px; }
 .gearchips button { min-height: 36px; padding: 0 14px; border-radius: 12px; border: 1px solid var(--line-strong); background: none; color: var(--text); font: 600 13.5px "Lexend", sans-serif; }
 .gearchips button.on { background: var(--text); color: var(--bg); border-color: var(--text); }
