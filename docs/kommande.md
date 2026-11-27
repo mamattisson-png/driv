@@ -146,6 +146,7 @@ Senast uppdaterad: 2026-11-06. Status bygger på dokumenterade publiceringar och
 | 142 | Dailys kan stängas av under Inställningar → Träning: fliken, kortet på Hem, dailys under passet och påminnelserna försvinner, och allt finns kvar om man slår på igen | Appen | Liten | Klar |
 | 143 | Mina dailys: veckan på en gång med dagens extra grupp per dag, grupper med namnet först och dagarna till höger, och menyn Kopiera/Ta bort utan överlapp | Dailys | Liten | Klar |
 | 144 | Egna pass (Träna → Egna pass) med val av var passet körs, filter i övningsbiblioteket (Gym, Hemma, Inga vikter, Maskiner) överallt där övningar väljs, och Kort pass på dagens pass | Träna | Medel | Klar |
+| 145 | Eget pass: välj flera övningar i rad med Klar längst ner, utrustningsfiltret valfritt (inget valt från början, ett tryck slår på eller av), och Passmall heter Eget pass | Träna | Liten | Klar |
 
 ## Detaljer och acceptanskriterier
 
