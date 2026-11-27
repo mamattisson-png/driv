@@ -104,12 +104,13 @@ function traningView() {
     const ring = started ? ` style="--p:${Math.round(100 * Math.min(1, nOk / Math.max(1, +e.sets || 1)))}%"` : "";
     const cls = [done ? "done" : "", started ? "started" : "", g ? "ss" : "", g && k === g[0] ? "ss-first" : "", g && k === g[1] ? "ss-last" : ""].filter(Boolean).join(" ");
     return `<li class="${cls}"><span class="tp-n"${ring}>${num}</span><span class="grow">${esc(EX[e.id] ? EX[e.id].name : e.id)}</span>
-      <span class="tp-sr">${started ? `<b>${nOk}</b>/` : ""}${e.sets} × ${reps}</span></li>`; };
+      <span class="tp-sr">${started ? `<b>${nOk}</b>/` : ""}${e.sets} × ${reps}</span>${swappedFrom(w, e.id) ? `<small class="tp-swap">i stället för ${esc(swappedFrom(w, e.id))}</small>` : ""}</li>`; };
   const sOk = !!completedPassDate(sel), sNext = sel === d && !t.rest && !sOk, sGoing = sel === d && started;
   const sets = sel.ex.reduce((a, e) => a + (+e.sets || 0), 0);
   const list = isActDay(sel) ? actPassCard(sel, sOk ? `<span class="pst ok">${icon("check", 12)}Klar</span>` : actRunning(sel) ? `<span class="pst accent">Pågår</span>` : status(sel, si), sOk, sNext) : `<section class="tpass ${sOk ? "ok" : sNext ? "next" : ""}" aria-label="${esc(sel.name)}">
       <span class="row between tp-top">${sOk ? `<span class="pst ok">${icon("check", 12)}Klar</span>` : status(sel, si)}<span class="muted small">${sel.ex.length} ${sel.ex.length === 1 ? "övning" : "övningar"}${sets ? ` · ~${Math.max(5, Math.round(sets * 2.5 / 5) * 5)} min` : ""}</span></span>
       <button class="tp-namebtn" data-pick="${sel.id}"><span class="tp-name">${esc(sel.name)}</span><span class="muted small tp-mus">${esc(passMuscles(sel))}</span></button>
+      ${sel === d && !sOk && !sGoing && !isActDay(sel) && sel.ex.length ? placeBar(sel, workoutOn(logDate(), sel.id)) : ""}
       ${sel.ex.length ? `<ol class="tp-ex">${sel.ex.map((e, k) => exLine(sel, e, k)).join("")}</ol>` : `<span class="muted small">Inga övningar än</span>`}
       <div class="tp-acts">${sel.ex.length ? `<button class="${sOk ? "" : "primary"} grow" data-focusstart="${sel.id}">${icon("play", 16)}${sGoing ? "Fortsätt" : sOk ? "Kör igen" : "Starta"} ${esc(sel.name)}</button>` : ""}
         <button class="${sel.ex.length ? "" : "primary grow"}" data-editpass="${sel.id}">${icon("edit", 16)}${sel.ex.length ? "Ändra" : "Lägg till övningar"}</button></div>

@@ -1341,6 +1341,7 @@ const VIEWS = {
           <span class="muted small">${esc(PROGRAMS[S.plan.program || "ppl"].name)} · ${S.plan.count} pass i veckan</span></span><span class="chev">${icon("right", 18)}</span></button></div></div>
         ${profRow("dailysav", "check", "Dailys", dailysOn() ? "Övningar och kosttillskott varje dag" : "Avstängt", null, `<input type="checkbox" class="switch" data-dailysav aria-label="Dailys på" ${dailysOn() ? "checked" : ""}>`)}
         ${profRow("paus", "paus", "Paus", pauseSummary(), pauseBody())}
+        ${profRow("platser", "kalender", "Platser", placesSummary(), placesBody())}
         ${profRow("vila", "timer", "Vilotimer", rs.on ? `På · ${rs.compound} s basövningar, ${rs.iso} s övriga` : "Av", `
           <label class="card psw"><span class="grow">Starta en vilotimer när jag bockar av ett set</span><input type="checkbox" class="switch" data-resttoggle ${rs.on ? "checked" : ""}></label>
           <div class="grid2" style="margin-top:10px">
@@ -1438,6 +1439,7 @@ const profName = () => (social.profile && social.profile.name) || S.name || (acc
 // annars är reglaget (extra) själva raden, som Utseende och Figur.
 let PROF_PAGES = {};
 const PROF_INTRO = {
+  platser: "Var du tränar och vilken utrustning som finns där. Övningar som inte går att göra byts mot närmaste alternativ.",
   paus: "Sjuk, på semester eller behöver vila? Under en paus bryts inte sviten, veckans mål krymper och påminnelserna tystnar.",
   vila: "Efter varje set räknar en timer ned vilan. Basövningar behöver längre vila än isolering och mage.",
   aktiviteter: "Padel, löpning, vandring och annat som du loggar med tid.",
@@ -2046,6 +2048,7 @@ function fillFromHint(d, exId, i) {
 // Passet räknas som klart när alla övningar är avbockade
 // Övningar som bytts ut bara för ett pass läggs tillbaka i passet. Setten på den nya övningen ligger kvar i loggen.
 function restoreSwaps(d, w) {
+  if (typeof undoPlan === "function") undoPlan(d, w);   // plats och kort pass
   if (!w.swap) return;
   if (d) for (const s of w.swap.slice().reverse()) {
     const i = d.ex.findIndex(x => x.id === s.id);
@@ -2073,7 +2076,7 @@ function restoreRemoved(d, w) {
 // Byten från tidigare dagar som aldrig sparades läggs också tillbaka
 function restoreOldSwaps() {
   for (const [date, L] of Object.entries(S.log || {})) if (date < TODAY) for (const w of L.workouts || []) {
-    if (w.swap) restoreSwaps(dayById(w.dayId), w);
+    if (w.swap || w.pswap || w.premoved || w.psets) restoreSwaps(dayById(w.dayId), w);
     if (w.added) dropAdded(dayById(w.dayId), w);
     if (w.removed) restoreRemoved(dayById(w.dayId), w);
   }

@@ -3122,3 +3122,31 @@ def test_dailys_kan_stangas_av(page):
     go(page, "profil")
     page.check('[data-dailysav]')
     assert page.locator('#nav [data-tab="dailys"]').count() == 1 and page.evaluate("S.daily[0].id") == "plankan" and not page.errors
+
+
+def test_plats_och_kort_pass(page):
+    start(page)
+    page.evaluate("S.places = [{id:'gym',name:'Gymmet',gear:['bar','db','kb','cable','machine','bw']},{id:'hemma',name:'Hemma',gear:['bw']}]; save()")
+    go(page, "pass")
+    d = page.evaluate("todaysPass().d.id")
+    before = page.evaluate(f"JSON.stringify(dayById('{d}').ex)")
+    # Hemma: allt blir kroppsvikt, med samma antal övningar
+    page.click('[data-place="hemma"]')
+    ex = page.evaluate(f"dayById('{d}').ex.map(e => e.id)")
+    assert all(page.evaluate(f"gearOf('{x}')") in ("bw", None) for x in ex)
+    assert "i stället för" in page.inner_text(".tp-ex")
+    # Kort pass: basövningarna, två set var
+    page.click('[data-pshort]')
+    assert all(s <= 2 for s in page.evaluate(f"dayById('{d}').ex.map(e => +e.sets)"))
+    assert not any(page.evaluate(f"dayById('{d}').ex.map(e => ISOLATION.has(e.id))"))
+    # Tillbaka till gymmet och vanligt pass: mallen är som innan
+    page.click('[data-place="gym"]'); page.click('[data-pshort]')
+    assert page.evaluate(f"JSON.stringify(dayById('{d}').ex)") == before
+    # Sparat pass återställer mallen
+    page.click('[data-place="hemma"]')
+    page.evaluate(f"const w = workoutFor(dayById('{d}')); restoreSwaps(dayById('{d}'), w)")
+    assert page.evaluate(f"JSON.stringify(dayById('{d}').ex)") == before
+    # Inställningar: en ny plats med egen utrustning
+    go(page, "profil"); page.click('[data-psec="platser"]')
+    page.click("[data-pladd]")
+    assert page.evaluate("S.places.length") == 3 and page.evaluate("S.places[2].gear.includes('bw')") and not page.errors
