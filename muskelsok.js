@@ -43,9 +43,10 @@ const GEAR_SETS = { hemma: ["Hemma", ["db", "kb", "bw"], "med hantlar, kettlebel
 const fitsGear = (id, set) => { const g = GEAR_SETS[set] && GEAR_SETS[set][1]; if (!g) return true; const x = gearOf(id); return g.includes(x || "bw"); };
 const gearChips = (cur, attr) => `<div class="gearchips" role="group" aria-label="Filtrera på utrustning">${Object.entries(GEAR_SETS).map(([k, [n]]) =>
   `<button class="${cur === k ? "on" : ""}" aria-pressed="${cur === k}" ${attr}="${k}">${n}</button>`).join("")}</div>
-  ${GEAR_SETS[cur] ? `<p class="gear-note">Visar bara övningar ${GEAR_SETS[cur][2]}. <button class="linkbtn2" ${attr}="${cur}">Visa alla</button></p>` : ""}`;
+`;
 let msk = { mode: "ex", sel: "brost", view: "f", q: "", limit: 30, back: "pass", cat: "alla", gear: "alla" };
-let mskDetail = null;   // stretchövningen vars sida är öppen
+let mskDetail = null;
+let figZoom = null;   // övningen vars figur visas stor   // stretchövningen vars sida är öppen
 
 const accOf = mode => mode === "st" ? "var(--stretch)" : "var(--accent)";
 // Anatomibilden för en sida. strong/soft: muskler som färgas starkt/svagt; labels: etiketter att trycka på.
@@ -127,7 +128,7 @@ function muscleView() {
       ${anatSvg(msk.view, { strong: q ? [] : msk.sel ? [msk.sel] : MUSKLER.map(m => m[0]), whole: !q && !msk.sel, mode: msk.mode })}</section>
     <div class="psearch">${icon("search", 18)}<input id="mskq" type="search" placeholder="${st ? "Sök stretchövning" : "Sök övning eller muskel"}" value="${esc(msk.q)}" autocomplete="off" aria-label="Sök"></div>
     ${filters}
-    <div class="row between sg-head"><h2>${title}</h2><span class="muted small">${list.length} ${st ? (list.length === 1 ? "stretch" : "stretchövningar") : (list.length === 1 ? "övning" : "övningar")}${msk.sel && !q ? ` · <button class="link small" data-mus="">Visa alla</button>` : ""}</span></div>
+    <div class="row between sg-head"><h2>${title}</h2><span class="muted small">${list.length} ${st ? (list.length === 1 ? "stretch" : "stretchövningar") : (list.length === 1 ? "övning" : "övningar")}${(msk.sel && !q) || (!st && GEAR_SETS[gear]) ? ` · <button class="link small" data-mskall>Visa alla</button>` : ""}</span></div>
     ${rows ? `<section class="h3-list">${rows}</section>` : `<div class="muted sg-none">${q ? "Inga övningar matchar." : `Inga ${st ? "stretchövningar" : "övningar"} matchar. Prova en annan muskel eller utrustning.`}</div>`}
     ${list.length > msk.limit ? `<button class="wide sg-more" data-mskmore>Visa fler (${list.length - msk.limit})</button>` : ""}</div>`;
 }
@@ -152,11 +153,14 @@ function stretchPage(id) {
   const words = st ? ["Töjs mest", "Töjs också"] : ["Tränas mest", "Tränas också"];
   return `<div class="msk ${st ? "st" : ""}"><button class="backbtn" data-mskdetail="">${icon("left", 18)}${st ? "Stretch" : "Övningar"}</button>
     <h1 class="msk-h">${esc(e.name)}</h1>
+    ${figZoom === id ? `<div class="overlay" data-figzoom=""><div class="sheet figzoom" role="dialog" aria-label="${esc(e.name)}">
+      <div class="row between"><h2 class="sheeth">${esc(e.name)}</h2><button class="small ghost iconbtn" data-figzoom="" aria-label="Stäng">${icon("close", 18)}</button></div>
+      <div class="figbig">${figure(id, "big", true)}</div></div></div>` : ""}
     <div class="msk-tchips">${most.map(k => chip(k, true)).join("")}${also.map(k => chip(k, false)).join("")}</div>
     <section class="msk-map msk-both" aria-label="${st ? "Muskler som töjs" : "Muskler som tränas"}">${front || !back ? anatSvg("f", { strong: most, soft: also, labels: false, mode, vb: "0 30 640 1190" }) : ""}${back ? anatSvg("b", { strong: most, soft: also, labels: false, mode, vb: "620 30 640 1190" }) : ""}
       <div class="msk-legend"><span><i class="on"></i>${words[0]}</span>${also.length ? `<span><i></i>${words[1]}</span>` : ""}</div></section>
     <div class="rstats three">${tile(`${e.sets} ×`, st ? "gånger" : "set")}${tile(secs ? `${secs} s` : esc(String(e.reps).replace(/(\d)\s*-\s*(\d)/g, "$1–$2")), secs ? "håll" : "reps")}${tile(g ? GEAR[g][0] : "Ingen", "utrustning")}</div>
-    <section class="card msk-how"><div class="row" style="gap:14px;align-items:center"><span class="thumb msk-fig">${figure(id, "", true)}</span>
+    <section class="card msk-how"><div class="row" style="gap:14px;align-items:center"><button class="thumb msk-fig" data-figzoom="${id}" aria-label="Visa ${esc(e.name)} större">${figure(id, "", true)}<span class="msk-zoom" aria-hidden="true">${icon("search", 12)}</span></button>
       <div><h2>Så här gör du</h2><span class="muted small">${st ? `Det ska dra${most.length ? ` i ${MUSKEL_NAMN[most[0]].toLowerCase()}` : ""}, inte göra ont.` : esc(e.muscles || "")}</span></div></div>
       <ol class="msk-steps">${(e.cues || []).map(c => `<li>${esc(c)}</li>`).join("")}</ol>
       ${g && !st ? `<div class="gearbox"><b>${GEAR[g][0]}</b><div>${GEAR[g][1]}</div></div>` : ""}
@@ -168,13 +172,28 @@ function stretchPage(id) {
 
 // Utrustning: valet minns, och ett eget pass minns sitt eget
 document.addEventListener("click", ev => {
-  const b = ev.target.closest && ev.target.closest("[data-mskgearset]");
+  const b = ev.target.closest && ev.target.closest("[data-mskgearset],[data-mskall]");
   if (!b) return;
   ev.stopImmediatePropagation();
+  // Visa alla: muskeln och utrustningen nollställs på en gång
+  if (b.dataset.mskall !== undefined) {
+    msk.sel = null; msk.gear = ""; msk.limit = 30;
+    const d0 = libCtx && libCtx.kind === "workout" && !String(libCtx.target).startsWith("draft:") ? dayById(libCtx.target) : null;
+    if (d0 && d0.own) d0.gearSet = "";
+    save(); render(); return;
+  }
   msk.gear = msk.gear === b.dataset.mskgearset ? "" : b.dataset.mskgearset; msk.limit = 30;
   const d = libCtx && libCtx.kind === "workout" && !String(libCtx.target).startsWith("draft:") ? dayById(libCtx.target) : null;
   if (d && d.own) d.gearSet = msk.gear;   // ett eget pass minns sitt filter
   save(); render();
+}, true);
+// Figuren på övningssidan förstoras med ett tryck; bakgrunden eller krysset stänger
+document.addEventListener("click", ev => {
+  const b = ev.target.closest && ev.target.closest("[data-figzoom]");
+  if (!b) return;
+  if (b.classList.contains("overlay") && ev.target !== b) return;
+  ev.stopImmediatePropagation();
+  figZoom = b.dataset.figzoom || null; render();
 }, true);
 // Menyn lämnar alltid biblioteket, även till fliken man kom från
 document.addEventListener("click", ev => { if (libCtx && ev.target.closest && ev.target.closest("#nav [data-tab]")) libCtx = null; }, true);

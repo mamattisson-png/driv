@@ -3154,7 +3154,7 @@ def test_egna_pass_filter_och_kort_pass(page):
     # Inget filter från början; Inga vikter slås på med ett tryck och minns av passet
     assert page.evaluate("tpls().at(-1).name") == 'Hemma' and page.locator('.gearchips .on').count() == 0
     page.click('.gearchips [data-mskgearset="bw"]')
-    assert page.evaluate("tpls().at(-1).gearSet") == 'bw' and "utan vikter" in page.inner_text('.gear-note')
+    assert page.evaluate("tpls().at(-1).gearSet") == 'bw' and page.locator('[data-mskall]').count() == 1   # Visa alla på fast plats
     shown = page.evaluate("[...document.querySelectorAll('[data-libpick]')].map(b => b.dataset.libpick)")
     assert shown and all(page.evaluate(f"gearOf('{x}')") in ("bw", None) for x in shown)
     # Biblioteket står kvar: flera övningar i rad, och Klar visar passet
@@ -3171,4 +3171,17 @@ def test_egna_pass_filter_och_kort_pass(page):
     assert all(page.evaluate(f"gearOf('{x}')") in ("bw", "db", "kb", None) for x in shown)
     # Ett tryck till slår av filtret
     page.click('.gearchips [data-mskgearset="hemma"]')
-    assert page.locator('.gearchips .on').count() == 0 and page.locator('.gear-note').count() == 0 and not page.errors
+    assert page.locator('.gearchips .on').count() == 0 and page.locator('[data-mskall]').count() == 0
+    # Visa alla nollställer både muskel och utrustning
+    page.click('.gearchips [data-mskgearset="maskin"]')
+    page.click('[data-mskall]')
+    assert page.evaluate("[msk.sel, msk.gear]") == [None, ''] and page.locator('[data-mskall]').count() == 0 and not page.errors
+
+
+def test_ovningsfiguren_kan_forstoras(page):
+    start(page)
+    page.evaluate("tab = 'pass'; exLib = {q: '', f: 'alla'}; mskDetail = 'lutande_hantelpress'; render()")
+    page.click('[data-figzoom="lutande_hantelpress"]')
+    assert page.locator('.figzoom .figbig svg').count() == 1
+    page.click('.figzoom [data-figzoom=""]')
+    assert page.locator('.figzoom').count() == 0 and not page.errors

@@ -41,7 +41,7 @@ const EX = {
       "Pressa uppåt och lite inåt, sänk kontrollerat."],
     scene: [["line", 66, 66, 38, 26], ["rect", 54, 64, 24, 4], ["line", 64, 68, 64, 95]],
     hold: "db",
-    A: P(INCLINE, { a: [54, 34], eb: -1 }), B: P(INCLINE, { a: [52, 7], eb: -1 }),
+    A: P(INCLINE, { a: [44, 40], eb: -1 }), B: P(INCLINE, { a: [52, 7], eb: -1 }),
   },
   militarpress: {
     name: "Militärpress", cat: "push", muscles: "Axlar, triceps", sets: 3, reps: "8–10",
@@ -397,7 +397,7 @@ const EX = {
       "Pressa upp tills armarna är raka."],
     scene: [["line", 66, 66, 38, 26], ["rect", 54, 64, 24, 4], ["line", 64, 68, 64, 95]],
     hold: "bar",
-    A: P(INCLINE, { a: [54, 34], eb: -1 }), B: P(INCLINE, { a: [52, 7], eb: -1 }),
+    A: P(INCLINE, { a: [44, 40], eb: -1 }), B: P(INCLINE, { a: [52, 7], eb: -1 }),
   },
   smal_bankpress: {
     name: "Bänkpress smalt grepp", cat: "push", muscles: "Triceps, bröst", sets: 3, reps: "8–10",
