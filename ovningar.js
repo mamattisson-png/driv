@@ -7,7 +7,7 @@ const P = (base, changes) => Object.assign({}, base, changes);
 const STAND = { h: [58, 54], t: 180, a: [59, 85], f: [58, 95] };
 
 const BENCH_LIE = { h: [44, 58], t: 90, f: [36, 95], kb: 1 };
-const INCLINE = { h: [62, 62], t: 215, f: [80, 95], kb: -1 };
+const INCLINE = { h: [62, 62], t: 230, f: [80, 95], kb: -1 };
 const SEATED = { h: [50, 60], t: 180, f: [76, 95] };
 const HANG = { h: [61, 54], t: 180, a: [64, -6], f: [57, 93], kb: -1 };
 const BENT = { h: [46, 58], t: 118, f: [56, 95] };
@@ -39,9 +39,9 @@ const EX = {
     cues: ["Ställ bänken i 30–45 grader och sitt med ryggen mot dynan.",
       "Starta med hantlarna vid axlarna, armbågarna lite under axelhöjd.",
       "Pressa uppåt och lite inåt, sänk kontrollerat."],
-    scene: [["line", 66, 66, 38, 26], ["rect", 54, 64, 24, 4], ["line", 64, 68, 64, 95]],
+    scene: [["line", 63, 70, 16, 30], ["rect", 54, 65, 24, 4], ["line", 64, 68, 64, 95]],
     hold: "db",
-    A: P(INCLINE, { a: [44, 40], eb: -1 }), B: P(INCLINE, { a: [52, 7], eb: -1 }),
+    A: P(INCLINE, { a: [42, 44], eb: 1 }), B: P(INCLINE, { a: [40, 8], eb: -1 }),
   },
   militarpress: {
     name: "Militärpress", cat: "push", muscles: "Axlar, triceps", sets: 3, reps: "8–10",
@@ -395,9 +395,9 @@ const EX = {
     cues: ["Ställ bänken i 30–45 grader och ta stången lite bredare än axlarna.",
       "Sänk stången till övre delen av bröstet.",
       "Pressa upp tills armarna är raka."],
-    scene: [["line", 66, 66, 38, 26], ["rect", 54, 64, 24, 4], ["line", 64, 68, 64, 95]],
+    scene: [["line", 63, 70, 16, 30], ["rect", 54, 65, 24, 4], ["line", 64, 68, 64, 95]],
     hold: "bar",
-    A: P(INCLINE, { a: [44, 40], eb: -1 }), B: P(INCLINE, { a: [52, 7], eb: -1 }),
+    A: P(INCLINE, { a: [42, 44], eb: 1 }), B: P(INCLINE, { a: [40, 8], eb: -1 }),
   },
   smal_bankpress: {
     name: "Bänkpress smalt grepp", cat: "push", muscles: "Triceps, bröst", sets: 3, reps: "8–10",
