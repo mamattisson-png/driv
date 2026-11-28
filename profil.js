@@ -202,7 +202,7 @@ function meSettings(name) {
     ${p ? `<input type="file" id="pfphotoinput" accept="image/*" hidden>` : ""}
     <div class="melbl">Data</div><div class="megrp">
       ${row("Exportera", "", "data-export")}${row("Importera", "", "data-import")}</div>
-    ${importMsg ? `<div class="muted small pfmsg">${esc(importMsg)}</div>` : ""}
+    ${importMsg ? `<div class="muted small pfmsg" role="status">${esc(importMsg)}</div>` : ""}
     <input type="file" id="importfile" accept="application/json" class="hidden">
     ${sbEnabled ? `<div class="melbl">Konto</div><div class="megrp">${inAcct ? `${row(esc(account.email), "Inloggad", "disabled", "plain")}${row("Logga ut", "", "data-signout", "plain")}`
       : row("Logga in eller skapa konto", "", "data-melogin")}</div>` : ""}

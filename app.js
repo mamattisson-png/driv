@@ -242,7 +242,7 @@ function migrateV1(old) {
     const n = { workouts: [], dailies: {}, food: L.food || [] };
     if (L.workout) {
       const d = s.plan.days.find(x => x.type === L.workout.day);
-      const w = { dayId: d ? d.id : "d1", done: !!L.workout.done, sets: {} };
+      const w = { _id: "v1-" + date, dayId: d ? d.id : "d1", done: !!L.workout.done, sets: {} };
       for (const [k, v] of Object.entries(L.workout.sets || {})) if (idMap[k]) w.sets[idMap[k]] = v;
       n.workouts.push(w);
     }
@@ -344,8 +344,25 @@ function load() {
 }
 
 let S = load();
+const localSaveWarning = document.getElementById("local-save-warning");
+const localSaveMessage = document.getElementById("local-save-message");
+// Varningen ligger utanför appvyn och tar plats även i fokuspassets låsta layout.
+if (typeof ResizeObserver !== "undefined") {
+  new ResizeObserver(() => {
+    document.documentElement.style.setProperty("--local-save-warning-height", `${localSaveWarning.offsetHeight}px`);
+  }).observe(localSaveWarning);
+}
 function saveLocal() {
-  try { localStorage.setItem(KEY, JSON.stringify({ ...S, _localOwner: account.localUid || null })); } catch (e) { /* ignoreras */ }
+  let message = "";
+  try {
+    localStorage.setItem(KEY, JSON.stringify({ ...S, _localOwner: account.localUid || null }));
+  } catch {
+    message = "Ändringarna kunde inte sparas på enheten. Exportera en kopia innan du stänger eller laddar om appen.";
+  }
+  if (localSaveMessage.textContent !== message) {
+    localSaveMessage.textContent = message;
+    localSaveWarning.classList.toggle("visible", !!message);
+  }
 }
 function save() {
   stamp();
@@ -399,16 +416,16 @@ function stampList(L, key, prefix, now, initial) {
   if (!initial) for (const id of Object.keys(old)) if (!(id in next)) deleted[id] = Math.max(now, (deleted[id] || 0) + 1, old[id].ts + 1);
   listSnap[snapKey] = next;
 }
-function mergeList(a, b, key, out) {
+function mergeList(a, b, key, out, keepLocalOnTie) {
   const deleted = {};
   for (const L of [a, b]) for (const [id, ts] of Object.entries((L._deleted || {})[key] || {})) deleted[id] = Math.max(deleted[id] || 0, ts);
   const items = new Map();
   for (const L of [a, b]) for (const item of listItems(L, key)) {
     const prev = items.get(item._id);
-    if (!prev || item._ts >= prev._ts) items.set(item._id, item);
+    if (!prev || item._ts > prev._ts || (item._ts === prev._ts && !keepLocalOnTie)) items.set(item._id, item);
   }
   out[key] = [...items.values()].filter(item => !(item._id in deleted) || item._ts > deleted[item._id]);
-  (out._deleted || (out._deleted = {}))[key] = deleted;
+  out._deleted = { ...out._deleted, [key]: deleted };
 }
 // En tom dag som bara skapats när appen visades får aldrig vinna över riktig loggning
 const isEmpty = v => v == null || v === false || v === "" ||
@@ -446,13 +463,14 @@ function stamp(initial = false) {
   }
 }
 // Väljer del för del den version som ändrats senast. b är kontots version.
-function mergeParts(a, b) {
+function mergeParts(a, b, keepLocalOnTie = false) {
   const ta = a._t || {}, tb = b._t || {}, out = { _t: {} };
   const keys = new Set([...Object.keys(a), ...Object.keys(b), ...Object.keys(ta), ...Object.keys(tb)]);
   keys.delete("_t");
   for (const k of keys) {
     const x = ta[k] || 0, y = tb[k] || 0;
-    const src = x > y ? a : y > x ? b : k in b ? b : a;
+    const tie = (keepLocalOnTie && k in a) || !(k in b) ? a : b;
+    const src = x > y ? a : y > x ? b : tie;
     if (k in src) out[k] = src[k];
     if ((src === a ? x : y)) out._t[k] = src === a ? x : y;
   }
@@ -460,28 +478,82 @@ function mergeParts(a, b) {
     const keys = new Set([...Object.keys(a.dailies || {}), ...Object.keys(b.dailies || {}), ...Object.keys(a._dailyT || {}), ...Object.keys(b._dailyT || {})]);
     const dailyPart = L => ({ ...L.dailies, _t: Object.fromEntries([...keys].map(k => [k,
       (L._dailyT || {})[k] ?? (Object.prototype.hasOwnProperty.call(L.dailies || {}, k) ? (L._dailyBase ?? ((L._t || {}).dailies || 0)) : undefined)]).filter(([, ts]) => ts !== undefined)) });
-    const { _t, ...daily } = mergeParts(dailyPart(a), dailyPart(b));
+    const { _t, ...daily } = mergeParts(dailyPart(a), dailyPart(b), keepLocalOnTie);
     out.dailies = daily; out._dailyT = _t;
     out._dailyBase = Math.max(a._dailyBase ?? (ta.dailies || 0), b._dailyBase ?? (tb.dailies || 0));
   }
   for (const key of syncLists) {
-    const arrays = [a[key], b[key]].filter(Array.isArray);
+    const lists = [a[key], b[key]];
     // Äldre primitiva värden (t.ex. gamla importer) använder delens tidsstämpel.
-    if (arrays.length && arrays.every(xs => xs.every(x => x && typeof x === "object"))) mergeList(a, b, key, out);
+    const hasDeleted = a._deleted?.[key] || b._deleted?.[key];
+    if ((lists.some(Array.isArray) || hasDeleted) &&
+      lists.every(xs => xs == null || Array.isArray(xs) && xs.every(x => x && typeof x === "object"))) mergeList(a, b, key, out, keepLocalOnTie);
   }
   return out;
 }
-function mergeLog(a, b) {
+function mergeLog(a, b, keepLocalOnTie) {
   const out = {};
   for (const date of new Set([...Object.keys(a), ...Object.keys(b)]))
-    out[date] = a[date] && b[date] ? mergeParts(a[date], b[date]) : a[date] || b[date];
+    out[date] = a[date] && b[date] ? mergeParts(a[date], b[date], keepLocalOnTie) : a[date] || b[date];
   return out;
 }
-function mergeState(local, remote) {
+function mergeState(local, remote, keepLocalOnTie) {
   const { log: la, ...sa } = local, { log: lb, ...sb } = remote;
-  return normalize(Object.assign(mergeParts(sa, sb), { log: mergeLog(la, lb) }));
+  return normalize(Object.assign(mergeParts(sa, sb, keepLocalOnTie), { log: mergeLog(la, lb, keepLocalOnTie) }));
 }
 stamp(true);
+
+function parseBackup(text) {
+  const data = JSON.parse(text);
+  const record = value => value && typeof value === "object" && !Array.isArray(value);
+  if (!record(data) || !record(data.log) || !record(data._t ?? {})) throw new Error("Ogiltig logg");
+  for (const [date, day] of Object.entries(data.log)) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !record(day) ||
+      !syncLists.every(key => day[key] == null || Array.isArray(day[key]) && day[key].every(record)) ||
+      ![day.dailies, day._t, day._dailyT, day._deleted].every(value => record(value ?? {})) ||
+      !Object.values(day._deleted || {}).every(record) ||
+      !record(day.workout ?? {})) throw new Error("Ogiltig loggdag");
+    for (const workout of day.workout ? [...(day.workouts || []), day.workout] : day.workouts || []) {
+      workout.sets ??= {};
+      if (!record(workout.sets) || !Object.values(workout.sets).every(sets => Array.isArray(sets) && sets.every(record))) {
+        throw new Error("Ogiltigt träningspass");
+      }
+    }
+    day.dailies ??= {};
+    day.food ??= [];
+  }
+  if (data.v === 2 && record(data.profile) && record(data.plan) &&
+    Object.hasOwn(GOALS, data.profile.goal) &&
+    Object.hasOwn(PROGRAMS, data.plan.program) && Array.isArray(data.plan.days) &&
+    data.plan.days.every(day => record(day) && Array.isArray(day.ex)) &&
+    (data.weights === undefined || record(data.weights))) {
+    const { _localOwner, ...backup } = data;
+    return normalize({ ...freshState(), ...backup });
+  }
+  if (data.v === 1 || (data.v == null && (record(data.program) || record(data.profile)))) {
+    return normalize(migrateV1(data));
+  }
+  throw new Error("Okänd säkerhetskopia");
+}
+
+async function importBackup(file) {
+  const owner = account.localUid, epoch = account.epoch;
+  const text = await file.text().catch(() => "");
+  if (account.localUid !== owner || account.epoch !== epoch) return;
+  try {
+    const backup = parseBackup(text);
+    // På en ny enhet utan konto kan filen även återställa inställningar från före tidsstämplarna.
+    const isFresh = !cloud.col && !S.profileSet && !Object.keys(S.log).length &&
+      !Object.keys(S.weights || {}).length && (!S.setupDone || S._t.setupDone) &&
+      (S._t.plan || 0) <= (S._t.setupDone || 0) &&
+      Object.keys(S._t).every(key => ["plan", "setupDone", "profileSet", "tourAsked"].includes(key));
+    S = isFresh ? { ...backup, setupDone: S.setupDone || backup.setupDone } : mergeState(S, backup, true);
+    stamp(true);   // Importen ska inte ge äldre poster och borttagningar nya tidsstämplar.
+    save();
+    importMsg = "Importerat.";
+  } catch (e) { importMsg = "Kunde inte läsa filen. Välj en JSON-fil som exporterats från appen."; }
+  render();
+}
 
 // I en publicerad artifact synkas allt till kontots privata databas: ett dokument
 // med inställningar och ett per månad med loggen. localStorage är cache och reserv.
@@ -2411,15 +2483,7 @@ document.addEventListener("change", ev => {
   }
   else if (t.id === "remtime") S.reminder = Object.assign({}, S.reminder, { time: t.value || "20:00" });
   else if (t.id === "importfile" && t.files[0]) {
-    t.files[0].text().then(txt => {
-      try {
-        const data = JSON.parse(txt);
-        S = data.v === 2 ? normalize(Object.assign(freshState(), data)) : migrateV1(data);
-        importMsg = "Importerat.";
-        save();
-      } catch (e) { importMsg = "Kunde inte läsa filen. Välj en JSON-fil som exporterats från appen."; }
-      render();
-    });
+    importBackup(t.files[0]);
     return;
   }
   else return;
