@@ -147,6 +147,7 @@ Senast uppdaterad: 2026-11-06. Status bygger på dokumenterade publiceringar och
 | 143 | Mina dailys: veckan på en gång med dagens extra grupp per dag, grupper med namnet först och dagarna till höger, och menyn Kopiera/Ta bort utan överlapp | Dailys | Liten | Klar |
 | 144 | Egna pass (Träna → Egna pass) med val av var passet körs, filter i övningsbiblioteket (Gym, Hemma, Inga vikter, Maskiner) överallt där övningar väljs, och Kort pass på dagens pass | Träna | Medel | Klar |
 | 145 | Eget pass: välj flera övningar i rad med Klar längst ner, utrustningsfiltret valfritt (inget valt från början, ett tryck slår på eller av), och Passmall heter Eget pass | Träna | Liten | Klar |
+| 146 | Fokusläget: stor figur, set som streck, kg och reps sida vid sida, vilan som ring i stället för figuren och övriga val under ⋯; raden med passets övningar kvar överst | Träna | Medel | Klar |
 
 ## Detaljer och acceptanskriterier
 
