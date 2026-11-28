@@ -652,6 +652,12 @@
   .fpreview .unk { color: var(--bad-text); }
   .subex .small { flex: none; }
   .subex input { flex: none; padding: 8px 10px; }
+  .local-save-warning button { display: none; }
+  .local-save-warning.visible { position: sticky; top: var(--tb, 0px); z-index: 8; display: flex; align-items: center; gap: 12px;
+    max-width: 640px; margin: 0 auto; padding: 8px max(16px, env(safe-area-inset-right, 0px)) 8px max(16px, env(safe-area-inset-left, 0px));
+    background: var(--bad-soft); color: var(--bad-text); font-size: 14px; }
+  .local-save-warning.visible button { display: block; flex: none; margin-left: auto; color: inherit; }
+  body:not(:has(.testbar)) .local-save-warning.visible { padding-top: calc(8px + env(safe-area-inset-top, 0px)); }
   /* Testläge */
   .testbar { position: sticky; top: 0; z-index: 8; display: flex; align-items: center; gap: 8px;
     padding: calc(4px + env(safe-area-inset-top, 0px)) 12px 4px; background: var(--accent-strong); color: var(--on-accent); font-size: 12px; }
@@ -848,13 +854,13 @@
   body.infocus.resting .sheet { max-height: 88vh; }
 
   body.infocus, body.infocus.resting { height: 100dvh; overflow: hidden; padding-bottom: 0; }
-  body.infocus main { height: calc(100dvh - 96px - env(safe-area-inset-bottom, 0px) - var(--tb, 0px)); padding-top: 12px; padding-bottom: 0; }
+  body.infocus main { height: calc(100dvh - 96px - env(safe-area-inset-bottom, 0px) - var(--tb, 0px) - var(--local-save-warning-height, 0px)); padding-top: 12px; padding-bottom: 0; }
   body.infocus .focus { height: 100%; min-height: 0; display: grid; grid-template-rows: minmax(0, 1fr) auto; gap: 0; }
   .focus-scroll { min-height: 0; overflow-y: auto; overscroll-behavior: contain; display: flex; flex-direction: column; gap: 14px; padding-bottom: 12px; }
   .focus-controls { min-width: 0; padding-top: 8px; background: var(--bg); }
   body.infocus .fbar { position: static; margin-top: 0; }
-  @media (pointer: coarse) { body.infocus.typing main { height: calc(100dvh - var(--tb, 0px)); }
-    body.infocus.set-editing main { height: calc(var(--set-edit-height, 100dvh) - var(--tb, 0px)); } }
+  @media (pointer: coarse) { body.infocus.typing main { height: calc(100dvh - var(--tb, 0px) - var(--local-save-warning-height, 0px)); }
+    body.infocus.set-editing main { height: calc(var(--set-edit-height, 100dvh) - var(--tb, 0px) - var(--local-save-warning-height, 0px)); } }
 
   /* ---------- Muskelkartan ---------- */
   .mcard { display: flex; flex-direction: column; gap: 12px; }
@@ -3005,6 +3011,10 @@ button.hstatbtn .muted { display: inline-flex; align-items: center; gap: 2px; co
 </style>
 </head>
 <body>
+<div id="local-save-warning" class="local-save-warning">
+  <span id="local-save-message" role="alert"></span>
+  <button data-export class="small" aria-label="Exportera en kopia">Exportera</button>
+</div>
 <main id="app"></main>
 <nav id="nav"></nav>
 <script src="ovningar.js"></script>
@@ -3070,7 +3080,9 @@ button.hstatbtn .muted { display: inline-flex; align-items: center; gap: 2px; co
     navigator.serviceWorker.register("sw.js").then(reg => {
       document.addEventListener("visibilitychange", () => {
         if (document.visibilityState !== "visible") return;
-        if (updated) location.reload();
+        if (updated) {
+          if (!localSaveWarning.classList.contains("visible")) location.reload();
+        }
         else reg.update().catch(() => {});
       });
     }).catch(() => {});
