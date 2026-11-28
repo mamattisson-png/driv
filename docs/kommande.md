@@ -148,6 +148,7 @@ Senast uppdaterad: 2026-11-06. Status bygger på dokumenterade publiceringar och
 | 144 | Egna pass (Träna → Egna pass) med val av var passet körs, filter i övningsbiblioteket (Gym, Hemma, Inga vikter, Maskiner) överallt där övningar väljs, och Kort pass på dagens pass | Träna | Medel | Klar |
 | 145 | Eget pass: välj flera övningar i rad med Klar längst ner, utrustningsfiltret valfritt (inget valt från början, ett tryck slår på eller av), och Passmall heter Eget pass | Träna | Liten | Klar |
 | 146 | Fokusläget: stor figur, set som streck, kg och reps sida vid sida, vilan som ring i stället för figuren och övriga val under ⋯; raden med passets övningar kvar överst | Träna | Medel | Klar |
+| 147 | Korrigera dagens pass på en sida med alla set (passet förblir sparat), rättade figurer för benpress och lutande press, figuren på övningssidan går att förstora, och Visa alla på fast plats som nollställer muskel och utrustning | Träna | Liten | Klar |
 
 ## Detaljer och acceptanskriterier
 
