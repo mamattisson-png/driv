@@ -206,8 +206,8 @@ const EX = {
       "Pressa upp utan att låsa knäna helt."],
     scene: [["line", 40, 76, 14, 46], ["rect", 34, 74, 22, 4], ["line", 44, 78, 44, 95]],
     plate: [6, 8],
-    A: { h: [42, 70], t: 222, a: [46, 76], f: [62, 52], kb: 1 },
-    B: { h: [42, 70], t: 222, a: [46, 76], f: [74, 42], kb: 1 },
+    A: { h: [42, 70], t: 222, a: [46, 76], f: [62, 52], kb: -1 },
+    B: { h: [42, 70], t: 222, a: [46, 76], f: [74, 42], kb: -1 },
   },
   bencurl: {
     name: "Liggande bencurl", cat: "legs", muscles: "Baksida lår", sets: 3, reps: "10–12",
