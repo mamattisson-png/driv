@@ -48,7 +48,8 @@ function tickRest() {
   const txt = `${Math.floor(left / 60)}:${String(left % 60).padStart(2, "0")}`;
   rest.el.querySelector(".rest-time").textContent = txt;
   // Fokusläget visar tiden bredvid Klart set
-  for (const el of document.querySelectorAll(".frest-time")) { el.textContent = txt; el.parentNode.classList.add("on"); }
+  for (const el of document.querySelectorAll(".frest-time")) el.textContent = txt;
+  for (const el of document.querySelectorAll(".frring")) el.style.setProperty("--p", `${rest.total ? Math.round(100 * (1 - left / rest.total)) : 100}%`);
   rest.el.querySelector(".rest-label").textContent = left ? `vila efter ${rest.name}` : "dags för nästa set!";
   rest.el.querySelector(".rest-bar div").style.width = `${rest.total ? (1 - left / rest.total) * 100 : 100}%`;
   if (left) return;
@@ -66,6 +67,8 @@ function stopRest() {
   if (rest.el) rest.el.remove();
   rest.el = null;
   document.body.classList.remove("resting");
+  // Fokusläget visar vilan i stället för figuren: tillbaka till figuren när vilan är slut
+  if (typeof focus !== "undefined" && focus && document.querySelector(".frestv") && typeof render === "function") setTimeout(render, 0);
 }
 
 // Kort ljudsignal; tillåts eftersom timern startas av ett tryck

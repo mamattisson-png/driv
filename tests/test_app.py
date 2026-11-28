@@ -531,6 +531,7 @@ def test_dailys_under_passet(page):
     go(page, "pass")
     pick(page, page.evaluate("S.plan.days[0].id"))
     page.click("[data-focusstart]")
+    page.click("[data-fmore]")
     assert "Dailys 0/2" in page.inner_text("[data-fdopen]")
     page.click("[data-fdopen]")
     assert page.locator(".overlay [data-dedit]").count() == 0
@@ -539,6 +540,7 @@ def test_dailys_under_passet(page):
     assert page.locator(".overlay").count() == 1   # fönstret står kvar tills man stänger
     page.click(".overlay button.wide[data-fdclose]")
     assert page.locator(".overlay").count() == 0 and page.locator(".focus").count() == 1
+    page.click("[data-fmore]")
     assert "Dailys 1/2" in page.inner_text("[data-fdopen]")
 
 
@@ -1691,7 +1693,7 @@ def test_byt_ovning_under_passet(page):
     page.click("[data-focusstart]")
     first = page.evaluate("S.plan.days[0].ex[0].id")
     # Bara i dag är förvalt; passet får tillbaka övningen när det sparas
-    page.click("[data-fswap]")
+    page.click("[data-fmore]"); page.click("[data-fswap]")
     assert "Byt ut" in page.inner_text(".msk h1")
     # Övningen som byts ut finns inte bland valen
     assert page.locator(f'[data-libpick="{first}"]').count() == 0
@@ -1704,7 +1706,7 @@ def test_byt_ovning_under_passet(page):
     assert page.evaluate("S.plan.days[0].ex[0].id") == first
     # Även framåt: bytet ligger kvar
     page.evaluate("render()")
-    page.click("[data-fswap]")
+    page.click("[data-fmore]"); page.click("[data-fswap]")
     page.click('[data-libtoday="false"]')
     page.click('.msk-row [data-libpick] >> nth=0')
     kept = page.evaluate("S.plan.days[0].ex[0].id")
@@ -2376,7 +2378,7 @@ def test_reps_foljer_med_till_nasta_set(page):
     # Set 2 föreslår samma vikt och samma reps, och listan visar dem för senare set
     assert page.get_attribute(f'[data-set="{ex}"][data-i="1"][data-f="reps"]', "placeholder") == "8"
     assert page.get_attribute(f'[data-set="{ex}"][data-i="1"][data-f="kg"]', "placeholder") == "20"
-    assert "8 reps" in page.inner_text(".fset:not(.active):not(.done) .fsel >> nth=0")
+    assert "8 reps" in page.get_attribute(".fseg:not(.on):not(.ok) >> nth=0", "aria-label")
     # Ett set man själv ställt in behåller sitt värde
     page.evaluate(f"setAt(S.plan.days[0], '{ex}', 3).reps = 5; render()")
     page.click(f'.fdone[data-ok="{ex}"][data-i="1"]')
@@ -2432,7 +2434,7 @@ def test_byt_ovning_under_passet_gar_att_scrolla(page):
     start(page)
     go(page, "pass")
     page.click(f'[data-focusstart="{page.evaluate("S.plan.days[0].id")}"]')
-    page.click("[data-fswap]")
+    page.click("[data-fmore]"); page.click("[data-fswap]")
     # Passets skrollås släpps medan biblioteket är öppet, och kommer tillbaka efteråt
     assert page.evaluate("document.body.classList.contains('infocus')") is False
     page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
@@ -2550,7 +2552,7 @@ def test_lagg_till_ovning_under_passet(page):
     assert page.evaluate("S.plan.days[0].ex.length") == n + 1
     assert page.evaluate("focus.idx") == n
     added = page.evaluate(f"S.plan.days[0].ex[{n}].id")
-    assert page.inner_text(".ftitle h2") == page.evaluate(f"EX['{added}'].name")
+    assert page.inner_text(".ftitle2 h2") == page.evaluate(f"EX['{added}'].name")
     # Bara i dag: tas bort ur passet nästa dag, setten ligger kvar i loggen
     page.evaluate("""() => { const w = workoutFor(S.plan.days[0]); S.log['2020-01-01'] = { workouts: [Object.assign({}, w, { sets: {} })], dailies: {}, food: [] }; delete w.added; restoreOldSwaps(); }""")
     assert page.evaluate("S.plan.days[0].ex.length") == n
@@ -2807,10 +2809,11 @@ def test_under_setet_en_rad_och_resten_under_mer(page):
     go(page, "pass")
     pick(page, page.evaluate("S.plan.days[0].id"))
     page.click("[data-focusstart]")
-    assert page.locator(".ftools .chipbtn").count() == 4
+    # Under setet bara en knapp; resten bakom ⋯ överst
+    assert page.locator(".ftools").count() == 0 and page.locator(".fbar button:visible").count() == 1
     page.click("[data-fmore]")
     sheet = page.inner_text(".fmoresheet")
-    for t in ["Uppvärmningsset", "Byt övning", "Kör som superset", "Ta bort övning", "Lägg till övning", "Ändra ordning"]:
+    for t in ["Ett set till", "Uppvärmningsset", "Byt övning", "Kör som superset", "Ta bort övning", "Lägg till övning", "Ändra ordning"]:
         assert t in sheet
     page.click(".fmoresheet [data-fmoreclose].iconbtn")
     assert page.locator(".fmoresheet").count() == 0

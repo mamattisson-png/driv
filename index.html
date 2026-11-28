@@ -2727,6 +2727,46 @@ button.acttile { min-height: 64px; cursor: pointer; }
 .gear-note .linkbtn2 { min-height: 0; padding: 0; margin-left: 4px; }
 .tplnew { display: flex; flex-direction: column; gap: 8px; margin: 10px 0; }
 .tplsheet .primary.wide { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 10px 0; }
+.focus-scroll > * { flex-shrink: 0; }
+body:has(.frestv) .rest { display: none; }
+.fhmore { width: 40px; height: 40px; border-radius: 12px; background: var(--card); display: grid; place-items: center; color: var(--text); }
+.fhero { display: grid; place-items: center; min-height: 140px; }
+.ffig { position: relative; width: 100%; height: 140px; min-height: 0; padding: 0; border: 0; background: none; }
+.ffig svg { height: 134px; width: auto; }
+.ffig .ibadge { position: absolute; right: 22%; bottom: 10px; }
+.frestv { gap: 10px; padding: 4px 0; }
+.frring { --p: 0%; width: 128px; height: 128px; border-radius: 50%; display: grid; place-items: center; background: conic-gradient(var(--ok) 0 var(--p), var(--line) var(--p) 100%); transition: background .25s; }
+.frring > div { width: 110px; height: 110px; border-radius: 50%; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.frring b { font: 700 30px "Unbounded", sans-serif; line-height: 1; }
+.frring small { color: var(--muted); font-size: 12.5px; margin-top: 4px; }
+.frestctl { display: flex; gap: 8px; }
+.frestctl button { min-height: 40px; padding: 0 16px; border: 0; border-radius: 14px; background: var(--card-2); color: var(--text); font: 600 14px "Lexend", sans-serif; }
+.frestctl button.p { background: var(--text); color: var(--bg); }
+.frestv .vstretch { width: 100%; }
+.ftitle2 { text-align: center; }
+.ftitle2 h2 { font: 800 24px/1.15 "Unbounded", sans-serif; margin: 0 0 4px; overflow-wrap: anywhere; }
+.focus .ftip { justify-content: center; text-align: center; }
+.fsegs { display: flex; gap: 6px; justify-content: center; }
+.fseg { flex: 0 1 52px; display: flex; flex-direction: column; align-items: center; gap: 4px; min-height: 40px; padding: 6px 0 0; border: 0; background: none; color: var(--muted); font: 600 11px "Lexend", sans-serif; }
+.fseg i { display: block; width: 100%; height: 8px; border-radius: 4px; background: var(--line-strong); }
+.fseg.w { flex-basis: 34px; } .fseg.w i { opacity: .6; }
+.fseg.ok i { background: var(--ok); }
+.fseg.on i { box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--text); }
+.fseg.on { color: var(--text); }
+.focus .fsets .fset.active { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 12px; border-color: var(--line); }
+.focus .fsets .fset.active > :not(.bigstep) { grid-column: 1 / -1; }
+.focus .fset.active .bigstep { background: var(--card-2); border-radius: 18px; padding: 10px; }
+.focus .fset.active .bigrow { display: grid; grid-template-columns: 34px 1fr 34px; grid-template-areas: "m n p"; gap: 4px; align-items: center; }
+.focus .fset.active .bigrow > .bstep:first-child { grid-area: m; } .focus .fset.active .bigrow > .bignum { grid-area: n; flex-direction: column; align-items: center; } .focus .fset.active .bigrow > .bstep:last-child { grid-area: p; }
+.focus .fset.active .bstep { width: 34px; height: 44px; border-radius: 12px; background: var(--card); }
+.focus .fset.active .bignum input { font-size: 25px; letter-spacing: -.04em; width: 100% !important; min-width: 0; padding: 4px 0; border: 1px solid var(--line-strong); border-radius: 10px; background: var(--card); }
+.fiinfo { width: 24px; height: 24px; min-height: 0; padding: 0; border: 0; border-radius: 12px; background: var(--accent-strong); color: var(--on-accent); font: 700 13px "Lexend", sans-serif; vertical-align: 4px; }
+.ffig.thumb { border-radius: 0; overflow: visible; }
+.focus .fset.active .bignum { min-width: 0; gap: 0; }
+.focus:has(.frestv) .ftip, .focus:has(.frestv) .fhint { display: none; }
+.focus .fset.active .bigstep { padding: 8px 6px; }
+.frestv .vstretch { padding: 8px 12px; } .frestv .vstretch .vsfig, .frestv .vstretch small { display: none; }
+.focus .fsethead b { font-size: 14px; }
 .up-goal2 { display: flex; align-items: center; gap: 12px; width: 100%; margin-top: 8px; padding: 14px 16px; border: 0; border-radius: 20px; background: rgba(255, 138, 71, .12); color: var(--text); font: inherit; text-align: left; }
 .up-goal2 .grow { display: flex; flex-direction: column; gap: 2px; } .up-goal2 small { color: var(--muted); font-size: 13px; } .up-goal2 > svg:first-child { color: var(--accent-text); }
 .up-opt { margin-top: 26px; padding: 18px; border-radius: 22px; border: 1.5px dashed var(--line-strong); }

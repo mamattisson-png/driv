@@ -44,6 +44,7 @@ def test_utokad_ovning_kan_valjas_och_loggas_i_pass(page,kind):
         assert page.locator(f'[data-set="{exercise}"][data-f="kg"]').count()==0
     value=30 if kind=='static_stretch' else 10
     page.fill(f'[data-set="{exercise}"][data-i="0"][data-f="reps"]',str(value))
+    page.click('[data-setconfirm]')   # OK stänger tangentbordet, sedan Klar med set
     page.click(f'[data-ok="{exercise}"][data-i="0"]')
     page.reload()
     assert page.evaluate('id=>workoutsOn(TODAY)[0].sets[id][0].ok',exercise)

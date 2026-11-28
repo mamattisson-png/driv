@@ -276,18 +276,17 @@ function focusView() {
         ? (active >= 0 ? `<button class="wide fdone ghostbtn" data-fsel="${active}">Till ${all[active].w ? "uppvärmning" : "set"} ${badge(all[active])}</button>` : "")
         : `<button class="primary wide fdone" ${okAttrs(s)}>${s.drop && s.k + 1 < nDrops ? "Klar · direkt till nästa drop" : doneTxt}</button>`;
       setAction = btn;
-      return `<li class="${cls}"><div class="fsethead"><button class="fcheck ${v.ok ? "on" : ""}" ${okAttrs(s)} aria-pressed="${!!v.ok}" aria-label="${s.w ? "Uppvärmning" : "Set"} ${s.i + 1} klart">${v.ok ? icon("check", 14) : `<span class="fb">${badge(s)}</span>`}</button>
+      return `<li class="${cls}"><div class="fsethead">
         <b class="grow">${s.w ? `Uppvärmning ${s.i + 1}` : s.drop ? `Drop${nDrops > 1 ? ` ${s.k + 1}` : ""}` : `Set ${s.i + 1}`}${amrapAt(s) ? ` <span class="settag">Max reps</span>` : dropAt(s) ? ` <span class="settag">Dropset</span>` : ""}</b>${note ? `<span class="muted small">${note}</span>` : ""}
         ${s.w ? `<button class="fwarmdel" data-warmdel="${ex.id}" data-wi="${s.i}" aria-label="Ta bort uppvärmning ${s.i + 1}">${icon("close", 16)}</button>` : ""}</div>
         ${fields}${s.drop && s === lastDrop && s.k < 3 && !v.ok ? `<button class="chipbtn dropmore" data-dropmore="${ex.id}">${icon("plus", 14)}En drop till efter den här</button>` : ""}</li>`;
     }
-    const val = v.ok && hasData(v) ? fmt(v) : hasData(h) ? fmt(h) : "";
-    return `<li class="${cls}"><button class="fcheck ${v.ok ? "on" : ""}" ${okAttrs(s)} aria-pressed="${!!v.ok}" aria-label="${s.w ? "Uppvärmning" : "Set"} ${s.i + 1} klart">${v.ok ? icon("check", 14) : `<span class="fb">${badge(s)}</span>`}</button>
-      <button class="fsel" data-fsel="${k}" aria-label="Välj ${s.w ? "uppvärmning" : "set"} ${s.i + 1}"><span>${val}</span>${v.ok ? `<span class="fstate">${s.w ? "Uppvärmd" : "Klart"}</span>` : ""}</button></li>`;
+    return "";
   });
-  const completed = rows.filter((_, k) => stOf(all[k]).ok && k !== sel);
-  const currentRows = rows.filter((_, k) => !stOf(all[k]).ok || k === sel).join("");
-  const completedView = completed.length ? `<details class="completed-sets"><summary>${icon("check", 16)}<span class="grow">${completed.length} ${completed.length === 1 ? "genomfört set" : "genomförda set"}</span>${icon("right", 16)}</summary><ol class="fsets">${completed.join("")}</ol></details>` : "";
+  const currentRows = rows[sel] || "";
+  // Seten som streck: klara gröna, det valda vitt, uppvärmning smalare. Tryck för att välja ett annat set.
+  const segs = `<div class="fsegs" role="group" aria-label="Set">${all.map((s, k) => { const v = stOf(s), h = s.w ? warmHint(d, ex, s.i) : liveHint(d, ex, s.i), val = v.ok && hasData(v) ? fmt(v) : hasData(h) ? fmt(h) : "";
+    return `<button class="fseg ${v.ok ? "ok" : ""} ${k === sel ? "on" : ""} ${s.w ? "w" : ""} ${s.drop ? "d" : ""}" data-fsel="${k}" aria-label="${s.w ? "Uppvärmning" : s.drop ? "Drop" : "Set"} ${s.i + 1}${v.ok ? ", klart" : ""}${val ? `, ${val}` : ""}"><i></i><small>${badge(s)}</small></button>`; }).join("")}</div>`;
   // Superset: varvet man är på och övningarna i gruppen
   const round = g ? Math.min(...d.ex.slice(g[0], g[1] + 1).map(x => ((w && w.sets[x.id]) || []).filter(z => z && z.ok).length)) + 1 : 0;
   const rounds = g ? Math.max(...d.ex.slice(g[0], g[1] + 1).map(x => x.sets)) : 0;
@@ -309,7 +308,6 @@ function focusView() {
     : `Första gången: välj en vikt du klarar ${esc(String(ex.reps).replace(/-/g, "–"))} gånger.`;
   const allDone = active < 0;
   const resting = rest.el && rest.end > Date.now();
-  const restBox = restSettings().on ? `<div class="frest ${resting ? "on" : ""}" aria-label="Vilotimer">${icon("timer", 18)}<span class="frest-time">${restText(resting ? Math.ceil((rest.end - Date.now()) / 1000) : restFor(ex.id))}</span></div>` : "";
   // Nästa övning som inte är klar: först efter den här, annars någon tidigare. Passet är klart först när alla är gjorda.
   const after = g ? g[1] + 1 : focus.idx + 1, undone = k => k !== focus.idx && !(g && k >= g[0] && k <= g[1]) && !exDone(w, d.ex[k]);
   const nextIdx = [...d.ex.keys()].filter(k => k >= after).find(undone) ?? [...d.ex.keys()].find(undone), next = nextIdx != null ? d.ex[nextIdx] : null;
@@ -322,16 +320,14 @@ function focusView() {
   const dList = dailyList(logDate()), dDone = dList.filter(e => dailyDone(logDate(), e.id)).length;
   const start = focus.start || Date.now();
   // Under setet bara det man gör oftast; resten under Mer, grupperat efter övningen och passet
-  const tools = `<div class="ftools">
-    <button class="chipbtn" data-setcount="-1" data-ex="${ex.id}" ${ex.sets > 1 ? "" : "disabled"} aria-label="Ett set färre">− Set</button>
-    <button class="chipbtn" data-setcount="1" data-ex="${ex.id}" aria-label="Ett set till">+ Set</button>
-    ${dList.length && dailysOn() ? `<button class="chipbtn" data-fdopen aria-label="Dailys, ${dDone} av ${dList.length} klara">Dailys ${dDone}/${dList.length}</button>` : ""}
-    <button class="chipbtn ${focusMore ? "on" : ""}" data-fmore aria-expanded="${focusMore}">${icon("more", 16)}Mer</button></div>`;
+
   const moreRow = (ic, title, sub, attrs) => `<button class="h3-row fmrow" ${attrs}><span class="h3-ic">${icon(ic, 18)}</span><span class="grow"><b>${title}</b>${sub ? `<small>${sub}</small>` : ""}</span></button>`;
   const moreSheet = focusMore ? `<div class="overlay" data-fmoreclose><div class="sheet fmoresheet" role="dialog" aria-label="Fler val">
     <div class="row between"><h2 class="sheeth">Fler val</h2><button class="small ghost iconbtn" data-fmoreclose aria-label="Stäng">${icon("close", 18)}</button></div>
     <div class="klabel">${esc(EX[ex.id].name)}</div>
     <section class="h3-list">
+      ${moreRow("plus", "Ett set till", `${ex.sets} set nu`, `data-setcount="1" data-ex="${ex.id}"`)}
+      ${ex.sets > 1 ? moreRow("minus", "Ett set färre", `${ex.sets} set nu`, `data-setcount="-1" data-ex="${ex.id}"`) : ""}
       ${nW < 5 && !stretch && !timed ? moreRow("plus", "Uppvärmningsset", nW ? `${nW} lagt till` : "Ett lättare set före arbetsseten", `data-warmadd="${ex.id}"`) : ""}
       ${nW ? moreRow("minus", "Ta bort ett uppvärmningsset", nW === 1 ? "Det som lagts till" : `${nW} lagt till · tar bort det sista`, `data-warmdel="${ex.id}"`) : ""}
       ${moreRow("swap", "Byt övning", "Bara i dag eller även framåt", `data-fswap="${focus.idx}"`)}
@@ -340,6 +336,7 @@ function focusView() {
     </section>
     <div class="klabel">Passet</div>
     <section class="h3-list">
+      ${dList.length && dailysOn() ? moreRow("check", `Dailys ${dDone}/${dList.length}`, "Gör dem mellan seten", "data-fdopen") : ""}
       ${moreRow("plus", "Lägg till övning", "", "data-faddex")}
       ${d.ex.length > 1 ? moreRow("list", "Ändra ordning", "", "data-forder") : ""}
       ${moreRow("timer", "Stretch under vilan", S.restStretch === false ? "Av · tryck för att visa förslag" : "På · tryck för att stänga av", "data-vsoff")}
@@ -347,21 +344,22 @@ function focusView() {
   return `<div class="focus"><div class="focus-scroll">
     <header class="fhead"><button class="fhbtn" data-fend>Avsluta</button>
       <span class="fclock"><span class="klabel">${esc(d.name)}</span><b class="ftimer" data-start="${start}">${clockText(Date.now() - start)}</b></span>
-      <button class="fhbtn" data-fswap="${focus.idx}">Byt övning</button></header>
+      <button class="fhbtn fhmore ${focusMore ? "on" : ""}" data-fmore aria-expanded="${focusMore}" aria-label="Fler val">${icon("more", 20)}</button></header>
     ${stepRow(d, w)}
     ${ss}
-    <div class="ftitle"><button class="thumb dt finfo" data-info="${ex.id}" aria-label="Visa hur ${esc(EX[ex.id].name)} görs">${figure(ex.id)}<span class="ibadge" aria-hidden="true">i</span></button>
-      <div class="grow"><span class="muted small">Övning ${focus.idx + 1} av ${d.ex.length} · ${repsText(ex)}${nW ? ` · +${nW} uppv.` : ""}</span>
-      <h2>${esc(EX[ex.id].name)}</h2></div></div>
-    <div class="ftip">${icon("trend", 16)}<span>${tip}</span></div>
-    ${completedView}${typeof restStretchRow === "function" ? restStretchRow(ex.id) : ""}
-    ${currentRows ? `<ol class="fsets" aria-label="Set">${currentRows}</ol>` : ""}
+    ${resting || (rest.el && rest.el.classList.contains("ding")) ? `<section class="fhero frestv" aria-label="Vila">
+        <div class="frring" style="--p:${rest.total ? Math.round(100 * (1 - Math.max(0, rest.end - Date.now()) / 1000 / rest.total)) : 100}%"><div><b class="frest-time">${restText(Math.max(0, Math.ceil((rest.end - Date.now()) / 1000)))}</b><small>vila</small></div></div>
+        <div class="frestctl" role="group" aria-label="Vila"><button data-restadd="15">+15 s</button><button class="p" data-restskip>Hoppa över</button></div>
+        ${typeof restStretchRow === "function" ? restStretchRow(ex.id) : ""}</section>`
+      : `<button class="fhero ffig finfo thumb" data-info="${ex.id}" aria-label="Visa hur ${esc(EX[ex.id].name)} görs">${figure(ex.id)}<span class="ibadge" aria-hidden="true">i</span></button>`}
+    <div class="ftitle2"><h2>${esc(EX[ex.id].name)}${resting || (rest.el && rest.el.classList.contains("ding")) ? ` <button class="fiinfo" data-info="${ex.id}" aria-label="Visa hur ${esc(EX[ex.id].name)} görs">i</button>` : ""}</h2><span class="muted small">Övning ${focus.idx + 1} av ${d.ex.length} · ${repsText(ex)}${nW ? ` · +${nW} uppv.` : ""}</span></div>
+    <div class="ftip">${icon("trend", 14)}<span>${tip}</span></div>
+    ${segs}
+    ${currentRows ? `<ol class="fsets" aria-label="Valt set">${currentRows}</ol>` : ""}
     ${allDone ? `<div class="fall">${icon("check", 16)}${d.id === "fritt" ? "Klart · lägg till nästa övning eller avsluta" : "Alla set klara"}</div>` : ""}
     ${ssPick}</div>
-    <div class="focus-controls">${focusRemoved && Date.now() - focusRemoved.at < 5000 ? `<div class="fundo" role="status"><span>${esc(EX[focusRemoved.entry.id].name)} borttagen från dagens pass</span><button class="linkbtn2" data-fundo>Ångra</button></div>` : ""}${tools}
-    <div class="fbar">${restBox ? `<div class="frestctl" role="group" aria-label="Vila"><button class="small" data-restadd="-15">−15</button>
-      <button class="small" data-restadd="15">+15</button><button class="small" data-restskip>Klar</button></div>` : ""}
-      <div class="fbar-row">${main}<button class="primary grow fconfirm" data-setconfirm aria-label="Bekräfta inmatning">OK</button>${restBox}</div></div></div>
+    <div class="focus-controls">${focusRemoved && Date.now() - focusRemoved.at < 5000 ? `<div class="fundo" role="status"><span>${esc(EX[focusRemoved.entry.id].name)} borttagen från dagens pass</span><button class="linkbtn2" data-fundo>Ångra</button></div>` : ""}
+    <div class="fbar"><div class="fbar-row">${main}<button class="primary grow fconfirm" data-setconfirm aria-label="Bekräfta inmatning">OK</button></div></div></div>
   </div>${focusDailies ? `<div class="overlay" data-fdclose><div class="sheet">
     <div class="row between"><span class="muted small">Fläta in i passet</span>${dailyClock ? "" : `<button class="small ghost iconbtn" data-fdclose aria-label="Stäng">${icon("close", 18)}</button>`}</div>
     ${dailyClock ? dailyClockView() : dailiesCard(true)}<button class="wide" data-fdclose style="margin-top:14px">Tillbaka till passet</button></div></div>` : ""}${focusOrder ? orderSheet(d, w) : ""}${focusEnd ? endSheet(d, w) : ""}${moreSheet}${typeof restStretchSheet === "function" ? restStretchSheet() : ""}`;

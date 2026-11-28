@@ -22,6 +22,7 @@ def test_ny_ovning_kan_valjas_och_loggas(page,exercise,area,gear):
     index=page.evaluate('id=>S.plan.days[0].ex.findIndex(e=>e.id===id)',exercise)
     page.evaluate('i=>{focus.idx=i;render()}',index)
     page.fill(f'[data-set="{exercise}"][data-i="0"][data-f="reps"]','10')
+    page.click('[data-setconfirm]')   # OK stänger tangentbordet, sedan Klar med set
     page.click(f'[data-ok="{exercise}"][data-i="0"]')
     assert page.evaluate('id=>workoutsOn(TODAY)[0].sets[id][0].ok',exercise)
     page.reload()

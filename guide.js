@@ -15,8 +15,7 @@ const TOUR_ALL = [
   { tab: "pass", prep: () => { startEdit(dayById(day0())); editing = true; chosenDay = day0(); passOpen = true; exSheet = 0; },
     sel: '.exset:has([data-exstep="warm"])', title: "Uppvärmning", text: "Öppna en övning när du ändrar passet och välj hur många lättare set du vill värma upp med. De räknas inte in i dina rekord." },
   { tab: "pass", prep: () => startFocus(day0()), sel: ".fsteps", title: "Övningarna i passet", text: "Tryck på en övning för att gå till den. Dra den åt höger eller vänster för att ändra ordning." },
-  { tab: "pass", prep: () => startFocus(day0()), sel: "[data-fmore]", title: "Fler val under passet", text: "Under Mer: kör som superset, lägg till uppvärmning, byt, lägg till eller ta bort övningar och ändra ordning." },
-  { tab: "pass", prep: () => startFocus(day0()), sel: "[data-fdopen]", title: "Dailys under passet", text: "Hinner du inte med dailys separat? Öppna dem här och bocka av mellan seten." },
+  { tab: "pass", prep: () => startFocus(day0()), sel: "[data-fmore]", title: "Fler val under passet", text: "Under ⋯: dailys, fler set, kör som superset, lägg till uppvärmning, byt, lägg till eller ta bort övningar och ändra ordning." },
   { tab: "idag", sel: ".homehead .setbtn", title: "Klart!", text: "Guiden startar du igen under Inställningar, bakom kugghjulet." },
 ];
 // Stegen om Dailys hoppas över när Dailys är avstängt

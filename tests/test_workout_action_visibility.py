@@ -38,12 +38,13 @@ def test_set_action_is_uncovered_at_every_scroll_position(page,size,resting,supe
 def test_original_set_rows_and_exercise_navigation_are_preserved(page):
     many_sets(page)
     assert page.locator('.set-icons, .set-icon').count()==0
-    assert page.locator('.fsets > .fset').count()==12
-    assert page.locator('.fsets > .fset.done').count()==11
+    # Seten som streck: alla syns, de klara gröna; det valda setet visas stort
+    assert page.locator('.fsegs > .fseg').count()==12
+    assert page.locator('.fsegs > .fseg.ok').count()==11
+    assert page.locator('.fsets > .fset').count()==1
     assert page.locator('[data-focusgo="0"]').count()>=1
     assert page.locator('[data-focusgo="1"]').count()>=1
-    page.locator('.completed-sets summary').click()
-    page.click('.fsets [data-fsel="0"]')
+    page.click('.fsegs [data-fsel="0"]')
     assert page.locator('.fset.active.warm').count()==1
     assert page.input_value('.fset.active [data-f="kg"]')=='5'
     page.click('.fbar .fdone')
@@ -54,7 +55,7 @@ def test_original_set_rows_and_exercise_navigation_are_preserved(page):
 @pytest.mark.parametrize('size',[(320,568),(390,844)])
 def test_all_workout_tools_can_be_reached_without_any_overlay(page,size):
     page.set_viewport_size({'width':size[0],'height':size[1]});many_sets(page)
-    for button in page.locator('.ftools button').all():
+    for button in page.locator('.fsegs button, .fset.active button').all():
         button.scroll_into_view_if_needed()
         box=button.bounding_box();footer=page.locator('.fbar').bounding_box()
         assert box['y']>=0 and box['y']+box['height']<=footer['y']
