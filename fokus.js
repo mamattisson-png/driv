@@ -255,7 +255,7 @@ function focusView() {
   const dropAt = s => ex.last === "drop" && !s.w && !s.drop && s.i === ex.sets - 1;
   const stOf = s => (s.w ? warm[s.i] : sets[s.i]) || {};
   const active = all.findIndex(s => !stOf(s).ok);
-  const sel = focus.sel != null && all[focus.sel] ? focus.sel : active;
+  const sel = focus.sel != null && all[focus.sel] ? focus.sel : active >= 0 ? active : all.length - 1;
   const g = ssGroup(d, focus.idx);
   const fmt = v => fmtSet2({ kg: +v.kg || 0, reps: +v.reps || 0 }, ex.id);
   const badge = s => s.w ? `U${s.i + 1}` : s.drop ? "D" : `${s.i + 1}`;
@@ -450,11 +450,11 @@ function passOverview(d, w) {
 
 // Ett pass i efterhand: alla övningar och set på en gång, med förra (eller nästa) gångens vikter
 // som förslag i fälten. "Fyll i som förslaget" loggar hela passet med ett tryck.
-function pastLog(d, w) {
+function pastLog(d, w, fix = false) {
   const done = d.ex.filter(x => exDone(w, x)).length;
   return `<section class="card kmeal exlist pastlog">
     <div class="khead">${tag(d.type)}<span class="grow">${passBand(d)}</span><span>${done} / ${d.ex.length} klara</span></div>
-    <div class="kbody"><button class="wide" data-fillall="${d.id}">↻ Fyll i hela passet som förslaget</button>
+    <div class="kbody" ${fix ? "hidden" : ""}><button class="wide" data-fillall="${d.id}">↻ Fyll i hela passet som förslaget</button>
       <div class="muted small" style="margin-top:6px">Förslagen kommer från passet före eller efter. Ändra det som inte stämmer.</div></div>
     ${d.ex.map(ex => {
       const sets = (w && w.sets[ex.id]) || [], bw = !!EX[ex.id].bw;

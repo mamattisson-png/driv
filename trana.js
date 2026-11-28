@@ -184,6 +184,17 @@ document.addEventListener("click", ev => {
 });
 
 // Sparade passmallar: tryck på en mall för att se och ändra den, eller starta direkt
+// Korrigera dagens pass: en sida med alla övningar och set (pastLog), där ändringar sparas direkt
+let fixPass = null;
+function fixView(d) {
+  const w = workoutOn(logDate(), d.id);
+  if (!w) { fixPass = null; return traningView(); }
+  return `<button class="backbtn" data-fixdone>${icon("left", 18)}Träna</button>
+    <h1>Korrigera ${esc(d.name)}</h1>
+    <p class="muted small fixsub">Idag. Ändra vikt eller reps, eller bocka av set. Ändringarna sparas direkt.</p>
+    ${pastLog(d, w, true)}
+    <button class="primary wide bigbtn fixdone" data-fixdone>Klar</button>`;
+}
 let tplNew = null;   // { name, gear } medan ett eget pass skapas
 function tplSheet() {
   const L = tpls();
@@ -344,7 +355,7 @@ function stepReps(r, dir, id) {
 }
 
 document.addEventListener("click", ev => {
-  const t = ev.target.closest("[data-seepass],[data-passback],[data-editcancel],[data-exsheet],[data-exsheetclose],[data-exstep],[data-exlast],[data-ordna],[data-trsheet],[data-tplopen],[data-tpldel],[data-trfix]");
+  const t = ev.target.closest("[data-fixdone],[data-seepass],[data-passback],[data-editcancel],[data-exsheet],[data-exsheetclose],[data-exstep],[data-exlast],[data-ordna],[data-trsheet],[data-tplopen],[data-tpldel],[data-trfix]");
   if (!t || t.disabled) return;
   if (t.classList.contains("overlay") && ev.target !== t) return;   // klick inne i fönstret
   const ds = t.dataset;
@@ -375,11 +386,10 @@ document.addEventListener("click", ev => {
   else if (ds.ordna !== undefined) ordna = !ordna;
   else if (ds.trsheet !== undefined) { trSheet = ds.trsheet || null; dailyEditing = false; }
   else if (ds.trfix) {
-    // Rätta ett avslutat pass: det öppnas igen på passets sida, där set, vikter och reps kan ändras och passet sparas på nytt
-    const d = dayById(ds.trfix), w = d && workoutOn(logDate(), d.id);
-    if (w) { w.done = false; if (typeof shareWorkout === "function") shareWorkout(d, logDate(), false); }
-    chosenDay = ds.trfix; passOpen = true; window.scrollTo(0, 0);
+    // Rätta ett avslutat pass på en enda sida: alla set på en gång. Passet förblir sparat medan man ändrar.
+    fixPass = ds.trfix; chosenDay = ds.trfix; window.scrollTo(0, 0);
   }
+  else if (ds.fixdone !== undefined) { fixPass = null; passOpen = false; toast("Passet är uppdaterat"); window.scrollTo(0, 0); }
   else if (ds.tplopen) { trSheet = null; chosenDay = ds.tplopen; passOpen = true; window.scrollTo(0, 0); }
   else if (ds.tpldel) {
     // Två tryck: första ber om bekräftelse. Loggade pass från mallen ligger kvar i historiken.

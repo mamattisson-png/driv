@@ -2759,11 +2759,15 @@ def test_korrigera_dagens_avslutade_pass_fran_trana(page):
     seed(page, f"S.log[TODAY] = {{workouts:[{{dayId:'{d}',done:true,start:Date.now()-3600e3,end:Date.now(),sets:{{bankpress:[{{kg:80,reps:8,ok:true}}]}}}}],dailies:{{}},food:[]}}")
     go(page, "pass")
     page.click(f'[data-trfix="{d}"]')
-    # Passet öppnas igen på sin sida: setten går att ändra och passet sparas på nytt
-    assert page.evaluate("[passOpen, chosenDay, workoutOn(TODAY, chosenDay).done]") == [True, d, False]
-    assert page.locator(f'button[data-finish="{d}"]').count() >= 1
-    page.click(f'button[data-finish="{d}"] >> nth=0')
-    assert page.evaluate(f"workoutOn(TODAY, '{d}').done") is True and page.evaluate("workoutsOn(TODAY).length") == 1
+    # En enda sida med alla set; passet förblir sparat medan man ändrar
+    assert "Korrigera" in page.inner_text("h1") and page.evaluate(f"workoutOn(TODAY, '{d}').done") is True
+    page.fill('[data-set="bankpress"][data-i="0"][data-f="kg"]', '82.5')
+    page.dispatch_event('[data-set="bankpress"][data-i="0"][data-f="kg"]', 'change')
+    page.click('[data-ok="bankpress"][data-i="1"]')
+    assert page.evaluate(f"workoutOn(TODAY, '{d}').sets.bankpress[0].kg") == 82.5
+    assert page.evaluate(f"workoutOn(TODAY, '{d}').done") is True and page.evaluate("rest.el") is None   # ingen vila startas
+    page.click('[data-fixdone] >> nth=-1')
+    assert page.evaluate("[fixPass, workoutsOn(TODAY).length]") == [None, 1] and not page.errors
 
 
 def test_ta_bort_ovning_under_passet_med_angra(page):

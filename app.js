@@ -1289,6 +1289,7 @@ const VIEWS = {
 
   pass() {
     if (editDate) return pastView();
+    if (fixPass && !focus) return fixView(dayById(fixPass) || currentPassDay());
     if (focus && !editing && !focus.suspended) return focusView();
     const d = currentPassDay();
     if (editing) return editView(d) + (exSheet != null && d.ex[exSheet] ? exSheetView(d) : "");
@@ -2142,6 +2143,7 @@ document.addEventListener("click", ev => {
   if (ds.tplsave !== undefined && passDone) { const f = $("tplname"); saveTpl((f && f.value.trim()) || dayById(passDone.dayId).name); save(); render(); toast("Sparat som eget pass"); return; }
   if (ds.passdoneclose !== undefined) { passDone = null; tab = "idag"; render(); window.scrollTo(0, 0); return; }
   if (ds.tab) {
+    if (typeof fixPass !== "undefined") fixPass = null;
     if (ds.tab === "vanner" && tab !== "vanner") vannerBack = tab;
     if (ds.tab === "vagning" && tab !== "vagning") { vikBack = tab; wDraft = null; wDate = null; }
     passDone = null;
@@ -2180,8 +2182,10 @@ document.addEventListener("click", ev => {
     // I ett superset vilar man först när varvet är klart
     const wk = workoutFor(d), nd = exo0 => Math.max(1, +((wk.drops || {})[exo0.id]) || 1);
     const exo = d.ex[idx], toDrop = exo && exo.last === "drop" && +ds.i >= exo.sets - 1 && +ds.i < exo.sets - 1 + nd(exo);   // dropen körs direkt, utan vila   // dropen körs direkt, utan vila
-    if (s.ok) { fillFromHint(d, ds.ok, +ds.i); checkRecord(ds.ok, s); if (!editDate && !inRound && !toDrop) startRest(ds.ok); }
+    if (s.ok) { fillFromHint(d, ds.ok, +ds.i); checkRecord(ds.ok, s); if (!editDate && !fixPass && !inRound && !toDrop) startRest(ds.ok); }
     syncDone(d);
+    // Korrigera: passet är redan sparat och förblir det
+    if (fixPass) { const fw = workoutOn(logDate(), d.id); if (fw) fw.done = true; }
     const from = focus && focus.idx;
     if (s.ok) focusAfterSet(d, idx, +ds.i);
     if (s.ok) setFeedback(d, ds.ok, s, { from, rest: !editDate && !inRound && !toDrop, inRound, drop: toDrop });
